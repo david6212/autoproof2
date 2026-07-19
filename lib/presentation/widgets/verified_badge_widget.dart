@@ -1,0 +1,40 @@
+import 'package:flutter/material.dart';
+
+import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_strings.dart';
+
+/// "מוכר מאומת ✓" pill badge.
+class VerifiedBadge extends StatelessWidget {
+  const VerifiedBadge({super.key, this.compact = false});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 10,
+        vertical: compact ? 4 : 5,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.tealLight,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.verified, size: compact ? 13 : 15, color: AppColors.teal),
+          const SizedBox(width: 4),
+          Text(
+            AppStrings.verifiedSellerBadge,
+            style: TextStyle(
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.bold,
+              color: AppColors.tealText2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

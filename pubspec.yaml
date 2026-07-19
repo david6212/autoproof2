@@ -1,0 +1,49 @@
+name: autoproof
+description: "AutoProof — trusted marketplace for buying used cars in Israel."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Firebase
+  firebase_core: ^3.0.0
+  firebase_auth: ^5.0.0
+  cloud_firestore: ^5.0.0
+  firebase_storage: ^12.0.0
+  firebase_messaging: ^15.0.0
+
+  # State Management
+  flutter_riverpod: ^2.5.0
+
+  # Navigation
+  go_router: ^14.0.0
+
+  # HTTP — data.gov.il API
+  dio: ^5.4.0
+
+  # UI helpers
+  cached_network_image: ^3.3.0
+  image_picker: ^1.1.0
+  # image_cropper — re-added in Phase 5 (photo upload). Removed for now
+  # because 5.0.x references UnmodifiableUint8ListView, removed in Dart 3.4+.
+
+  # Utils
+  intl: ^0.19.0
+  flutter_secure_storage: ^9.0.0
+  google_fonts: ^6.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

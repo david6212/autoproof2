@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "424043770826",
+    "project_id": "autoproof-8d827",
+    "storage_bucket": "autoproof-8d827.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:424043770826:android:2423b7e09e8f3290ae5533",
+        "android_client_info": {
+          "package_name": "il.autoproof.autoproof"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6PWMaHZu8X8TGpi-3lwfe7a4TcNOl0co"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
