@@ -102,7 +102,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/book/:inspectorId',
         builder: (c, s) => BookInspectionScreen(
-            inspectorId: s.pathParameters['inspectorId']!),
+          inspectorId: s.pathParameters['inspectorId']!,
+          carId: s.uri.queryParameters['carId'] ?? '',
+        ),
       ),
       GoRoute(path: '/swipe', builder: (c, s) => const SwipeScreen()),
       GoRoute(path: '/match', builder: (c, s) => const MatchScreen()),

@@ -38,6 +38,19 @@ final carByIdProvider =
   return ref.watch(carRepositoryProvider).getCarById(id);
 });
 
+/// The current user's active listing (null if none or not signed in).
+final myActiveListingProvider = Provider<AsyncValue<CarModel?>>((ref) {
+  final user = ref.watch(authStateProvider).valueOrNull;
+  final cars = ref.watch(activeCarsProvider);
+  if (user == null) return const AsyncData(null);
+  return cars.whenData((list) {
+    for (final c in list) {
+      if (c.sellerId == user.uid) return c;
+    }
+    return null;
+  });
+});
+
 /// Set of saved car ids for the current user (empty if not signed in).
 final savedIdsProvider = StreamProvider<Set<String>>((ref) {
   final user = ref.watch(authStateProvider).valueOrNull;
@@ -50,6 +63,35 @@ final savedCarsProvider = StreamProvider<List<CarModel>>((ref) {
   final user = ref.watch(authStateProvider).valueOrNull;
   if (user == null) return Stream.value(<CarModel>[]);
   return ref.watch(carRepositoryProvider).streamSavedCars(user.uid);
+});
+
+/// Writes an anonymous review. CRITICAL: no sellerId field is stored, so the
+/// seller can never query or see these reviews.
+typedef ReviewWriter = Future<void> Function({
+  required String carId,
+  required String reviewerId,
+  required bool anonymous,
+  required List<String> reasons,
+  required String text,
+});
+
+final reviewWriteProvider = Provider<ReviewWriter>((ref) {
+  final repo = ref.read(carRepositoryProvider);
+  return ({
+    required carId,
+    required reviewerId,
+    required anonymous,
+    required reasons,
+    required text,
+  }) {
+    return repo.addReview(
+      carId: carId,
+      reviewerId: reviewerId,
+      anonymous: anonymous,
+      reasons: reasons,
+      text: text,
+    );
+  };
 });
 
 /// Toggles saved state for a car. No-op if not signed in.

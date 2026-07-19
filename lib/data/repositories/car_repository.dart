@@ -82,6 +82,25 @@ class CarRepository {
     return demoMatch || sellerLike.exists;
   }
 
+  /// Adds an anonymous review. IMPORTANT: no sellerId field — the seller
+  /// cannot query or read reviews (RULE 6).
+  Future<void> addReview({
+    required String carId,
+    required String reviewerId,
+    required bool anonymous,
+    required List<String> reasons,
+    required String text,
+  }) async {
+    await _db.collection('reviews').add({
+      'carId': carId,
+      'reviewerId': anonymous ? '' : reviewerId,
+      'anonymous': anonymous,
+      'reasons': reasons,
+      'text': text,
+      'createdAt': DateTime.now(),
+    });
+  }
+
   // ---- Saved cars ----
 
   Stream<Set<String>> streamSavedIds(String uid) {
