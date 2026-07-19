@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/cars_provider.dart';
+import '../../providers/chat_provider.dart';
 import '../../widgets/verified_badge_widget.dart';
 
 class CarDetailScreen extends ConsumerWidget {
@@ -305,7 +306,20 @@ class _ActionBar extends ConsumerWidget {
                 ),
                 icon: const Icon(Icons.chat_bubble_outline),
                 label: const Text('שלח הודעה'),
-                onPressed: () => context.push('/chat/${car.id}'),
+                onPressed: () async {
+                  final chatId =
+                      await ref.read(openChatForCarProvider).call(car);
+                  if (!context.mounted) return;
+                  if (chatId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('יש להתחבר כדי לשלוח הודעה'),
+                      ),
+                    );
+                    return;
+                  }
+                  context.push('/chat/$chatId');
+                },
               ),
             ),
             const SizedBox(width: 10),
