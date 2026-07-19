@@ -59,6 +59,29 @@ class CarRepository {
     return _cars.doc(carId).update({'photos': photos});
   }
 
+  /// Records a buyer's "like" on a car and returns whether it's a mutual match.
+  /// A match occurs when the seller has already liked this buyer, or when the
+  /// car is flagged `demoMatch: true` (used to demo the flow without Cloud
+  /// Functions on the free plan).
+  Future<bool> likeCar(String carId, String buyerId) async {
+    await _cars
+        .doc(carId)
+        .collection('buyer_likes')
+        .doc(buyerId)
+        .set({'likedAt': FieldValue.serverTimestamp()});
+
+    final carSnap = await _cars.doc(carId).get();
+    final demoMatch = carSnap.data()?['demoMatch'] == true;
+
+    final sellerLike = await _cars
+        .doc(carId)
+        .collection('seller_likes')
+        .doc(buyerId)
+        .get();
+
+    return demoMatch || sellerLike.exists;
+  }
+
   // ---- Saved cars ----
 
   Stream<Set<String>> streamSavedIds(String uid) {
