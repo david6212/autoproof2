@@ -1,1 +1,42 @@
-{"flutter":{"platforms":{"dart":{"lib/firebase_options.dart":{"projectId":"autoproof-8d827","configurations":{"android":"1:424043770826:android:2423b7e09e8f3290ae5533","ios":"1:424043770826:ios:47d76ca308c225ebae5533","macos":"1:424043770826:ios:47d76ca308c225ebae5533","web":"1:424043770826:web:e9c1995112bf1c0aae5533","windows":"1:424043770826:web:8a37c297656410bcae5533"}}},"android":{"default":{"projectId":"autoproof-8d827","appId":"1:424043770826:android:2423b7e09e8f3290ae5533","fileOutput":"android/app/google-services.json"}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "autoproof-8d827",
+          "configurations": {
+            "android": "1:424043770826:android:2423b7e09e8f3290ae5533",
+            "ios": "1:424043770826:ios:47d76ca308c225ebae5533",
+            "macos": "1:424043770826:ios:47d76ca308c225ebae5533",
+            "web": "1:424043770826:web:e9c1995112bf1c0aae5533",
+            "windows": "1:424043770826:web:8a37c297656410bcae5533"
+          }
+        }
+      },
+      "android": {
+        "default": {
+          "projectId": "autoproof-8d827",
+          "appId": "1:424043770826:android:2423b7e09e8f3290ae5533",
+          "fileOutput": "android/app/google-services.json"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
