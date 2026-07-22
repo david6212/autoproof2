@@ -112,6 +112,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         },
                   child: const Text('שנה מספר טלפון'),
                 ),
+              ] else ...[
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => context.go('/home'),
+                  child: const Text('גלוש בלי להתחבר ←'),
+                ),
               ],
             ],
           ),
