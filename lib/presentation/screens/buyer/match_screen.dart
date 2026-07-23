@@ -93,20 +93,25 @@ class _Avatars extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Fixed width so the Stack doesn't collapse to the heart's size — that
+    // was pushing the two 90px avatars off-screen.
     return SizedBox(
+      width: 220,
       height: 110,
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // Buyer avatar (right).
           Positioned(
-            right: 60,
+            right: 0,
             child: _circle(const Icon(Icons.person,
                 size: 40, color: AppColors.teal)),
           ),
+          // Car avatar (left) — the listing's cover photo.
           Positioned(
-            left: 60,
+            left: 0,
             child: _circle(
-              photo == null
+              photo == null || photo!.isEmpty
                   ? const Icon(Icons.directions_car,
                       size: 40, color: AppColors.teal)
                   : ClipOval(
@@ -115,6 +120,10 @@ class _Avatars extends StatelessWidget {
                         width: 90,
                         height: 90,
                         fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => const Icon(
+                            Icons.directions_car,
+                            size: 40,
+                            color: AppColors.teal),
                       ),
                     ),
             ),

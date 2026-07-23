@@ -133,6 +133,104 @@ class _Content extends StatelessWidget {
           label: const Text('הצ\'אטים שלי'),
           onPressed: () => context.go('/chats'),
         ),
+        const SizedBox(height: 24),
+        _SellerActions(carId: car.id),
+      ],
+    );
+  }
+}
+
+/// Lets the seller mark the listing as sold or remove it. Both actions ask for
+/// confirmation first, then flip the car's status (which drops it from the
+/// active marketplace feed).
+class _SellerActions extends ConsumerWidget {
+  const _SellerActions({required this.carId});
+  final String carId;
+
+  Future<bool> _confirm(
+    BuildContext context, {
+    required String title,
+    required String body,
+    required String confirmLabel,
+    required Color confirmColor,
+  }) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(body),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('ביטול'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: confirmColor),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    );
+    return ok ?? false;
+  }
+
+  Future<void> _apply(
+    BuildContext context,
+    WidgetRef ref,
+    CarStatus status,
+    String snackText,
+  ) async {
+    await ref.read(updateListingStatusProvider).call(carId, status);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(snackText)));
+    context.go('/seller');
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton.icon(
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.teal,
+            minimumSize: const Size.fromHeight(48),
+          ),
+          icon: const Icon(Icons.check_circle_outline),
+          label: const Text('סמן כנמכר'),
+          onPressed: () async {
+            final ok = await _confirm(
+              context,
+              title: 'לסמן כנמכר?',
+              body: 'המודעה תוסר מרשימת הרכבים הפעילים. אפשר לפרסם רכב חדש לאחר מכן.',
+              confirmLabel: 'כן, נמכר',
+              confirmColor: AppColors.teal,
+            );
+            if (ok && context.mounted) {
+              await _apply(context, ref, CarStatus.sold, 'מזל טוב! המודעה סומנה כנמכרה');
+            }
+          },
+        ),
+        const SizedBox(height: 8),
+        TextButton.icon(
+          style: TextButton.styleFrom(foregroundColor: AppColors.errorRed),
+          icon: const Icon(Icons.delete_outline),
+          label: const Text('הסר מודעה'),
+          onPressed: () async {
+            final ok = await _confirm(
+              context,
+              title: 'להסיר את המודעה?',
+              body: 'המודעה תוסר מהמערכת. פעולה זו אינה הפיכה.',
+              confirmLabel: 'הסר',
+              confirmColor: AppColors.errorRed,
+            );
+            if (ok && context.mounted) {
+              await _apply(context, ref, CarStatus.removed, 'המודעה הוסרה');
+            }
+          },
+        ),
       ],
     );
   }

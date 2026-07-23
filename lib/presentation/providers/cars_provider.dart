@@ -94,6 +94,15 @@ final reviewWriteProvider = Provider<ReviewWriter>((ref) {
   };
 });
 
+/// Updates a listing's status (e.g. mark as sold or remove it). Used by the
+/// seller from the "My listing" screen.
+final updateListingStatusProvider =
+    Provider<Future<void> Function(String carId, CarStatus status)>((ref) {
+  return (carId, status) {
+    return ref.read(carRepositoryProvider).updateStatus(carId, status);
+  };
+});
+
 /// Toggles saved state for a car. No-op if not signed in.
 final toggleSavedProvider =
     Provider<Future<void> Function(String carId, bool save)>((ref) {
