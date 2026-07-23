@@ -97,23 +97,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Thin gold divider.
+                      // Thin gold accent under the wordmark.
                       Container(
                         width: 54,
                         height: 2,
                         decoration: BoxDecoration(
                           color: _gold,
                           borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'PREMIUM CAR VERIFICATION',
-                        style: GoogleFonts.montserrat(
-                          color: _gold,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 4,
                         ),
                       ),
                     ],
