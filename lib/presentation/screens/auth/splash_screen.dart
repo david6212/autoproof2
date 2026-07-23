@@ -110,14 +110,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                             ),
                           ),
                         ),
-                        // Car: opacity + drop from above into the shield.
+                        // Car: opacity + drop from above, settling slightly
+                        // above centre so the check sits at the shield's base.
                         Opacity(
                           opacity: _car.value.clamp(0.0, 1.0),
                           child: Transform.translate(
-                            offset: Offset(0, -90 * (1 - _car.value)),
-                            child: const CustomPaint(
-                              size: Size(64, 50),
-                              painter: _CarPainter(_green),
+                            offset: Offset(
+                                0, (-90 * (1 - _car.value)) - 6 * _car.value),
+                            child: Image.asset(
+                              'assets/layers/car.png',
+                              width: 72,
+                              fit: BoxFit.contain,
                             ),
                           ),
                         ),
@@ -217,84 +220,6 @@ class _ShieldPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ShieldPainter old) => old.color != color;
-}
-
-/// A cleaner, more realistic front-view sedan: smooth white silhouette with
-/// a green outline, sloped windshield, swept headlights and a grille.
-class _CarPainter extends CustomPainter {
-  const _CarPainter(this.accent);
-  final Color accent;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.scale(size.width / 100, size.height / 78);
-
-    final white = Paint()..color = Colors.white;
-    final green = Paint()..color = accent;
-    final outline = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.6
-      ..strokeJoin = StrokeJoin.round
-      ..color = accent;
-
-    // Body silhouette (roof + shoulders + rounded lower body).
-    final body = Path()
-      ..moveTo(10, 52)
-      ..quadraticBezierTo(10, 43, 19, 41)
-      ..lineTo(28, 41)
-      ..quadraticBezierTo(31, 24, 43, 22)
-      ..lineTo(57, 22)
-      ..quadraticBezierTo(69, 24, 72, 41)
-      ..lineTo(81, 41)
-      ..quadraticBezierTo(90, 43, 90, 52)
-      ..lineTo(90, 61)
-      ..quadraticBezierTo(90, 67, 83, 67)
-      ..lineTo(17, 67)
-      ..quadraticBezierTo(10, 67, 10, 61)
-      ..close();
-    canvas.drawPath(body, white);
-    canvas.drawPath(body, outline);
-
-    // Windshield / roof glass.
-    final windshield = Path()
-      ..moveTo(33, 41)
-      ..lineTo(37, 28)
-      ..quadraticBezierTo(38, 26, 41, 26)
-      ..lineTo(59, 26)
-      ..quadraticBezierTo(62, 26, 63, 28)
-      ..lineTo(67, 41)
-      ..close();
-    canvas.drawPath(windshield, green);
-
-    // Swept headlights.
-    final lh = Path()
-      ..moveTo(15, 46)
-      ..lineTo(34, 45)
-      ..lineTo(33, 50)
-      ..lineTo(15, 51)
-      ..close();
-    final rh = Path()
-      ..moveTo(85, 46)
-      ..lineTo(66, 45)
-      ..lineTo(67, 50)
-      ..lineTo(85, 51)
-      ..close();
-    canvas.drawPath(lh, green);
-    canvas.drawPath(rh, green);
-
-    // Grille + lower bumper intake.
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            const Rect.fromLTWH(42, 53, 16, 6), const Radius.circular(2)),
-        green);
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            const Rect.fromLTWH(28, 61, 44, 4), const Radius.circular(2)),
-        green);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CarPainter old) => old.accent != accent;
 }
 
 class _CheckPainter extends CustomPainter {
