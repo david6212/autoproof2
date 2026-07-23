@@ -135,24 +135,28 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   ),
                   const SizedBox(height: 22),
                   // ---- Wordmark: AUTO from left, PROOF from right ----
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Opacity(
-                        opacity: _text.value.clamp(0.0, 1.0),
-                        child: Transform.translate(
-                          offset: Offset(-120 * (1 - _text.value), 0),
-                          child: Text('AUTO', style: _wordStyle),
+                  // Force LTR so "AUTO" stays left of "PROOF" (the app is RTL).
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Opacity(
+                          opacity: _text.value.clamp(0.0, 1.0),
+                          child: Transform.translate(
+                            offset: Offset(-120 * (1 - _text.value), 0),
+                            child: Text('AUTO', style: _wordStyle),
+                          ),
                         ),
-                      ),
-                      Opacity(
-                        opacity: _text.value.clamp(0.0, 1.0),
-                        child: Transform.translate(
-                          offset: Offset(120 * (1 - _text.value), 0),
-                          child: Text('PROOF', style: _wordStyle),
+                        Opacity(
+                          opacity: _text.value.clamp(0.0, 1.0),
+                          child: Transform.translate(
+                            offset: Offset(120 * (1 - _text.value), 0),
+                            child: Text('PROOF', style: _wordStyle),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               );
