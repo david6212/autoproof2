@@ -5,13 +5,28 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/guest_prompt_view.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isGuest = ref.watch(authStateProvider).valueOrNull == null;
     final userAsync = ref.watch(currentUserModelProvider);
+
+    if (isGuest) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('פרופיל')),
+        body: const SafeArea(
+          child: GuestPromptView(
+            icon: Icons.person_outline,
+            title: 'הפרופיל שלך',
+            body: 'התחבר כדי לנהל מודעות, שמורים והתכתבויות.',
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('פרופיל')),

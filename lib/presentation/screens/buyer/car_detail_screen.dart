@@ -6,8 +6,10 @@ import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/car_model.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../widgets/login_required_sheet.dart';
 import '../../widgets/verified_badge_widget.dart';
 
 class CarDetailScreen extends ConsumerWidget {
@@ -307,15 +309,18 @@ class _ActionBar extends ConsumerWidget {
                 icon: const Icon(Icons.chat_bubble_outline),
                 label: const Text('שלח הודעה'),
                 onPressed: () async {
+                  // Guests can't open a chat — invite them to sign in.
+                  final isGuest =
+                      ref.read(authStateProvider).valueOrNull == null;
+                  if (isGuest) {
+                    showLoginRequired(context, action: 'לשלוח הודעה');
+                    return;
+                  }
                   final chatId =
                       await ref.read(openChatForCarProvider).call(car);
                   if (!context.mounted) return;
                   if (chatId == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('יש להתחבר כדי לשלוח הודעה'),
-                      ),
-                    );
+                    showLoginRequired(context, action: 'לשלוח הודעה');
                     return;
                   }
                   context.push('/chat/$chatId');
@@ -331,8 +336,16 @@ class _ActionBar extends ConsumerWidget {
             _RoundAction(
               icon: isSaved ? Icons.favorite : Icons.favorite_border,
               color: isSaved ? AppColors.errorRed : AppColors.textMuted,
-              onTap: () =>
-                  ref.read(toggleSavedProvider).call(car.id, !isSaved),
+              onTap: () {
+                // Saving requires an account — prompt guests to sign in.
+                final isGuest =
+                    ref.read(authStateProvider).valueOrNull == null;
+                if (isGuest) {
+                  showLoginRequired(context, action: 'לשמור רכבים');
+                  return;
+                }
+                ref.read(toggleSavedProvider).call(car.id, !isSaved);
+              },
             ),
           ],
         ),

@@ -6,13 +6,21 @@ import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/car_model.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/swipe_provider.dart';
+import '../../widgets/login_required_sheet.dart';
 import '../../widgets/verified_badge_widget.dart';
 
 class SwipeScreen extends ConsumerWidget {
   const SwipeScreen({super.key});
 
   Future<void> _like(BuildContext context, WidgetRef ref, CarModel car) async {
+    // Liking creates a match/chat, which requires an account.
+    final isGuest = ref.read(authStateProvider).valueOrNull == null;
+    if (isGuest) {
+      showLoginRequired(context, action: 'לסמן שאהבת ולהתאים');
+      return;
+    }
     final isMatch = await ref.read(likeCarProvider).call(car);
     if (isMatch && context.mounted) {
       context.push('/match');

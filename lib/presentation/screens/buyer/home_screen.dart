@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/car_model.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../widgets/car_card_widget.dart';
+import '../../widgets/login_required_sheet.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -186,9 +188,16 @@ class _CarList extends StatelessWidget {
           return CarCard(
             car: car,
             saved: savedIds.contains(car.id),
-            onToggleSave: () => ref
-                .read(toggleSavedProvider)
-                .call(car.id, !savedIds.contains(car.id)),
+            onToggleSave: () {
+              // Guests can't save — invite them to sign in.
+              if (ref.read(authStateProvider).valueOrNull == null) {
+                showLoginRequired(context, action: 'לשמור רכבים');
+                return;
+              }
+              ref
+                  .read(toggleSavedProvider)
+                  .call(car.id, !savedIds.contains(car.id));
+            },
             onTap: () => context.push('/car/${car.id}'),
           );
         });

@@ -3,21 +3,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../widgets/car_card_widget.dart';
+import '../../widgets/guest_prompt_view.dart';
 
 class SavedScreen extends ConsumerWidget {
   const SavedScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isGuest = ref.watch(authStateProvider).valueOrNull == null;
     final savedAsync = ref.watch(savedCarsProvider);
     final savedIds = ref.watch(savedIdsProvider).valueOrNull ?? const {};
 
     return Scaffold(
       appBar: AppBar(title: const Text('רכבים שמורים')),
       body: SafeArea(
-        child: savedAsync.when(
+        child: isGuest
+            ? const GuestPromptView(
+                icon: Icons.favorite_border,
+                title: 'שמור רכבים שאהבת',
+                body: 'התחבר כדי לשמור רכבים ולחזור אליהם בקלות.',
+              )
+            : savedAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (_, __) => const Center(
             child: Text('שגיאה בטעינת השמורים',

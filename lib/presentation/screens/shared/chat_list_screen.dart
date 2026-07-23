@@ -7,19 +7,27 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/chat_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../widgets/guest_prompt_view.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final chatsAsync = ref.watch(userChatsProvider);
     final me = ref.watch(authStateProvider).valueOrNull?.uid ?? '';
+    final isGuest = me.isEmpty;
+    final chatsAsync = ref.watch(userChatsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('צ\'אטים')),
       body: SafeArea(
-        child: chatsAsync.when(
+        child: isGuest
+            ? const GuestPromptView(
+                icon: Icons.chat_bubble_outline,
+                title: 'שוחח עם המוכרים',
+                body: 'התחבר כדי לפתוח שיחות עם בעלי הרכבים.',
+              )
+            : chatsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (_, __) => const Center(
             child: Text('שגיאה בטעינת הצ\'אטים',
