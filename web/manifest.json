@@ -1,11 +1,13 @@
 {
-    "name": "autoproof",
-    "short_name": "autoproof",
+    "name": "AutoProof",
+    "short_name": "AutoProof",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0F6E56",
+    "theme_color": "#0B3D33",
+    "description": "שוק מהימן לרכבי יד שנייה בישראל — רק מוכרים פרטיים מאומתים, עם נתונים רשמיים ממשרד התחבורה.",
+    "lang": "he",
+    "dir": "rtl",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
