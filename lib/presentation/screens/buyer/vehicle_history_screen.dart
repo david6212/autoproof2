@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/plate_formatter.dart';
+import '../../providers/analytics_provider.dart';
 import '../../providers/gov_api_provider.dart';
 import '../../widgets/gov_data_card_widget.dart';
 import '../../widgets/primary_button_widget.dart';
@@ -40,9 +41,9 @@ class _VehicleHistoryScreenState extends ConsumerState<VehicleHistoryScreen> {
 
   void _search() {
     FocusScope.of(context).unfocus();
-    ref
-        .read(govLookupControllerProvider.notifier)
-        .search(_plateController.text.trim());
+    final plate = _plateController.text.trim();
+    ref.read(analyticsHelperProvider).vehicleLookup(plate);
+    ref.read(govLookupControllerProvider.notifier).search(plate);
   }
 
   @override

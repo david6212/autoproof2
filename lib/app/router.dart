@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../presentation/providers/auth_provider.dart';
+import '../presentation/providers/analytics_provider.dart';
 
 // Auth
 import '../presentation/screens/auth/splash_screen.dart';
@@ -40,6 +41,8 @@ import '../presentation/widgets/seller_shell.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
+    // Auto-logs a screen_view analytics event for every pushed route.
+    observers: [ref.watch(analyticsObserverProvider)],
     redirect: (context, state) {
       // RULE 1 — Seller gate: only verified users may create a listing.
       if (state.matchedLocation == '/seller/create') {

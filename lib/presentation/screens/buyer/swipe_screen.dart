@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/car_model.dart';
+import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/swipe_provider.dart';
 import '../../widgets/login_required_sheet.dart';
@@ -18,6 +19,7 @@ class SwipeScreen extends ConsumerWidget {
     // Liking creates a match/chat, which requires an account.
     final isGuest = ref.read(authStateProvider).valueOrNull == null;
     if (isGuest) {
+      ref.read(analyticsHelperProvider).guestPrompt('like');
       showLoginRequired(context, action: 'לסמן שאהבת ולהתאים');
       return;
     }

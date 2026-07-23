@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/primary_button_widget.dart';
 
@@ -34,6 +35,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Navigate home once verified.
     ref.listen<PhoneAuthState>(phoneAuthControllerProvider, (prev, next) {
       if (next.step == PhoneAuthStep.verified) {
+        ref.read(analyticsHelperProvider).loginCompleted();
         context.go('/home');
       }
     });

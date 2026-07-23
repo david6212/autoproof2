@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/car_model.dart';
+import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../widgets/car_card_widget.dart';
@@ -191,6 +192,7 @@ class _CarList extends StatelessWidget {
             onToggleSave: () {
               // Guests can't save — invite them to sign in.
               if (ref.read(authStateProvider).valueOrNull == null) {
+                ref.read(analyticsHelperProvider).guestPrompt('save');
                 showLoginRequired(context, action: 'לשמור רכבים');
                 return;
               }

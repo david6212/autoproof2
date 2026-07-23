@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/car_model.dart';
+import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/chat_provider.dart';
@@ -313,6 +314,7 @@ class _ActionBar extends ConsumerWidget {
                   final isGuest =
                       ref.read(authStateProvider).valueOrNull == null;
                   if (isGuest) {
+                    ref.read(analyticsHelperProvider).guestPrompt('chat');
                     showLoginRequired(context, action: 'לשלוח הודעה');
                     return;
                   }
@@ -323,6 +325,7 @@ class _ActionBar extends ConsumerWidget {
                     showLoginRequired(context, action: 'לשלוח הודעה');
                     return;
                   }
+                  ref.read(analyticsHelperProvider).chatStarted();
                   context.push('/chat/$chatId');
                 },
               ),
@@ -341,6 +344,7 @@ class _ActionBar extends ConsumerWidget {
                 final isGuest =
                     ref.read(authStateProvider).valueOrNull == null;
                 if (isGuest) {
+                  ref.read(analyticsHelperProvider).guestPrompt('save');
                   showLoginRequired(context, action: 'לשמור רכבים');
                   return;
                 }
