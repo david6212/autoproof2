@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -38,47 +37,27 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // White background so the green AutoProof logo reads clearly.
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.tealDark, AppColors.teal],
-          ),
-        ),
-        child: Center(
+      backgroundColor: AppColors.white,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  color: AppColors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                child: const Icon(
-                  Icons.verified_user,
-                  size: 52,
-                  color: AppColors.white,
-                ),
+              Image.asset(
+                'assets/logo_full.png',
+                width: 260,
+                fit: BoxFit.contain,
               ),
-              const SizedBox(height: 20),
-              const Text(
-                AppStrings.appName,
-                style: TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.white,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                AppStrings.tagline,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.tealLight,
+              const SizedBox(height: 40),
+              const SizedBox(
+                width: 26,
+                height: 26,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: AppColors.teal,
                 ),
               ),
             ],
