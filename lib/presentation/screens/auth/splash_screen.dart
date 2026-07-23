@@ -116,7 +116,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           child: Transform.translate(
                             offset: Offset(0, -90 * (1 - _car.value)),
                             child: const CustomPaint(
-                              size: Size(58, 48),
+                              size: Size(64, 50),
                               painter: _CarPainter(_green),
                             ),
                           ),
@@ -219,50 +219,77 @@ class _ShieldPainter extends CustomPainter {
   bool shouldRepaint(covariant _ShieldPainter old) => old.color != color;
 }
 
+/// A cleaner, more realistic front-view sedan: smooth white silhouette with
+/// a green outline, sloped windshield, swept headlights and a grille.
 class _CarPainter extends CustomPainter {
   const _CarPainter(this.accent);
   final Color accent;
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.scale(size.width / 100, size.height / 80);
+    canvas.scale(size.width / 100, size.height / 78);
+
     final white = Paint()..color = Colors.white;
     final green = Paint()..color = accent;
+    final outline = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.6
+      ..strokeJoin = StrokeJoin.round
+      ..color = accent;
 
-    final roof = Path()
-      ..moveTo(25, 32)
-      ..cubicTo(30, 18, 38, 12, 50, 12)
-      ..cubicTo(62, 12, 70, 18, 75, 32)
-      ..lineTo(82, 48)
-      ..lineTo(18, 48)
-      ..close();
-    canvas.drawPath(roof, white);
-
+    // Body silhouette (roof + shoulders + rounded lower body).
     final body = Path()
-      ..moveTo(12, 48)
-      ..cubicTo(10, 48, 8, 51, 8, 56)
-      ..lineTo(10, 68)
-      ..cubicTo(10, 72, 14, 74, 18, 74)
-      ..lineTo(22, 74)
-      ..lineTo(22, 70)
-      ..lineTo(78, 70)
-      ..lineTo(78, 74)
-      ..lineTo(82, 74)
-      ..cubicTo(86, 74, 90, 72, 90, 68)
-      ..lineTo(92, 56)
-      ..cubicTo(92, 51, 90, 48, 88, 48)
+      ..moveTo(10, 52)
+      ..quadraticBezierTo(10, 43, 19, 41)
+      ..lineTo(28, 41)
+      ..quadraticBezierTo(31, 24, 43, 22)
+      ..lineTo(57, 22)
+      ..quadraticBezierTo(69, 24, 72, 41)
+      ..lineTo(81, 41)
+      ..quadraticBezierTo(90, 43, 90, 52)
+      ..lineTo(90, 61)
+      ..quadraticBezierTo(90, 67, 83, 67)
+      ..lineTo(17, 67)
+      ..quadraticBezierTo(10, 67, 10, 61)
       ..close();
     canvas.drawPath(body, white);
+    canvas.drawPath(body, outline);
 
-    canvas.drawOval(
-        Rect.fromCenter(center: const Offset(24, 58), width: 14, height: 8),
-        green);
-    canvas.drawOval(
-        Rect.fromCenter(center: const Offset(76, 58), width: 14, height: 8),
+    // Windshield / roof glass.
+    final windshield = Path()
+      ..moveTo(33, 41)
+      ..lineTo(37, 28)
+      ..quadraticBezierTo(38, 26, 41, 26)
+      ..lineTo(59, 26)
+      ..quadraticBezierTo(62, 26, 63, 28)
+      ..lineTo(67, 41)
+      ..close();
+    canvas.drawPath(windshield, green);
+
+    // Swept headlights.
+    final lh = Path()
+      ..moveTo(15, 46)
+      ..lineTo(34, 45)
+      ..lineTo(33, 50)
+      ..lineTo(15, 51)
+      ..close();
+    final rh = Path()
+      ..moveTo(85, 46)
+      ..lineTo(66, 45)
+      ..lineTo(67, 50)
+      ..lineTo(85, 51)
+      ..close();
+    canvas.drawPath(lh, green);
+    canvas.drawPath(rh, green);
+
+    // Grille + lower bumper intake.
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            const Rect.fromLTWH(42, 53, 16, 6), const Radius.circular(2)),
         green);
     canvas.drawRRect(
         RRect.fromRectAndRadius(
-            const Rect.fromLTWH(40, 57, 20, 7), const Radius.circular(2)),
+            const Rect.fromLTWH(28, 61, 44, 4), const Radius.circular(2)),
         green);
   }
 
