@@ -55,37 +55,31 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppColors.tealDark, AppColors.teal],
-        ),
+        color: AppColors.white,
+        border: Border(bottom: BorderSide(color: AppColors.cardBorder)),
       ),
       child: Column(
         children: [
           Align(
             alignment: Alignment.centerRight,
             child: IconButton(
-              icon: const Icon(Icons.arrow_forward, color: AppColors.white),
+              icon: const Icon(Icons.arrow_forward,
+                  color: AppColors.textPrimary),
               onPressed: () => context.pop(),
             ),
           ),
-          const Icon(Icons.verified_user, size: 56, color: AppColors.white),
-          const SizedBox(height: 12),
-          const Text(
-            AppStrings.appName,
-            style: TextStyle(
-              color: AppColors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
+          // The full brand logo (shield + AUTOPROOF).
+          Image.asset(
+            'assets/logo_full.png',
+            width: 190,
+            fit: BoxFit.contain,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           const Text(
             AppStrings.tagline,
-            style: TextStyle(color: AppColors.tealLight, fontSize: 15),
+            style: TextStyle(color: AppColors.teal, fontSize: 15),
           ),
         ],
       ),
