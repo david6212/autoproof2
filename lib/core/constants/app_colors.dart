@@ -5,22 +5,22 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Primary
-  static const teal = Color(0xFF0F6E56);
-  static const tealDark = Color(0xFF0B3D33);
-  static const tealLight = Color(0xFFE1F5EE);
-  static const tealText = Color(0xFF04342C);
-  static const tealText2 = Color(0xFF085041);
+  // Primary — matched to the splash screen palette (sage green #558B6E).
+  static const teal = Color(0xFF558B6E);
+  static const tealDark = Color(0xFF3C614C);
+  static const tealLight = Color(0xFFE7EFEA);
+  static const tealText = Color(0xFF294539);
+  static const tealText2 = Color(0xFF40634F);
 
-  // Backgrounds
-  static const background = Color(0xFFF4F3EE);
+  // Backgrounds — cool near-white like the splash background.
+  static const background = Color(0xFFF8FAF9);
   static const white = Color(0xFFFFFFFF);
-  static const cardBorder = Color(0xFFE2E0D8);
+  static const cardBorder = Color(0xFFE6EAE8);
 
-  // Text
-  static const textPrimary = Color(0xFF15191D);
-  static const textMuted = Color(0xFF5F5E5A);
-  static const textSubtle = Color(0xFF9C9B96);
+  // Text — splash ink.
+  static const textPrimary = Color(0xFF1A202C);
+  static const textMuted = Color(0xFF5A6169);
+  static const textSubtle = Color(0xFF9AA0A6);
 
   // Semantic
   static const errorRed = Color(0xFFE5604D);
