@@ -27,7 +27,9 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final carsAsync = ref.watch(filteredCarsProvider);
     final selected = ref.watch(carFilterProvider);
+    final query = ref.watch(carSearchProvider);
     final savedIds = ref.watch(savedIdsProvider).valueOrNull ?? const {};
+    final filtering = selected != null || query.trim().isNotEmpty;
 
     return Scaffold(
       body: SafeArea(
@@ -49,7 +51,13 @@ class HomeScreen extends ConsumerWidget {
                   onRetry: () => ref.invalidate(activeCarsProvider),
                 ),
                 data: (cars) => cars.isEmpty
-                    ? const _EmptyState()
+                    ? _EmptyState(
+                        filtering: filtering,
+                        onClear: () {
+                          ref.read(carFilterProvider.notifier).state = null;
+                          ref.read(carSearchProvider.notifier).state = '';
+                        },
+                      )
                     : _CarList(cars: cars, savedIds: savedIds),
               ),
             ),
@@ -91,20 +99,60 @@ class _Header extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          TextField(
-            decoration: InputDecoration(
-              hintText: 'חפש יצרן, דגם או אזור',
-              prefixIcon: const Icon(Icons.search),
-              filled: true,
-              fillColor: AppColors.white,
-              contentPadding: EdgeInsets.zero,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
+          const _SearchField(),
         ],
+      ),
+    );
+  }
+}
+
+/// Live search box that filters the car list by make/model/area/plate.
+class _SearchField extends ConsumerStatefulWidget {
+  const _SearchField();
+
+  @override
+  ConsumerState<_SearchField> createState() => _SearchFieldState();
+}
+
+class _SearchFieldState extends ConsumerState<_SearchField> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _set(String v) {
+    ref.read(carSearchProvider.notifier).state = v;
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      textInputAction: TextInputAction.search,
+      onChanged: _set,
+      decoration: InputDecoration(
+        hintText: 'חפש יצרן, דגם או אזור',
+        prefixIcon: const Icon(Icons.search),
+        suffixIcon: _controller.text.isEmpty
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.close, size: 20),
+                onPressed: () {
+                  _controller.clear();
+                  _set('');
+                },
+              ),
+        filled: true,
+        fillColor: AppColors.white,
+        contentPadding: EdgeInsets.zero,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
       ),
     );
   }
@@ -209,19 +257,32 @@ class _CarList extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+  const _EmptyState({this.filtering = false, this.onClear});
+
+  final bool filtering;
+  final VoidCallback? onClear;
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.directions_car_outlined,
+          Icon(filtering ? Icons.search_off : Icons.directions_car_outlined,
               size: 64, color: AppColors.textSubtle),
-          SizedBox(height: 12),
-          Text('אין רכבים להצגה כרגע',
-              style: TextStyle(color: AppColors.textMuted)),
+          const SizedBox(height: 12),
+          Text(
+            filtering ? 'לא נמצאו רכבים תואמים' : 'אין רכבים להצגה כרגע',
+            style: const TextStyle(color: AppColors.textMuted),
+          ),
+          if (filtering && onClear != null) ...[
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: onClear,
+              icon: const Icon(Icons.close, size: 18),
+              label: const Text('נקה חיפוש וסינון'),
+            ),
+          ],
         ],
       ),
     );

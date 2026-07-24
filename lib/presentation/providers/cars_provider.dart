@@ -12,24 +12,47 @@ final carRepositoryProvider = Provider<CarRepository>((ref) {
 /// null = "הכל" (all).
 final carFilterProvider = StateProvider<String?>((ref) => null);
 
+/// Free-text search query on the home screen (make / model / area / plate).
+final carSearchProvider = StateProvider<String>((ref) => '');
+
+/// Derives a body-type category from the make/model text so the filter pills
+/// work without a dedicated field. Falls back to "משפחתי".
+String carBodyType(CarModel c) {
+  final s = '${c.make} ${c.model}'.toLowerCase();
+  bool has(List<String> ks) => ks.any((k) => s.contains(k));
+  if (has(['cx', 'טוסון', 'tucson', 'קרוסאובר', 'rav', 'x1', 'x3', 'x5',
+      'q3', 'q5', 'glc', 'tiguan', 'קאשקאי', 'qashqai', 'sportage', 'סורנטו'])) {
+    return 'קרוסאובר';
+  }
+  if (has(['חשמל', 'electric', ' ev', 'tesla', 'טסלה', 'ioniq', 'atto', 'אטו'])) {
+    return 'חשמלי';
+  }
+  if (has(['hybrid', 'היבר', 'phev', 'prius', 'פריוס'])) return 'היברידי';
+  if (has(['320', '330', 'm3', 'm4', 'coupe', 'קופה', ' gt', 'amg', 'ספורט',
+      'gti', 'golf r', 'rs'])) {
+    return 'ספורט';
+  }
+  return 'משפחתי';
+}
+
 /// Stream of all active listings.
 final activeCarsProvider = StreamProvider<List<CarModel>>((ref) {
   return ref.watch(carRepositoryProvider).streamActiveCars();
 });
 
-/// Active listings after applying the selected category filter.
-/// (Category is a lightweight client-side text match for the MVP.)
+/// Active listings after applying the category filter AND the text search.
 final filteredCarsProvider = Provider<AsyncValue<List<CarModel>>>((ref) {
   final cars = ref.watch(activeCarsProvider);
   final filter = ref.watch(carFilterProvider);
+  final query = ref.watch(carSearchProvider).trim().toLowerCase();
   return cars.whenData((list) {
-    if (filter == null) return list;
-    return list
-        .where((c) =>
-            c.model.contains(filter) ||
-            c.make.contains(filter) ||
-            (c.govData?['fuelType']?.toString().contains(filter) ?? false))
-        .toList();
+    return list.where((c) {
+      final matchesCategory = filter == null || carBodyType(c) == filter;
+      final haystack =
+          '${c.make} ${c.model} ${c.area} ${c.plate}'.toLowerCase();
+      final matchesSearch = query.isEmpty || haystack.contains(query);
+      return matchesCategory && matchesSearch;
+    }).toList();
   });
 });
 
