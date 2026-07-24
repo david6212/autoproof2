@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../widgets/autoproof_logo.dart';
 
 /// Animated AutoProof splash — a Flutter port of the GSAP prototype:
 /// shield scales in → car drops into the shield → AUTO/PROOF converge →
@@ -106,7 +107,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                             scale: 0.8 + 0.2 * _shield.value,
                             child: const CustomPaint(
                               size: Size(120, 135),
-                              painter: _ShieldPainter(_green),
+                              painter: ShieldPainter(_green),
                             ),
                           ),
                         ),
@@ -130,7 +131,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           bottom: 12,
                           child: CustomPaint(
                             size: const Size(48, 48),
-                            painter: _CheckPainter(_green, _check.value),
+                            painter: CheckPainter(_green, _check.value),
                           ),
                         ),
                       ],
@@ -176,86 +177,4 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         letterSpacing: 2,
         color: _ink,
       );
-}
-
-// ----------------- Painters (ported from the SVG paths) -----------------
-
-class _ShieldPainter extends CustomPainter {
-  const _ShieldPainter(this.color);
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.scale(size.width / 100, size.height / 115);
-
-    final outer = Path()
-      ..moveTo(50, 5)
-      ..cubicTo(75, 5, 95, 18, 95, 28)
-      ..lineTo(95, 65)
-      ..cubicTo(95, 92, 65, 108, 50, 112)
-      ..cubicTo(35, 108, 5, 92, 5, 65)
-      ..lineTo(5, 28)
-      ..cubicTo(5, 18, 25, 5, 50, 5)
-      ..close();
-    canvas.drawPath(
-      outer,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 6
-        ..strokeJoin = StrokeJoin.round
-        ..color = color,
-    );
-
-    final inner = Path()
-      ..moveTo(50, 14)
-      ..cubicTo(70, 14, 87, 25, 87, 33)
-      ..lineTo(87, 63)
-      ..cubicTo(87, 85, 62, 98, 50, 102)
-      ..cubicTo(38, 98, 13, 85, 13, 63)
-      ..lineTo(13, 33)
-      ..cubicTo(13, 25, 30, 14, 50, 14)
-      ..close();
-    canvas.drawPath(inner, Paint()..color = color);
-  }
-
-  @override
-  bool shouldRepaint(covariant _ShieldPainter old) => old.color != color;
-}
-
-class _CheckPainter extends CustomPainter {
-  const _CheckPainter(this.color, this.progress);
-  final Color color;
-  final double progress;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.scale(size.width / 60, size.height / 60);
-
-    final full = Path()
-      ..moveTo(12, 30)
-      ..lineTo(26, 44)
-      ..lineTo(48, 16);
-
-    // Draw only the first `progress` fraction of the stroke.
-    final metrics = full.computeMetrics().toList();
-    final drawn = Path();
-    for (final m in metrics) {
-      drawn.addPath(m.extractPath(0, m.length * progress.clamp(0.0, 1.0)),
-          Offset.zero);
-    }
-
-    canvas.drawPath(
-      drawn,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 10
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round
-        ..color = color,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _CheckPainter old) =>
-      old.progress != progress || old.color != color;
 }

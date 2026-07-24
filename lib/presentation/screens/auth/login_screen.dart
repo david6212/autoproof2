@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/autoproof_logo.dart';
 import '../../widgets/primary_button_widget.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -54,12 +55,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 12),
-              // Compact shield emblem — consistent with the splash screen.
-              Image.asset(
-                'assets/logo_emblem.png',
-                width: 82,
-                fit: BoxFit.contain,
-              ),
+              // Same mark as the splash screen (shield + car + check).
+              const AutoproofLogo(size: 92),
               const SizedBox(height: 20),
               Text(
                 isCodeStep ? 'הזן את הקוד שקיבלת' : 'התחברות',
