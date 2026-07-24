@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../widgets/autoproof_logo.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -70,13 +71,19 @@ class _Header extends StatelessWidget {
               onPressed: () => context.pop(),
             ),
           ),
-          // The full brand logo (shield + AUTOPROOF).
-          Image.asset(
-            'assets/logo_full.png',
-            width: 190,
-            fit: BoxFit.contain,
+          // Splash-style brand mark (shield + car + check).
+          const AutoproofLogo(size: 96),
+          const SizedBox(height: 10),
+          const Text(
+            AppStrings.appName,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+              color: AppColors.tealText,
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           const Text(
             AppStrings.tagline,
             style: TextStyle(color: AppColors.teal, fontSize: 15),
