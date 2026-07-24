@@ -8,12 +8,64 @@ final carRepositoryProvider = Provider<CarRepository>((ref) {
   return CarRepository();
 });
 
-/// Currently selected category filter pill on the home screen.
-/// null = "הכל" (all).
-final carFilterProvider = StateProvider<String?>((ref) => null);
-
 /// Free-text search query on the home screen (make / model / area / plate).
 final carSearchProvider = StateProvider<String>((ref) => '');
+
+/// Rich buyer filters (body types + price/year/km/area) from the filter sheet.
+class CarFilters {
+  static const double priceCap = 500000;
+  static const int yearFloor = 2005;
+  static const int kmCap = 400000;
+
+  final Set<String> types; // body-type categories (up to 4)
+  final double maxPrice;
+  final int minYear;
+  final int maxKm;
+  final String? area;
+
+  const CarFilters({
+    this.types = const {},
+    this.maxPrice = priceCap,
+    this.minYear = yearFloor,
+    this.maxKm = kmCap,
+    this.area,
+  });
+
+  CarFilters copyWith({
+    Set<String>? types,
+    double? maxPrice,
+    int? minYear,
+    int? maxKm,
+    String? area,
+    bool clearArea = false,
+  }) {
+    return CarFilters(
+      types: types ?? this.types,
+      maxPrice: maxPrice ?? this.maxPrice,
+      minYear: minYear ?? this.minYear,
+      maxKm: maxKm ?? this.maxKm,
+      area: clearArea ? null : (area ?? this.area),
+    );
+  }
+
+  bool get isDefault =>
+      types.isEmpty &&
+      maxPrice >= priceCap &&
+      minYear <= yearFloor &&
+      maxKm >= kmCap &&
+      area == null;
+
+  /// Number of active (non-default) filter groups, for the badge.
+  int get activeCount =>
+      (types.isNotEmpty ? 1 : 0) +
+      (maxPrice < priceCap ? 1 : 0) +
+      (minYear > yearFloor ? 1 : 0) +
+      (maxKm < kmCap ? 1 : 0) +
+      (area != null ? 1 : 0);
+}
+
+final carFiltersProvider =
+    StateProvider<CarFilters>((ref) => const CarFilters());
 
 /// Derives a body-type category from the make/model text so the filter pills
 /// work without a dedicated field. Falls back to "משפחתי".
@@ -40,18 +92,24 @@ final activeCarsProvider = StreamProvider<List<CarModel>>((ref) {
   return ref.watch(carRepositoryProvider).streamActiveCars();
 });
 
-/// Active listings after applying the category filter AND the text search.
+/// Active listings after applying the filter sheet AND the text search.
 final filteredCarsProvider = Provider<AsyncValue<List<CarModel>>>((ref) {
   final cars = ref.watch(activeCarsProvider);
-  final filter = ref.watch(carFilterProvider);
+  final f = ref.watch(carFiltersProvider);
   final query = ref.watch(carSearchProvider).trim().toLowerCase();
   return cars.whenData((list) {
     return list.where((c) {
-      final matchesCategory = filter == null || carBodyType(c) == filter;
-      final haystack =
-          '${c.make} ${c.model} ${c.area} ${c.plate}'.toLowerCase();
-      final matchesSearch = query.isEmpty || haystack.contains(query);
-      return matchesCategory && matchesSearch;
+      if (f.types.isNotEmpty && !f.types.contains(carBodyType(c))) return false;
+      if (c.price > f.maxPrice) return false;
+      if (c.year < f.minYear) return false;
+      if (c.km > f.maxKm) return false;
+      if (f.area != null && c.area != f.area) return false;
+      if (query.isNotEmpty) {
+        final haystack =
+            '${c.make} ${c.model} ${c.area} ${c.plate}'.toLowerCase();
+        if (!haystack.contains(query)) return false;
+      }
+      return true;
     }).toList();
   });
 });

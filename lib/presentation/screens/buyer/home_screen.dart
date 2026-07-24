@@ -10,6 +10,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../widgets/car_card_widget.dart';
 import '../../widgets/login_required_sheet.dart';
+import '../../widgets/search_filter_sheet.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -26,10 +27,23 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final carsAsync = ref.watch(filteredCarsProvider);
-    final selected = ref.watch(carFilterProvider);
+    final filters = ref.watch(carFiltersProvider);
     final query = ref.watch(carSearchProvider);
     final savedIds = ref.watch(savedIdsProvider).valueOrNull ?? const {};
-    final filtering = selected != null || query.trim().isNotEmpty;
+    final filtering = !filters.isDefault || query.trim().isNotEmpty;
+
+    void toggleType(String f) {
+      final types = {...filters.types};
+      if (f == 'הכל') {
+        types.clear();
+      } else if (types.contains(f)) {
+        types.remove(f);
+      } else if (types.length < 4) {
+        types.add(f);
+      }
+      ref.read(carFiltersProvider.notifier).state =
+          filters.copyWith(types: types);
+    }
 
     return Scaffold(
       body: SafeArea(
@@ -39,9 +53,8 @@ class HomeScreen extends ConsumerWidget {
             _Header(),
             _FilterPills(
               filters: _filters,
-              selected: selected,
-              onSelect: (f) => ref.read(carFilterProvider.notifier).state =
-                  f == 'הכל' ? null : f,
+              selectedTypes: filters.types,
+              onToggle: toggleType,
             ),
             Expanded(
               child: carsAsync.when(
@@ -54,7 +67,8 @@ class HomeScreen extends ConsumerWidget {
                     ? _EmptyState(
                         filtering: filtering,
                         onClear: () {
-                          ref.read(carFilterProvider.notifier).state = null;
+                          ref.read(carFiltersProvider.notifier).state =
+                              const CarFilters();
                           ref.read(carSearchProvider.notifier).state = '';
                         },
                       )
@@ -130,28 +144,86 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: _controller,
-      textInputAction: TextInputAction.search,
-      onChanged: _set,
-      decoration: InputDecoration(
-        hintText: 'חפש יצרן, דגם או אזור',
-        prefixIcon: const Icon(Icons.search),
-        suffixIcon: _controller.text.isEmpty
-            ? null
-            : IconButton(
-                icon: const Icon(Icons.close, size: 20),
-                onPressed: () {
-                  _controller.clear();
-                  _set('');
-                },
+    final count = ref.watch(carFiltersProvider).activeCount;
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _controller,
+            textInputAction: TextInputAction.search,
+            onChanged: _set,
+            decoration: InputDecoration(
+              hintText: 'חפש יצרן, דגם או אזור',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _controller.text.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () {
+                        _controller.clear();
+                        _set('');
+                      },
+                    ),
+              filled: true,
+              fillColor: AppColors.white,
+              contentPadding: EdgeInsets.zero,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
               ),
-        filled: true,
-        fillColor: AppColors.white,
-        contentPadding: EdgeInsets.zero,
-        border: OutlineInputBorder(
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        _FilterButton(
+          count: count,
+          onTap: () => showSearchFilterSheet(context),
+        ),
+      ],
+    );
+  }
+}
+
+/// White square button that opens the filter sheet, with an active-count badge.
+class _FilterButton extends StatelessWidget {
+  const _FilterButton({required this.count, required this.onTap});
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            const Icon(Icons.tune, color: AppColors.teal),
+            if (count > 0)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: AppColors.errorRed,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text('$count',
+                      style: const TextStyle(
+                          color: AppColors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold)),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -161,13 +233,13 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
 class _FilterPills extends StatelessWidget {
   const _FilterPills({
     required this.filters,
-    required this.selected,
-    required this.onSelect,
+    required this.selectedTypes,
+    required this.onToggle,
   });
 
   final List<String> filters;
-  final String? selected;
-  final void Function(String) onSelect;
+  final Set<String> selectedTypes;
+  final void Function(String) onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -180,9 +252,10 @@ class _FilterPills extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final f = filters[i];
-          final isActive = (selected == null && f == 'הכל') || selected == f;
+          final isActive = (selectedTypes.isEmpty && f == 'הכל') ||
+              selectedTypes.contains(f);
           return GestureDetector(
-            onTap: () => onSelect(f),
+            onTap: () => onToggle(f),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               alignment: Alignment.center,
