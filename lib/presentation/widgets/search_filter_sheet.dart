@@ -3,11 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../data/models/car_model.dart';
 import '../providers/cars_provider.dart';
-import 'car_type_icon.dart';
 
-/// Opens the buyer filter sheet. Edits a local draft, then commits it to
-/// [carFiltersProvider] on "apply".
+/// Opens the advanced buyer filter sheet. Functional filters (model, hand,
+/// price, year, km, area) are committed to [carFiltersProvider] on apply;
+/// the remaining sections are visual for now until the data is stored.
 Future<void> showSearchFilterSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
@@ -17,13 +18,12 @@ Future<void> showSearchFilterSheet(BuildContext context) {
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
     builder: (_) => const FractionallySizedBox(
-      heightFactor: 0.9,
+      heightFactor: 0.92,
       child: _FilterSheet(),
     ),
   );
 }
 
-const _bodyTypes = ['משפחתי', 'קרוסאובר', 'ספורט', 'חשמלי', 'היברידי'];
 const _areas = [
   'תל אביב', 'ירושלים', 'חיפה', 'ראשון לציון', 'פתח תקווה',
   'באר שבע', 'נתניה', 'אשדוד', 'רמת גן', 'הרצליה',
@@ -37,8 +37,19 @@ class _FilterSheet extends ConsumerStatefulWidget {
 }
 
 class _FilterSheetState extends ConsumerState<_FilterSheet> {
-  late CarFilters _draft;
   static final _fmt = NumberFormat('#,###', 'en');
+
+  late CarFilters _draft;
+
+  // Visual-only selections (not yet backed by listing data).
+  String _trim = 'הכל';
+  String _ownership = 'פרטית';
+  String _engine = 'ללא הגבלה';
+  String _seats = 'הכל';
+  String _fuel = 'הכל';
+  String _inspection = 'הכל';
+  int _color = -1;
+  bool _disability = false;
 
   @override
   void initState() {
@@ -46,18 +57,60 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     _draft = ref.read(carFiltersProvider);
   }
 
-  void _toggleType(String t) {
-    final types = {..._draft.types};
-    if (types.contains(t)) {
-      types.remove(t);
-    } else if (types.length < 4) {
-      types.add(t);
+  // ---- functional setters ----
+  void _setHand(String v) {
+    setState(() {
+      _draft = v == 'יד 1 בלבד'
+          ? _draft.copyWith(maxHand: 1)
+          : v == 'עד יד 2'
+              ? _draft.copyWith(maxHand: 2)
+              : _draft.copyWith(clearHand: true);
+    });
+  }
+
+  String get _handLabel => _draft.maxHand == 1
+      ? 'יד 1 בלבד'
+      : _draft.maxHand == 2
+          ? 'עד יד 2'
+          : 'ללא הגבלה';
+
+  bool _matches(CarModel c, String query) {
+    final f = _draft;
+    if (f.model != null && c.title != f.model) return false;
+    if (f.maxHand != null && c.hand > f.maxHand!) return false;
+    if (c.price > f.maxPrice) return false;
+    if (c.year < f.minYear) return false;
+    if (c.km > f.maxKm) return false;
+    if (f.area != null && c.area != f.area) return false;
+    if (query.isNotEmpty) {
+      final hay = '${c.make} ${c.model} ${c.area} ${c.plate}'.toLowerCase();
+      if (!hay.contains(query.toLowerCase())) return false;
     }
-    setState(() => _draft = _draft.copyWith(types: types));
+    return true;
+  }
+
+  void _clearAll() {
+    setState(() {
+      _draft = const CarFilters();
+      _trim = 'הכל';
+      _ownership = 'פרטית';
+      _engine = 'ללא הגבלה';
+      _seats = 'הכל';
+      _fuel = 'הכל';
+      _inspection = 'הכל';
+      _color = -1;
+      _disability = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final all = ref.watch(activeCarsProvider).valueOrNull ?? const [];
+    final query = ref.watch(carSearchProvider);
+    final count = all.where((c) => _matches(c, query)).length;
+
+    final models = <String>{for (final c in all) c.title}.toList()..sort();
+
     return Column(
       children: [
         const SizedBox(height: 10),
@@ -70,20 +123,16 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
           child: Row(
             children: [
-              const Text('סינון רכבים',
+              const Text('סינון רכבים מתקדם',
                   style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary)),
               const Spacer(),
-              TextButton(
-                onPressed: () =>
-                    setState(() => _draft = const CarFilters()),
-                child: const Text('נקה הכל'),
-              ),
+              _ClearButton(onTap: _clearAll),
             ],
           ),
         ),
@@ -92,15 +141,128 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _label('סוג רכב', hint: 'עד 4'),
-              const SizedBox(height: 10),
-              _TypeGrid(
-                selected: _draft.types,
-                onToggle: _toggleType,
+              // Model + trim
+              Row(
+                children: [
+                  Expanded(
+                    child: _Dropdown<String?>(
+                      label: 'דגם רכב',
+                      value: _draft.model,
+                      items: [
+                        const DropdownMenuItem(
+                            value: null, child: Text('כל הדגמים')),
+                        for (final m in models)
+                          DropdownMenuItem(value: m, child: Text(m)),
+                      ],
+                      onChanged: (v) => setState(() => _draft = v == null
+                          ? _draft.copyWith(clearModel: true)
+                          : _draft.copyWith(model: v)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _Dropdown<String>(
+                      label: 'תת דגם / גימור',
+                      value: _trim,
+                      items: const [
+                        DropdownMenuItem(value: 'הכל', child: Text('הכל')),
+                        DropdownMenuItem(value: 'EX', child: Text('EX')),
+                        DropdownMenuItem(value: 'LX', child: Text('LX')),
+                        DropdownMenuItem(
+                            value: 'Premium', child: Text('Premium')),
+                      ],
+                      onChanged: (v) => setState(() => _trim = v!),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
 
-              _sliderSection(
+              _PillGroup(
+                label: 'יד (בעלות קודמת)',
+                options: const ['עד יד 2', 'יד 1 בלבד', 'ללא הגבלה'],
+                selected: _handLabel,
+                onSelect: _setHand,
+              ),
+              const SizedBox(height: 16),
+
+              _PillGroup(
+                label: 'בעלות נוכחית',
+                options: const ['פרטית', 'ליסינג/חברה', 'הכל'],
+                selected: _ownership,
+                onSelect: (v) => setState(() => _ownership = v),
+              ),
+              const SizedBox(height: 18),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _Dropdown<String>(
+                      label: 'נפח מנוע (סמ"ק)',
+                      value: _engine,
+                      items: const [
+                        DropdownMenuItem(
+                            value: 'ללא הגבלה', child: Text('ללא הגבלה')),
+                        DropdownMenuItem(
+                            value: '1200-1600', child: Text('1,200 - 1,600')),
+                        DropdownMenuItem(
+                            value: '1600-2000', child: Text('1,600 - 2,000')),
+                        DropdownMenuItem(value: '2000+', child: Text('2,000+')),
+                      ],
+                      onChanged: (v) => setState(() => _engine = v!),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _Dropdown<String>(
+                      label: 'מספר מקומות',
+                      value: _seats,
+                      items: const [
+                        DropdownMenuItem(value: 'הכל', child: Text('הכל')),
+                        DropdownMenuItem(value: '5', child: Text('5 מקומות')),
+                        DropdownMenuItem(value: '7', child: Text('7 מקומות')),
+                        DropdownMenuItem(value: '8', child: Text('8+ מקומות')),
+                      ],
+                      onChanged: (v) => setState(() => _seats = v!),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+
+              _PillGroup(
+                label: 'סוג מנוע / הנעה',
+                options: const ['הכל', 'בנזין', 'דיזל', 'היברידי', 'חשמלי'],
+                selected: _fuel,
+                onSelect: (v) => setState(() => _fuel = v),
+              ),
+              const SizedBox(height: 16),
+
+              _PillGroup(
+                label: 'סטטוס בדיקת מכון לפני קנייה',
+                options: const ['הכל', 'נבדק ואושר ✓', 'עם הערות', 'לא נבדק'],
+                selected: _inspection,
+                onSelect: (v) => setState(() => _inspection = v),
+              ),
+              const SizedBox(height: 18),
+
+              _Dropdown<String?>(
+                label: 'אזור',
+                value: _draft.area,
+                items: [
+                  const DropdownMenuItem(
+                      value: null, child: Text('כל האזורים')),
+                  for (final a in _areas)
+                    DropdownMenuItem(value: a, child: Text(a)),
+                ],
+                onChanged: (v) => setState(() => _draft = v == null
+                    ? _draft.copyWith(clearArea: true)
+                    : _draft.copyWith(area: v)),
+              ),
+              const SizedBox(height: 18),
+
+              // Buy range sliders (functional).
+              _slider(
                 title: 'מחיר עד',
                 value: _draft.maxPrice,
                 min: 30000,
@@ -112,7 +274,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 onChanged: (v) =>
                     setState(() => _draft = _draft.copyWith(maxPrice: v)),
               ),
-              _sliderSection(
+              _slider(
                 title: 'שנת ייצור מ-',
                 value: _draft.minYear.toDouble(),
                 min: CarFilters.yearFloor.toDouble(),
@@ -122,7 +284,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 onChanged: (v) => setState(
                     () => _draft = _draft.copyWith(minYear: v.round())),
               ),
-              _sliderSection(
+              _slider(
                 title: 'קילומטראז\' עד',
                 value: _draft.maxKm.toDouble(),
                 min: 0,
@@ -134,20 +296,20 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 onChanged: (v) =>
                     setState(() => _draft = _draft.copyWith(maxKm: v.round())),
               ),
-              const SizedBox(height: 12),
-              _label('אזור'),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String?>(
-                value: _draft.area,
-                decoration: const InputDecoration(),
-                items: [
-                  const DropdownMenuItem(value: null, child: Text('כל האזורים')),
-                  for (final a in _areas)
-                    DropdownMenuItem(value: a, child: Text(a)),
-                ],
-                onChanged: (v) => setState(() => _draft = v == null
-                    ? _draft.copyWith(clearArea: true)
-                    : _draft.copyWith(area: v)),
+
+              const _SectionLabel('צבע רכב'),
+              const SizedBox(height: 10),
+              _ColorDots(
+                selected: _color,
+                onSelect: (i) => setState(() => _color = _color == i ? -1 : i),
+              ),
+              const SizedBox(height: 8),
+
+              _ToggleRow(
+                label: 'מיועד / מתאים לנכים (תו נכה)',
+                value: _disability,
+                onChanged: (v) => setState(() => _disability = v),
               ),
               const SizedBox(height: 8),
             ],
@@ -160,18 +322,18 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             child: SizedBox(
               height: 52,
               child: FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.teal,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28)),
+                ),
                 onPressed: () {
                   ref.read(carFiltersProvider.notifier).state = _draft;
                   Navigator.of(context).pop();
                 },
-                child: Text(
-                  _draft.activeCount == 0
-                      ? 'הצג תוצאות'
-                      : 'הצג תוצאות · ${_draft.activeCount} מסננים',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                child: Text('הצג תוצאות ($count רכבים)',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ),
@@ -180,25 +342,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     );
   }
 
-  Widget _label(String text, {String? hint}) {
-    return Row(
-      children: [
-        Text(text,
-            style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary)),
-        if (hint != null) ...[
-          const SizedBox(width: 6),
-          Text('($hint)',
-              style: const TextStyle(
-                  fontSize: 12, color: AppColors.textSubtle)),
-        ],
-      ],
-    );
-  }
-
-  Widget _sliderSection({
+  Widget _slider({
     required String title,
     required double value,
     required double min,
@@ -208,13 +352,13 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     required ValueChanged<double> onChanged,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Expanded(child: _label(title)),
+              Expanded(child: _SectionLabel(title)),
               Text(display,
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, color: AppColors.teal)),
@@ -234,63 +378,200 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   }
 }
 
-class _TypeGrid extends StatelessWidget {
-  const _TypeGrid({required this.selected, required this.onToggle});
-  final Set<String> selected;
-  final void Function(String) onToggle;
+// ---------------- Reusable pieces ----------------
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) => Text(text,
+      style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: AppColors.textPrimary));
+}
+
+class _ClearButton extends StatelessWidget {
+  const _ClearButton({required this.onTap});
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      style: TextButton.styleFrom(
+        backgroundColor: AppColors.tealLight,
+        foregroundColor: AppColors.tealText,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
+      ),
+      onPressed: onTap,
+      child: const Text('נקה הכל', style: TextStyle(fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+class _Dropdown<T> extends StatelessWidget {
+  const _Dropdown({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+  final String label;
+  final T value;
+  final List<DropdownMenuItem<T>> items;
+  final ValueChanged<T?> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final t in _bodyTypes)
-          _TypeCard(
-            type: t,
-            active: selected.contains(t),
-            onTap: () => onToggle(t),
+        _SectionLabel(label),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<T>(
+          value: value,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          ),
+          items: items,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+}
+
+class _PillGroup extends StatelessWidget {
+  const _PillGroup({
+    required this.label,
+    required this.options,
+    required this.selected,
+    required this.onSelect,
+  });
+  final String label;
+  final List<String> options;
+  final String selected;
+  final void Function(String) onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionLabel(label),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
+          child: Row(
+            children: [
+              for (final o in options)
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => onSelect(o),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: selected == o
+                            ? AppColors.teal
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        o,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: selected == o
+                              ? AppColors.white
+                              : AppColors.textMuted,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ColorDots extends StatelessWidget {
+  const _ColorDots({required this.selected, required this.onSelect});
+  final int selected;
+  final void Function(int) onSelect;
+
+  static const _colors = [
+    Color(0xFFFFFFFF),
+    Color(0xFF111111),
+    Color(0xFFA0AEC0),
+    Color(0xFF2B6CB0),
+    Color(0xFFC53030),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var i = 0; i < _colors.length; i++)
+          GestureDetector(
+            onTap: () => onSelect(i),
+            child: Container(
+              margin: const EdgeInsets.only(left: 10),
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: _colors[i],
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selected == i ? AppColors.teal : AppColors.cardBorder,
+                  width: selected == i ? 2.5 : 1.5,
+                ),
+              ),
+            ),
           ),
       ],
     );
   }
 }
 
-class _TypeCard extends StatelessWidget {
-  const _TypeCard(
-      {required this.type, required this.active, required this.onTap});
-  final String type;
-  final bool active;
-  final VoidCallback onTap;
+class _ToggleRow extends StatelessWidget {
+  const _ToggleRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? AppColors.teal : AppColors.textMuted;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 104,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: active ? AppColors.tealLight : AppColors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: active ? AppColors.teal : AppColors.cardBorder,
-            width: active ? 1.6 : 1,
-          ),
+    return Row(
+      children: [
+        Expanded(
+          child: Text(label,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary)),
         ),
-        child: Column(
-          children: [
-            CarTypeIcon(type: type, color: color, width: 62),
-            const SizedBox(height: 6),
-            Text(type,
-                style: TextStyle(
-                    color: active ? AppColors.tealText : AppColors.textMuted,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13)),
-          ],
+        Switch(
+          value: value,
+          activeColor: AppColors.teal,
+          onChanged: onChanged,
         ),
-      ),
+      ],
     );
   }
 }

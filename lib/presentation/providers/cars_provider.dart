@@ -22,6 +22,8 @@ class CarFilters {
   final int minYear;
   final int maxKm;
   final String? area;
+  final String? model; // exact "make model" title
+  final int? maxHand; // max previous owners
 
   const CarFilters({
     this.types = const {},
@@ -29,6 +31,8 @@ class CarFilters {
     this.minYear = yearFloor,
     this.maxKm = kmCap,
     this.area,
+    this.model,
+    this.maxHand,
   });
 
   CarFilters copyWith({
@@ -38,6 +42,10 @@ class CarFilters {
     int? maxKm,
     String? area,
     bool clearArea = false,
+    String? model,
+    bool clearModel = false,
+    int? maxHand,
+    bool clearHand = false,
   }) {
     return CarFilters(
       types: types ?? this.types,
@@ -45,6 +53,8 @@ class CarFilters {
       minYear: minYear ?? this.minYear,
       maxKm: maxKm ?? this.maxKm,
       area: clearArea ? null : (area ?? this.area),
+      model: clearModel ? null : (model ?? this.model),
+      maxHand: clearHand ? null : (maxHand ?? this.maxHand),
     );
   }
 
@@ -53,7 +63,9 @@ class CarFilters {
       maxPrice >= priceCap &&
       minYear <= yearFloor &&
       maxKm >= kmCap &&
-      area == null;
+      area == null &&
+      model == null &&
+      maxHand == null;
 
   /// Number of active (non-default) filter groups, for the badge.
   int get activeCount =>
@@ -61,7 +73,9 @@ class CarFilters {
       (maxPrice < priceCap ? 1 : 0) +
       (minYear > yearFloor ? 1 : 0) +
       (maxKm < kmCap ? 1 : 0) +
-      (area != null ? 1 : 0);
+      (area != null ? 1 : 0) +
+      (model != null ? 1 : 0) +
+      (maxHand != null ? 1 : 0);
 }
 
 final carFiltersProvider =
@@ -104,6 +118,8 @@ final filteredCarsProvider = Provider<AsyncValue<List<CarModel>>>((ref) {
       if (c.year < f.minYear) return false;
       if (c.km > f.maxKm) return false;
       if (f.area != null && c.area != f.area) return false;
+      if (f.model != null && c.title != f.model) return false;
+      if (f.maxHand != null && c.hand > f.maxHand!) return false;
       if (query.isNotEmpty) {
         final haystack =
             '${c.make} ${c.model} ${c.area} ${c.plate}'.toLowerCase();
