@@ -131,27 +131,44 @@ class _Content extends ConsumerWidget {
   }
 }
 
-class _Gallery extends StatelessWidget {
+class _Gallery extends StatefulWidget {
   const _Gallery({required this.car});
   final CarModel car;
 
   @override
+  State<_Gallery> createState() => _GalleryState();
+}
+
+class _GalleryState extends State<_Gallery> {
+  final _controller = PageController();
+  int _index = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final photos = widget.car.photos;
     return Stack(
       children: [
         SizedBox(
           height: 280,
           width: double.infinity,
-          child: car.photos.isEmpty
+          child: photos.isEmpty
               ? Container(
                   color: AppColors.tealLight,
                   child: const Icon(Icons.directions_car,
                       size: 80, color: AppColors.teal),
                 )
               : PageView.builder(
-                  itemCount: car.photos.length,
+                  controller: _controller,
+                  itemCount: photos.length,
+                  onPageChanged: (i) => setState(() => _index = i),
                   itemBuilder: (_, i) => CachedNetworkImage(
-                    imageUrl: car.photos[i],
+                    imageUrl: photos[i],
                     fit: BoxFit.cover,
                     errorWidget: (_, __, ___) => Container(
                       color: AppColors.tealLight,
@@ -160,6 +177,22 @@ class _Gallery extends StatelessWidget {
                     ),
                   ),
                 ),
+        ),
+        // Top scrim so the back button stays legible over bright photos.
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: 90,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black.withValues(alpha: 0.28), Colors.transparent],
+              ),
+            ),
+          ),
         ),
         SafeArea(
           child: Padding(
@@ -174,6 +207,71 @@ class _Gallery extends StatelessWidget {
             ),
           ),
         ),
+        // Photo counter (top-left).
+        if (photos.length > 1)
+          Positioned(
+            top: 16,
+            left: 12,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.45),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text('${_index + 1}/${photos.length}',
+                  style: const TextStyle(color: AppColors.white, fontSize: 12)),
+            ),
+          ),
+        // Verified pill (bottom-right).
+        Positioned(
+          bottom: 12,
+          right: 12,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.verified, size: 15, color: AppColors.teal),
+                SizedBox(width: 4),
+                Text('מוכר מאומת',
+                    style: TextStyle(
+                        color: AppColors.tealText,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ),
+        // Page dots (bottom-center).
+        if (photos.length > 1)
+          Positioned(
+            bottom: 14,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(photos.length, (i) {
+                final active = i == _index;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: active ? 18 : 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: active
+                        ? AppColors.white
+                        : AppColors.white.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                );
+              }),
+            ),
+          ),
       ],
     );
   }
