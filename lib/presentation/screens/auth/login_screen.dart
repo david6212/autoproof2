@@ -20,12 +20,30 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _phoneController = TextEditingController();
   final _codeController = TextEditingController();
+  bool _socialLoading = false;
 
   @override
   void dispose() {
     _phoneController.dispose();
     _codeController.dispose();
     super.dispose();
+  }
+
+  /// Runs a Google/Apple sign-in action, then routes home on success.
+  Future<void> _social(Future<void> Function() action) async {
+    setState(() => _socialLoading = true);
+    try {
+      await action();
+      if (!mounted) return;
+      ref.read(analyticsHelperProvider).loginCompleted();
+      context.go('/home');
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _socialLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ההתחברות נכשלה. נסה שוב.')),
+      );
+    }
   }
 
   @override
@@ -113,7 +131,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: const Text('שנה מספר טלפון'),
                 ),
               ] else ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 20),
+                const _OrDivider(),
+                const SizedBox(height: 16),
+                _SocialButton(
+                  label: 'המשך עם Google',
+                  leading: Image.asset('assets/google_g.png',
+                      width: 22, height: 22),
+                  background: AppColors.white,
+                  foreground: AppColors.textPrimary,
+                  border: true,
+                  loading: _socialLoading,
+                  onPressed: () => _social(
+                      () => ref.read(authRepositoryProvider).signInWithGoogle()),
+                ),
+                const SizedBox(height: 10),
+                _SocialButton(
+                  label: 'המשך עם Apple',
+                  leading: const Icon(Icons.apple,
+                      color: AppColors.white, size: 22),
+                  background: const Color(0xFF111111),
+                  foreground: AppColors.white,
+                  loading: _socialLoading,
+                  onPressed: () => _social(
+                      () => ref.read(authRepositoryProvider).signInWithApple()),
+                ),
+                const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => context.go('/home'),
                   child: const Text('גלוש בלי להתחבר ←'),
@@ -175,6 +218,76 @@ class _CodeField extends StatelessWidget {
       decoration: const InputDecoration(
         counterText: '',
         hintText: '••••••',
+      ),
+    );
+  }
+}
+
+class _OrDivider extends StatelessWidget {
+  const _OrDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        Expanded(child: Divider(color: AppColors.cardBorder)),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          child: Text('או', style: TextStyle(color: AppColors.textSubtle)),
+        ),
+        Expanded(child: Divider(color: AppColors.cardBorder)),
+      ],
+    );
+  }
+}
+
+class _SocialButton extends StatelessWidget {
+  const _SocialButton({
+    required this.label,
+    required this.leading,
+    required this.background,
+    required this.foreground,
+    required this.onPressed,
+    this.border = false,
+    this.loading = false,
+  });
+
+  final String label;
+  final Widget leading;
+  final Color background;
+  final Color foreground;
+  final VoidCallback onPressed;
+  final bool border;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 50,
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: background,
+          foregroundColor: foreground,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: border
+                ? const BorderSide(color: AppColors.cardBorder)
+                : BorderSide.none,
+          ),
+        ),
+        onPressed: loading ? null : onPressed,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            leading,
+            const SizedBox(width: 10),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.w600)),
+          ],
+        ),
       ),
     );
   }

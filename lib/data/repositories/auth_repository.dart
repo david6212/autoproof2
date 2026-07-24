@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../models/user_model.dart';
 
@@ -67,6 +68,30 @@ class AuthRepository {
   Future<UserModel> signInWithCredential(
       PhoneAuthCredential credential) async {
     final result = await _auth.signInWithCredential(credential);
+    final user = result.user!;
+    return _ensureUserDoc(uid: user.uid, phone: user.phoneNumber ?? '');
+  }
+
+  /// Sign in with Google (popup on web, native federated flow on mobile).
+  /// Requires the Google provider to be enabled in the Firebase console.
+  Future<UserModel> signInWithGoogle() async {
+    final provider = GoogleAuthProvider();
+    final result = kIsWeb
+        ? await _auth.signInWithPopup(provider)
+        : await _auth.signInWithProvider(provider);
+    final user = result.user!;
+    return _ensureUserDoc(uid: user.uid, phone: user.phoneNumber ?? '');
+  }
+
+  /// Sign in with Apple. Requires an Apple Developer account + the Apple
+  /// provider configured in Firebase before it will work.
+  Future<UserModel> signInWithApple() async {
+    final provider = OAuthProvider('apple.com')
+      ..addScope('email')
+      ..addScope('name');
+    final result = kIsWeb
+        ? await _auth.signInWithPopup(provider)
+        : await _auth.signInWithProvider(provider);
     final user = result.user!;
     return _ensureUserDoc(uid: user.uid, phone: user.phoneNumber ?? '');
   }
