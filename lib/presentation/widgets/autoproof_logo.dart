@@ -13,14 +13,18 @@ class AutoproofLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      child: FittedBox(
-        fit: BoxFit.contain,
-        child: SizedBox(
-          width: 140,
-          height: 150,
-          child: Stack(
+    // Center + explicit height so a stretching parent (e.g. a Column with
+    // crossAxisAlignment.stretch) can't blow the logo up to full width.
+    return Center(
+      child: SizedBox(
+        width: size,
+        height: size * 150 / 140,
+        child: FittedBox(
+          fit: BoxFit.contain,
+          child: SizedBox(
+            width: 140,
+            height: 150,
+            child: Stack(
             alignment: Alignment.center,
             children: [
               const CustomPaint(
@@ -45,6 +49,7 @@ class AutoproofLogo extends StatelessWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );
