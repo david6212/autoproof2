@@ -22,7 +22,8 @@ class CarFilters {
   final int minYear;
   final int maxKm;
   final String? area;
-  final String? model; // exact "make model" title
+  final String? make; // manufacturer
+  final String? model; // model name
   final int? maxHand; // max previous owners
 
   const CarFilters({
@@ -31,6 +32,7 @@ class CarFilters {
     this.minYear = yearFloor,
     this.maxKm = kmCap,
     this.area,
+    this.make,
     this.model,
     this.maxHand,
   });
@@ -42,6 +44,8 @@ class CarFilters {
     int? maxKm,
     String? area,
     bool clearArea = false,
+    String? make,
+    bool clearMake = false,
     String? model,
     bool clearModel = false,
     int? maxHand,
@@ -53,6 +57,7 @@ class CarFilters {
       minYear: minYear ?? this.minYear,
       maxKm: maxKm ?? this.maxKm,
       area: clearArea ? null : (area ?? this.area),
+      make: clearMake ? null : (make ?? this.make),
       model: clearModel ? null : (model ?? this.model),
       maxHand: clearHand ? null : (maxHand ?? this.maxHand),
     );
@@ -64,6 +69,7 @@ class CarFilters {
       minYear <= yearFloor &&
       maxKm >= kmCap &&
       area == null &&
+      make == null &&
       model == null &&
       maxHand == null;
 
@@ -74,6 +80,7 @@ class CarFilters {
       (minYear > yearFloor ? 1 : 0) +
       (maxKm < kmCap ? 1 : 0) +
       (area != null ? 1 : 0) +
+      (make != null ? 1 : 0) +
       (model != null ? 1 : 0) +
       (maxHand != null ? 1 : 0);
 }
@@ -118,7 +125,8 @@ final filteredCarsProvider = Provider<AsyncValue<List<CarModel>>>((ref) {
       if (c.year < f.minYear) return false;
       if (c.km > f.maxKm) return false;
       if (f.area != null && c.area != f.area) return false;
-      if (f.model != null && c.title != f.model) return false;
+      if (f.make != null && c.make != f.make) return false;
+      if (f.model != null && c.model != f.model) return false;
       if (f.maxHand != null && c.hand > f.maxHand!) return false;
       if (query.isNotEmpty) {
         final haystack =

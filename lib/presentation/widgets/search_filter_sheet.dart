@@ -3,13 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/car_catalog.dart';
 import '../../data/models/car_model.dart';
 import '../providers/cars_provider.dart';
 
 /// Opens the advanced buyer filter sheet. Functional filters (model, hand,
 /// price, year, km, area) are committed to [carFiltersProvider] on apply;
 /// the remaining sections are visual for now until the data is stored.
-Future<void> showSearchFilterSheet(BuildContext context) {
+Future<void> showSearchFilterSheet(
+    BuildContext context, List<CarModel> cars) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -17,9 +19,9 @@ Future<void> showSearchFilterSheet(BuildContext context) {
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
-    builder: (_) => const FractionallySizedBox(
+    builder: (_) => FractionallySizedBox(
       heightFactor: 0.92,
-      child: _FilterSheet(),
+      child: _FilterSheet(cars: cars),
     ),
   );
 }
@@ -30,7 +32,8 @@ const _areas = [
 ];
 
 class _FilterSheet extends ConsumerStatefulWidget {
-  const _FilterSheet();
+  const _FilterSheet({required this.cars});
+  final List<CarModel> cars;
 
   @override
   ConsumerState<_FilterSheet> createState() => _FilterSheetState();
@@ -42,7 +45,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   late CarFilters _draft;
 
   // Visual-only selections (not yet backed by listing data).
-  String _trim = 'הכל';
   String _ownership = 'פרטית';
   String _engine = 'ללא הגבלה';
   String _seats = 'הכל';
@@ -76,7 +78,8 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
 
   bool _matches(CarModel c, String query) {
     final f = _draft;
-    if (f.model != null && c.title != f.model) return false;
+    if (f.make != null && c.make != f.make) return false;
+    if (f.model != null && c.model != f.model) return false;
     if (f.maxHand != null && c.hand > f.maxHand!) return false;
     if (c.price > f.maxPrice) return false;
     if (c.year < f.minYear) return false;
@@ -92,7 +95,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   void _clearAll() {
     setState(() {
       _draft = const CarFilters();
-      _trim = 'הכל';
       _ownership = 'פרטית';
       _engine = 'ללא הגבלה';
       _seats = 'הכל';
@@ -105,11 +107,11 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final all = ref.watch(activeCarsProvider).valueOrNull ?? const [];
     final query = ref.watch(carSearchProvider);
-    final count = all.where((c) => _matches(c, query)).length;
+    final count = widget.cars.where((c) => _matches(c, query)).length;
 
-    final models = <String>{for (final c in all) c.title}.toList()..sort();
+    final models =
+        _draft.make == null ? const <String>[] : (kCarCatalog[_draft.make] ?? const []);
 
     return Column(
       children: [
@@ -141,37 +143,44 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // Model + trim
+              // Manufacturer + model (from the Israel-wide catalogue).
               Row(
                 children: [
                   Expanded(
                     child: _Dropdown<String?>(
-                      label: 'דגם רכב',
-                      value: _draft.model,
+                      label: 'יצרן',
+                      value: _draft.make,
                       items: [
                         const DropdownMenuItem(
-                            value: null, child: Text('כל הדגמים')),
-                        for (final m in models)
+                            value: null, child: Text('כל היצרנים')),
+                        for (final m in kCarMakes)
                           DropdownMenuItem(value: m, child: Text(m)),
                       ],
                       onChanged: (v) => setState(() => _draft = v == null
-                          ? _draft.copyWith(clearModel: true)
-                          : _draft.copyWith(model: v)),
+                          ? _draft.copyWith(clearMake: true, clearModel: true)
+                          // Changing make resets the chosen model.
+                          : _draft.copyWith(make: v, clearModel: true)),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _Dropdown<String>(
-                      label: 'תת דגם / גימור',
-                      value: _trim,
-                      items: const [
-                        DropdownMenuItem(value: 'הכל', child: Text('הכל')),
-                        DropdownMenuItem(value: 'EX', child: Text('EX')),
-                        DropdownMenuItem(value: 'LX', child: Text('LX')),
+                    child: _Dropdown<String?>(
+                      label: 'דגם',
+                      value: _draft.model,
+                      items: [
                         DropdownMenuItem(
-                            value: 'Premium', child: Text('Premium')),
+                            value: null,
+                            child: Text(_draft.make == null
+                                ? 'בחר יצרן'
+                                : 'כל הדגמים')),
+                        for (final m in models)
+                          DropdownMenuItem(value: m, child: Text(m)),
                       ],
-                      onChanged: (v) => setState(() => _trim = v!),
+                      onChanged: _draft.make == null
+                          ? null
+                          : (v) => setState(() => _draft = v == null
+                              ? _draft.copyWith(clearModel: true)
+                              : _draft.copyWith(model: v)),
                     ),
                   ),
                 ],
@@ -419,7 +428,7 @@ class _Dropdown<T> extends StatelessWidget {
   final String label;
   final T value;
   final List<DropdownMenuItem<T>> items;
-  final ValueChanged<T?> onChanged;
+  final ValueChanged<T?>? onChanged;
 
   @override
   Widget build(BuildContext context) {

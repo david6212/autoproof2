@@ -177,7 +177,10 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
         const SizedBox(width: 8),
         _FilterButton(
           count: count,
-          onTap: () => showSearchFilterSheet(context),
+          onTap: () => showSearchFilterSheet(
+            context,
+            ref.read(activeCarsProvider).valueOrNull ?? const [],
+          ),
         ),
       ],
     );
