@@ -53,20 +53,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 8),
-              // Brand logo at the top of the sign-in screen.
+              const SizedBox(height: 12),
+              // Compact shield emblem — consistent with the splash screen.
               Image.asset(
-                'assets/logo_full.png',
-                width: 150,
+                'assets/logo_emblem.png',
+                width: 82,
                 fit: BoxFit.contain,
               ),
               const SizedBox(height: 20),
-              Icon(
-                isCodeStep ? Icons.sms_outlined : Icons.phone_iphone,
-                size: 40,
-                color: AppColors.teal,
-              ),
-              const SizedBox(height: 16),
               Text(
                 isCodeStep ? 'הזן את הקוד שקיבלת' : 'התחברות',
                 textAlign: TextAlign.center,
