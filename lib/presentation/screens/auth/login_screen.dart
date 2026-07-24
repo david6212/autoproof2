@@ -67,11 +67,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+        child: Center(
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 380),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
               const SizedBox(height: 12),
               // Same mark as the splash screen (shield + car + check).
               const AutoproofLogo(size: 92),
@@ -163,6 +167,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ],
             ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -263,15 +270,16 @@ class _SocialButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 50,
+      height: 52,
       width: double.infinity,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: background,
           foregroundColor: foreground,
           elevation: 0,
+          minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             side: border
                 ? const BorderSide(color: AppColors.cardBorder)
                 : BorderSide.none,
