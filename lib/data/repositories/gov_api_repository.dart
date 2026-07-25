@@ -19,13 +19,11 @@ class GovApiRepository {
     final record = await _service.fetchByPlate(digits);
     final base = GovData.fromApi(record);
 
-    // Enrich with history (km, structural change) + open recalls in parallel.
-    final results = await Future.wait([
-      _service.fetchHistory(digits),
-      _service.fetchRecalls(digits),
-    ]);
-    final history = results[0] as Map<String, dynamic>?;
-    final rawRecalls = (results[1] as List).cast<Map<String, dynamic>>();
+    // Enrich with the extra datasets in parallel.
+    final history = await _service.fetchHistory(digits);
+    final rawRecalls = await _service.fetchRecalls(digits);
+    final offRoad = await _service.fetchOffRoad(digits);
+    final disabilityTag = await _service.fetchDisabilityTag(digits);
     final recalls = rawRecalls
         .map((r) => RecallItem(
               system: (r['SUG_TAKALA'] ?? '').toString(),
@@ -34,6 +32,11 @@ class GovApiRepository {
             ))
         .toList();
 
-    return base.withExtras(history: history, recalls: recalls);
+    return base.withExtras(
+      history: history,
+      recalls: recalls,
+      offRoad: offRoad,
+      disabilityTag: disabilityTag,
+    );
   }
 }

@@ -24,6 +24,16 @@ class GovDataCard extends StatelessWidget {
         _Header(data: data),
         const SizedBox(height: 12),
         _ValidityStrip(expiry: data.licenseExpiry),
+        // Critical: vehicle scrapped / finally cancelled.
+        if (data.offRoad) ...[
+          const SizedBox(height: 12),
+          _WarnBanner(
+            icon: Icons.block,
+            text: data.offRoadDate.isEmpty
+                ? 'הרכב ירד מהכביש / בוטל סופית'
+                : 'הרכב ירד מהכביש / בוטל סופית · ${data.offRoadDate}',
+          ),
+        ],
         // High-priority flags from the history + recall datasets.
         if (data.recalls.isNotEmpty) ...[
           const SizedBox(height: 12),
@@ -431,6 +441,7 @@ class _FullSpecs extends StatelessWidget {
       ('רישום ראשון', data.firstRegistration, false),
       ('שינוי צבע רשום', data.colorChanged ? 'כן' : '', false),
       ('שינוי צמיגים רשום', data.tireChanged ? 'כן' : '', false),
+      ('תג חניה לנכה', data.hasDisabilityTag ? 'כן' : '', false),
       ('טסט אחרון', data.lastTestDisplay, false),
       ('תוקף רישיון', data.licenseExpiryDisplay, false),
       ('רמת אבזור בטיחותי', data.safetyRating ?? '', false),

@@ -12,6 +12,10 @@ class ApiConstants {
       '56063a99-8a3e-4ff4-912e-5966c0279bad'; // km at last test, structural change
   static const openRecallResourceId =
       '36bf1404-0be4-49d2-82dc-2f1ead4a8b93'; // open (unperformed) recalls
+  static const offRoadResourceId =
+      '851ecab1-0622-4dbe-a6c7-f950cf82abf9'; // off-road / final cancellation
+  static const disabilityTagResourceId =
+      'c8b9f9c8-4612-4068-934f-d4acd2e3c06e'; // disability parking tag
 
   // Usage:
   // GET https://data.gov.il/api/3/action/datastore_search

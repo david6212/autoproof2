@@ -94,4 +94,42 @@ class GovApiService {
       return const [];
     }
   }
+
+  /// Best-effort: is the vehicle off the road / finally cancelled (scrapped)?
+  /// Returns the record (with bitul_dt) if so, else null.
+  Future<Map<String, dynamic>?> fetchOffRoad(String plateDigits) async {
+    try {
+      final res = await _dio.get(ApiConstants.govApiBase, queryParameters: {
+        'resource_id': ApiConstants.offRoadResourceId,
+        'q': plateDigits,
+        'limit': 5,
+      });
+      final records =
+          (res.data?['result']?['records'] as List?) ?? const [];
+      for (final r in records) {
+        if ('${(r as Map)['mispar_rechev']}' == plateDigits) {
+          return Map<String, dynamic>.from(r);
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Best-effort: does the vehicle have a disability parking tag?
+  Future<bool> fetchDisabilityTag(String plateDigits) async {
+    try {
+      final res = await _dio.get(ApiConstants.govApiBase, queryParameters: {
+        'resource_id': ApiConstants.disabilityTagResourceId,
+        'q': plateDigits,
+        'limit': 5,
+      });
+      final records =
+          (res.data?['result']?['records'] as List?) ?? const [];
+      return records.any((r) => '${(r as Map)['MISPAR RECHEV']}' == plateDigits);
+    } catch (_) {
+      return false;
+    }
+  }
 }

@@ -44,6 +44,10 @@ class GovData {
   final String firstRegistration; // rishum_rishon_dt
   // From the open-recall dataset.
   final List<RecallItem> recalls;
+  // From the off-road / disability-tag datasets.
+  final bool offRoad; // vehicle scrapped / finally cancelled
+  final String offRoadDate; // bitul_dt
+  final bool hasDisabilityTag;
 
   const GovData({
     required this.plate,
@@ -71,12 +75,18 @@ class GovData {
     this.originality = '',
     this.firstRegistration = '',
     this.recalls = const [],
+    this.offRoad = false,
+    this.offRoadDate = '',
+    this.hasDisabilityTag = false,
   });
 
-  /// Returns a copy with the vehicle-history + recall data merged in.
+  /// Returns a copy with the extra datasets (history, recalls, off-road,
+  /// disability tag) merged in.
   GovData withExtras({
     required Map<String, dynamic>? history,
     required List<RecallItem> recalls,
+    Map<String, dynamic>? offRoad,
+    bool disabilityTag = false,
   }) {
     int? km;
     bool flag(dynamic v) => v == 1 || v == '1';
@@ -111,6 +121,10 @@ class GovData {
       firstRegistration:
           (history?['rishum_rishon_dt'] ?? '').toString().split(' ').first,
       recalls: recalls,
+      offRoad: offRoad != null,
+      offRoadDate:
+          (offRoad?['bitul_dt'] ?? '').toString().split(' ').first,
+      hasDisabilityTag: disabilityTag,
     );
   }
 
