@@ -25,6 +25,9 @@ class CarFilters {
   final String? make; // manufacturer
   final String? model; // model name
   final int? maxHand; // max previous owners
+  final String? fuel; // drivetrain category (בנזין / דיזל / היברידי / חשמלי)
+  final String? ownership; // 'פרטית' / 'ליסינג/חברה'
+  final String? colorCat; // colour bucket (לבן / שחור / אפור / כחול / אדום)
 
   const CarFilters({
     this.types = const {},
@@ -35,6 +38,9 @@ class CarFilters {
     this.make,
     this.model,
     this.maxHand,
+    this.fuel,
+    this.ownership,
+    this.colorCat,
   });
 
   CarFilters copyWith({
@@ -50,6 +56,12 @@ class CarFilters {
     bool clearModel = false,
     int? maxHand,
     bool clearHand = false,
+    String? fuel,
+    bool clearFuel = false,
+    String? ownership,
+    bool clearOwnership = false,
+    String? colorCat,
+    bool clearColor = false,
   }) {
     return CarFilters(
       types: types ?? this.types,
@@ -60,6 +72,9 @@ class CarFilters {
       make: clearMake ? null : (make ?? this.make),
       model: clearModel ? null : (model ?? this.model),
       maxHand: clearHand ? null : (maxHand ?? this.maxHand),
+      fuel: clearFuel ? null : (fuel ?? this.fuel),
+      ownership: clearOwnership ? null : (ownership ?? this.ownership),
+      colorCat: clearColor ? null : (colorCat ?? this.colorCat),
     );
   }
 
@@ -71,7 +86,10 @@ class CarFilters {
       area == null &&
       make == null &&
       model == null &&
-      maxHand == null;
+      maxHand == null &&
+      fuel == null &&
+      ownership == null &&
+      colorCat == null;
 
   /// Number of active (non-default) filter groups, for the badge.
   int get activeCount =>
@@ -82,7 +100,10 @@ class CarFilters {
       (area != null ? 1 : 0) +
       (make != null ? 1 : 0) +
       (model != null ? 1 : 0) +
-      (maxHand != null ? 1 : 0);
+      (maxHand != null ? 1 : 0) +
+      (fuel != null ? 1 : 0) +
+      (ownership != null ? 1 : 0) +
+      (colorCat != null ? 1 : 0);
 }
 
 final carFiltersProvider =
@@ -128,6 +149,10 @@ final filteredCarsProvider = Provider<AsyncValue<List<CarModel>>>((ref) {
       if (f.make != null && c.make != f.make) return false;
       if (f.model != null && c.model != f.model) return false;
       if (f.maxHand != null && c.hand > f.maxHand!) return false;
+      if (f.fuel != null && c.fuelCategory != f.fuel) return false;
+      if (f.colorCat != null && c.colorCategory != f.colorCat) return false;
+      if (f.ownership == 'פרטית' && !c.isPrivateOwnership) return false;
+      if (f.ownership == 'ליסינג/חברה' && c.isPrivateOwnership) return false;
       if (query.isNotEmpty) {
         final haystack =
             '${c.make} ${c.model} ${c.area} ${c.plate}'.toLowerCase();

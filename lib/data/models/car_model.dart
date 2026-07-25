@@ -17,6 +17,10 @@ class CarModel {
   final String reasonForSelling;
   final DateTime createdAt;
   final int reviewCount;
+  // Official fields copied from data.gov.il at listing time (for filtering).
+  final String fuel; // e.g. "בנזין", "חשמל/בנזין"
+  final String color; // e.g. "כסף", "שחור מטלי"
+  final String ownership; // e.g. "פרטי", "ליסינג"
 
   const CarModel({
     required this.id,
@@ -35,7 +39,36 @@ class CarModel {
     required this.reasonForSelling,
     required this.createdAt,
     this.reviewCount = 0,
+    this.fuel = '',
+    this.color = '',
+    this.ownership = '',
   });
+
+  /// Normalised drivetrain category for filtering.
+  String get fuelCategory {
+    final f = fuel;
+    if (f.contains('חשמל') && f.contains('בנזין')) return 'היברידי';
+    if (f.contains('חשמל')) return 'חשמלי';
+    if (f.contains('היבר')) return 'היברידי';
+    if (f.contains('דיזל')) return 'דיזל';
+    if (f.contains('בנזין')) return 'בנזין';
+    return '';
+  }
+
+  /// Normalised colour bucket for the colour-dot filter.
+  String get colorCategory {
+    final c = color;
+    if (c.contains('לבן') || c.contains('שנהב')) return 'לבן';
+    if (c.contains('שחור')) return 'שחור';
+    if (c.contains('כסף') || c.contains('אפור') || c.contains('אלומיני')) {
+      return 'אפור';
+    }
+    if (c.contains('כחול')) return 'כחול';
+    if (c.contains('אדום')) return 'אדום';
+    return 'אחר';
+  }
+
+  bool get isPrivateOwnership => ownership.contains('פרטי');
 
   factory CarModel.fromFirestore(Map<String, dynamic> data, String id) {
     return CarModel(
@@ -66,6 +99,9 @@ class CarModel {
       reviewCount: (data['reviewCount'] ?? 0) is int
           ? (data['reviewCount'] ?? 0)
           : int.tryParse('${data['reviewCount']}') ?? 0,
+      fuel: data['fuel'] ?? '',
+      color: data['color'] ?? '',
+      ownership: data['ownership'] ?? '',
     );
   }
 
@@ -85,6 +121,9 @@ class CarModel {
         'reasonForSelling': reasonForSelling,
         'createdAt': createdAt,
         'reviewCount': reviewCount,
+        'fuel': fuel,
+        'color': color,
+        'ownership': ownership,
       };
 
   String get title => '$make $model'.trim();

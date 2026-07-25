@@ -139,6 +139,10 @@ class CreateListingController extends Notifier<CreateListingState> {
           'color': car.color,
           'ownershipType': car.ownershipType,
         },
+        // Official fields stored top-level so the buyer filters can use them.
+        fuel: car.fuelType,
+        color: car.color,
+        ownership: car.ownershipType,
         photos: const [],
         reasonForSelling: state.reason.trim(),
         createdAt: DateTime.now(),

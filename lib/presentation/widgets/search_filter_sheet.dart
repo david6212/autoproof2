@@ -44,13 +44,12 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
 
   late CarFilters _draft;
 
+  static const _colorCats = ['לבן', 'שחור', 'אפור', 'כחול', 'אדום'];
+
   // Visual-only selections (not yet backed by listing data).
-  String _ownership = 'פרטית';
   String _engine = 'ללא הגבלה';
   String _seats = 'הכל';
-  String _fuel = 'הכל';
   String _inspection = 'הכל';
-  int _color = -1;
   bool _disability = false;
 
   @override
@@ -81,6 +80,10 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     if (f.make != null && c.make != f.make) return false;
     if (f.model != null && c.model != f.model) return false;
     if (f.maxHand != null && c.hand > f.maxHand!) return false;
+    if (f.fuel != null && c.fuelCategory != f.fuel) return false;
+    if (f.colorCat != null && c.colorCategory != f.colorCat) return false;
+    if (f.ownership == 'פרטית' && !c.isPrivateOwnership) return false;
+    if (f.ownership == 'ליסינג/חברה' && c.isPrivateOwnership) return false;
     if (c.price > f.maxPrice) return false;
     if (c.year < f.minYear) return false;
     if (c.km > f.maxKm) return false;
@@ -95,12 +98,9 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   void _clearAll() {
     setState(() {
       _draft = const CarFilters();
-      _ownership = 'פרטית';
       _engine = 'ללא הגבלה';
       _seats = 'הכל';
-      _fuel = 'הכל';
       _inspection = 'הכל';
-      _color = -1;
       _disability = false;
     });
   }
@@ -198,8 +198,10 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
               _PillGroup(
                 label: 'בעלות נוכחית',
                 options: const ['פרטית', 'ליסינג/חברה', 'הכל'],
-                selected: _ownership,
-                onSelect: (v) => setState(() => _ownership = v),
+                selected: _draft.ownership ?? 'הכל',
+                onSelect: (v) => setState(() => _draft = v == 'הכל'
+                    ? _draft.copyWith(clearOwnership: true)
+                    : _draft.copyWith(ownership: v)),
               ),
               const SizedBox(height: 18),
 
@@ -242,8 +244,10 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
               _PillGroup(
                 label: 'סוג מנוע / הנעה',
                 options: const ['הכל', 'בנזין', 'דיזל', 'היברידי', 'חשמלי'],
-                selected: _fuel,
-                onSelect: (v) => setState(() => _fuel = v),
+                selected: _draft.fuel ?? 'הכל',
+                onSelect: (v) => setState(() => _draft = v == 'הכל'
+                    ? _draft.copyWith(clearFuel: true)
+                    : _draft.copyWith(fuel: v)),
               ),
               const SizedBox(height: 16),
 
@@ -310,8 +314,13 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
               const _SectionLabel('צבע רכב'),
               const SizedBox(height: 10),
               _ColorDots(
-                selected: _color,
-                onSelect: (i) => setState(() => _color = _color == i ? -1 : i),
+                selected: _draft.colorCat == null
+                    ? -1
+                    : _colorCats.indexOf(_draft.colorCat!),
+                onSelect: (i) => setState(() => _draft =
+                    _draft.colorCat == _colorCats[i]
+                        ? _draft.copyWith(clearColor: true)
+                        : _draft.copyWith(colorCat: _colorCats[i])),
               ),
               const SizedBox(height: 8),
 
