@@ -102,6 +102,12 @@ class _Content extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       _StatsRow(car: car),
+                      if (car.fuel.isNotEmpty ||
+                          car.color.isNotEmpty ||
+                          car.ownership.isNotEmpty) ...[
+                        const SizedBox(height: 14),
+                        _OfficialSpecs(car: car),
+                      ],
                       const SizedBox(height: 16),
                       _SellerCard(),
                       const SizedBox(height: 12),
@@ -311,6 +317,70 @@ class _StatsRow extends StatelessWidget {
                         fontSize: 13, color: AppColors.textPrimary)),
               ],
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Official specs copied from data.gov.il at listing time (fuel/color/owner).
+class _OfficialSpecs extends StatelessWidget {
+  const _OfficialSpecs({required this.car});
+  final CarModel car;
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = <(IconData, String)>[
+      if (car.fuel.isNotEmpty) (Icons.local_gas_station, car.fuel),
+      if (car.color.isNotEmpty) (Icons.palette_outlined, car.color),
+      if (car.ownership.isNotEmpty) (Icons.badge_outlined, car.ownership),
+    ];
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.tealLight,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.verified_user, size: 16, color: AppColors.teal),
+              SizedBox(width: 6),
+              Text('מפרט רשמי · משרד התחבורה',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: AppColors.tealText)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final (icon, label) in chips)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(icon, size: 15, color: AppColors.teal),
+                      const SizedBox(width: 5),
+                      Text(label,
+                          style: const TextStyle(
+                              fontSize: 13, color: AppColors.textPrimary)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );
