@@ -21,6 +21,11 @@ class GovData {
   final DateTime? licenseExpiry; // tokef_dt
   final String? safetyRating; // ramat_eivzur_betihuty
   final String chassis; // misgeret (VIN)
+  final String pollutionGroup; // kvutzat_zihum
+  final String engineModel; // degem_manoa
+  final String frontTire; // zmig_kidmi
+  final String rearTire; // zmig_ahori
+  final String firstOnRoad; // moed_aliya_lakvish (e.g. "2017-8")
 
   const GovData({
     required this.plate,
@@ -36,6 +41,11 @@ class GovData {
     required this.licenseExpiry,
     required this.safetyRating,
     required this.chassis,
+    this.pollutionGroup = '',
+    this.engineModel = '',
+    this.frontTire = '',
+    this.rearTire = '',
+    this.firstOnRoad = '',
   });
 
   /// True when the vehicle is privately owned (ownership contains "פרטי").
@@ -72,7 +82,23 @@ class GovData {
           ? null
           : s(r['ramat_eivzur_betihuty']),
       chassis: s(r['misgeret']),
+      pollutionGroup: s(r['kvutzat_zihum']),
+      engineModel: s(r['degem_manoa']),
+      frontTire: s(r['zmig_kidmi']),
+      rearTire: s(r['zmig_ahori']),
+      firstOnRoad: s(r['moed_aliya_lakvish']),
     );
+  }
+
+  /// "יצרן · דגם · שנה" style extras.
+  String get firstOnRoadDisplay {
+    if (firstOnRoad.isEmpty) return '—';
+    final parts = firstOnRoad.split('-');
+    if (parts.length == 2) {
+      final m = parts[1].padLeft(2, '0');
+      return '$m/${parts[0]}';
+    }
+    return firstOnRoad;
   }
 
   /// A short, human-friendly title for the vehicle.

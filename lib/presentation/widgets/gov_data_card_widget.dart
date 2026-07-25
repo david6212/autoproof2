@@ -25,10 +25,8 @@ class GovDataCard extends StatelessWidget {
         _ValidityStrip(expiry: data.licenseExpiry),
         const SizedBox(height: 12),
         _StatsGrid(data: data),
-        if (data.chassis.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          _VinRow(vin: data.chassis),
-        ],
+        const SizedBox(height: 12),
+        _FullSpecs(data: data),
         const SizedBox(height: 12),
         _UsageBanner(data: data),
         if (data.safetyRating != null) ...[
@@ -286,35 +284,81 @@ class _StatTile extends StatelessWidget {
 }
 
 /// Full-width row for the VIN / chassis number (too long for a grid tile).
-class _VinRow extends StatelessWidget {
-  const _VinRow({required this.vin});
-  final String vin;
+/// Full table of every field the Ministry of Transport provides.
+class _FullSpecs extends StatelessWidget {
+  const _FullSpecs({required this.data});
+  final GovData data;
 
   @override
   Widget build(BuildContext context) {
+    // (label, value, ltr?) — only non-empty rows are shown.
+    final rows = <(String, String, bool)>[
+      ('יצרן', data.make, false),
+      ('דגם מסחרי',
+          data.commercialName.isNotEmpty ? data.commercialName : data.model,
+          true),
+      ('קוד דגם', data.model, true),
+      ('רמת גימור', data.trim, true),
+      ('שנת ייצור', data.year > 0 ? '${data.year}' : '', false),
+      ('עלייה לכביש', data.firstOnRoadDisplay, false),
+      ('צבע', data.color, false),
+      ('סוג דלק', data.fuelType, false),
+      ('דגם מנוע', data.engineModel, true),
+      ('קבוצת זיהום', data.pollutionGroup, false),
+      ('בעלות', data.ownershipType, false),
+      ('טסט אחרון', data.lastTestDisplay, false),
+      ('תוקף רישיון', data.licenseExpiryDisplay, false),
+      ('רמת אבזור בטיחותי', data.safetyRating ?? '', false),
+      ('צמיג קדמי', data.frontTire, true),
+      ('צמיג אחורי', data.rearTire, true),
+      ('מספר שלדה', data.chassis, true),
+    ].where((r) => r.$2.isNotEmpty && r.$2 != '—').toList();
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.cardBorder),
       ),
-      child: Row(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
         children: [
-          const Icon(Icons.tag, size: 18, color: AppColors.textSubtle),
-          const SizedBox(width: 8),
-          const Text('מספר שלדה',
-              style: TextStyle(fontSize: 12, color: AppColors.textSubtle)),
-          const Spacer(),
-          Text(
-            vin,
-            textDirection: TextDirection.ltr,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-              letterSpacing: 1,
-            ),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            color: AppColors.tealLight,
+            child: const Text('כל הפרטים הרשמיים',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: AppColors.tealText)),
           ),
+          for (var i = 0; i < rows.length; i++)
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              color: i.isOdd ? AppColors.background : AppColors.white,
+              child: Row(
+                children: [
+                  Text(rows[i].$1,
+                      style: const TextStyle(
+                          fontSize: 13, color: AppColors.textMuted)),
+                  const Spacer(),
+                  Flexible(
+                    child: Text(
+                      rows[i].$2,
+                      textAlign: TextAlign.end,
+                      textDirection:
+                          rows[i].$3 ? TextDirection.ltr : TextDirection.rtl,
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
