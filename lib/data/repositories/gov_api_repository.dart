@@ -16,13 +16,22 @@ class GovApiRepository {
     if (digits.isEmpty) {
       throw GovApiException('יש להזין מספר רישוי.');
     }
-    final record = await _service.fetchByPlate(digits);
+    // Off-road/scrapped vehicles are NOT in the active registry, so if the
+    // active lookup fails, fall back to the off-road dataset (same fields).
+    Map<String, dynamic> record;
+    Map<String, dynamic>? offRoad;
+    try {
+      record = await _service.fetchByPlate(digits);
+    } on GovApiException {
+      offRoad = await _service.fetchOffRoad(digits);
+      if (offRoad == null) rethrow; // truly not found
+      record = offRoad;
+    }
     final base = GovData.fromApi(record);
 
-    // Enrich with the extra datasets in parallel.
+    // Enrich with the extra datasets.
     final history = await _service.fetchHistory(digits);
     final rawRecalls = await _service.fetchRecalls(digits);
-    final offRoad = await _service.fetchOffRoad(digits);
     final disabilityTag = await _service.fetchDisabilityTag(digits);
     final recalls = rawRecalls
         .map((r) => RecallItem(
