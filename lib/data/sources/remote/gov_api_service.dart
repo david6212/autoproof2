@@ -52,4 +52,46 @@ class GovApiService {
       throw GovApiException('שגיאת רשת. נסה שוב.');
     }
   }
+
+  /// Best-effort fetch of the vehicle-history record (km at last test,
+  /// structural change...). Returns null if missing — that's normal.
+  Future<Map<String, dynamic>?> fetchHistory(String plateDigits) async {
+    try {
+      final res = await _dio.get(ApiConstants.govApiBase, queryParameters: {
+        'resource_id': ApiConstants.vehicleHistoryResourceId,
+        'q': plateDigits,
+        'limit': 5,
+      });
+      final records =
+          (res.data?['result']?['records'] as List?) ?? const [];
+      for (final r in records) {
+        if ('${(r as Map)['mispar_rechev']}' == plateDigits) {
+          return Map<String, dynamic>.from(r);
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Best-effort fetch of open (unperformed) recalls for the plate.
+  /// Empty list = no open recalls (good).
+  Future<List<Map<String, dynamic>>> fetchRecalls(String plateDigits) async {
+    try {
+      final res = await _dio.get(ApiConstants.govApiBase, queryParameters: {
+        'resource_id': ApiConstants.openRecallResourceId,
+        'q': plateDigits,
+        'limit': 20,
+      });
+      final records =
+          (res.data?['result']?['records'] as List?) ?? const [];
+      return records
+          .where((r) => '${(r as Map)['MISPAR_RECHEV']}' == plateDigits)
+          .map((r) => Map<String, dynamic>.from(r as Map))
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
 }

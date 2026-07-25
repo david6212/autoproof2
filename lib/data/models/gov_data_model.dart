@@ -1,5 +1,14 @@
 import '../../core/utils/date_formatter.dart';
 
+/// A single open manufacturer recall (קריאת שירות שלא בוצעה).
+class RecallItem {
+  final String system; // SUG_TAKALA
+  final String description; // TEUR_TAKALA
+  final String date; // TAARICH_PTICHA
+  const RecallItem(
+      {required this.system, required this.description, required this.date});
+}
+
 /// Vehicle data as returned by the data.gov.il registry
 /// (resource 053cea08-09bc-40ec-8f7a-156f0677aff3).
 ///
@@ -26,6 +35,15 @@ class GovData {
   final String frontTire; // zmig_kidmi
   final String rearTire; // zmig_ahori
   final String firstOnRoad; // moed_aliya_lakvish (e.g. "2017-8")
+  // From the vehicle-history dataset.
+  final int? lastTestKm; // kilometer_test_aharon (official odometer)
+  final bool structuralChange; // shinui_mivne_ind
+  final bool colorChanged; // shnui_zeva_ind
+  final bool tireChanged; // shinui_zmig_ind
+  final String originality; // mkoriut_nm (e.g. "פרטי", "החכר", "ביס לנהיגה")
+  final String firstRegistration; // rishum_rishon_dt
+  // From the open-recall dataset.
+  final List<RecallItem> recalls;
 
   const GovData({
     required this.plate,
@@ -46,7 +64,55 @@ class GovData {
     this.frontTire = '',
     this.rearTire = '',
     this.firstOnRoad = '',
+    this.lastTestKm,
+    this.structuralChange = false,
+    this.colorChanged = false,
+    this.tireChanged = false,
+    this.originality = '',
+    this.firstRegistration = '',
+    this.recalls = const [],
   });
+
+  /// Returns a copy with the vehicle-history + recall data merged in.
+  GovData withExtras({
+    required Map<String, dynamic>? history,
+    required List<RecallItem> recalls,
+  }) {
+    int? km;
+    bool flag(dynamic v) => v == 1 || v == '1';
+    if (history != null) {
+      final k = history['kilometer_test_aharon'];
+      km = k is int ? k : int.tryParse('${k ?? ''}');
+    }
+    return GovData(
+      plate: plate,
+      make: make,
+      commercialName: commercialName,
+      model: model,
+      year: year,
+      color: color,
+      fuelType: fuelType,
+      ownershipType: ownershipType,
+      trim: trim,
+      lastTestDate: lastTestDate,
+      licenseExpiry: licenseExpiry,
+      safetyRating: safetyRating,
+      chassis: chassis,
+      pollutionGroup: pollutionGroup,
+      engineModel: engineModel,
+      frontTire: frontTire,
+      rearTire: rearTire,
+      firstOnRoad: firstOnRoad,
+      lastTestKm: km,
+      structuralChange: flag(history?['shinui_mivne_ind']),
+      colorChanged: flag(history?['shnui_zeva_ind']),
+      tireChanged: flag(history?['shinui_zmig_ind']),
+      originality: (history?['mkoriut_nm'] ?? '').toString().trim(),
+      firstRegistration:
+          (history?['rishum_rishon_dt'] ?? '').toString().split(' ').first,
+      recalls: recalls,
+    );
+  }
 
   /// True when the vehicle is privately owned (ownership contains "פרטי").
   bool get isPrivate => ownershipType.contains('פרטי');

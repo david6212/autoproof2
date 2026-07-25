@@ -17,6 +17,23 @@ class GovApiRepository {
       throw GovApiException('יש להזין מספר רישוי.');
     }
     final record = await _service.fetchByPlate(digits);
-    return GovData.fromApi(record);
+    final base = GovData.fromApi(record);
+
+    // Enrich with history (km, structural change) + open recalls in parallel.
+    final results = await Future.wait([
+      _service.fetchHistory(digits),
+      _service.fetchRecalls(digits),
+    ]);
+    final history = results[0] as Map<String, dynamic>?;
+    final rawRecalls = (results[1] as List).cast<Map<String, dynamic>>();
+    final recalls = rawRecalls
+        .map((r) => RecallItem(
+              system: (r['SUG_TAKALA'] ?? '').toString(),
+              description: (r['TEUR_TAKALA'] ?? '').toString(),
+              date: (r['TAARICH_PTICHA'] ?? '').toString().split(' ').first,
+            ))
+        .toList();
+
+    return base.withExtras(history: history, recalls: recalls);
   }
 }
