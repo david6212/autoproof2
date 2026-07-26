@@ -18,9 +18,7 @@ import '../presentation/screens/buyer/car_detail_screen.dart';
 import '../presentation/screens/buyer/vehicle_history_screen.dart';
 import '../presentation/screens/buyer/inspectors_screen.dart';
 import '../presentation/screens/buyer/book_inspection_screen.dart';
-import '../presentation/screens/buyer/swipe_prefs_screen.dart';
 import '../presentation/screens/buyer/swipe_screen.dart';
-import '../presentation/screens/buyer/match_screen.dart';
 import '../presentation/screens/buyer/saved_screen.dart';
 import '../presentation/screens/buyer/notifications_screen.dart';
 import '../presentation/screens/buyer/quick_review_screen.dart';
@@ -77,7 +75,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/home', builder: (c, s) => const HomeScreen()),
           GoRoute(path: '/saved', builder: (c, s) => const SavedScreen()),
           GoRoute(
-              path: '/discover', builder: (c, s) => const SwipePrefsScreen()),
+              path: '/discover', builder: (c, s) => const SwipeScreen()),
           GoRoute(path: '/chats', builder: (c, s) => const ChatListScreen()),
           GoRoute(path: '/profile', builder: (c, s) => const ProfileScreen()),
         ],
@@ -109,8 +107,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           carId: s.uri.queryParameters['carId'] ?? '',
         ),
       ),
-      GoRoute(path: '/swipe', builder: (c, s) => const SwipeScreen()),
-      GoRoute(path: '/match', builder: (c, s) => const MatchScreen()),
       GoRoute(
           path: '/notifications',
           builder: (c, s) => const NotificationsScreen()),

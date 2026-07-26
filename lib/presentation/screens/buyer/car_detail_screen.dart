@@ -10,6 +10,8 @@ import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../widgets/buyer_journey_card.dart';
+import '../../widgets/car_notes_section.dart';
 import '../../widgets/login_required_sheet.dart';
 import '../../widgets/verified_badge_widget.dart';
 
@@ -108,10 +110,22 @@ class _Content extends ConsumerWidget {
                         const SizedBox(height: 14),
                         _OfficialSpecs(car: car),
                       ],
+                      const SizedBox(height: 14),
+                      _ValueInsights(car: car),
+                      if (car.description.trim().isNotEmpty) ...[
+                        const SizedBox(height: 14),
+                        _SellerAbout(text: car.description.trim()),
+                      ],
                       const SizedBox(height: 16),
                       _SellerCard(),
                       const SizedBox(height: 12),
                       _HistoryButton(plate: car.plate),
+                      const SizedBox(height: 16),
+                      // Guided buyer journey — interactive, per-buyer progress.
+                      BuyerJourneyCard(carId: car.id),
+                      const SizedBox(height: 16),
+                      // Crowdsourced visitor notes for this listing.
+                      CarNotesSection(carId: car.id),
                       if (car.reasonForSelling.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         const Text('סיבת המכירה',
@@ -387,6 +401,157 @@ class _OfficialSpecs extends StatelessWidget {
   }
 }
 
+/// Derived value signals (no extra data): average km/year and ownership type.
+class _ValueInsights extends StatelessWidget {
+  const _ValueInsights({required this.car});
+  final CarModel car;
+
+  static final _fmt = NumberFormat('#,###', 'en');
+
+  @override
+  Widget build(BuildContext context) {
+    final age = DateTime.now().year - car.year;
+    final kmPerYear = age <= 0 ? car.km : (car.km / age).round();
+
+    // Israeli average is ~15,000 km/year.
+    String kmTag;
+    Color kmBg, kmFg;
+    if (kmPerYear < 12000) {
+      kmTag = 'מתחת לממוצע';
+      kmBg = AppColors.tealLight;
+      kmFg = AppColors.tealText;
+    } else if (kmPerYear <= 18000) {
+      kmTag = 'ממוצע';
+      kmBg = AppColors.background;
+      kmFg = AppColors.textMuted;
+    } else {
+      kmTag = 'מעל הממוצע';
+      kmBg = AppColors.warnBg;
+      kmFg = AppColors.warnText;
+    }
+
+    final ownership = car.ownership.trim();
+    final isPrivate = car.isPrivateOwnership;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.insights_outlined, size: 16, color: AppColors.teal),
+              SizedBox(width: 6),
+              Text('תובנות שווי',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: AppColors.textPrimary)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _insightRow(
+            icon: Icons.speed,
+            label: 'ק"מ ממוצע לשנה',
+            value: '${_fmt.format(kmPerYear)} ק"מ',
+            tag: kmTag,
+            tagBg: kmBg,
+            tagFg: kmFg,
+          ),
+          if (ownership.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _insightRow(
+              icon: Icons.badge_outlined,
+              label: 'סוג בעלות',
+              value: ownership,
+              tag: isPrivate ? 'פרטי ✓' : 'שימוש מסחרי',
+              tagBg: isPrivate ? AppColors.tealLight : AppColors.warnBg,
+              tagFg: isPrivate ? AppColors.tealText : AppColors.warnText,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _insightRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required String tag,
+    required Color tagBg,
+    required Color tagFg,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: AppColors.teal),
+        const SizedBox(width: 8),
+        Text(label,
+            style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+        const Spacer(),
+        Text(value,
+            style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary)),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration:
+              BoxDecoration(color: tagBg, borderRadius: BorderRadius.circular(20)),
+          child: Text(tag,
+              style: TextStyle(
+                  fontSize: 11.5, fontWeight: FontWeight.bold, color: tagFg)),
+        ),
+      ],
+    );
+  }
+}
+
+/// The seller's free-text "a few words about the car".
+class _SellerAbout extends StatelessWidget {
+  const _SellerAbout({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.format_quote_outlined,
+                  size: 16, color: AppColors.teal),
+              SizedBox(width: 6),
+              Text('מהמוכר',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: AppColors.textPrimary)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(text,
+              style: const TextStyle(
+                  fontSize: 13.5, height: 1.4, color: AppColors.textPrimary)),
+        ],
+      ),
+    );
+  }
+}
+
 class _SellerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -486,15 +651,23 @@ class _ActionBar extends ConsumerWidget {
                     showLoginRequired(context, action: 'לשלוח הודעה');
                     return;
                   }
-                  final chatId =
-                      await ref.read(openChatForCarProvider).call(car);
-                  if (!context.mounted) return;
-                  if (chatId == null) {
-                    showLoginRequired(context, action: 'לשלוח הודעה');
-                    return;
+                  try {
+                    final chatId =
+                        await ref.read(openChatForCarProvider).call(car);
+                    if (!context.mounted) return;
+                    if (chatId == null) {
+                      showLoginRequired(context, action: 'לשלוח הודעה');
+                      return;
+                    }
+                    ref.read(analyticsHelperProvider).chatStarted();
+                    context.push('/chat/$chatId');
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('לא ניתן לפתוח צ׳אט כרגע. נסה שוב.')),
+                    );
                   }
-                  ref.read(analyticsHelperProvider).chatStarted();
-                  context.push('/chat/$chatId');
                 },
               ),
             ),

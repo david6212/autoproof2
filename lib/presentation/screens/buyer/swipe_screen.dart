@@ -8,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/cars_provider.dart';
 import '../../providers/swipe_provider.dart';
 import '../../widgets/login_required_sheet.dart';
 import '../../widgets/verified_badge_widget.dart';
@@ -15,23 +16,30 @@ import '../../widgets/verified_badge_widget.dart';
 class SwipeScreen extends ConsumerWidget {
   const SwipeScreen({super.key});
 
-  Future<void> _like(BuildContext context, WidgetRef ref, CarModel car) async {
-    // Liking creates a match/chat, which requires an account.
+  void _skip(WidgetRef ref, CarModel car) {
+    ref.read(swipedIdsProvider.notifier).update((s) => {...s, car.id});
+  }
+
+  Future<void> _save(BuildContext context, WidgetRef ref, CarModel car) async {
+    // Saving a car requires an account.
     final isGuest = ref.read(authStateProvider).valueOrNull == null;
     if (isGuest) {
-      ref.read(analyticsHelperProvider).guestPrompt('like');
-      showLoginRequired(context, action: 'לסמן שאהבת ולהתאים');
+      ref.read(analyticsHelperProvider).guestPrompt('save');
+      showLoginRequired(context, action: 'לשמור רכבים');
       return;
     }
-    final isMatch = await ref.read(likeCarProvider).call(car);
-    if (isMatch && context.mounted) {
-      context.push('/match');
+    await ref.read(toggleSavedProvider).call(car.id, true);
+    ref.read(swipedIdsProvider.notifier).update((s) => {...s, car.id});
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('נשמר למועדפים ❤')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final candidates = ref.watch(swipeCandidatesProvider);
+    final deck = ref.watch(swipeDeckProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -44,14 +52,14 @@ class SwipeScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: candidates.isEmpty
+        child: deck.isEmpty
             ? const _NoMoreCards()
             : _SwipeBody(
-                car: candidates.first,
-                remaining: candidates.length,
-                onSkip: () => ref.read(skipCarProvider).call(candidates.first),
-                onLike: () => _like(context, ref, candidates.first),
-                onInfo: () => context.push('/car/${candidates.first.id}'),
+                car: deck.first,
+                remaining: deck.length,
+                onSkip: () => _skip(ref, deck.first),
+                onLike: () => _save(context, ref, deck.first),
+                onInfo: () => context.push('/car/${deck.first.id}'),
               ),
       ),
     );
@@ -253,13 +261,16 @@ class _NoMoreCards extends StatelessWidget {
         children: [
           const Icon(Icons.done_all, size: 64, color: AppColors.teal),
           const SizedBox(height: 12),
-          const Text('עברת על כל הרכבים הזמינים',
+          const Text('עברת על כל הרכבים המסוננים',
               style: TextStyle(color: AppColors.textMuted)),
+          const SizedBox(height: 4),
+          const Text('שנה את הסינון בעמוד הבית כדי לראות עוד',
+              style: TextStyle(color: AppColors.textSubtle, fontSize: 12.5)),
           const SizedBox(height: 16),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
-            onPressed: () => context.go('/discover'),
-            child: const Text('שנה העדפות'),
+            onPressed: () => context.go('/home'),
+            child: const Text('חזרה לפיד'),
           ),
         ],
       ),

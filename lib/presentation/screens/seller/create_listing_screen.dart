@@ -240,6 +240,7 @@ class _StepDetailsState extends ConsumerState<_StepDetails> {
   late final TextEditingController _price;
   late final TextEditingController _km;
   late final TextEditingController _reason;
+  late final TextEditingController _description;
 
   static const _areas = [
     'תל אביב', 'ירושלים', 'חיפה', 'ראשון לציון', 'פתח תקווה',
@@ -254,6 +255,7 @@ class _StepDetailsState extends ConsumerState<_StepDetails> {
     _price = TextEditingController(text: s.price);
     _km = TextEditingController(text: s.km);
     _reason = TextEditingController(text: s.reason);
+    _description = TextEditingController(text: s.description);
     _area = s.area.isEmpty ? null : s.area;
   }
 
@@ -262,6 +264,7 @@ class _StepDetailsState extends ConsumerState<_StepDetails> {
     _price.dispose();
     _km.dispose();
     _reason.dispose();
+    _description.dispose();
     super.dispose();
   }
 
@@ -323,6 +326,19 @@ class _StepDetailsState extends ConsumerState<_StepDetails> {
                     setState(() => _area = v);
                     notifier.setArea(v ?? '');
                   },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _description,
+                  maxLines: 4,
+                  maxLength: 600,
+                  onChanged: notifier.setDescription,
+                  decoration: const InputDecoration(
+                    labelText: 'כמה מילים על הרכב',
+                    hintText:
+                        'למשל: רכב שמור, טופל תמיד במוסך מורשה, ללא תאונות, צמיגים חדשים…',
+                    alignLabelWithHint: true,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -428,6 +444,8 @@ class _StepReview extends ConsumerWidget {
                     '${_fmt.format(int.tryParse(s.km) ?? 0)} ק"מ'),
                 _reviewRow('אזור', s.area),
                 _reviewRow('תמונות', '${s.photos.length}'),
+                if (s.description.isNotEmpty)
+                  _reviewRow('על הרכב', s.description),
                 if (s.reason.isNotEmpty) _reviewRow('סיבת המכירה', s.reason),
                 const SizedBox(height: 12),
                 Container(

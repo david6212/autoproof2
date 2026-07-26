@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/car_model.dart';
+import '../models/car_note_model.dart';
 
 /// All reads/writes for the cars collection and per-user saved cars.
 class CarRepository {
@@ -99,6 +100,76 @@ class CarRepository {
       'text': text,
       'createdAt': DateTime.now(),
     });
+  }
+
+  // ---- Visitor notes (public, per listing) ----
+
+  CollectionReference<Map<String, dynamic>> _notes(String carId) =>
+      _cars.doc(carId).collection('notes');
+
+  /// Stream of visitor notes for a car, newest first.
+  Stream<List<CarNote>> streamNotes(String carId) {
+    return _notes(carId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => CarNote.fromFirestore(d.data(), d.id))
+            .toList());
+  }
+
+  Future<void> addNote({
+    required String carId,
+    required String authorUid,
+    required String authorName,
+    required String text,
+  }) {
+    return _notes(carId).add(CarNote(
+      id: '',
+      authorUid: authorUid,
+      authorName: authorName,
+      text: text,
+      createdAt: DateTime.now(),
+    ).toFirestore());
+  }
+
+  /// Deletes a note. Security rules ensure only its author can.
+  Future<void> deleteNote(String carId, String noteId) {
+    return _notes(carId).doc(noteId).delete();
+  }
+
+  /// Flags a note for admin review (e.g. defamatory / off-topic content).
+  Future<void> reportNote({
+    required String carId,
+    required String noteId,
+    required String reporterUid,
+  }) {
+    return _db.collection('note_reports').add({
+      'carId': carId,
+      'noteId': noteId,
+      'reporterUid': reporterUid,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // ---- Buyer journey progress (private, per buyer + car) ----
+
+  DocumentReference<Map<String, dynamic>> _journey(String carId, String uid) =>
+      _cars.doc(carId).collection('journeys').doc(uid);
+
+  /// Stream of the buyer's current stage for a car. Defaults to 1 (the gov-data
+  /// check counts as done, so the physical inspection is the first live step).
+  Stream<int> streamJourneyStage(String carId, String uid) {
+    return _journey(carId, uid).snapshots().map((snap) {
+      final stage = snap.data()?['stage'];
+      return stage is int ? stage : 1;
+    });
+  }
+
+  Future<void> setJourneyStage(String carId, String uid, int stage) {
+    return _journey(carId, uid).set({
+      'stage': stage,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   // ---- Saved cars ----

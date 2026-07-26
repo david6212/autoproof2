@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/car_model.dart';
+import '../../data/models/car_note_model.dart';
 import '../../data/repositories/car_repository.dart';
 import 'auth_provider.dart';
 
@@ -240,5 +241,76 @@ final toggleSavedProvider =
     final user = ref.read(authStateProvider).valueOrNull;
     if (user == null) return;
     await ref.read(carRepositoryProvider).toggleSaved(user.uid, carId, save);
+  };
+});
+
+// ---- Buyer journey progress ----
+
+/// The buyer's current journey stage for a car (defaults to 1). Guests see the
+/// default view read-only.
+final journeyStageProvider =
+    StreamProvider.family<int, String>((ref, carId) {
+  final user = ref.watch(authStateProvider).valueOrNull;
+  if (user == null) return Stream.value(1);
+  return ref.watch(carRepositoryProvider).streamJourneyStage(carId, user.uid);
+});
+
+/// Advances (or sets) the buyer's stage for a car. No-op if not signed in.
+final setJourneyStageProvider =
+    Provider<Future<void> Function(String carId, int stage)>((ref) {
+  return (carId, stage) async {
+    final user = ref.read(authStateProvider).valueOrNull;
+    if (user == null) return;
+    await ref.read(carRepositoryProvider).setJourneyStage(carId, user.uid, stage);
+  };
+});
+
+// ---- Visitor notes ----
+
+/// Public stream of visitor notes for a car (visible to everyone).
+final carNotesProvider =
+    StreamProvider.family<List<CarNote>, String>((ref, carId) {
+  return ref.watch(carRepositoryProvider).streamNotes(carId);
+});
+
+/// Adds a note as the current user. No-op if not signed in.
+final addNoteProvider =
+    Provider<Future<void> Function(String carId, String text)>((ref) {
+  return (carId, text) async {
+    final user = ref.read(authStateProvider).valueOrNull;
+    if (user == null) return;
+    final profile = ref.read(currentUserModelProvider).valueOrNull;
+    final name = (profile?.name.trim().isNotEmpty ?? false)
+        ? profile!.name
+        : (user.displayName?.trim().isNotEmpty ?? false)
+            ? user.displayName!
+            : 'מבקר';
+    await ref.read(carRepositoryProvider).addNote(
+          carId: carId,
+          authorUid: user.uid,
+          authorName: name,
+          text: text.trim(),
+        );
+  };
+});
+
+/// Deletes a note (author only — enforced by security rules).
+final deleteNoteProvider =
+    Provider<Future<void> Function(String carId, String noteId)>((ref) {
+  return (carId, noteId) =>
+      ref.read(carRepositoryProvider).deleteNote(carId, noteId);
+});
+
+/// Reports a note for review. No-op if not signed in.
+final reportNoteProvider =
+    Provider<Future<void> Function(String carId, String noteId)>((ref) {
+  return (carId, noteId) async {
+    final user = ref.read(authStateProvider).valueOrNull;
+    if (user == null) return;
+    await ref.read(carRepositoryProvider).reportNote(
+          carId: carId,
+          noteId: noteId,
+          reporterUid: user.uid,
+        );
   };
 });

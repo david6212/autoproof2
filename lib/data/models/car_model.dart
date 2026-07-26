@@ -15,6 +15,7 @@ class CarModel {
   final Map<String, dynamic>? govData;
   final List<String> photos; // Storage download URLs
   final String reasonForSelling;
+  final String description; // seller's free-text "a few words about the car"
   final DateTime createdAt;
   final int reviewCount;
   // Official fields copied from data.gov.il at listing time (for filtering).
@@ -37,6 +38,7 @@ class CarModel {
     this.govData,
     required this.photos,
     required this.reasonForSelling,
+    this.description = '',
     required this.createdAt,
     this.reviewCount = 0,
     this.fuel = '',
@@ -95,6 +97,7 @@ class CarModel {
       govData: (data['govData'] as Map?)?.cast<String, dynamic>(),
       photos: List<String>.from(data['photos'] ?? const []),
       reasonForSelling: data['reasonForSelling'] ?? '',
+      description: data['description'] ?? '',
       createdAt: (data['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
       reviewCount: (data['reviewCount'] ?? 0) is int
           ? (data['reviewCount'] ?? 0)
@@ -119,6 +122,7 @@ class CarModel {
         'govData': govData,
         'photos': photos,
         'reasonForSelling': reasonForSelling,
+        'description': description,
         'createdAt': createdAt,
         'reviewCount': reviewCount,
         'fuel': fuel,

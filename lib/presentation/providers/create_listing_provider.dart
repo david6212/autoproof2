@@ -17,6 +17,7 @@ class CreateListingState {
   final String km;
   final String area;
   final String reason;
+  final String description; // "a few words about the car"
   final int step; // 0 = photos, 1 = details, 2 = review
   final bool publishing;
   final String? error;
@@ -28,6 +29,7 @@ class CreateListingState {
     this.km = '',
     this.area = '',
     this.reason = '',
+    this.description = '',
     this.step = 0,
     this.publishing = false,
     this.error,
@@ -40,6 +42,7 @@ class CreateListingState {
     String? km,
     String? area,
     String? reason,
+    String? description,
     int? step,
     bool? publishing,
     String? error,
@@ -52,6 +55,7 @@ class CreateListingState {
       km: km ?? this.km,
       area: area ?? this.area,
       reason: reason ?? this.reason,
+      description: description ?? this.description,
       step: step ?? this.step,
       publishing: publishing ?? this.publishing,
       error: clearError ? null : (error ?? this.error),
@@ -78,6 +82,7 @@ class CreateListingController extends Notifier<CreateListingState> {
   void setKm(String v) => state = state.copyWith(km: v);
   void setArea(String v) => state = state.copyWith(area: v);
   void setReason(String v) => state = state.copyWith(reason: v);
+  void setDescription(String v) => state = state.copyWith(description: v);
 
   void next() {
     if (state.step < 2) state = state.copyWith(step: state.step + 1, clearError: true);
@@ -145,6 +150,7 @@ class CreateListingController extends Notifier<CreateListingState> {
         ownership: car.ownershipType,
         photos: const [],
         reasonForSelling: state.reason.trim(),
+        description: state.description.trim(),
         createdAt: DateTime.now(),
       );
 
