@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,47 +38,135 @@ final userLocationProvider = FutureProvider<LatLng?>((ref) async {
 const _israelCenter = LatLng(31.7, 34.9);
 const _distance = Distance();
 
-/// Below this zoom the map groups centers into one bubble per city (with a
-/// count); at or above it, every center gets its own street-level pin.
-const _cityZoom = 11.0;
+/// From this zoom on, each center gets its own pin so streets become useful.
+/// Below it, centers are grouped per city so the buyer sees how many each town
+/// has.
+const _streetZoom = 12.0;
+
+/// How close two markers may sit (in screen pixels) before they merge. Both are
+/// wider than the widest bubble (46px), which is what stops the pile-ups that
+/// used to happen in dense areas like Gush Dan.
+const _cityRadiusPx = 64.0;
+const _streetRadiusPx = 78.0;
 
 String _fmtDistance(double meters) => meters < 1000
     ? '${meters.round()} מ׳'
     : '${(meters / 1000).toStringAsFixed(1)} ק״מ';
 
-/// All inspection centers of one city, collapsed into a single map bubble.
-class _CityGroup {
-  _CityGroup(this.city, this.centers);
+/// Web-Mercator pixel position of a coordinate at a given integer zoom. Used
+/// only to measure on-screen distances for clustering.
+({double x, double y}) _project(double lat, double lng, int zoom) {
+  final scale = 256.0 * (1 << zoom);
+  final s = math.sin(lat * math.pi / 180).clamp(-0.9999, 0.9999);
+  return (
+    x: (lng + 180) / 360 * scale,
+    y: (0.5 - math.log((1 + s) / (1 - s)) / (4 * math.pi)) * scale,
+  );
+}
 
-  final String city;
+/// A group of centers close enough on screen to share one marker. A cluster of
+/// one renders as a normal pin; larger ones render as a counted bubble.
+class _Cluster {
+  _Cluster(this.centers, this.point);
+
   final List<InspectionCenter> centers;
+  final LatLng point;
 
   int get count => centers.length;
+  bool get isSingle => count == 1;
+  InspectionCenter get single => centers.first;
 
   List<LatLng> get points =>
       [for (final c in centers) LatLng(c.lat!, c.lng!)];
 
-  /// Average position of the city's centers — where the bubble sits.
-  LatLng get center {
-    var lat = 0.0, lng = 0.0;
+  /// The city name when every member shares one, else null (mixed area).
+  String? get soleCity {
+    final city = centers.first.city;
+    return centers.every((c) => c.city == city) ? city : null;
+  }
+
+  /// Caption under the bubble: the town itself, or — when neighbouring towns
+  /// were folded in — the busiest one marked as a whole area.
+  String get label {
+    final sole = soleCity;
+    if (sole != null) return sole;
+    final tally = <String, int>{};
     for (final c in centers) {
+      tally[c.city] = (tally[c.city] ?? 0) + 1;
+    }
+    var best = centers.first.city, top = 0;
+    tally.forEach((city, n) {
+      if (n > top) {
+        top = n;
+        best = city;
+      }
+    });
+    return 'אזור $best';
+  }
+
+  static LatLng _centroid(List<InspectionCenter> group) {
+    var lat = 0.0, lng = 0.0;
+    for (final c in group) {
       lat += c.lat!;
       lng += c.lng!;
     }
-    return LatLng(lat / centers.length, lng / centers.length);
+    return LatLng(lat / group.length, lng / group.length);
   }
 
-  static List<_CityGroup> from(List<InspectionCenter> centers) {
+  /// What gets placed on the map before collision-merging: whole cities when
+  /// zoomed out (so counts per town are visible), single centers once zoomed in
+  /// far enough for street positions to matter.
+  static List<List<InspectionCenter>> _nodes(
+      bool cityMode, List<InspectionCenter> centers) {
+    if (!cityMode) return [for (final c in centers) [c]];
     final byCity = <String, List<InspectionCenter>>{};
-    for (final c in centers.where((c) => c.hasCoords)) {
+    for (final c in centers) {
       byCity.putIfAbsent(c.city, () => []).add(c);
     }
-    final groups = [
-      for (final e in byCity.entries) _CityGroup(e.key, e.value),
+    return byCity.values.toList();
+  }
+
+  /// Groups centers for display at [zoom], merging any two markers that would
+  /// overlap on screen. Greedy and O(n²) — trivial for ~134 points.
+  static List<_Cluster> at(double zoom, List<InspectionCenter> centers) {
+    final z = zoom.round().clamp(3, 18);
+    final cityMode = zoom < _streetZoom;
+    final radius = cityMode ? _cityRadiusPx : _streetRadiusPx;
+
+    final nodes = _nodes(cityMode, centers.where((c) => c.hasCoords).toList())
+        .map((g) => (group: g, at: _centroid(g)))
+        .toList()
+      // Seed each cluster with the busiest node so bubbles settle on the
+      // biggest town rather than an arbitrary neighbour.
+      ..sort((a, b) => b.group.length.compareTo(a.group.length));
+
+    final pts = [
+      for (final n in nodes) (n: n, p: _project(n.at.latitude, n.at.longitude, z)),
     ];
-    // Biggest clusters drawn last so they sit on top.
-    groups.sort((a, b) => a.count.compareTo(b.count));
-    return groups;
+
+    final taken = List<bool>.filled(pts.length, false);
+    final clusters = <_Cluster>[];
+    final r2 = radius * radius;
+
+    for (var i = 0; i < pts.length; i++) {
+      if (taken[i]) continue;
+      taken[i] = true;
+      final group = [...pts[i].n.group];
+      for (var j = i + 1; j < pts.length; j++) {
+        if (taken[j]) continue;
+        final dx = pts[i].p.x - pts[j].p.x;
+        final dy = pts[i].p.y - pts[j].p.y;
+        if (dx * dx + dy * dy <= r2) {
+          taken[j] = true;
+          group.addAll(pts[j].n.group);
+        }
+      }
+      clusters.add(_Cluster(group, _centroid(group)));
+    }
+
+    // Bigger clusters last so they paint on top of smaller ones.
+    clusters.sort((a, b) => a.count.compareTo(b.count));
+    return clusters;
   }
 }
 
@@ -219,17 +309,23 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
     );
   }
 
-  /// Zooms the map to fit every center of a tapped city, revealing its streets.
-  void _zoomToCity(_CityGroup group) {
+  /// Zooms into a tapped cluster so it breaks apart into its member centers.
+  void _openCluster(_Cluster cluster) {
     setState(() => _selected = null);
-    if (group.count == 1) {
-      _mapController.move(group.center, 15);
+    final pts = cluster.points;
+    // A lone center — or several sharing one coordinate — has no extent to fit,
+    // so just fly to it at street zoom.
+    final spread = pts.any((p) =>
+        p.latitude != pts.first.latitude || p.longitude != pts.first.longitude);
+    if (!spread) {
+      _mapController.move(cluster.point, 15);
+      if (cluster.isSingle) setState(() => _selected = cluster.single);
       return;
     }
     _mapController.fitCamera(CameraFit.coordinates(
-      coordinates: group.points,
-      padding: const EdgeInsets.all(60),
-      maxZoom: 15,
+      coordinates: pts,
+      padding: const EdgeInsets.all(70),
+      maxZoom: 16,
     ));
   }
 
@@ -240,8 +336,11 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             ? LatLng(withCoords.first.lat!, withCoords.first.lng!)
             : _israelCenter);
     final initialZoom = me != null ? 12.0 : (withCoords.isNotEmpty ? 11.0 : 7.0);
-    // Far out → one bubble per city; close in → individual street pins.
-    final clustered = _zoom < _cityZoom;
+    // Zoomed out: one labelled bubble per town (merged where they'd collide).
+    // Zoomed in: individual street pins. Nothing overlaps at any zoom.
+    final cityMode = _zoom < _streetZoom;
+    final clusters = _Cluster.at(_zoom, withCoords);
+    final anyClustered = cityMode || clusters.any((c) => !c.isSingle);
 
     return Stack(
       children: [
@@ -252,13 +351,12 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             initialZoom: initialZoom,
             onTap: (_, __) => setState(() => _selected = null),
             onPositionChanged: (camera, _) {
-              // Only rebuild when we cross the clustering threshold. The
-              // callback can fire during layout, so defer the rebuild to the
-              // next frame rather than calling setState mid-build.
-              final wasClustered = _zoom < _cityZoom;
-              final nowClustered = camera.zoom < _cityZoom;
+              // Clusters are computed per integer zoom level, so only rebuild
+              // when that changes. The callback can fire during layout, so the
+              // rebuild is deferred rather than calling setState mid-build.
+              final changed = camera.zoom.round() != _zoom.round();
               _zoom = camera.zoom;
-              if (wasClustered != nowClustered) {
+              if (changed) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) setState(() {});
                 });
@@ -272,33 +370,33 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             ),
             MarkerLayer(
               markers: [
-                if (clustered)
-                  for (final g in _CityGroup.from(withCoords))
+                for (final cluster in clusters)
+                  if (cluster.isSingle && !cityMode)
                     Marker(
-                      point: g.center,
-                      width: 76,
-                      height: 66,
-                      child: GestureDetector(
-                        onTap: () => _zoomToCity(g),
-                        child: _CityBubble(group: g),
-                      ),
-                    )
-                else
-                  for (final c in withCoords)
-                    Marker(
-                      point: LatLng(c.lat!, c.lng!),
+                      point: cluster.point,
                       width: 40,
                       height: 40,
                       alignment: Alignment.topCenter,
                       child: GestureDetector(
-                        onTap: () => setState(() => _selected = c),
+                        onTap: () =>
+                            setState(() => _selected = cluster.single),
                         child: Icon(
                           Icons.location_on,
-                          size: _selected?.id == c.id ? 40 : 32,
-                          color: _selected?.id == c.id
+                          size: _selected?.id == cluster.single.id ? 40 : 32,
+                          color: _selected?.id == cluster.single.id
                               ? AppColors.dealerOrange
                               : AppColors.teal,
                         ),
+                      ),
+                    )
+                  else
+                    Marker(
+                      point: cluster.point,
+                      width: 84,
+                      height: 68,
+                      child: GestureDetector(
+                        onTap: () => _openCluster(cluster),
+                        child: _ClusterBubble(cluster: cluster),
                       ),
                     ),
                 if (me != null)
@@ -312,7 +410,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             ),
           ],
         ),
-        if (clustered)
+        if (anyClustered)
           const Positioned(
             bottom: 16,
             left: 0,
@@ -355,7 +453,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             top: 8,
             left: 12,
             right: 12,
-            child: _LocationHint(),
+            child: Center(child: _LocationHint()),
           ),
         if (_selected != null)
           Positioned(
@@ -442,19 +540,20 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-/// One city collapsed into a counted bubble (shown when zoomed out). Tapping it
-/// zooms in to that city's individual centers.
-class _CityBubble extends StatelessWidget {
-  const _CityBubble({required this.group});
-  final _CityGroup group;
+/// Several nearby centers collapsed into one counted bubble. Tapping it zooms
+/// in until the group breaks apart. Labelled with the city when the whole
+/// cluster sits in one, so overlapping labels can't clutter dense areas.
+class _ClusterBubble extends StatelessWidget {
+  const _ClusterBubble({required this.cluster});
+  final _Cluster cluster;
 
   @override
   Widget build(BuildContext context) {
-    // Bigger cities get a slightly bigger bubble.
-    final size = group.count >= 10
-        ? 44.0
-        : group.count >= 5
-            ? 40.0
+    final count = cluster.count;
+    final size = count >= 10
+        ? 46.0
+        : count >= 5
+            ? 41.0
             : 36.0;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -474,7 +573,7 @@ class _CityBubble extends StatelessWidget {
             ],
           ),
           child: Center(
-            child: Text('${group.count}',
+            child: Text('$count',
                 style: const TextStyle(
                     color: AppColors.white,
                     fontWeight: FontWeight.bold,
@@ -485,11 +584,11 @@ class _CityBubble extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
           decoration: BoxDecoration(
-            color: AppColors.white.withValues(alpha: 0.9),
+            color: AppColors.white.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
-            group.city,
+            cluster.label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -567,13 +666,14 @@ class _LocationHint extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.warnBg,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: const Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.location_off, size: 15, color: AppColors.warnText),
           SizedBox(width: 6),
-          Expanded(
+          Flexible(
             child: Text('אפשרו גישה למיקום כדי לראות את המכון הקרוב אליכם',
                 style: TextStyle(fontSize: 12, color: AppColors.warnText)),
           ),
