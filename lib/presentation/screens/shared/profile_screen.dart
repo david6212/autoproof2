@@ -85,7 +85,7 @@ class _Content extends StatelessWidget {
                   children: [
                     Icon(Icons.verified, size: 16, color: AppColors.teal),
                     SizedBox(width: 4),
-                    Text('בעלים פרטי מאומת',
+                    Text('מוכר מאומת',
                         style: TextStyle(color: AppColors.teal)),
                   ],
                 )

@@ -122,6 +122,7 @@ class CarRepository {
     required String authorUid,
     required String authorName,
     required String text,
+    String sellerFlag = '',
   }) {
     return _notes(carId).add(CarNote(
       id: '',
@@ -129,6 +130,7 @@ class CarRepository {
       authorName: authorName,
       text: text,
       createdAt: DateTime.now(),
+      sellerFlag: sellerFlag,
     ).toFirestore());
   }
 

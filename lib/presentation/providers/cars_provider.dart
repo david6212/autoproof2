@@ -274,9 +274,9 @@ final carNotesProvider =
 });
 
 /// Adds a note as the current user. No-op if not signed in.
-final addNoteProvider =
-    Provider<Future<void> Function(String carId, String text)>((ref) {
-  return (carId, text) async {
+final addNoteProvider = Provider<
+    Future<void> Function(String carId, String text, String sellerFlag)>((ref) {
+  return (carId, text, sellerFlag) async {
     final user = ref.read(authStateProvider).valueOrNull;
     if (user == null) return;
     final profile = ref.read(currentUserModelProvider).valueOrNull;
@@ -290,6 +290,7 @@ final addNoteProvider =
           authorUid: user.uid,
           authorName: name,
           text: text.trim(),
+          sellerFlag: sellerFlag,
         );
   };
 });

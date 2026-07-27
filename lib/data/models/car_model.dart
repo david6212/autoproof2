@@ -1,5 +1,21 @@
 enum CarStatus { active, removed, sold }
 
+/// Who is selling the car. Every listing is labeled so buyers always know who
+/// they're dealing with (transparency instead of banning dealers).
+enum SellerType {
+  private, // בעלים פרטי — selling their own car (verified vs gov ownership)
+  agent, // סוכן — selling a car that isn't theirs, on someone's behalf
+  dealer, // סוחר / מגרש — a car-dealing business
+}
+
+extension SellerTypeX on SellerType {
+  String get label => switch (this) {
+        SellerType.private => 'בעלים פרטי',
+        SellerType.agent => 'סוכן',
+        SellerType.dealer => 'סוחר',
+      };
+}
+
 class CarModel {
   final String id;
   final String plate;
@@ -16,6 +32,7 @@ class CarModel {
   final List<String> photos; // Storage download URLs
   final String reasonForSelling;
   final String description; // seller's free-text "a few words about the car"
+  final SellerType sellerType;
   final DateTime createdAt;
   final int reviewCount;
   // Official fields copied from data.gov.il at listing time (for filtering).
@@ -39,6 +56,7 @@ class CarModel {
     required this.photos,
     required this.reasonForSelling,
     this.description = '',
+    this.sellerType = SellerType.private,
     required this.createdAt,
     this.reviewCount = 0,
     this.fuel = '',
@@ -98,6 +116,10 @@ class CarModel {
       photos: List<String>.from(data['photos'] ?? const []),
       reasonForSelling: data['reasonForSelling'] ?? '',
       description: data['description'] ?? '',
+      sellerType: SellerType.values.firstWhere(
+        (t) => t.name == data['sellerType'],
+        orElse: () => SellerType.private,
+      ),
       createdAt: (data['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
       reviewCount: (data['reviewCount'] ?? 0) is int
           ? (data['reviewCount'] ?? 0)
@@ -123,6 +145,7 @@ class CarModel {
         'photos': photos,
         'reasonForSelling': reasonForSelling,
         'description': description,
+        'sellerType': sellerType.name,
         'createdAt': createdAt,
         'reviewCount': reviewCount,
         'fuel': fuel,

@@ -99,7 +99,8 @@ class CreateListingController extends Notifier<CreateListingState> {
   }
 
   Future<void> publish() async {
-    final car = ref.read(sellerVerificationControllerProvider).carData;
+    final verification = ref.read(sellerVerificationControllerProvider);
+    final car = verification.carData;
     if (car == null) {
       state = state.copyWith(error: 'יש לאמת רכב תחילה (מסך אימות מוכר).');
       return;
@@ -151,6 +152,7 @@ class CreateListingController extends Notifier<CreateListingState> {
         photos: const [],
         reasonForSelling: state.reason.trim(),
         description: state.description.trim(),
+        sellerType: verification.sellerType,
         createdAt: DateTime.now(),
       );
 

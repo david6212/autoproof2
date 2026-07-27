@@ -22,6 +22,12 @@ class AppColors {
   static const textMuted = Color(0xFF5A6169);
   static const textSubtle = Color(0xFF9AA0A6);
 
+  // Seller-type accents (private uses the brand teal)
+  static const agentBlue = Color(0xFF3E6DB5);
+  static const agentBlueBg = Color(0xFFE7EFFA);
+  static const dealerOrange = Color(0xFFB4671C);
+  static const dealerOrangeBg = Color(0xFFFBEFE0);
+
   // Semantic
   static const errorRed = Color(0xFFE5604D);
   static const errorBg = Color(0xFFFCEBEB);

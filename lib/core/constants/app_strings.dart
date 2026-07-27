@@ -8,12 +8,12 @@ class AppStrings {
   static const tagline = 'הכוח בידיים שלך';
 
   // Onboarding
-  static const onboard1Title = 'רק בעלים פרטיים. אף סוחר.';
-  static const onboard1Body = 'כל מוכר מאומת מול רישוי הרכב';
+  static const onboard1Title = 'תמיד תדעו עם מי אתם מדברים';
+  static const onboard1Body = 'כל מוכר מאומת ומסומן — פרטי, סוכן או סוחר';
   static const onboard2Title = 'נתונים רשמיים בלחיצה';
   static const onboard2Body = 'ק"מ, טסט, ריקול — ממשרד התחבורה';
   static const onboard3Title = 'דבר ישירות עם המוכר';
-  static const onboard3Body = 'צ\'אט מאובטח, בלי מתווכים';
+  static const onboard3Body = 'צ\'אט מאובטח וישיר מול המוכר';
   static const continueBtn = 'המשך';
   static const skip = 'דלג';
 
@@ -27,15 +27,15 @@ class AppStrings {
   static const plateNotFound = 'המספר לא נמצא. בדוק את מספר הרישוי.';
   static const idOnlyNote = 'המידע לאימות זהות בלבד 🔒';
   static const verifiedSuccess = 'אומתת בהצלחה';
-  static const verifiedAsPrivate = 'את/ה רשום/ה כבעלים פרטי מאומת';
+  static const verifiedAsPrivate = 'הפרטים שלך אומתו וסומנו באפליקציה';
   static const continueToListing = 'המשך לפרסום המודעה';
 
   // Home
-  static const onlyPrivateSellers = 'רק מוכרים פרטיים';
+  static const onlyPrivateSellers = 'מוכרים מאומתים ומסומנים';
   static const verifiedSellerBadge = 'מוכר מאומת';
 
   // Chat
-  static const chatWithVerified = 'שיחה מול בעלים פרטי מאומת';
+  static const chatWithVerified = 'שיחה מול מוכר מאומת';
 
   // Common states
   static const loading = 'טוען...';

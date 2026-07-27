@@ -85,8 +85,11 @@ class CarNotesSection extends ConsumerWidget {
                           TextStyle(color: AppColors.textMuted, fontSize: 13)),
                 );
               }
+              final flagCount =
+                  notes.where((n) => n.sellerFlag.isNotEmpty).length;
               return Column(
                 children: [
+                  if (flagCount > 0) _FlagBanner(count: flagCount),
                   for (final note in notes)
                     _NoteTile(
                       note: note,
@@ -248,6 +251,29 @@ class _NoteTile extends StatelessWidget {
           Text(note.text,
               style: const TextStyle(
                   fontSize: 13.5, height: 1.35, color: AppColors.textPrimary)),
+          if (note.flagLabel != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.warnBg,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.flag, size: 13, color: AppColors.warnText),
+                  const SizedBox(width: 4),
+                  Text(note.flagLabel!,
+                      style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.warnText)),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -265,6 +291,41 @@ class _NoteTile extends StatelessWidget {
   }
 }
 
+/// Warning shown when visitors have flagged the seller's real type.
+class _FlagBanner extends StatelessWidget {
+  const _FlagBanner({required this.count});
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.warnBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.report_gmailerrorred, size: 18, color: AppColors.warnText),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              count == 1
+                  ? 'מבקר סימן שהמוכר אינו בהכרח פרטי — קראו את ההערות.'
+                  : '$count מבקרים סימנו שהמוכר אינו בהכרח פרטי — קראו את ההערות.',
+              style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.warnText),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _AddNoteSheet extends ConsumerStatefulWidget {
   const _AddNoteSheet({required this.carId});
   final String carId;
@@ -275,6 +336,7 @@ class _AddNoteSheet extends ConsumerStatefulWidget {
 
 class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
   final _controller = TextEditingController();
+  String _flag = ''; // '' | 'agent' | 'dealer'
   bool _saving = false;
 
   @override
@@ -288,7 +350,7 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
     if (text.isEmpty || _saving) return;
     setState(() => _saving = true);
     try {
-      await ref.read(addNoteProvider).call(widget.carId, text);
+      await ref.read(addNoteProvider).call(widget.carId, text, _flag);
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
@@ -336,7 +398,34 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 12),
+          const Text('שמת לב שהמוכר אינו פרטי? (לא חובה)',
+              style: TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final opt in const [
+                ('', 'לא סימנתי'),
+                ('agent', 'בעצם סוכן'),
+                ('dealer', 'בעצם סוחר / מגרש'),
+              ])
+                ChoiceChip(
+                  label: Text(opt.$2),
+                  selected: _flag == opt.$1,
+                  showCheckmark: false,
+                  selectedColor: AppColors.teal,
+                  labelStyle: TextStyle(
+                    fontSize: 12.5,
+                    color: _flag == opt.$1
+                        ? AppColors.white
+                        : AppColors.textMuted,
+                  ),
+                  onSelected: (_) => setState(() => _flag = opt.$1),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.teal,

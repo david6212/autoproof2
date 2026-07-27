@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/models/car_model.dart';
-import 'verified_badge_widget.dart';
+import 'seller_type_badge.dart';
 
 /// A single car listing card used on Home and Saved screens.
 class CarCard extends StatelessWidget {
@@ -118,7 +118,7 @@ class CarCard extends StatelessWidget {
                   ),
                 ),
         ),
-        const Positioned(top: 10, right: 10, child: VerifiedBadge()),
+        Positioned(top: 10, right: 10, child: SellerTypeBadge(type: car.sellerType)),
         if (onToggleSave != null)
           Positioned(
             top: 6,

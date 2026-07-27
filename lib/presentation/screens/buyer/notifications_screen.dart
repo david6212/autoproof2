@@ -22,13 +22,13 @@ class NotificationsScreen extends StatelessWidget {
             _NotificationTile(
               icon: Icons.chat_bubble_outline,
               title: 'הודעה חדשה',
-              body: 'בעלים פרטי מאומת השיב להודעתך',
+              body: 'מוכר מאומת השיב להודעתך',
               unread: true,
             ),
             _NotificationTile(
               icon: Icons.verified_user_outlined,
               title: 'ברוך הבא ל-AutoProof',
-              body: 'רק מוכרים פרטיים מאומתים. הכוח בידיים שלך.',
+              body: 'מוכרים מאומתים ומסומנים. הכוח בידיים שלך.',
               unread: false,
             ),
           ],

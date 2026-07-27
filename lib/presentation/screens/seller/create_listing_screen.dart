@@ -617,7 +617,7 @@ class _NeedVerification extends StatelessWidget {
                     size: 64, color: AppColors.textSubtle),
                 const SizedBox(height: 12),
                 const Text(
-                  'יש לאמת שאתה בעלים פרטי לפני פרסום מודעה',
+                  'יש להשלים אימות מוכר לפני פרסום מודעה',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppColors.textMuted),
                 ),

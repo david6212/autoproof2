@@ -13,7 +13,7 @@ import '../../providers/chat_provider.dart';
 import '../../widgets/buyer_journey_card.dart';
 import '../../widgets/car_notes_section.dart';
 import '../../widgets/login_required_sheet.dart';
-import '../../widgets/verified_badge_widget.dart';
+import '../../widgets/seller_type_badge.dart';
 
 class CarDetailScreen extends ConsumerWidget {
   const CarDetailScreen({super.key, required this.carId});
@@ -117,7 +117,7 @@ class _Content extends ConsumerWidget {
                         _SellerAbout(text: car.description.trim()),
                       ],
                       const SizedBox(height: 16),
-                      _SellerCard(),
+                      _SellerCard(sellerType: car.sellerType),
                       const SizedBox(height: 12),
                       _HistoryButton(plate: car.plate),
                       const SizedBox(height: 16),
@@ -243,29 +243,11 @@ class _GalleryState extends State<_Gallery> {
                   style: const TextStyle(color: AppColors.white, fontSize: 12)),
             ),
           ),
-        // Verified pill (bottom-right).
+        // Seller-type pill (bottom-right).
         Positioned(
           bottom: 12,
           right: 12,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.verified, size: 15, color: AppColors.teal),
-                SizedBox(width: 4),
-                Text('מוכר מאומת',
-                    style: TextStyle(
-                        color: AppColors.tealText,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ),
+          child: SellerTypeBadge(type: widget.car.sellerType),
         ),
         // Page dots (bottom-center).
         if (photos.length > 1)
@@ -553,6 +535,15 @@ class _SellerAbout extends StatelessWidget {
 }
 
 class _SellerCard extends StatelessWidget {
+  const _SellerCard({required this.sellerType});
+  final SellerType sellerType;
+
+  String get _subtitle => switch (sellerType) {
+        SellerType.private => 'בעלים פרטי מאומת מול מרשם הרכב',
+        SellerType.agent => 'סוכן — מוכר בשם בעל הרכב',
+        SellerType.dealer => 'סוחר / מגרש רכב',
+      };
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -561,35 +552,29 @@ class _SellerCard extends StatelessWidget {
         color: AppColors.tealLight,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          CircleAvatar(
+          const CircleAvatar(
             backgroundColor: AppColors.teal,
             child: Icon(Icons.person, color: AppColors.white),
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text('בעלים פרטי',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.tealText)),
-                    SizedBox(width: 6),
-                    Icon(Icons.verified, size: 16, color: AppColors.teal),
-                  ],
-                ),
-                SizedBox(height: 2),
-                Text('בעלים פרטי מאומת · לא סוחר',
-                    style: TextStyle(
+                Text(sellerType.label,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.tealText)),
+                const SizedBox(height: 2),
+                Text(_subtitle,
+                    style: const TextStyle(
                         fontSize: 12, color: AppColors.tealText2)),
               ],
             ),
           ),
-          VerifiedBadge(compact: true),
+          SellerTypeBadge(type: sellerType, compact: true),
         ],
       ),
     );
