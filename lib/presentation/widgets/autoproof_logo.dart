@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 
@@ -45,13 +46,24 @@ class AutoproofLogo extends StatelessWidget {
                     fit: BoxFit.contain,
                   ),
                 ),
-                // Bigger checkmark, scaled to the emblem.
-                const Positioned(
+                // Check on a white badge so it never blends into the shield.
+                Positioned(
                   right: 0,
-                  bottom: 6,
-                  child: CustomPaint(
-                    size: Size(64, 64),
-                    painter: CheckPainter(_green, 1),
+                  bottom: 2,
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: _green, width: 3),
+                    ),
+                    child: const Center(
+                      child: CustomPaint(
+                        size: Size(34, 34),
+                        painter: CheckPainter(_green, 1),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -70,8 +82,8 @@ class AutoproofLogo extends StatelessWidget {
         SizedBox(height: size * 0.12),
         Text(
           'AutoProof',
-          style: TextStyle(
-            fontSize: size * 0.34,
+          style: GoogleFonts.poppins(
+            fontSize: size * 0.32,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
             letterSpacing: -0.5,
