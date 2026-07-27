@@ -90,6 +90,15 @@ service cloud.firestore {
       }
     }
 
+    // ---- Plate history (cross-listing memory, keyed by plate) ----
+    // Public read so buyers see a car's past listings (odometer/price checks).
+    // Snapshots hold NO seller identity; any signed-in user may add one when
+    // publishing a listing.
+    match /plate_history/{plate}/snapshots/{snapshotId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+    }
+
     // ---- Note reports (flags for admin review; no client reads) ----
     match /note_reports/{reportId} {
       allow read: if false;

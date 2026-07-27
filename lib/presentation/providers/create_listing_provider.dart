@@ -158,6 +158,21 @@ class CreateListingController extends Notifier<CreateListingState> {
 
       final id = await carRepo.createListing(model);
 
+      // Record a plate snapshot so this car can be cross-checked if relisted
+      // later (odometer rollback, price history). Best-effort.
+      try {
+        await carRepo.recordPlateSnapshot(
+          plate: model.plate,
+          carId: id,
+          km: model.km,
+          price: model.price,
+          sellerType: model.sellerType,
+          area: model.area,
+        );
+      } catch (_) {
+        // Ignore — history is a bonus, must never block publishing.
+      }
+
       // Best-effort photo upload; if Storage isn't available the listing
       // still publishes (with the placeholder image).
       if (state.photos.isNotEmpty) {

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/car_model.dart';
 import '../models/car_note_model.dart';
+import '../models/plate_snapshot_model.dart';
 
 /// All reads/writes for the cars collection and per-user saved cars.
 class CarRepository {
@@ -172,6 +173,42 @@ class CarRepository {
       'stage': stage,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  // ---- Plate history (cross-listing memory, keyed by plate) ----
+
+  CollectionReference<Map<String, dynamic>> _plateSnapshots(String plate) =>
+      _db.collection('plate_history').doc(plate).collection('snapshots');
+
+  /// Records a snapshot of a listing so the same plate, relisted later by
+  /// anyone, can be cross-checked. Best-effort — never blocks publishing.
+  Future<void> recordPlateSnapshot({
+    required String plate,
+    required String carId,
+    required int km,
+    required double price,
+    required SellerType sellerType,
+    required String area,
+  }) {
+    return _plateSnapshots(plate).add(PlateSnapshot(
+      id: '',
+      carId: carId,
+      km: km,
+      price: price,
+      sellerType: sellerType,
+      area: area,
+      createdAt: DateTime.now(),
+    ).toFirestore());
+  }
+
+  /// All past snapshots for a plate, newest first.
+  Future<List<PlateSnapshot>> getPlateHistory(String plate) async {
+    final snap = await _plateSnapshots(plate)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snap.docs
+        .map((d) => PlateSnapshot.fromFirestore(d.data(), d.id))
+        .toList();
   }
 
   // ---- Saved cars ----

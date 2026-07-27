@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/car_model.dart';
 import '../../data/models/car_note_model.dart';
+import '../../data/models/plate_snapshot_model.dart';
 import '../../data/repositories/car_repository.dart';
 import 'auth_provider.dart';
 
@@ -242,6 +243,14 @@ final toggleSavedProvider =
     if (user == null) return;
     await ref.read(carRepositoryProvider).toggleSaved(user.uid, carId, save);
   };
+});
+
+// ---- Plate history (cross-listing memory) ----
+
+/// Past listing snapshots for a plate (newest first), for buyer cross-checks.
+final plateHistoryProvider =
+    FutureProvider.family<List<PlateSnapshot>, String>((ref, plate) {
+  return ref.watch(carRepositoryProvider).getPlateHistory(plate);
 });
 
 // ---- Buyer journey progress ----

@@ -13,6 +13,7 @@ import '../../providers/chat_provider.dart';
 import '../../widgets/buyer_journey_card.dart';
 import '../../widgets/car_notes_section.dart';
 import '../../widgets/login_required_sheet.dart';
+import '../../widgets/plate_history_card.dart';
 import '../../widgets/seller_type_badge.dart';
 
 class CarDetailScreen extends ConsumerWidget {
@@ -116,6 +117,14 @@ class _Content extends ConsumerWidget {
                         const SizedBox(height: 14),
                         _SellerAbout(text: car.description.trim()),
                       ],
+                      const SizedBox(height: 14),
+                      // Cross-listing memory: past listings for this plate +
+                      // odometer-rollback flag (renders nothing if first time).
+                      PlateHistoryCard(
+                        plate: car.plate,
+                        currentCarId: car.id,
+                        currentKm: car.km,
+                      ),
                       const SizedBox(height: 16),
                       _SellerCard(sellerType: car.sellerType),
                       const SizedBox(height: 12),
