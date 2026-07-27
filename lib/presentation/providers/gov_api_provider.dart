@@ -8,6 +8,18 @@ final govApiRepositoryProvider = Provider<GovApiRepository>((ref) {
   return GovApiRepository();
 });
 
+/// Fetches official gov data for a plate (used by the car page to cross-check
+/// the odometer). Returns null on any failure — it's an enhancement, never a
+/// blocker.
+final govDataForPlateProvider =
+    FutureProvider.family<GovData?, String>((ref, plate) async {
+  try {
+    return await ref.read(govApiRepositoryProvider).lookupPlate(plate);
+  } catch (_) {
+    return null;
+  }
+});
+
 /// Holds the result of a single plate lookup.
 /// - AsyncData(null): idle, nothing searched yet
 /// - AsyncLoading: searching
