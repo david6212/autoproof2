@@ -31,9 +31,12 @@ final inspectionCentersProvider =
 
   return centers.map((c) {
     final coord = geo[c.geoKey];
-    if (coord is List && coord.length == 2) {
+    if (coord is List && coord.length >= 2) {
       return c.withCoords(
-          (coord[0] as num).toDouble(), (coord[1] as num).toDouble());
+        (coord[0] as num).toDouble(),
+        (coord[1] as num).toDouble(),
+        coord.length > 2 ? '${coord[2]}' : 'city',
+      );
     }
     return c;
   }).toList();

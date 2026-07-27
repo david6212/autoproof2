@@ -13,6 +13,10 @@ class InspectionCenter {
   final double? lat;
   final double? lng;
 
+  /// How precise [lat]/[lng] are: 'street' (exact address) or 'city' (the town
+  /// centre, used when the address couldn't be resolved).
+  final String accuracy;
+
   const InspectionCenter({
     required this.id,
     required this.name,
@@ -21,6 +25,7 @@ class InspectionCenter {
     required this.phone,
     this.lat,
     this.lng,
+    this.accuracy = 'city',
   });
 
   factory InspectionCenter.fromApi(Map<String, dynamic> r) {
@@ -34,7 +39,8 @@ class InspectionCenter {
     );
   }
 
-  InspectionCenter withCoords(double? lat, double? lng) => InspectionCenter(
+  InspectionCenter withCoords(double? lat, double? lng, String accuracy) =>
+      InspectionCenter(
         id: id,
         name: name,
         city: city,
@@ -42,9 +48,13 @@ class InspectionCenter {
         phone: phone,
         lat: lat,
         lng: lng,
+        accuracy: accuracy,
       );
 
   bool get hasCoords => lat != null && lng != null;
+
+  /// True when the pin sits on the real address rather than the town centre.
+  bool get isExact => accuracy == 'street';
 
   /// Key matching the geocode asset (mirrors the Python `normkey`): name+city
   /// with whitespace and punctuation stripped.

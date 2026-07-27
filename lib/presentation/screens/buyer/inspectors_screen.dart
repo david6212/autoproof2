@@ -36,9 +36,49 @@ final userLocationProvider = FutureProvider<LatLng?>((ref) async {
 const _israelCenter = LatLng(31.7, 34.9);
 const _distance = Distance();
 
+/// Below this zoom the map groups centers into one bubble per city (with a
+/// count); at or above it, every center gets its own street-level pin.
+const _cityZoom = 11.0;
+
 String _fmtDistance(double meters) => meters < 1000
     ? '${meters.round()} מ׳'
     : '${(meters / 1000).toStringAsFixed(1)} ק״מ';
+
+/// All inspection centers of one city, collapsed into a single map bubble.
+class _CityGroup {
+  _CityGroup(this.city, this.centers);
+
+  final String city;
+  final List<InspectionCenter> centers;
+
+  int get count => centers.length;
+
+  List<LatLng> get points =>
+      [for (final c in centers) LatLng(c.lat!, c.lng!)];
+
+  /// Average position of the city's centers — where the bubble sits.
+  LatLng get center {
+    var lat = 0.0, lng = 0.0;
+    for (final c in centers) {
+      lat += c.lat!;
+      lng += c.lng!;
+    }
+    return LatLng(lat / centers.length, lng / centers.length);
+  }
+
+  static List<_CityGroup> from(List<InspectionCenter> centers) {
+    final byCity = <String, List<InspectionCenter>>{};
+    for (final c in centers.where((c) => c.hasCoords)) {
+      byCity.putIfAbsent(c.city, () => []).add(c);
+    }
+    final groups = [
+      for (final e in byCity.entries) _CityGroup(e.key, e.value),
+    ];
+    // Biggest clusters drawn last so they sit on top.
+    groups.sort((a, b) => a.count.compareTo(b.count));
+    return groups;
+  }
+}
 
 /// Directory + live map of licensed pre-purchase inspection centers ("מכוני
 /// בדיקה") from official Ministry of Transport data. Opens on a map centered on
@@ -60,6 +100,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
   bool _mapMode = true;
   bool _movedToUser = false;
   InspectionCenter? _selected;
+  double _zoom = 7;
 
   @override
   void initState() {
@@ -178,6 +219,20 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
     );
   }
 
+  /// Zooms the map to fit every center of a tapped city, revealing its streets.
+  void _zoomToCity(_CityGroup group) {
+    setState(() => _selected = null);
+    if (group.count == 1) {
+      _mapController.move(group.center, 15);
+      return;
+    }
+    _mapController.fitCamera(CameraFit.coordinates(
+      coordinates: group.points,
+      padding: const EdgeInsets.all(60),
+      maxZoom: 15,
+    ));
+  }
+
   Widget _buildMap(List<InspectionCenter> list, LatLng? me) {
     final withCoords = list.where((c) => c.hasCoords).toList();
     final initial = me ??
@@ -185,6 +240,8 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             ? LatLng(withCoords.first.lat!, withCoords.first.lng!)
             : _israelCenter);
     final initialZoom = me != null ? 12.0 : (withCoords.isNotEmpty ? 11.0 : 7.0);
+    // Far out → one bubble per city; close in → individual street pins.
+    final clustered = _zoom < _cityZoom;
 
     return Stack(
       children: [
@@ -194,6 +251,19 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             initialCenter: initial,
             initialZoom: initialZoom,
             onTap: (_, __) => setState(() => _selected = null),
+            onPositionChanged: (camera, _) {
+              // Only rebuild when we cross the clustering threshold. The
+              // callback can fire during layout, so defer the rebuild to the
+              // next frame rather than calling setState mid-build.
+              final wasClustered = _zoom < _cityZoom;
+              final nowClustered = camera.zoom < _cityZoom;
+              _zoom = camera.zoom;
+              if (wasClustered != nowClustered) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) setState(() {});
+                });
+              }
+            },
           ),
           children: [
             TileLayer(
@@ -202,23 +272,35 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             ),
             MarkerLayer(
               markers: [
-                for (final c in withCoords)
-                  Marker(
-                    point: LatLng(c.lat!, c.lng!),
-                    width: 40,
-                    height: 40,
-                    alignment: Alignment.topCenter,
-                    child: GestureDetector(
-                      onTap: () => setState(() => _selected = c),
-                      child: Icon(
-                        Icons.location_on,
-                        size: _selected?.id == c.id ? 40 : 32,
-                        color: _selected?.id == c.id
-                            ? AppColors.dealerOrange
-                            : AppColors.teal,
+                if (clustered)
+                  for (final g in _CityGroup.from(withCoords))
+                    Marker(
+                      point: g.center,
+                      width: 76,
+                      height: 66,
+                      child: GestureDetector(
+                        onTap: () => _zoomToCity(g),
+                        child: _CityBubble(group: g),
+                      ),
+                    )
+                else
+                  for (final c in withCoords)
+                    Marker(
+                      point: LatLng(c.lat!, c.lng!),
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.topCenter,
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selected = c),
+                        child: Icon(
+                          Icons.location_on,
+                          size: _selected?.id == c.id ? 40 : 32,
+                          color: _selected?.id == c.id
+                              ? AppColors.dealerOrange
+                              : AppColors.teal,
+                        ),
                       ),
                     ),
-                  ),
                 if (me != null)
                   Marker(
                     point: me,
@@ -230,6 +312,13 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             ),
           ],
         ),
+        if (clustered)
+          const Positioned(
+            bottom: 16,
+            left: 0,
+            right: 0,
+            child: Center(child: _ZoomHint()),
+          ),
         // Attribution (OSM tile usage requires credit).
         const Positioned(
           bottom: 2,
@@ -348,6 +437,100 @@ class _SearchBar extends StatelessWidget {
             borderSide: BorderSide.none,
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// One city collapsed into a counted bubble (shown when zoomed out). Tapping it
+/// zooms in to that city's individual centers.
+class _CityBubble extends StatelessWidget {
+  const _CityBubble({required this.group});
+  final _CityGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    // Bigger cities get a slightly bigger bubble.
+    final size = group.count >= 10
+        ? 44.0
+        : group.count >= 5
+            ? 40.0
+            : 36.0;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: AppColors.teal,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.white, width: 2.5),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2)),
+            ],
+          ),
+          child: Center(
+            child: Text('${group.count}',
+                style: const TextStyle(
+                    color: AppColors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15)),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+          decoration: BoxDecoration(
+            color: AppColors.white.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text(
+            group.city,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                fontSize: 9.5,
+                fontWeight: FontWeight.bold,
+                color: AppColors.tealText),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Nudge telling the user that zooming in reveals individual centers.
+class _ZoomHint extends StatelessWidget {
+  const _ZoomHint();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppColors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12), blurRadius: 8),
+        ],
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.zoom_in, size: 15, color: AppColors.teal),
+          SizedBox(width: 5),
+          Text('הקישו על עיר או התקרבו כדי לראות את המכונים',
+              style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.tealText)),
+        ],
       ),
     );
   }
@@ -473,6 +656,12 @@ class _CenterCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                    if (center.hasCoords && !center.isExact) ...[
+                      const SizedBox(height: 3),
+                      const Text('הסיכה במרכז העיר — התקשרו לכתובת המדויקת',
+                          style: TextStyle(
+                              fontSize: 11, color: AppColors.textSubtle)),
+                    ],
                   ],
                 ),
               ),
