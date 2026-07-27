@@ -41,6 +41,9 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   google_fonts: ^6.2.0
   url_launcher: ^6.3.2
+  flutter_map: ^8.3.1
+  latlong2: ^0.10.1
+  geolocator: ^14.0.2
 
 dev_dependencies:
   flutter_test:
@@ -54,3 +57,4 @@ flutter:
     - assets/logo_emblem.png
     - assets/layers/car.png
     - assets/google_g.png
+    - assets/data/inspection_centers_geo.json

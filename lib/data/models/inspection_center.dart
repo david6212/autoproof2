@@ -8,12 +8,19 @@ class InspectionCenter {
   final String address;
   final String phone;
 
+  /// Coordinates from the bundled geocode asset — null when we couldn't place
+  /// it (then it won't get a map pin, but still shows in the list).
+  final double? lat;
+  final double? lng;
+
   const InspectionCenter({
     required this.id,
     required this.name,
     required this.city,
     required this.address,
     required this.phone,
+    this.lat,
+    this.lng,
   });
 
   factory InspectionCenter.fromApi(Map<String, dynamic> r) {
@@ -26,6 +33,26 @@ class InspectionCenter {
       phone: s(r['telephone']),
     );
   }
+
+  InspectionCenter withCoords(double? lat, double? lng) => InspectionCenter(
+        id: id,
+        name: name,
+        city: city,
+        address: address,
+        phone: phone,
+        lat: lat,
+        lng: lng,
+      );
+
+  bool get hasCoords => lat != null && lng != null;
+
+  /// Key matching the geocode asset (mirrors the Python `normkey`): name+city
+  /// with whitespace and punctuation stripped.
+  String get geoKey =>
+      '${_norm(name)}|${_norm(city)}';
+
+  static String _norm(String s) =>
+      s.replaceAll(RegExp('''[\\s'".,\\-)(/]'''), '');
 
   bool get hasPhone => phone.isNotEmpty;
 

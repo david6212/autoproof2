@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/gov_data_model.dart';
@@ -9,11 +12,31 @@ final govApiRepositoryProvider = Provider<GovApiRepository>((ref) {
   return GovApiRepository();
 });
 
-/// Licensed pre-purchase inspection centers nationwide (official gov data).
-/// Cached for the session — the list rarely changes.
+/// Licensed pre-purchase inspection centers nationwide (official gov data),
+/// enriched with coordinates from the bundled geocode asset so they can be
+/// pinned on a map. Cached for the session — the list rarely changes.
 final inspectionCentersProvider =
     FutureProvider<List<InspectionCenter>>((ref) async {
-  return ref.read(govApiRepositoryProvider).inspectionCenters();
+  final centers = await ref.read(govApiRepositoryProvider).inspectionCenters();
+
+  // Attach pre-geocoded coordinates (asset keyed by normalized name|city).
+  Map<String, dynamic> geo = const {};
+  try {
+    final raw =
+        await rootBundle.loadString('assets/data/inspection_centers_geo.json');
+    geo = jsonDecode(raw) as Map<String, dynamic>;
+  } catch (_) {
+    // No asset / parse error → centers just render without pins.
+  }
+
+  return centers.map((c) {
+    final coord = geo[c.geoKey];
+    if (coord is List && coord.length == 2) {
+      return c.withCoords(
+          (coord[0] as num).toDouble(), (coord[1] as num).toDouble());
+    }
+    return c;
+  }).toList();
 });
 
 /// Fetches official gov data for a plate (used by the car page to cross-check
