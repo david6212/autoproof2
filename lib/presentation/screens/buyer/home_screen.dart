@@ -106,6 +106,11 @@ class _Header extends StatelessWidget {
                 ),
               ),
               IconButton(
+                icon: const Icon(Icons.info_outline, color: AppColors.white),
+                tooltip: 'אודות AutoProof',
+                onPressed: () => context.push('/about'),
+              ),
+              IconButton(
                 icon: const Icon(Icons.notifications_none,
                     color: AppColors.white),
                 onPressed: () => context.push('/notifications'),
