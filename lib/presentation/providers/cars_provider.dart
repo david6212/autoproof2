@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/car_model.dart';
 import '../../data/models/car_note_model.dart';
 import '../../data/models/plate_snapshot_model.dart';
+import '../../data/models/seller_encounter.dart';
 import '../../data/repositories/car_repository.dart';
 import 'auth_provider.dart';
 
@@ -322,5 +323,24 @@ final reportNoteProvider =
           noteId: noteId,
           reporterUid: user.uid,
         );
+  };
+});
+
+/// Live crowd tally of who buyers actually met (private/agent/dealer) for a car.
+final encounterTallyProvider =
+    StreamProvider.family<EncounterTally, String>((ref, carId) {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid;
+  return ref.watch(carRepositoryProvider).streamEncounters(carId, uid);
+});
+
+/// Records the current buyer's report of who they met. No-op if not signed in.
+final recordEncounterProvider =
+    Provider<Future<void> Function(String carId, SellerType type)>((ref) {
+  return (carId, type) async {
+    final user = ref.read(authStateProvider).valueOrNull;
+    if (user == null) return;
+    await ref
+        .read(carRepositoryProvider)
+        .recordEncounter(carId, user.uid, type);
   };
 });

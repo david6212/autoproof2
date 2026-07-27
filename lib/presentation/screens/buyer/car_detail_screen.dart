@@ -15,6 +15,7 @@ import '../../widgets/car_notes_section.dart';
 import '../../widgets/gov_red_flags_card.dart';
 import '../../widgets/login_required_sheet.dart';
 import '../../widgets/plate_history_card.dart';
+import '../../widgets/seller_encounter_card.dart';
 import '../../widgets/seller_type_badge.dart';
 
 class CarDetailScreen extends ConsumerWidget {
@@ -132,6 +133,9 @@ class _Content extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       _SellerCard(sellerType: car.sellerType),
+                      const SizedBox(height: 16),
+                      // Crowd trust: buyers report who they actually met.
+                      SellerEncounterCard(car: car),
                       const SizedBox(height: 12),
                       _HistoryButton(plate: car.plate),
                       const SizedBox(height: 16),

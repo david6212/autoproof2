@@ -66,6 +66,14 @@ service cloud.firestore {
         allow delete: if isSignedIn()
                       && resource.data.authorUid == request.auth.uid;
       }
+
+      // Seller-type encounters — buyers report who they actually met. Public
+      // read (the tally is the point); the doc is keyed by the reporter's uid,
+      // so each buyer writes only their own single report.
+      match /encounters/{uid} {
+        allow read: if true;
+        allow write: if isSignedIn() && request.auth.uid == uid;
+      }
     }
 
     // ---- Chats (private, participants only) ----
