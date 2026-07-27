@@ -78,7 +78,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
               const SizedBox(height: 12),
               // Same mark as the splash screen (shield + car + check).
-              const AutoproofLogo(size: 92),
+              const AutoproofLogo(size: 132, withWordmark: true),
               const SizedBox(height: 20),
               Text(
                 isCodeStep ? 'הזן את הקוד שקיבלת' : 'התחברות',

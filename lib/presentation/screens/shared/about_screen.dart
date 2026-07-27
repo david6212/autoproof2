@@ -72,18 +72,8 @@ class _Header extends StatelessWidget {
             ),
           ),
           // Splash-style brand mark (shield + car + check).
-          const AutoproofLogo(size: 96),
-          const SizedBox(height: 10),
-          const Text(
-            AppStrings.appName,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-              color: AppColors.tealText,
-            ),
-          ),
-          const SizedBox(height: 4),
+          const AutoproofLogo(size: 120, withWordmark: true),
+          const SizedBox(height: 8),
           const Text(
             AppStrings.tagline,
             style: TextStyle(color: AppColors.teal, fontSize: 15),
