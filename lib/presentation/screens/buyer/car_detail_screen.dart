@@ -12,6 +12,7 @@ import '../../providers/cars_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../widgets/buyer_journey_card.dart';
 import '../../widgets/car_notes_section.dart';
+import '../../widgets/gov_red_flags_card.dart';
 import '../../widgets/login_required_sheet.dart';
 import '../../widgets/plate_history_card.dart';
 import '../../widgets/seller_type_badge.dart';
@@ -105,6 +106,10 @@ class _Content extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       _StatsRow(car: car),
+                      const SizedBox(height: 14),
+                      // Official red flags (accident / recall / off-road),
+                      // pulled forward from the full history screen.
+                      GovRedFlagsCard(plate: car.plate),
                       if (car.fuel.isNotEmpty ||
                           car.color.isNotEmpty ||
                           car.ownership.isNotEmpty) ...[
