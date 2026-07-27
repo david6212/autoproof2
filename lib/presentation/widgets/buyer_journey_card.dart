@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -26,6 +27,7 @@ class _JourneyStep {
     required this.subtitle,
     this.reports = const [],
     this.automation,
+    this.findInspection = false,
   });
 
   final String title;
@@ -36,6 +38,9 @@ class _JourneyStep {
 
   /// Optional automation note shown when an automated action fires at this step.
   final String? automation;
+
+  /// When true, shows an in-app link to the licensed inspection-center directory.
+  final bool findInspection;
 }
 
 /// "מסע הקנייה" — a vertical stepper the buyer sees on the car page.
@@ -57,6 +62,7 @@ class BuyerJourneyCard extends ConsumerWidget {
     _JourneyStep(
       title: 'בדיקה פיזית',
       subtitle: 'צפייה ברכב או במוסך',
+      findInspection: true,
     ),
     _JourneyStep(
       title: 'בדיקת עומק לפני החלטה',
@@ -120,6 +126,7 @@ class BuyerJourneyCard extends ConsumerWidget {
             _StepRow(
               step: _steps[i],
               index: i,
+              carId: carId,
               isDone: i < currentStage,
               isActive: i == currentStage,
               isLast: i == _steps.length - 1,
@@ -170,6 +177,7 @@ class _StepRow extends StatelessWidget {
   const _StepRow({
     required this.step,
     required this.index,
+    required this.carId,
     required this.isDone,
     required this.isActive,
     required this.isLast,
@@ -179,6 +187,7 @@ class _StepRow extends StatelessWidget {
 
   final _JourneyStep step;
   final int index;
+  final String carId;
   final bool isDone;
   final bool isActive;
   final bool isLast;
@@ -248,6 +257,23 @@ class _StepRow extends StatelessWidget {
                   Text(step.subtitle,
                       style: const TextStyle(
                           fontSize: 12.5, color: AppColors.textMuted)),
+                  if (step.findInspection) ...[
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.teal,
+                        side: const BorderSide(color: AppColors.teal),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.build_circle_outlined, size: 17),
+                      label: const Text('מצא מכון בדיקה מורשה',
+                          style: TextStyle(fontSize: 12.5)),
+                      onPressed: () => context.push('/inspectors/$carId'),
+                    ),
+                  ],
                   for (final report in step.reports) ...[
                     const SizedBox(height: 8),
                     _ReportButton(report: report),

@@ -17,6 +17,13 @@ class ApiConstants {
   static const disabilityTagResourceId =
       'c8b9f9c8-4612-4068-934f-d4acd2e3c06e'; // disability parking tag
 
+  // Licensed garages & inspection institutes ("מוסכים ומכוני רישוי").
+  static const garagesResourceId = 'bb68386a-a331-4bbc-b668-bba2766d517d';
+
+  // The `miktzoa` (specialty) value marking a pre-purchase/sale inspection
+  // center — exactly the "בדיקת רכב לפני קנייה" a buyer needs (~134 nationwide).
+  static const inspectionMiktzoa = 'בדיקות-רכב )קניה ומכירה)';
+
   // Usage:
   // GET https://data.gov.il/api/3/action/datastore_search
   //   ?resource_id=053cea08-09bc-40ec-8f7a-156f0677aff3

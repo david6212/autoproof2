@@ -1,11 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/gov_data_model.dart';
+import '../../data/models/inspection_center.dart';
 import '../../data/repositories/gov_api_repository.dart';
 import '../../data/sources/remote/gov_api_service.dart';
 
 final govApiRepositoryProvider = Provider<GovApiRepository>((ref) {
   return GovApiRepository();
+});
+
+/// Licensed pre-purchase inspection centers nationwide (official gov data).
+/// Cached for the session — the list rarely changes.
+final inspectionCentersProvider =
+    FutureProvider<List<InspectionCenter>>((ref) async {
+  return ref.read(govApiRepositoryProvider).inspectionCenters();
 });
 
 /// Fetches official gov data for a plate (used by the car page to cross-check

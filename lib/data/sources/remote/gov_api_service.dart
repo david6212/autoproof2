@@ -53,6 +53,36 @@ class GovApiService {
     }
   }
 
+  /// Fetches licensed pre-purchase inspection centers ("מכוני בדיקה") from the
+  /// Ministry of Transport garages dataset, filtered to the pre-sale-inspection
+  /// specialty. Returns the raw record maps, or throws GovApiException.
+  Future<List<Map<String, dynamic>>> fetchInspectionCenters() async {
+    try {
+      final res = await _dio.get(
+        ApiConstants.govApiBase,
+        queryParameters: {
+          'resource_id': ApiConstants.garagesResourceId,
+          'filters': '{"miktzoa":"${ApiConstants.inspectionMiktzoa}"}',
+          'limit': 500,
+        },
+      );
+      final data = res.data;
+      if (data is! Map || data['success'] != true) {
+        throw GovApiException('שירות הנתונים הממשלתי אינו זמין כרגע.');
+      }
+      final records = (data['result']?['records'] as List?) ?? const [];
+      return records
+          .map((r) => Map<String, dynamic>.from(r as Map))
+          .toList();
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw GovApiException('הבקשה ארכה מדי. בדוק את החיבור לאינטרנט.');
+      }
+      throw GovApiException('שגיאת רשת. נסה שוב.');
+    }
+  }
+
   /// Best-effort fetch of the vehicle-history record (km at last test,
   /// structural change...). Returns null if missing — that's normal.
   Future<Map<String, dynamic>?> fetchHistory(String plateDigits) async {

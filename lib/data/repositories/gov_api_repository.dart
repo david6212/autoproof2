@@ -1,5 +1,6 @@
 import '../../core/utils/plate_formatter.dart';
 import '../models/gov_data_model.dart';
+import '../models/inspection_center.dart';
 import '../sources/remote/gov_api_service.dart';
 
 /// Turns a raw plate string into a parsed GovData object.
@@ -47,5 +48,20 @@ class GovApiRepository {
       offRoad: offRoad,
       disabilityTag: disabilityTag,
     );
+  }
+
+  /// Licensed pre-purchase inspection centers, cleaned and sorted by city then
+  /// name. Drops records with no usable name.
+  Future<List<InspectionCenter>> inspectionCenters() async {
+    final raw = await _service.fetchInspectionCenters();
+    final list = raw
+        .map(InspectionCenter.fromApi)
+        .where((c) => c.name.isNotEmpty)
+        .toList();
+    list.sort((a, b) {
+      final byCity = a.city.compareTo(b.city);
+      return byCity != 0 ? byCity : a.name.compareTo(b.name);
+    });
+    return list;
   }
 }
