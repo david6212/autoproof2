@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_text.dart';
 import '../../data/models/car_note_model.dart';
 import '../providers/analytics_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cars_provider.dart';
+import 'app_card.dart';
 import 'login_required_sheet.dart';
 
 /// "הערות מבקרים" — crowdsourced notes from people who went to see the car,
@@ -20,51 +22,19 @@ class CarNotesSection extends ConsumerWidget {
     final notesAsync = ref.watch(carNotesProvider(carId));
     final myUid = ref.watch(authStateProvider).valueOrNull?.uid;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
+    return AppSectionCard(
+      icon: Icons.rate_review_outlined,
+      title: 'הערות מבקרים',
+      subtitle: 'מה שמבקרים קודמים ראו ברכב — עוזר לך להחליט.',
+      trailing: notesAsync.maybeWhen(
+        data: (notes) => notes.isEmpty
+            ? const SizedBox.shrink()
+            : AppCountBadge(count: notes.length),
+        orElse: () => const SizedBox.shrink(),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.rate_review_outlined,
-                  size: 18, color: AppColors.teal),
-              const SizedBox(width: 6),
-              const Text('הערות מבקרים',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: AppColors.textPrimary)),
-              const SizedBox(width: 6),
-              notesAsync.maybeWhen(
-                data: (notes) => notes.isEmpty
-                    ? const SizedBox.shrink()
-                    : Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: AppColors.tealLight,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text('${notes.length}',
-                            style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.tealText)),
-                      ),
-                orElse: () => const SizedBox.shrink(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          const Text('מה שמבקרים קודמים ראו ברכב — עוזר לך להחליט.',
-              style: TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
-          const SizedBox(height: 12),
           notesAsync.when(
             loading: () => const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
@@ -75,14 +45,13 @@ class CarNotesSection extends ConsumerWidget {
                       child: CircularProgressIndicator(strokeWidth: 2))),
             ),
             error: (_, __) => const Text('לא ניתן לטעון הערות כרגע.',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                style: AppText.bodySmMuted),
             data: (notes) {
               if (notes.isEmpty) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 6),
                   child: Text('עדיין אין הערות. היה הראשון לשתף מה ראית 👀',
-                      style:
-                          TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                      style: AppText.bodySmMuted),
                 );
               }
               final flagCount =
@@ -106,17 +75,14 @@ class CarNotesSection extends ConsumerWidget {
             },
           ),
           const SizedBox(height: 12),
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.teal,
-              side: const BorderSide(color: AppColors.teal),
-              minimumSize: const Size.fromHeight(46),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+          // Styling comes from outlinedButtonTheme; only the width is local.
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.add_comment_outlined, size: 19),
+              label: const Text('הוסף הערה'),
+              onPressed: () => _onAdd(context, ref),
             ),
-            icon: const Icon(Icons.add_comment_outlined, size: 19),
-            label: const Text('הוסף הערה'),
-            onPressed: () => _onAdd(context, ref),
           ),
         ],
       ),

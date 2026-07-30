@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_text.dart';
 import '../../data/models/car_model.dart';
 import '../../data/models/seller_encounter.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cars_provider.dart';
+import 'app_card.dart';
 import 'login_required_sheet.dart';
 
 /// "עם מי נפגשתם בקנייה?" — buyers who met the seller report whether they were
@@ -39,45 +41,22 @@ class SellerEncounterCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tallyAsync = ref.watch(encounterTallyProvider(car.id));
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.groups_outlined, size: 18, color: AppColors.teal),
-              SizedBox(width: 6),
-              Text('עם מי נפגשתם בקנייה?',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: AppColors.textPrimary)),
-            ],
-          ),
-          const SizedBox(height: 4),
-          const Text(
-              'האמינות בידיים שלכם — פגשתם את המוכר? דווחו מי הוא באמת. כך כל קונה הבא יודע.',
-              style: TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
-          const SizedBox(height: 12),
-          tallyAsync.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2)),
-            ),
-            error: (_, __) => const Text('לא ניתן לטעון דיווחים כרגע.',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
-            data: (tally) => _body(context, ref, tally),
-          ),
-        ],
+    return AppSectionCard(
+      icon: Icons.groups_outlined,
+      title: 'עם מי נפגשתם בקנייה?',
+      subtitle:
+          'האמינות בידיים שלכם — פגשתם את המוכר? דווחו מי הוא באמת. כך כל קונה הבא יודע.',
+      child: tallyAsync.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+        error: (_, __) =>
+            const Text('לא ניתן לטעון דיווחים כרגע.', style: AppText.bodySmMuted),
+        data: (tally) => _body(context, ref, tally),
       ),
     );
   }

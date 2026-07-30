@@ -8,7 +8,9 @@ import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_dimens.dart';
 import '../../../data/models/inspection_center.dart';
+import '../../widgets/app_card.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/gov_api_provider.dart';
 
@@ -705,22 +707,10 @@ class _CenterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: elevated ? 0 : 12),
+    return AppCard(
+      margin: EdgeInsets.only(bottom: elevated ? 0 : AppSpace.md),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
-        boxShadow: elevated
-            ? [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4)),
-              ]
-            : null,
-      ),
+      elevated: elevated,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

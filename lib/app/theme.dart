@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/theme/app_dimens.dart';
 
 /// AutoProof app theme — Heebo font, teal brand palette, clean fintech feel.
 class AppTheme {
@@ -42,11 +43,43 @@ class AppTheme {
           ),
         ),
       ),
+      // Filled/outlined buttons were styled inline at ~24 call sites; these
+      // defaults mean a plain FilledButton/OutlinedButton already looks right.
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.teal,
+          foregroundColor: AppColors.white,
+          // Height only — `Size.fromHeight` would set an INFINITE minimum
+          // width and stretch every button, including dialog actions.
+          minimumSize: const Size(64, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          textStyle: GoogleFonts.heebo(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.teal,
+          side: const BorderSide(color: AppColors.teal),
+          minimumSize: const Size(64, 46),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          textStyle: GoogleFonts.heebo(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
       cardTheme: CardThemeData(
         color: AppColors.white,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           side: const BorderSide(color: AppColors.cardBorder),
         ),
       ),

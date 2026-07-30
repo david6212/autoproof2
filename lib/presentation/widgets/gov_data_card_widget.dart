@@ -3,8 +3,10 @@ import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/theme/app_dimens.dart';
 import '../../core/utils/plate_formatter.dart';
 import '../../data/models/gov_data_model.dart';
+import 'app_card.dart';
 
 /// Displays official government vehicle data:
 /// official-source banner → dark header → license-validity strip →
@@ -385,13 +387,9 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppCard(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
+      radius: AppRadius.md,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -450,12 +448,9 @@ class _FullSpecs extends StatelessWidget {
       ('מספר שלדה', data.chassis, true),
     ].where((r) => r.$2.isNotEmpty && r.$2 != '—').toList();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
+    return AppCard(
+      padding: EdgeInsets.zero,
+      radius: AppRadius.md,
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
@@ -543,13 +538,9 @@ class _SafetyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppCard(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
+      radius: AppRadius.md,
       child: Row(
         children: [
           const Icon(Icons.shield_outlined, color: AppColors.teal),

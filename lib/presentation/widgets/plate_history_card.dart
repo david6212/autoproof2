@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../providers/cars_provider.dart';
 import '../providers/gov_api_provider.dart';
+import 'app_card.dart';
 
 /// Odometer cross-check + cross-listing memory for a plate. Compares the
 /// current listing's km against BOTH the official gov odometer (last test) and
@@ -42,29 +43,12 @@ class PlateHistoryCard extends ConsumerWidget {
     // Nothing to show if there's neither an official reading nor prior listings.
     if (govKm == null && previous.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
+    return AppSectionCard(
+      icon: Icons.speed,
+      title: 'בדיקת קילומטראז\' והיסטוריה',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              Icon(Icons.speed, size: 18, color: AppColors.teal),
-              SizedBox(width: 6),
-              Text('בדיקת קילומטראז\' והיסטוריה',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: AppColors.textPrimary)),
-            ],
-          ),
-          const SizedBox(height: 12),
-
           // Rollback warning (from official record and/or a past listing).
           if (govRollback || histRollback) ...[
             Container(

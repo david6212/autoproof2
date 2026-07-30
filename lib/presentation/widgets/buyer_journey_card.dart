@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cars_provider.dart';
+import 'app_card.dart';
 import 'login_required_sheet.dart';
 
 /// External deep-check report the buyer can order from a partner service.
@@ -89,39 +90,22 @@ class BuyerJourneyCard extends ConsumerWidget {
     final currentStage = ref.watch(journeyStageProvider(carId)).valueOrNull ?? 1;
     final completed = currentStage >= _steps.length;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
+    return AppSectionCard(
+      icon: Icons.route_outlined,
+      title: 'מסע הקנייה',
+      trailing: completed
+          ? TextButton(
+              onPressed: () => ref.read(setJourneyStageProvider).call(carId, 1),
+              style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textMuted,
+                  minimumSize: const Size(0, 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 6)),
+              child: const Text('אפס', style: TextStyle(fontSize: 12)),
+            )
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.route_outlined, size: 18, color: AppColors.teal),
-              const SizedBox(width: 6),
-              const Text('מסע הקנייה',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: AppColors.textPrimary)),
-              const Spacer(),
-              if (completed)
-                TextButton(
-                  onPressed: () =>
-                      ref.read(setJourneyStageProvider).call(carId, 1),
-                  style: TextButton.styleFrom(
-                      foregroundColor: AppColors.textMuted,
-                      minimumSize: const Size(0, 0),
-                      padding: const EdgeInsets.symmetric(horizontal: 6)),
-                  child: const Text('אפס', style: TextStyle(fontSize: 12)),
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
           for (var i = 0; i < _steps.length; i++)
             _StepRow(
               step: _steps[i],
