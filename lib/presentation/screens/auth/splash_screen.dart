@@ -5,10 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/autoproof_logo.dart';
+import '../../widgets/klaro_logo.dart';
 
-/// Animated AutoProof splash — a Flutter port of the GSAP prototype:
+/// Animated KLARO splash — a Flutter port of the GSAP prototype:
 /// shield scales in → car drops into the shield → AUTO/PROOF converge →
 /// the checkmark draws itself on. Then hold and fade out to the app.
 class SplashScreen extends ConsumerStatefulWidget {
@@ -138,28 +139,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     ),
                   ),
                   const SizedBox(height: 22),
-                  // ---- Wordmark: AUTO from left, PROOF from right ----
-                  // Force LTR so "AUTO" stays left of "PROOF" (the app is RTL).
+                  // ---- Wordmark: KLARO's letters draw together ----
+                  // One word, so the old two-halves convergence is replaced by
+                  // letter-spacing settling from wide to tight as it fades in.
+                  // Force LTR — the Latin mark must not flip in this RTL app.
                   Directionality(
                     textDirection: TextDirection.ltr,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Opacity(
-                          opacity: _text.value.clamp(0.0, 1.0),
-                          child: Transform.translate(
-                            offset: Offset(-120 * (1 - _text.value), 0),
-                            child: Text('AUTO', style: _wordStyle),
-                          ),
+                    child: Opacity(
+                      opacity: _text.value.clamp(0.0, 1.0),
+                      child: Text(
+                        AppStrings.appName,
+                        style: _wordStyle.copyWith(
+                          letterSpacing: 4 + 16 * (1 - _text.value),
                         ),
-                        Opacity(
-                          opacity: _text.value.clamp(0.0, 1.0),
-                          child: Transform.translate(
-                            offset: Offset(120 * (1 - _text.value), 0),
-                            child: Text('PROOF', style: _wordStyle),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ],

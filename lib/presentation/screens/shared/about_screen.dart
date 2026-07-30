@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
-import '../../widgets/autoproof_logo.dart';
+import '../../widgets/klaro_logo.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -72,7 +72,7 @@ class _Header extends StatelessWidget {
             ),
           ),
           // Splash-style brand mark (shield + car + check).
-          const AutoproofLogo(size: 120, withWordmark: true),
+          const KlaroLogo(size: 120, withWordmark: true),
           const SizedBox(height: 8),
           const Text(
             AppStrings.tagline,

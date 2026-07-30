@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// AutoProof brand colors. Never hardcode hex values in widgets — always
+/// KLARO brand colors. Never hardcode hex values in widgets — always
 /// reference AppColors.X.
 class AppColors {
   AppColors._();

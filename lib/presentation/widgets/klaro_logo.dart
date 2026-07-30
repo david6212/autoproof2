@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_strings.dart';
 
-/// The AutoProof mark exactly as it looks at the end of the splash animation:
+/// The KLARO mark exactly as it looks at the end of the splash animation:
 /// a flat green shield + the car image + a green checkmark. Static (no
 /// animation) so it can be reused anywhere a brand logo is needed. Pass
-/// [withWordmark] to show the "AutoProof" wordmark beneath the emblem.
-class AutoproofLogo extends StatelessWidget {
-  const AutoproofLogo({super.key, this.size = 120, this.withWordmark = false});
+/// [withWordmark] to show the KLARO wordmark beneath the emblem.
+class KlaroLogo extends StatelessWidget {
+  const KlaroLogo({super.key, this.size = 120, this.withWordmark = false});
 
   /// Target width in logical pixels (height scales proportionally).
   final double size;
 
-  /// When true, renders the "AutoProof" wordmark under the emblem.
+  /// When true, renders the KLARO wordmark under the emblem.
   final bool withWordmark;
 
   static const _green = Color(0xFF558B6E);
@@ -80,14 +81,20 @@ class AutoproofLogo extends StatelessWidget {
       children: [
         emblem,
         SizedBox(height: size * 0.12),
-        Text(
-          'AutoProof',
-          style: GoogleFonts.poppins(
-            fontSize: size * 0.32,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-            letterSpacing: -0.5,
-            height: 1,
+        // Latin mark in an RTL app — pin the direction so it never flips.
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Text(
+            AppStrings.appName,
+            style: GoogleFonts.poppins(
+              fontSize: size * 0.30,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+              // KLARO is a short all-caps word: a little tracking suits it,
+              // where the old lowercase wordmark needed tightening.
+              letterSpacing: 2,
+              height: 1,
+            ),
           ),
         ),
       ],

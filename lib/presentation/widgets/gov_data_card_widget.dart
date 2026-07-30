@@ -178,7 +178,7 @@ class _RecallBanner extends StatelessWidget {
 }
 
 /// A trust banner that makes the official source explicit — this is the whole
-/// selling point of AutoProof, so we surface it prominently.
+/// selling point of KLARO, so we surface it prominently.
 class _SourceBanner extends StatelessWidget {
   const _SourceBanner();
 

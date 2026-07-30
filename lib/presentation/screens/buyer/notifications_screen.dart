@@ -27,7 +27,7 @@ class NotificationsScreen extends StatelessWidget {
             ),
             _NotificationTile(
               icon: Icons.verified_user_outlined,
-              title: 'ברוך הבא ל-AutoProof',
+              title: 'ברוך הבא ל-KLARO',
               body: 'מוכרים מאומתים ומסומנים. הכוח בידיים שלך.',
               unread: false,
             ),

@@ -5,8 +5,8 @@ import '../core/constants/app_strings.dart';
 import 'router.dart';
 import 'theme.dart';
 
-class AutoProofApp extends ConsumerWidget {
-  const AutoProofApp({super.key});
+class KlaroApp extends ConsumerWidget {
+  const KlaroApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

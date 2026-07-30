@@ -107,7 +107,7 @@ class _Header extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.info_outline, color: AppColors.white),
-                tooltip: 'אודות AutoProof',
+                tooltip: 'אודות KLARO',
                 onPressed: () => context.push('/about'),
               ),
               IconButton(

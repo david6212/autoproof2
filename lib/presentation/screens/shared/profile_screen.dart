@@ -58,7 +58,7 @@ class _Content extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = (user?.name.isNotEmpty ?? false)
         ? user!.name
-        : 'משתמש AutoProof';
+        : 'משתמש KLARO';
     final verified = user?.verified ?? false;
 
     return ListView(
@@ -113,7 +113,7 @@ class _Content extends StatelessWidget {
         ),
         _MenuRow(
           icon: Icons.info_outline,
-          label: 'אודות AutoProof',
+          label: 'אודות KLARO',
           onTap: () => context.push('/about'),
         ),
         const Divider(height: 32),

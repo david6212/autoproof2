@@ -1,5 +1,5 @@
-name: autoproof
-description: "AutoProof — trusted marketplace for buying used cars in Israel."
+name: klaro
+description: "KLARO — trusted marketplace for buying used cars in Israel."
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -53,8 +53,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/logo_full.png
-    - assets/logo_emblem.png
+    # logo_full.png / logo_emblem.png are no longer bundled: the mark is drawn
+    # in code by KlaroLogo, and logo_full still carried the old "AUTOPROOF"
+    # wordmark. The files stay on disk for regenerating launcher icons.
     - assets/layers/car.png
     - assets/google_g.png
     - assets/data/inspection_centers_geo.json

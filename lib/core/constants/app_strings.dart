@@ -4,7 +4,7 @@ class AppStrings {
   AppStrings._();
 
   // App
-  static const appName = 'AutoProof';
+  static const appName = 'KLARO';
   static const tagline = 'הכוח בידיים שלך';
 
   // Onboarding
