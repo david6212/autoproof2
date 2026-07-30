@@ -25,6 +25,7 @@ class CarNotesSection extends ConsumerWidget {
     return AppSectionCard(
       icon: Icons.rate_review_outlined,
       title: 'הערות מבקרים',
+      source: DataSource.community,
       subtitle: 'מה שמבקרים קודמים ראו ברכב — עוזר לך להחליט.',
       trailing: notesAsync.maybeWhen(
         data: (notes) => notes.isEmpty

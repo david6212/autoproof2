@@ -44,4 +44,15 @@ class AppStrings {
 
   // Government data disclaimer
   static const govDisclaimer = 'נתונים רשמיים ממשרד התחבורה · data.gov.il';
+
+  /// Liability notice shown wherever official records and user reports appear
+  /// together (BUSINESS_ROADMAP 9.11).
+  static const liabilityNotice =
+      'המידע באפליקציה משלב נתונים ממקורות רשמיים ודיווחי משתמשים. למרות שנעשה '
+      'מאמץ לשמור על דיוקו, ייתכנו טעויות. אין לראות במידע זה תחליף לבדיקה '
+      'עצמאית או למידע רשמי.';
+
+  /// Framing required next to any crowd-sourced figure.
+  static const communityDataNote =
+      'המידע מבוסס על דיווחי משתמשי הקהילה ואינו מידע רשמי.';
 }

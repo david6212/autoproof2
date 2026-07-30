@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_strings.dart';
+import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_text.dart';
 import '../../data/models/car_model.dart';
 import '../../data/models/seller_encounter.dart';
@@ -44,6 +46,7 @@ class SellerEncounterCard extends ConsumerWidget {
     return AppSectionCard(
       icon: Icons.groups_outlined,
       title: 'עם מי נפגשתם בקנייה?',
+      source: DataSource.community,
       subtitle:
           'האמינות בידיים שלכם — פגשתם את המוכר? דווחו מי הוא באמת. כך כל קונה הבא יודע.',
       child: tallyAsync.when(
@@ -66,34 +69,38 @@ class SellerEncounterCard extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (tally.disagreesWith(car.sellerType))
-          _MismatchBanner(
+          _AttentionBanner(
             declared: car.sellerType,
-            crowd: tally.majority!,
+            reported: tally.majority!,
+            percent: tally.percentFor(tally.majority!),
+            total: tally.total,
           ),
-        if (tally.total > 0) ...[
+
+        // Below the minimum we deliberately show no breakdown — two opinions
+        // are not a pattern, and presenting them as one invites a false claim.
+        if (!tally.hasEnoughReports)
+          _NotEnoughInfo(total: tally.total)
+        else ...[
           for (final t in _types)
             if (tally.countFor(t) > 0)
               _TallyRow(
                 type: t,
                 count: tally.countFor(t),
-                total: tally.total,
+                percent: tally.percentFor(t),
+                share: tally.shareFor(t),
                 style: _style(t),
                 highlight: tally.myReport == t,
               ),
           const SizedBox(height: 4),
-          Text(
-            tally.total == 1
-                ? 'קונה אחד דיווח.'
-                : '${tally.total} קונים דיווחו.',
-            style: const TextStyle(fontSize: 11.5, color: AppColors.textSubtle),
-          ),
-          const SizedBox(height: 12),
+          Text('מתוך ${tally.total} דיווחי משתמשים.', style: AppText.micro),
         ],
+
+        const SizedBox(height: 12),
         Text(
           tally.myReport == null
               ? 'נפגשת עם המוכר? מי הוא היה?'
               : 'דיווחת. אפשר לעדכן:',
-          style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+          style: AppText.caption,
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -109,8 +116,70 @@ class SellerEncounterCard extends ConsumerWidget {
               ),
           ],
         ),
+
+        // Required framing: this is community input, not an official record,
+        // plus a route to challenge it (BUSINESS_ROADMAP 9.2 / 9.6 / 9.10).
+        const SizedBox(height: 12),
+        const Divider(height: 1, color: AppColors.cardBorder),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.info_outline, size: 14, color: AppColors.textSubtle),
+            const SizedBox(width: 5),
+            const Expanded(
+              child: Text(AppStrings.communityDataNote, style: AppText.micro),
+            ),
+            if (tally.total > 0)
+              TextButton(
+                onPressed: () => _reportWrong(context, ref),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textMuted,
+                  minimumSize: const Size(0, 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('דווח על מידע שגוי',
+                    style: TextStyle(fontSize: 11.5)),
+              ),
+          ],
+        ),
       ],
     );
+  }
+
+  /// Lets anyone — including the seller — challenge the tally. Having a visible
+  /// correction route is what keeps a crowd statistic defensible.
+  Future<void> _reportWrong(BuildContext context, WidgetRef ref) async {
+    final isGuest = ref.read(authStateProvider).valueOrNull == null;
+    if (isGuest) {
+      showLoginRequired(context, action: 'לדווח על מידע שגוי');
+      return;
+    }
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('לדווח על מידע שגוי?'),
+        content: const Text(
+            'הדיווחים כאן נמסרו על ידי משתמשים. אם הם אינם נכונים, נבדוק את הפנייה '
+            'ונתקן או נסיר את המידע לפי הצורך.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('ביטול')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('שלח בקשה')),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    await ref.read(reportEncounterTallyProvider).call(car.id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('הבקשה נשלחה לבדיקה. תודה.')),
+      );
+    }
   }
 
   Future<void> _report(
@@ -134,21 +203,22 @@ class _TallyRow extends StatelessWidget {
   const _TallyRow({
     required this.type,
     required this.count,
-    required this.total,
+    required this.percent,
+    required this.share,
     required this.style,
     required this.highlight,
   });
 
   final SellerType type;
   final int count;
-  final int total;
+  final int percent;
+  final double share;
   final (Color, Color, IconData) style;
   final bool highlight;
 
   @override
   Widget build(BuildContext context) {
     final (_, fg, icon) = style;
-    final fraction = total == 0 ? 0.0 : count / total;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -167,7 +237,7 @@ class _TallyRow extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
-                value: fraction,
+                value: share,
                 minHeight: 8,
                 backgroundColor: AppColors.background,
                 valueColor: AlwaysStoppedAnimation(fg),
@@ -175,9 +245,13 @@ class _TallyRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text('$count',
+          // Percentage leads, raw count in brackets — the figure the spec asks
+          // us to state ("X% of reporters said…").
+          Text('$percent%',
               style: TextStyle(
                   fontSize: 12.5, fontWeight: FontWeight.bold, color: fg)),
+          const SizedBox(width: 3),
+          Text('($count)', style: AppText.micro),
           if (highlight) ...[
             const SizedBox(width: 4),
             Icon(Icons.check_circle, size: 14, color: fg),
@@ -232,12 +306,22 @@ class _ReportChip extends StatelessWidget {
   }
 }
 
-/// Shown when the crowd's majority report differs from the declared type.
-class _MismatchBanner extends StatelessWidget {
-  const _MismatchBanner({required this.declared, required this.crowd});
+/// Drawn when most reporters named a type other than the declared one.
+///
+/// Wording is deliberately statistical — it attributes the claim to reporters
+/// and never asserts what the seller is (BUSINESS_ROADMAP 9.1 / 9.6).
+class _AttentionBanner extends StatelessWidget {
+  const _AttentionBanner({
+    required this.declared,
+    required this.reported,
+    required this.percent,
+    required this.total,
+  });
 
   final SellerType declared;
-  final SellerType crowd;
+  final SellerType reported;
+  final int percent;
+  final int total;
 
   @override
   Widget build(BuildContext context) {
@@ -246,20 +330,53 @@ class _MismatchBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.warnBg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.report_gmailerrorred,
-              size: 18, color: AppColors.warnText),
+          const Icon(Icons.info_outline, size: 18, color: AppColors.warnText),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'המודעה מסומנת "${declared.label}", אך קונים דיווחו על "${crowd.label}". בדקו טוב מי מולכם.',
+              '$percent% מהמדווחים ($total דיווחים) ציינו "${reported.label}", '
+              'בעוד המודעה מסומנת "${declared.label}". כדאי לבדוק בעצמכם.',
               style: const TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   color: AppColors.warnText),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown while there are too few reports to describe a pattern.
+class _NotEnoughInfo extends StatelessWidget {
+  const _NotEnoughInfo({required this.total});
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.help_outline, size: 16, color: AppColors.textSubtle),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              total == 0
+                  ? 'אין עדיין דיווחים על הרכב הזה.'
+                  : 'אין מספיק מידע כדי להציג התפלגות '
+                      '($total מתוך ${EncounterTally.minReportsToShow} דיווחים נדרשים).',
+              style: AppText.micro,
             ),
           ),
         ],

@@ -114,6 +114,15 @@ service cloud.firestore {
                     && request.resource.data.reporterUid == request.auth.uid;
     }
 
+    // ---- Correction requests ("this information is wrong") ----
+    // Admin-review only. Anyone signed in may ask for a correction — including
+    // a seller challenging community reports about their own listing.
+    match /data_corrections/{requestId} {
+      allow read: if false;
+      allow create: if isSignedIn()
+                    && request.resource.data.reporterUid == request.auth.uid;
+    }
+
     // ---- Reviews (anonymous "help a future buyer") ----
     // RULE 6: the seller must NEVER be able to read reviews. No client can
     // read them at all; any signed-in user may submit one.

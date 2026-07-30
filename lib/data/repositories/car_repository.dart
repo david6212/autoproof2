@@ -199,6 +199,20 @@ class CarRepository {
     });
   }
 
+  /// Flags a car's encounter tally as wrong, for admin review. The visible
+  /// correction route that keeps a crowd statistic defensible.
+  Future<void> reportEncounterTally({
+    required String carId,
+    required String reporterUid,
+  }) {
+    return _db.collection('data_corrections').add({
+      'kind': 'encounters',
+      'carId': carId,
+      'reporterUid': reporterUid,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   // ---- Buyer journey progress (private, per buyer + car) ----
 
   DocumentReference<Map<String, dynamic>> _journey(String carId, String uid) =>

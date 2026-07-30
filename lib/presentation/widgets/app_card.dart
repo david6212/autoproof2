@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_strings.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_text.dart';
 
@@ -70,6 +71,17 @@ class AppCard extends StatelessWidget {
   }
 }
 
+/// Where a panel's content comes from. Shown as a badge so official records and
+/// user-generated content can never be mistaken for one another
+/// (BUSINESS_ROADMAP 9.3).
+enum DataSource {
+  /// Ministry of Transport records via data.gov.il.
+  official,
+
+  /// Reports, notes and ratings submitted by users.
+  community,
+}
+
 /// An [AppCard] with the app's standard section header: a teal icon, a bold
 /// title, an optional trailing badge, and an explanatory line underneath.
 ///
@@ -84,11 +96,16 @@ class AppSectionCard extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.margin,
+    this.source,
   });
 
   final IconData icon;
   final String title;
   final Widget child;
+
+  /// Labels the panel official or community. Omit for panels that present no
+  /// factual claims (e.g. the buyer's own journey checklist).
+  final DataSource? source;
 
   /// Short line under the title explaining what the panel is for.
   final String? subtitle;
@@ -113,12 +130,90 @@ class AppSectionCard extends StatelessWidget {
               if (trailing != null) trailing!,
             ],
           ),
+          if (source != null) ...[
+            const SizedBox(height: AppSpace.sm - 2),
+            DataSourceBadge(source: source!),
+          ],
           if (subtitle != null) ...[
             const SizedBox(height: AppSpace.xs),
             Text(subtitle!, style: AppText.caption),
           ],
           const SizedBox(height: AppSpace.md),
           child,
+        ],
+      ),
+    );
+  }
+}
+
+/// States whether a panel holds official records or user-submitted content.
+class DataSourceBadge extends StatelessWidget {
+  const DataSourceBadge({super.key, required this.source});
+
+  final DataSource source;
+
+  @override
+  Widget build(BuildContext context) {
+    final (bg, fg, icon, label) = switch (source) {
+      DataSource.official => (
+          AppColors.tealLight,
+          AppColors.tealText,
+          Icons.verified_user,
+          'מידע רשמי · משרד התחבורה',
+        ),
+      DataSource.community => (
+          AppColors.background,
+          AppColors.textMuted,
+          Icons.groups_outlined,
+          'מידע קהילתי · דיווחי משתמשים',
+        ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+        border: source == DataSource.community
+            ? Border.all(color: AppColors.cardBorder)
+            : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: fg),
+          const SizedBox(width: 4),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 10.5, fontWeight: FontWeight.bold, color: fg)),
+        ],
+      ),
+    );
+  }
+}
+
+/// The app-wide liability notice. Show it at the foot of any screen that mixes
+/// official records with user reports (BUSINESS_ROADMAP 9.11).
+class LiabilityNotice extends StatelessWidget {
+  const LiabilityNotice({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpace.md),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.gavel_outlined, size: 15, color: AppColors.textSubtle),
+          SizedBox(width: AppSpace.sm - 2),
+          Expanded(
+            child: Text(AppStrings.liabilityNotice, style: AppText.micro),
+          ),
         ],
       ),
     );

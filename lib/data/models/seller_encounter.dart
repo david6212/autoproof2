@@ -27,6 +27,21 @@ class EncounterTally {
         SellerType.dealer => dealerCount,
       };
 
+  /// Share of reports for [type], 0..1.
+  double shareFor(SellerType type) =>
+      total == 0 ? 0 : countFor(type) / total;
+
+  /// Rounded percentage for [type] — what the UI actually states, since the
+  /// figure is presented as "X% of reporters said…", never as a fact.
+  int percentFor(SellerType type) => (shareFor(type) * 100).round();
+
+  /// Fewest reports before a tally is worth showing at all. Below this the UI
+  /// says there isn't enough information rather than implying a pattern from
+  /// one or two opinions.
+  static const minReportsToShow = 3;
+
+  bool get hasEnoughReports => total >= minReportsToShow;
+
   /// The most-reported type, or null when there are no reports. Ties resolve
   /// toward the "less flattering" end (dealer > agent > private) so a contested
   /// listing never looks safer than it is.
@@ -39,11 +54,12 @@ class EncounterTally {
     return best;
   }
 
-  /// True when the crowd clearly points at a different type than [declared] —
-  /// at least two reports for the majority, and it outweighs the declared type.
+  /// True when enough reporters point at a type other than [declared]. Only
+  /// gates whether to draw attention — the wording stays statistical, never a
+  /// claim about the seller.
   bool disagreesWith(SellerType declared) {
     final m = majority;
-    if (m == null || m == declared) return false;
-    return countFor(m) >= 2 && countFor(m) > countFor(declared);
+    if (m == null || m == declared || !hasEnoughReports) return false;
+    return countFor(m) > countFor(declared);
   }
 }

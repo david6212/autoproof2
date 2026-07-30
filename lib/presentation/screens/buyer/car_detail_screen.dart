@@ -156,6 +156,10 @@ class _Content extends ConsumerWidget {
                             style: const TextStyle(
                                 color: AppColors.textMuted)),
                       ],
+                      const SizedBox(height: 16),
+                      // Official records and user reports sit side by side on
+                      // this page, so the notice belongs here.
+                      const LiabilityNotice(),
                       const SizedBox(height: 24),
                     ],
                   ),

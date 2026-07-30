@@ -344,3 +344,16 @@ final recordEncounterProvider =
         .recordEncounter(carId, user.uid, type);
   };
 });
+
+/// Asks for the encounter tally on a car to be reviewed and corrected.
+final reportEncounterTallyProvider =
+    Provider<Future<void> Function(String carId)>((ref) {
+  return (carId) async {
+    final user = ref.read(authStateProvider).valueOrNull;
+    if (user == null) return;
+    await ref.read(carRepositoryProvider).reportEncounterTally(
+          carId: carId,
+          reporterUid: user.uid,
+        );
+  };
+});

@@ -84,7 +84,8 @@ class PlateHistoryCard extends ConsumerWidget {
           if (govKm != null)
             _kmRow(
               icon: Icons.verified_user,
-              label: 'מד-אוץ רשמי (טסט אחרון)',
+              // Naming the source is a licence obligation, not just nice-to-have.
+              label: 'מד-אוץ רשמי · משרד התחבורה (טסט אחרון)',
               km: govKm,
               flagged: govRollback,
               okNote: 'תואם ✓',
