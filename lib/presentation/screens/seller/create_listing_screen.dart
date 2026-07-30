@@ -460,7 +460,7 @@ class _StepReview extends ConsumerWidget {
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'תג "מוכר מאומת" יוצג אוטומטית במודעה שלך',
+                          'תג "נבדק מול המרשם" והסיווג שבחרת יוצגו במודעה',
                           style: TextStyle(
                               color: AppColors.tealText2, fontSize: 13),
                         ),

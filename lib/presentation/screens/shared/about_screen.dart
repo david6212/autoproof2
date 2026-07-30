@@ -8,14 +8,16 @@ import '../../widgets/otov_logo.dart';
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
+  // Each line must describe what the app actually does — no service we don't
+  // provide, no check we don't run. See BUSINESS_ROADMAP section 10.
   static const _layers = [
-    (Icons.verified_user, 'אימות מוכר חובה',
-        'כל מוכר מוצלב מול מרשם הרכב הממשלתי ומסומן לפי סוגו — בעלים פרטי, סוכן או סוחר. אתם תמיד יודעים עם מי יש לכם עסק.'),
+    (Icons.verified_user, 'בדיקה מול מרשם הרכב',
+        'מספר הרישוי של כל מודעה מוצלב מול מרשם הרכב הממשלתי, והמוכר מסומן לפי הסיווג שבחר — בעלים פרטי, סוכן או סוחר. איננו מאמתים זהות או בעלות.'),
     (Icons.assignment_outlined, 'נתונים רשמיים',
         'ק"מ, טסט, בעלות ותוקף רישיון — ישירות ממשרד התחבורה, בחינם.'),
-    (Icons.build_outlined, 'בדיקה עצמאית',
-        'בודקי רכב מוסמכים ובלתי תלויים, עם תשלום רק אחרי הבדיקה.'),
-    (Icons.chat_bubble_outline, 'צ\'אט מאובטח',
+    (Icons.build_outlined, 'מכוני בדיקה מורשים',
+        'רשימת מכוני הבדיקה המורשים של משרד התחבורה, עם מפה וניווט. הבדיקה וההתקשרות נעשות ישירות מולם.'),
+    (Icons.chat_bubble_outline, 'צ\'אט פרטי',
         'התקשרות ישירה עם המוכר בתוך האפליקציה, בלי מתווכים.'),
   ];
 

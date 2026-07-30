@@ -126,7 +126,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSeller = chat != null && me == chat!.sellerId;
-    final title = isSeller ? 'קונה מתעניין' : 'מוכר מאומת';
+    final title = isSeller ? 'קונה מתעניין' : 'מוכר';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [

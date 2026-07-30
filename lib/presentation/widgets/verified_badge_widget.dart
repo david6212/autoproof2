@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 
-/// "מוכר מאומת ✓" pill badge.
+/// Pill badge naming the check that ran, not the person: it says
+/// "נבדק מול המרשם", never "verified seller". See AppStrings.
 class VerifiedBadge extends StatelessWidget {
   const VerifiedBadge({super.key, this.compact = false});
 

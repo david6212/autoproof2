@@ -48,7 +48,7 @@ class _VerifyRoleScreenState extends ConsumerState<VerifyRoleScreen> {
               ),
               const SizedBox(height: 6),
               const Text(
-                'כל מוכר מסומן בבירור — כדי שהקונה תמיד יידע עם מי יש לו עסק.',
+                'הסיווג שתבחר יוצג בבירור במודעה, כדי שהקונה יידע כיצד סיווגת את עצמך.',
                 style: TextStyle(color: AppColors.textMuted),
               ),
               const SizedBox(height: 24),

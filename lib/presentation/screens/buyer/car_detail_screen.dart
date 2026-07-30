@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_strings.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -547,7 +548,7 @@ class _SellerCard extends StatelessWidget {
   final SellerType sellerType;
 
   String get _subtitle => switch (sellerType) {
-        SellerType.private => 'בעלים פרטי מאומת מול מרשם הרכב',
+        SellerType.private => 'הרכב רשום כבעלות פרטית במרשם',
         SellerType.agent => 'סוכן — מוכר בשם בעל הרכב',
         SellerType.dealer => 'סוחר / מגרש רכב',
       };
@@ -560,29 +561,49 @@ class _SellerCard extends StatelessWidget {
         color: AppColors.tealLight,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CircleAvatar(
-            backgroundColor: AppColors.teal,
-            child: Icon(Icons.person, color: AppColors.white),
+          Row(
+            children: [
+              const CircleAvatar(
+                backgroundColor: AppColors.teal,
+                child: Icon(Icons.person, color: AppColors.white),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(sellerType.label,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.tealText)),
+                    const SizedBox(height: 2),
+                    Text(_subtitle,
+                        style: const TextStyle(
+                            fontSize: 12, color: AppColors.tealText2)),
+                  ],
+                ),
+              ),
+              SellerTypeBadge(type: sellerType, compact: true),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(sellerType.label,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.tealText)),
-                const SizedBox(height: 2),
-                Text(_subtitle,
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.tealText2)),
-              ],
-            ),
+          // States the limits of the check right where the label is read, so
+          // the badge can never be mistaken for identity or ownership proof.
+          const SizedBox(height: 10),
+          const Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.info_outline, size: 13, color: AppColors.tealText2),
+              SizedBox(width: 5),
+              Expanded(
+                child: Text(AppStrings.checkScopeNote,
+                    style: TextStyle(
+                        fontSize: 11, height: 1.35, color: AppColors.tealText2)),
+              ),
+            ],
           ),
-          SellerTypeBadge(type: sellerType, compact: true),
         ],
       ),
     );

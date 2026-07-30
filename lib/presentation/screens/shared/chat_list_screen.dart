@@ -63,7 +63,7 @@ class _ChatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSeller = me == chat.sellerId;
-    final title = isSeller ? 'קונה מתעניין' : 'מוכר מאומת';
+    final title = isSeller ? 'קונה מתעניין' : 'מוכר';
 
     return ListTile(
       onTap: () => context.push('/chat/${chat.id}'),

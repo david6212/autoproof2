@@ -85,7 +85,7 @@ class _Content extends StatelessWidget {
                   children: [
                     Icon(Icons.verified, size: 16, color: AppColors.teal),
                     SizedBox(width: 4),
-                    Text('מוכר מאומת',
+                    Text('נבדק מול המרשם',
                         style: TextStyle(color: AppColors.teal)),
                   ],
                 )
@@ -108,7 +108,7 @@ class _Content extends StatelessWidget {
         ),
         _MenuRow(
           icon: Icons.verified_user_outlined,
-          label: verified ? 'סטטוס אימות: מאומת ✓' : 'אימות מוכר',
+          label: verified ? 'בדיקה מול המרשם: הושלמה ✓' : 'בדיקת מוכר',
           onTap: () => context.push('/verify/role'),
         ),
         _MenuRow(
