@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// KLARO brand colors. Never hardcode hex values in widgets — always
+/// OtoV brand colors. Never hardcode hex values in widgets — always
 /// reference AppColors.X.
 class AppColors {
   AppColors._();

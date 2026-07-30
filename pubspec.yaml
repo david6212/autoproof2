@@ -1,5 +1,5 @@
-name: klaro
-description: "KLARO — trusted marketplace for buying used cars in Israel."
+name: otov
+description: "OtoV — trusted marketplace for buying used cars in Israel."
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -54,7 +54,7 @@ flutter:
   uses-material-design: true
   assets:
     # logo_full.png / logo_emblem.png are no longer bundled: the mark is drawn
-    # in code by KlaroLogo, and logo_full still carried the old "AUTOPROOF"
+    # in code by OtovLogo, and logo_full still carried the old "AUTOPROOF"
     # wordmark. The files stay on disk for regenerating launcher icons.
     - assets/layers/car.png
     - assets/google_g.png

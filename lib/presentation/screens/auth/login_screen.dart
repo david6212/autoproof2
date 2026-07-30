@@ -7,7 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/klaro_logo.dart';
+import '../../widgets/otov_logo.dart';
 import '../../widgets/primary_button_widget.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -78,7 +78,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
               const SizedBox(height: 12),
               // Same mark as the splash screen (shield + car + check).
-              const KlaroLogo(size: 132, withWordmark: true),
+              const OtovLogo(size: 132, withWordmark: true),
               const SizedBox(height: 20),
               Text(
                 isCodeStep ? 'הזן את הקוד שקיבלת' : 'התחברות',

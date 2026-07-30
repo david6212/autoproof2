@@ -552,7 +552,7 @@ class _PublishedScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'הרכב שלך זמין כעת לקונים ב-KLARO',
+                'הרכב שלך זמין כעת לקונים ב-OtoV',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textMuted),
               ),

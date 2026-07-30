@@ -5,8 +5,8 @@ import '../core/constants/app_strings.dart';
 import 'router.dart';
 import 'theme.dart';
 
-class KlaroApp extends ConsumerWidget {
-  const KlaroApp({super.key});
+class OtovApp extends ConsumerWidget {
+  const OtovApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

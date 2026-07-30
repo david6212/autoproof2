@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
 import '../core/theme/app_dimens.dart';
 
-/// KLARO app theme — Heebo font, teal brand palette, clean fintech feel.
+/// OtoV app theme — Heebo font, teal brand palette, clean fintech feel.
 class AppTheme {
   AppTheme._();
 

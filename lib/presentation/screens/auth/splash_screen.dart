@@ -7,11 +7,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/klaro_logo.dart';
+import '../../widgets/otov_logo.dart';
 
-/// Animated KLARO splash — a Flutter port of the GSAP prototype:
-/// shield scales in → car drops into the shield → AUTO/PROOF converge →
-/// the checkmark draws itself on. Then hold and fade out to the app.
+/// Animated OtoV splash — a Flutter port of the GSAP prototype:
+/// shield scales in → car drops into the shield → the wordmark's letters draw
+/// together → the checkmark draws itself on. Then hold and fade out to the app.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -139,7 +139,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     ),
                   ),
                   const SizedBox(height: 22),
-                  // ---- Wordmark: KLARO's letters draw together ----
+                  // ---- Wordmark: OtoV's letters draw together ----
                   // One word, so the old two-halves convergence is replaced by
                   // letter-spacing settling from wide to tight as it fades in.
                   // Force LTR — the Latin mark must not flip in this RTL app.

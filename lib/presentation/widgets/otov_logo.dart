@@ -4,17 +4,17 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 
-/// The KLARO mark exactly as it looks at the end of the splash animation:
+/// The OtoV mark exactly as it looks at the end of the splash animation:
 /// a flat green shield + the car image + a green checkmark. Static (no
 /// animation) so it can be reused anywhere a brand logo is needed. Pass
-/// [withWordmark] to show the KLARO wordmark beneath the emblem.
-class KlaroLogo extends StatelessWidget {
-  const KlaroLogo({super.key, this.size = 120, this.withWordmark = false});
+/// [withWordmark] to show the OtoV wordmark beneath the emblem.
+class OtovLogo extends StatelessWidget {
+  const OtovLogo({super.key, this.size = 120, this.withWordmark = false});
 
   /// Target width in logical pixels (height scales proportionally).
   final double size;
 
-  /// When true, renders the KLARO wordmark under the emblem.
+  /// When true, renders the OtoV wordmark under the emblem.
   final bool withWordmark;
 
   static const _green = Color(0xFF558B6E);
@@ -90,9 +90,9 @@ class KlaroLogo extends StatelessWidget {
               fontSize: size * 0.30,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
-              // KLARO is a short all-caps word: a little tracking suits it,
-              // where the old lowercase wordmark needed tightening.
-              letterSpacing: 2,
+              // OtoV is short and mixed-case; slight tracking keeps the capital
+              // O and V from crowding the lowercase middle.
+              letterSpacing: 1,
               height: 1,
             ),
           ),

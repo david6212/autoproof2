@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 
-/// Type scale for KLARO.
+/// Type scale for OtoV.
 ///
 /// The app had grown 20 different `fontSize` values (12 and 12.5, 13 and 13.5,
 /// 15 and 15.5 …) with no system. These are the steps that replace them —

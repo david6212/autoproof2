@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:klaro/presentation/widgets/placeholder_scaffold.dart';
+import 'package:otov/presentation/widgets/placeholder_scaffold.dart';
 
 void main() {
   testWidgets('PlaceholderScaffold shows its title', (tester) async {
