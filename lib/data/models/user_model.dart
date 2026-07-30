@@ -10,6 +10,10 @@ class UserModel {
   final DateTime createdAt;
   final List<String> fcmTokens;
 
+  /// Whether a phone number is attached. Required before publishing a listing —
+  /// Google and Apple sign-in leave this empty.
+  bool get hasPhone => phone.trim().isNotEmpty;
+
   const UserModel({
     required this.uid,
     required this.name,

@@ -27,8 +27,12 @@ class Analytics {
   }
 
   /// The differentiating feature — an official gov.il history lookup.
-  Future<void> vehicleLookup(String plate) =>
-      _log('vehicle_lookup', {'plate': plate});
+  ///
+  /// The plate is deliberately NOT sent. A plate is linkable to its registered
+  /// owner, so shipping it to a third-party analytics service would put
+  /// personal data there for no product gain — the count alone answers the
+  /// only question we ask of it ("is anyone using lookups?").
+  Future<void> vehicleLookup() => _log('vehicle_lookup');
 
   /// A guest hit a feature that needs an account (save / chat / like).
   Future<void> guestPrompt(String action) =>

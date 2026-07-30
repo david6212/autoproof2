@@ -460,7 +460,7 @@ class _StepReview extends ConsumerWidget {
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'תג "נבדק מול המרשם" והסיווג שבחרת יוצגו במודעה',
+                          'תג "נתונים ממרשם הרכב" והסיווג שבחרת יוצגו במודעה',
                           style: TextStyle(
                               color: AppColors.tealText2, fontSize: 13),
                         ),

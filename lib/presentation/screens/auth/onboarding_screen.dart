@@ -129,6 +129,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 );
               }),
             ),
+            // Sets expectations before the user ever sees a listing: what the
+            // app is a source of, and what it is not evidence of.
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 16, 24, 0),
+              child: Text(
+                AppStrings.entryDisclaimer,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 11.5, height: 1.4, color: AppColors.textSubtle),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.all(24),
               child: PrimaryButton(

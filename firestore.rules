@@ -123,26 +123,20 @@ service cloud.firestore {
                     && request.resource.data.reporterUid == request.auth.uid;
     }
 
-    // ---- Reviews (anonymous "help a future buyer") ----
-    // RULE 6: the seller must NEVER be able to read reviews. No client can
-    // read them at all; any signed-in user may submit one.
+    // ---- Retired collections ----
+    // `reviews` collected anonymous feedback that no client could ever read,
+    // so it gathered personal data with no purpose — the feature is gone and
+    // writes are now refused.
+    // `inspectors` / `bookings` backed a mock paid-booking flow that was never
+    // implemented; the inspection-centre directory comes from data.gov.il.
     match /reviews/{reviewId} {
-      allow read: if false;
-      allow create: if isSignedIn();
+      allow read, write: if false;
     }
-
-    // ---- Inspectors (public directory, seeded by admin) ----
     match /inspectors/{inspectorId} {
-      allow read: if true;
-      allow write: if false;
+      allow read, write: if false;
     }
-
-    // ---- Bookings (private to the buyer who created them) ----
     match /bookings/{bookingId} {
-      allow read: if isSignedIn()
-                  && resource.data.buyerId == request.auth.uid;
-      allow create: if isSignedIn()
-                    && request.resource.data.buyerId == request.auth.uid;
+      allow read, write: if false;
     }
   }
 }

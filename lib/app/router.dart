@@ -10,6 +10,7 @@ import '../presentation/screens/auth/onboarding_screen.dart';
 import '../presentation/screens/auth/login_screen.dart';
 // Verify
 import '../presentation/screens/verify/verify_role_screen.dart';
+import '../presentation/screens/verify/verify_phone_screen.dart';
 import '../presentation/screens/verify/verify_plate_screen.dart';
 import '../presentation/screens/verify/verify_success_screen.dart';
 // Buyer
@@ -17,11 +18,9 @@ import '../presentation/screens/buyer/home_screen.dart';
 import '../presentation/screens/buyer/car_detail_screen.dart';
 import '../presentation/screens/buyer/vehicle_history_screen.dart';
 import '../presentation/screens/buyer/inspectors_screen.dart';
-import '../presentation/screens/buyer/book_inspection_screen.dart';
 import '../presentation/screens/buyer/swipe_screen.dart';
 import '../presentation/screens/buyer/saved_screen.dart';
 import '../presentation/screens/buyer/notifications_screen.dart';
-import '../presentation/screens/buyer/quick_review_screen.dart';
 // Seller
 import '../presentation/screens/seller/seller_home_screen.dart';
 import '../presentation/screens/seller/create_listing_screen.dart';
@@ -42,12 +41,17 @@ final routerProvider = Provider<GoRouter>((ref) {
     // Auto-logs a screen_view analytics event for every pushed route.
     observers: [ref.watch(analyticsObserverProvider)],
     redirect: (context, state) {
-      // RULE 1 — Seller gate: only verified users may create a listing.
+      // RULE 1 — Seller gate: only verified users may create a listing, and
+      // only with a phone number on file. Google/Apple sign-in carries no
+      // number, so without this a throwaway account could publish anonymously.
       if (state.matchedLocation == '/seller/create') {
         final user = ref.read(currentUserModelProvider).valueOrNull;
-        // Only block when we positively know the user is NOT verified.
+        // Only block when we positively know the user is NOT eligible.
         if (user != null && !user.verified) {
           return '/verify/role';
+        }
+        if (user != null && !user.hasPhone) {
+          return '/verify/phone';
         }
       }
       return null;
@@ -64,6 +68,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           path: '/verify/role', builder: (c, s) => const VerifyRoleScreen()),
       GoRoute(
           path: '/verify/plate', builder: (c, s) => const VerifyPlateScreen()),
+      GoRoute(
+          path: '/verify/phone', builder: (c, s) => const VerifyPhoneScreen()),
       GoRoute(
           path: '/verify/success',
           builder: (c, s) => const VerifySuccessScreen()),
@@ -101,20 +107,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             InspectorsScreen(carId: s.pathParameters['carId']!),
       ),
       GoRoute(
-        path: '/book/:inspectorId',
-        builder: (c, s) => BookInspectionScreen(
-          inspectorId: s.pathParameters['inspectorId']!,
-          carId: s.uri.queryParameters['carId'] ?? '',
-        ),
-      ),
-      GoRoute(
           path: '/notifications',
           builder: (c, s) => const NotificationsScreen()),
-      GoRoute(
-        path: '/review/:carId',
-        builder: (c, s) =>
-            QuickReviewScreen(carId: s.pathParameters['carId']!),
-      ),
 
       // Seller shell
       ShellRoute(

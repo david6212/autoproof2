@@ -92,13 +92,19 @@ class SellerEncounterCard extends ConsumerWidget {
                 highlight: tally.myReport == t,
               ),
           const SizedBox(height: 4),
-          Text('מתוך ${tally.total} דיווחי משתמשים.', style: AppText.micro),
+          Text(
+            [
+              'מתוך ${tally.total} דיווחי משתמשים',
+              if (tally.lastUpdatedLabel case final l?) l,
+            ].join(' · '),
+            style: AppText.micro,
+          ),
         ],
 
         const SizedBox(height: 12),
         Text(
           tally.myReport == null
-              ? 'נפגשת עם המוכר? מי הוא היה?'
+              ? 'נפגשת עם המוכר? כיצד הוא פעל?'
               : 'דיווחת. אפשר לעדכן:',
           style: AppText.caption,
         ),
@@ -338,9 +344,12 @@ class _AttentionBanner extends StatelessWidget {
           const Icon(Icons.info_outline, size: 18, color: AppColors.warnText),
           const SizedBox(width: 8),
           Expanded(
+            // "ציינו שנפגשו עם מוכר שפעל כ…" describes the reporters' own
+            // experience. Saying someone "is" a dealer labels the person.
             child: Text(
-              '$percent% מהמדווחים ($total דיווחים) ציינו "${reported.label}", '
-              'בעוד המודעה מסומנת "${declared.label}". כדאי לבדוק בעצמכם.',
+              '$percent% מהמדווחים ($total דיווחים) ציינו שנפגשו עם מוכר '
+              'שפעל כ"${reported.label}", בעוד המודעה מסומנת "${declared.label}". '
+              'כדאי לבדוק בעצמכם.',
               style: const TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,

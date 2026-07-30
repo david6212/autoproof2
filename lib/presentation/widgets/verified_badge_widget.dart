@@ -4,7 +4,8 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 
 /// Pill badge naming the check that ran, not the person: it says
-/// "נבדק מול המרשם", never "verified seller". See AppStrings.
+/// "נתונים ממרשם הרכב" — it names where the data came from, never an act
+/// of verification we performed. See AppStrings.
 class VerifiedBadge extends StatelessWidget {
   const VerifiedBadge({super.key, this.compact = false});
 

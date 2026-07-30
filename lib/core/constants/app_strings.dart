@@ -32,28 +32,35 @@ class AppStrings {
   // was actually checked. See BUSINESS_ROADMAP section 10.
   static const verifyOwnerYes = 'כן, אני הבעלים הפרטי';
   static const verifyDealer = 'אני סוחר / סוכן רכב';
-  static const verifyingWithGov = 'בודק מול מרשם הרכב...';
+  // "נבדק" sounds like an action we performed and vouch for. We only COMPARE
+  // the plate against what the registry already publishes, so every string
+  // says "הושוו"/"מבוסס על" instead.
+  static const verifyingWithGov = 'משווה למידע הזמין במרשם...';
   static const plateNotFound = 'המספר לא נמצא. בדוק את מספר הרישוי.';
-  static const idOnlyNote = 'מספר הרישוי משמש לבדיקה מול מרשם הרכב בלבד 🔒';
-  static const verifiedSuccess = 'הבדיקה הושלמה';
+  static const idOnlyNote = 'מספר הרישוי משמש להשוואה מול מרשם הרכב בלבד 🔒';
+  static const verifiedSuccess = 'ההשוואה הושלמה';
   static const verifiedAsPrivate =
-      'הרכב נבדק מול מרשם הרכב, והמודעה תסומן לפי הסיווג שבחרת';
+      'נתוני הרכב הושוו למידע הזמין במרשם, והמודעה תסומן לפי הסיווג שבחרת';
   static const continueToListing = 'המשך לפרסום המודעה';
 
-  /// Exactly what the check covers — and what it does not. Shown wherever a
-  /// buyer might otherwise read the badge as a guarantee about the seller.
+  /// Exactly what the comparison covers — and what it does not.
   static const checkScopeNote =
-      'הצלבנו את מספר הרישוי מול מרשם הרכב וסימנו את הסיווג שהמוכר בחר. '
+      'נתוני הרכב הושוו למידע הזמין במרשם הרכב, והמוכר סומן לפי הסיווג שבחר. '
       'לא אימתנו את זהותו ולא את בעלותו על הרכב — בדקו מסמכים מול המוכר.';
 
   // Home
-  static const onlyPrivateSellers = 'מוכרים מסווגים ומוצלבים מול המרשם';
+  static const onlyPrivateSellers = 'מוכרים מסווגים · נתונים ממאגרי משרד התחבורה';
 
-  /// Badge text — names the check, not the person.
-  static const verifiedSellerBadge = 'נבדק מול המרשם';
+  /// Badge text — describes the data's origin, not an act of ours.
+  static const verifiedSellerBadge = 'נתונים ממרשם הרכב';
 
   // Chat
-  static const chatWithVerified = 'מוכר · נבדק מול המרשם';
+  static const chatWithVerified = 'מוכר';
+
+  /// Shown on the first screen a user meets, before anything else.
+  static const entryDisclaimer =
+      'OtoV מספק מידע ממקורות רשמיים ומדיווחי משתמשים. אין לראות במידע זה '
+      'אישור לבעלות, לזהות המוכר או לתקינות הרכב.';
 
   // Common states
   static const loading = 'טוען...';

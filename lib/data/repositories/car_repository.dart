@@ -17,19 +17,41 @@ class CarRepository {
   CollectionReference<Map<String, dynamic>> _saved(String uid) =>
       _db.collection('users').doc(uid).collection('saved');
 
-  /// Stream of active listings, newest first.
+  /// How long a listing stays visible. Past this it is treated as expired and
+  /// withheld everywhere, so stale personal data stops circulating.
+  ///
+  /// NOTE: this hides expired listings, it does not erase them. Scheduled
+  /// deletion needs a server-side job (Cloud Functions / a scheduled task),
+  /// which the current Firebase plan does not include — see [expiredBefore].
+  static const retention = Duration(days: 730); // 24 months
+
+  /// Cut-off date: anything created before this is expired.
+  static DateTime get expiredBefore => DateTime.now().subtract(retention);
+
+  /// Stream of active listings, newest first, excluding expired ones.
   Stream<List<CarModel>> streamActiveCars() {
     // Sort client-side to avoid needing a composite (status + createdAt) index.
     return _cars
         .where('status', isEqualTo: CarStatus.active.name)
         .snapshots()
         .map((snap) {
+      final cutoff = expiredBefore;
       final cars = snap.docs
           .map((d) => CarModel.fromFirestore(d.data(), d.id))
+          .where((c) => c.createdAt.isAfter(cutoff))
           .toList();
       cars.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return cars;
     });
+  }
+
+  /// Ids of listings past the retention window, for a future purge job to
+  /// delete. Nothing calls this yet — it exists so the deletion path is ready.
+  Future<List<String>> expiredListingIds() async {
+    final snap = await _cars
+        .where('createdAt', isLessThan: Timestamp.fromDate(expiredBefore))
+        .get();
+    return [for (final d in snap.docs) d.id];
   }
 
   Future<CarModel?> getCarById(String id) async {
@@ -85,25 +107,6 @@ class CarRepository {
     return demoMatch || sellerLike.exists;
   }
 
-  /// Adds an anonymous review. IMPORTANT: no sellerId field — the seller
-  /// cannot query or read reviews (RULE 6).
-  Future<void> addReview({
-    required String carId,
-    required String reviewerId,
-    required bool anonymous,
-    required List<String> reasons,
-    required String text,
-  }) async {
-    await _db.collection('reviews').add({
-      'carId': carId,
-      'reviewerId': anonymous ? '' : reviewerId,
-      'anonymous': anonymous,
-      'reasons': reasons,
-      'text': text,
-      'createdAt': DateTime.now(),
-    });
-  }
-
   // ---- Visitor notes (public, per listing) ----
 
   CollectionReference<Map<String, dynamic>> _notes(String carId) =>
@@ -123,15 +126,17 @@ class CarRepository {
     required String carId,
     required String authorUid,
     required String authorName,
-    required String text,
+    required List<NoteTag> tags,
+    String otherText = '',
     String sellerFlag = '',
   }) {
     return _notes(carId).add(CarNote(
       id: '',
       authorUid: authorUid,
       authorName: authorName,
-      text: text,
       createdAt: DateTime.now(),
+      tags: tags,
+      otherText: otherText,
       sellerFlag: sellerFlag,
     ).toFirestore());
   }
@@ -166,9 +171,11 @@ class CarRepository {
     return _encounters(carId).snapshots().map((snap) {
       var private = 0, agent = 0, dealer = 0;
       SellerType? mine;
+      DateTime? newest;
       for (final doc in snap.docs) {
+        final data = doc.data();
         final type = SellerType.values.firstWhere(
-          (t) => t.name == doc.data()['sellerType'],
+          (t) => t.name == data['sellerType'],
           orElse: () => SellerType.private,
         );
         switch (type) {
@@ -180,12 +187,15 @@ class CarRepository {
             dealer++;
         }
         if (myUid != null && doc.id == myUid) mine = type;
+        final at = (data['createdAt'] as Timestamp?)?.toDate();
+        if (at != null && (newest == null || at.isAfter(newest))) newest = at;
       }
       return EncounterTally(
         privateCount: private,
         agentCount: agent,
         dealerCount: dealer,
         myReport: mine,
+        lastReportAt: newest,
       );
     });
   }
@@ -204,11 +214,22 @@ class CarRepository {
   Future<void> reportEncounterTally({
     required String carId,
     required String reporterUid,
+  }) =>
+      submitCorrection(kind: 'encounters', carId: carId, reporterUid: reporterUid);
+
+  /// One channel for every "this is wrong" and "delete my data" request, so a
+  /// user never has to hunt for how to challenge something.
+  Future<void> submitCorrection({
+    required String kind,
+    required String reporterUid,
+    String carId = '',
+    String note = '',
   }) {
     return _db.collection('data_corrections').add({
-      'kind': 'encounters',
+      'kind': kind,
       'carId': carId,
       'reporterUid': reporterUid,
+      'note': note,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }

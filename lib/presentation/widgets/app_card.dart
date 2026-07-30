@@ -154,16 +154,18 @@ class DataSourceBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Blue = official record, orange = community report. Two different hues
+    // (not two shades of the brand green) so the distinction survives a glance.
     final (bg, fg, icon, label) = switch (source) {
       DataSource.official => (
-          AppColors.tealLight,
-          AppColors.tealText,
-          Icons.verified_user,
+          AppColors.agentBlueBg,
+          AppColors.agentBlue,
+          Icons.account_balance,
           'מידע רשמי · משרד התחבורה',
         ),
       DataSource.community => (
-          AppColors.background,
-          AppColors.textMuted,
+          AppColors.dealerOrangeBg,
+          AppColors.dealerOrange,
           Icons.groups_outlined,
           'מידע קהילתי · דיווחי משתמשים',
         ),

@@ -11,8 +11,8 @@ class AboutScreen extends StatelessWidget {
   // Each line must describe what the app actually does — no service we don't
   // provide, no check we don't run. See BUSINESS_ROADMAP section 10.
   static const _layers = [
-    (Icons.verified_user, 'בדיקה מול מרשם הרכב',
-        'מספר הרישוי של כל מודעה מוצלב מול מרשם הרכב הממשלתי, והמוכר מסומן לפי הסיווג שבחר — בעלים פרטי, סוכן או סוחר. איננו מאמתים זהות או בעלות.'),
+    (Icons.verified_user, 'נתונים ממרשם הרכב',
+        'מספר הרישוי של כל מודעה מושווה למידע הזמין במרשם הרכב הממשלתי, והמוכר מסומן לפי הסיווג שבחר — בעלים פרטי, סוכן או סוחר. איננו מאמתים זהות או בעלות.'),
     (Icons.assignment_outlined, 'נתונים רשמיים',
         'ק"מ, טסט, בעלות ותוקף רישיון — ישירות ממשרד התחבורה, בחינם.'),
     (Icons.build_outlined, 'מכוני בדיקה מורשים',

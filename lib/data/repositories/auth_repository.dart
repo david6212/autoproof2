@@ -72,6 +72,35 @@ class AuthRepository {
     return _ensureUserDoc(uid: user.uid, phone: user.phoneNumber ?? '');
   }
 
+  /// Attaches a phone number to the CURRENT account (used when someone signed
+  /// in with Google or Apple and has no number on file). Publishing a listing
+  /// requires one, so that a throwaway account can't post anonymously.
+  ///
+  /// If the number is already attached to a different account, Firebase throws
+  /// `credential-already-in-use`, which surfaces as a Hebrew message.
+  Future<void> linkPhone({
+    required String verificationId,
+    required String smsCode,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('לא מחובר');
+    final credential = PhoneAuthProvider.credential(
+      verificationId: verificationId,
+      smsCode: smsCode,
+    );
+    try {
+      await user.linkWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_mapAuthError(e));
+    }
+    await user.reload();
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .set({'phone': _auth.currentUser?.phoneNumber ?? ''},
+            SetOptions(merge: true));
+  }
+
   /// Sign in with Google (popup on web, native federated flow on mobile).
   /// Requires the Google provider to be enabled in the Firebase console.
   Future<UserModel> signInWithGoogle() async {

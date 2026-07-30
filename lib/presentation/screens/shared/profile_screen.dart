@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/cars_provider.dart';
 import '../../widgets/guest_prompt_view.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -54,6 +55,36 @@ class _Content extends StatelessWidget {
     if (context.mounted) context.go('/login');
   }
 
+  /// Files a deletion request. Deliberately a request rather than an instant
+  /// wipe: listings and reports a user left are entangled with other people's
+  /// records, so each case is handled rather than cascaded blindly.
+  Future<void> _requestDeletion(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('בקשת מחיקת מידע'),
+        content: const Text(
+            'נטפל בבקשה ונמחק את המידע האישי שלך מהמערכת. מודעות ודיווחים שפרסמת '
+            'ייבדקו בנפרד. נחזור אליך באמצעי הקשר הרשום בחשבון.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('ביטול')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('שלח בקשה')),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    await ref.read(submitCorrectionProvider).call(kind: 'account_deletion');
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('הבקשה נשלחה. נטפל בה ונעדכן אותך.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = (user?.name.isNotEmpty ?? false)
@@ -85,7 +116,7 @@ class _Content extends StatelessWidget {
                   children: [
                     Icon(Icons.verified, size: 16, color: AppColors.teal),
                     SizedBox(width: 4),
-                    Text('נבדק מול המרשם',
+                    Text('נתונים ממרשם הרכב',
                         style: TextStyle(color: AppColors.teal)),
                   ],
                 )
@@ -108,7 +139,7 @@ class _Content extends StatelessWidget {
         ),
         _MenuRow(
           icon: Icons.verified_user_outlined,
-          label: verified ? 'בדיקה מול המרשם: הושלמה ✓' : 'בדיקת מוכר',
+          label: verified ? 'השוואה למרשם: הושלמה ✓' : 'השוואה למרשם הרכב',
           onTap: () => context.push('/verify/role'),
         ),
         _MenuRow(
@@ -117,6 +148,12 @@ class _Content extends StatelessWidget {
           onTap: () => context.push('/about'),
         ),
         const Divider(height: 32),
+        // A visible, self-serve route to have personal data removed.
+        _MenuRow(
+          icon: Icons.delete_sweep_outlined,
+          label: 'בקשת מחיקת המידע שלי',
+          onTap: () => _requestDeletion(context, ref),
+        ),
         _MenuRow(
           icon: Icons.logout,
           label: 'התנתקות',

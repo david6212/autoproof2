@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_text.dart';
 import '../../data/models/car_note_model.dart';
 import '../providers/analytics_provider.dart';
@@ -215,9 +216,26 @@ class _NoteTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(note.text,
-              style: const TextStyle(
-                  fontSize: 13.5, height: 1.35, color: AppColors.textPrimary)),
+          // Only the fixed observations are ever rendered.
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final tag in note.tags) _TagChip(tag: tag),
+            ],
+          ),
+          if (note.hasPendingText) ...[
+            const SizedBox(height: 8),
+            const Row(
+              children: [
+                Icon(Icons.schedule, size: 13, color: AppColors.textSubtle),
+                SizedBox(width: 4),
+                Text('הערה חופשית ממתינה לבדיקה',
+                    style: TextStyle(
+                        fontSize: 11.5, color: AppColors.textSubtle)),
+              ],
+            ),
+          ],
           if (note.flagLabel != null) ...[
             const SizedBox(height: 8),
             Container(
@@ -255,6 +273,37 @@ class _NoteTile extends StatelessWidget {
     if (d.inDays < 30) return 'לפני ${d.inDays} ימים';
     if (d.inDays < 365) return 'לפני ${(d.inDays / 30).floor()} חודשים';
     return 'לפני ${(d.inDays / 365).floor()} שנים';
+  }
+}
+
+/// One ticked observation. Positive ones read green, cautionary ones amber —
+/// no red, because nothing on the list is an accusation.
+class _TagChip extends StatelessWidget {
+  const _TagChip({required this.tag});
+  final NoteTag tag;
+
+  @override
+  Widget build(BuildContext context) {
+    final positive = tag.isPositive;
+    final bg = positive ? AppColors.tealLight : AppColors.warnBg;
+    final fg = positive ? AppColors.tealText2 : AppColors.warnText;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(positive ? Icons.check : Icons.info_outline, size: 12, color: fg),
+          const SizedBox(width: 4),
+          Text(tag.label,
+              style: TextStyle(
+                  fontSize: 11.5, fontWeight: FontWeight.w600, color: fg)),
+        ],
+      ),
+    );
   }
 }
 
@@ -303,6 +352,7 @@ class _AddNoteSheet extends ConsumerStatefulWidget {
 
 class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
   final _controller = TextEditingController();
+  final _tags = <NoteTag>{};
   String _flag = ''; // '' | 'agent' | 'dealer'
   bool _saving = false;
 
@@ -313,11 +363,17 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
   }
 
   Future<void> _submit() async {
-    final text = _controller.text.trim();
-    if (text.isEmpty || _saving) return;
+    // At least one ticked observation — free text alone can't carry a note,
+    // since it isn't displayed until reviewed.
+    if (_tags.isEmpty || _saving) return;
     setState(() => _saving = true);
     try {
-      await ref.read(addNoteProvider).call(widget.carId, text, _flag);
+      await ref.read(addNoteProvider).call(
+            widget.carId,
+            _tags.toList(),
+            _controller.text,
+            _flag,
+          );
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
@@ -339,24 +395,55 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('הוספת הערה על הרכב',
+          const Text('מה ראיתם בפגישה?',
               style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                   color: AppColors.textPrimary)),
           const SizedBox(height: 4),
           const Text(
-              'שתפו עובדות על הרכב — מצב, פגמים, מה שראיתם. הימנעו מהאשמות אישיות במוכר.',
+              'סמנו מה שמתאים. הבחירה מתוך רשימה קבועה שומרת על דיווח עובדתי.',
               style: TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
           const SizedBox(height: 12),
+          // Fixed checklist instead of an open box — see NoteTag's docs.
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final tag in NoteTag.values)
+                FilterChip(
+                  label: Text(tag.label),
+                  selected: _tags.contains(tag),
+                  showCheckmark: true,
+                  checkmarkColor: AppColors.white,
+                  selectedColor: AppColors.teal,
+                  backgroundColor: AppColors.background,
+                  side: BorderSide(
+                      color: _tags.contains(tag)
+                          ? AppColors.teal
+                          : AppColors.cardBorder),
+                  labelStyle: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: _tags.contains(tag)
+                        ? AppColors.white
+                        : AppColors.textMuted,
+                  ),
+                  onSelected: (on) => setState(
+                      () => on ? _tags.add(tag) : _tags.remove(tag)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // "Other" is accepted but held back from display until reviewed.
           TextField(
             controller: _controller,
-            autofocus: true,
-            maxLines: 4,
-            maxLength: 500,
-            textInputAction: TextInputAction.newline,
+            maxLines: 2,
+            maxLength: 300,
             decoration: InputDecoration(
-              hintText: 'לדוגמה: ראיתי שריטה קלה בדלת ימין, המנוע נשמע חלק…',
+              labelText: 'אחר (לא חובה)',
+              helperText: 'טקסט חופשי נשלח לבדיקה ולא יוצג עד לאישור.',
+              helperMaxLines: 2,
               filled: true,
               fillColor: AppColors.background,
               border: OutlineInputBorder(
@@ -365,8 +452,8 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          const Text('שמת לב שהמוכר אינו פרטי? (לא חובה)',
+          const SizedBox(height: 8),
+          const Text('כיצד פעל המוכר? (לא חובה)',
               style: TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
           const SizedBox(height: 8),
           Wrap(
@@ -374,8 +461,8 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
             children: [
               for (final opt in const [
                 ('', 'לא סימנתי'),
-                ('agent', 'בעצם סוכן'),
-                ('dealer', 'בעצם סוחר / מגרש'),
+                ('agent', 'פעל כסוכן'),
+                ('dealer', 'פעל כסוחר / מגרש'),
               ])
                 ChoiceChip(
                   label: Text(opt.$2),
@@ -398,14 +485,14 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
               backgroundColor: AppColors.teal,
               minimumSize: const Size.fromHeight(48),
             ),
-            onPressed: _saving ? null : _submit,
+            onPressed: (_saving || _tags.isEmpty) ? null : _submit,
             child: _saving
                 ? const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: AppColors.white))
-                : const Text('פרסם הערה'),
+                : const Text('שלח דיווח'),
           ),
         ],
       ),

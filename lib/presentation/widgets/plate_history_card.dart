@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../data/models/plate_snapshot_model.dart';
 import '../providers/cars_provider.dart';
 import '../providers/gov_api_provider.dart';
 import 'app_card.dart';
@@ -24,7 +25,6 @@ class PlateHistoryCard extends ConsumerWidget {
   final int currentKm;
 
   static final _fmt = NumberFormat('#,###', 'en');
-  static final _dateFmt = DateFormat('MM/yyyy');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -63,15 +63,29 @@ class PlateHistoryCard extends ConsumerWidget {
                   const Icon(Icons.warning_amber_rounded,
                       size: 20, color: AppColors.errorRed),
                   const SizedBox(width: 8),
+                  // Factual description only. "חשד לגלגול" implied a criminal
+                  // act; a mismatch between sources is what we can actually
+                  // show, and the reader draws their own conclusion.
                   Expanded(
-                    child: Text(
-                      govRollback
-                          ? 'אזהרת קילומטראז\': המודעה מציגה פחות ק"מ מהמד-אוץ הרשמי בטסט האחרון. ייתכן גילגול.'
-                          : 'אזהרת קילומטראז\': במודעה קודמת נרשמו יותר ק"מ מהמודעה הנוכחית. ייתכן גילגול.',
-                      style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.errorRed),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          govRollback
+                              ? 'נמצאה אי-התאמה בין נתוני הקילומטראז\' במקורות שונים: המודעה מציגה פחות ק"מ מהרישום בטסט האחרון.'
+                              : 'נמצאה אי-התאמה בין נתוני הקילומטראז\' במקורות שונים: במודעה קודמת נרשמו יותר ק"מ מהמודעה הנוכחית.',
+                          style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.errorRed),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'מומלץ לבדוק את היסטוריית הרכב לפני השלמת העסקה.',
+                          style: TextStyle(
+                              fontSize: 11.5, color: AppColors.errorRed),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -91,25 +105,98 @@ class PlateHistoryCard extends ConsumerWidget {
               okNote: 'תואם ✓',
             ),
 
-          // Past OtoV listings.
+          // Past listings are SUMMARISED, never itemised. Listing every past
+          // price and reading builds a timeline of the car's owners; a count
+          // plus the direction of change gives the buyer the same signal
+          // without publishing that history.
           if (previous.isNotEmpty) ...[
             if (govKm != null) const SizedBox(height: 6),
             const SizedBox(height: 6),
-            Text('מודעות קודמות באפליקציה (${previous.length})',
-                style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textMuted)),
-            const SizedBox(height: 8),
-            for (final s in previous)
-              _kmRow(
-                icon: Icons.history,
-                label: _dateFmt.format(s.createdAt),
-                km: s.km,
-                flagged: s.km > currentKm,
-                trailing: '₪${_fmt.format(s.price)}',
-              ),
+            _summaryRow(
+              icon: Icons.history,
+              label: previous.length == 1
+                  ? 'נמצאה מודעה קודמת אחת באפליקציה'
+                  : 'נמצאו ${previous.length} מודעות קודמות באפליקציה',
+            ),
+            if (_priceNote(previous) case final note?)
+              _summaryRow(icon: Icons.swap_vert, label: note),
+            if (_kmNote(previous, currentKm) case final note?)
+              _summaryRow(
+                  icon: Icons.speed, label: note, flagged: histRollback),
           ],
+          // Every surface carrying community-derived data offers a way to
+          // challenge it.
+          if (previous.isNotEmpty)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton.icon(
+                icon: const Icon(Icons.flag_outlined, size: 15),
+                label: const Text('דווח על מידע שגוי',
+                    style: TextStyle(fontSize: 11.5)),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textMuted,
+                  minimumSize: const Size(0, 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: () => _reportWrong(context, ref),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _reportWrong(BuildContext context, WidgetRef ref) async {
+    await ref
+        .read(submitCorrectionProvider)
+        .call(kind: 'plate_history', carId: currentCarId);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('הבקשה נשלחה לבדיקה. תודה.')),
+      );
+    }
+  }
+
+  /// "The asking price rose/fell since the previous listing" — direction and
+  /// size only, never the old figures themselves.
+  static String? _priceNote(List<PlateSnapshot> previous) {
+    final last = previous.first.price;
+    final diff = last - previous.last.price;
+    if (previous.length < 2 || diff == 0) return null;
+    final amount = _fmt.format(diff.abs());
+    return diff > 0
+        ? 'המחיר המבוקש עלה בכ-₪$amount בין המודעות'
+        : 'המחיר המבוקש ירד בכ-₪$amount בין המודעות';
+  }
+
+  /// Whether the reading moved forward as expected, without listing each one.
+  static String? _kmNote(List<PlateSnapshot> previous, int currentKm) {
+    final highest = previous.map((s) => s.km).reduce((a, b) => a > b ? a : b);
+    if (highest > currentKm) {
+      return 'במודעה קודמת נרשמו ${_fmt.format(highest)} ק"מ — יותר מהמודעה הנוכחית';
+    }
+    return 'הקילומטראז\' עלה בהתאמה בין המודעות ✓';
+  }
+
+  /// A single summarised line — no odometer column, no price column.
+  Widget _summaryRow({
+    required IconData icon,
+    required String label,
+    bool flagged = false,
+  }) {
+    final color = flagged ? AppColors.errorRed : AppColors.textMuted;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon,
+              size: 16, color: flagged ? AppColors.errorRed : AppColors.teal),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(label,
+                style: TextStyle(fontSize: 12.5, color: color)),
+          ),
         ],
       ),
     );

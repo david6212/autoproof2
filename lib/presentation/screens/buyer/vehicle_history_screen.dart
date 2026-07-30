@@ -42,7 +42,7 @@ class _VehicleHistoryScreenState extends ConsumerState<VehicleHistoryScreen> {
   void _search() {
     FocusScope.of(context).unfocus();
     final plate = _plateController.text.trim();
-    ref.read(analyticsHelperProvider).vehicleLookup(plate);
+    ref.read(analyticsHelperProvider).vehicleLookup();
     ref.read(govLookupControllerProvider.notifier).search(plate);
   }
 

@@ -198,35 +198,6 @@ final savedCarsProvider = StreamProvider<List<CarModel>>((ref) {
   return ref.watch(carRepositoryProvider).streamSavedCars(user.uid);
 });
 
-/// Writes an anonymous review. CRITICAL: no sellerId field is stored, so the
-/// seller can never query or see these reviews.
-typedef ReviewWriter = Future<void> Function({
-  required String carId,
-  required String reviewerId,
-  required bool anonymous,
-  required List<String> reasons,
-  required String text,
-});
-
-final reviewWriteProvider = Provider<ReviewWriter>((ref) {
-  final repo = ref.read(carRepositoryProvider);
-  return ({
-    required carId,
-    required reviewerId,
-    required anonymous,
-    required reasons,
-    required text,
-  }) {
-    return repo.addReview(
-      carId: carId,
-      reviewerId: reviewerId,
-      anonymous: anonymous,
-      reasons: reasons,
-      text: text,
-    );
-  };
-});
-
 /// Updates a listing's status (e.g. mark as sold or remove it). Used by the
 /// seller from the "My listing" screen.
 final updateListingStatusProvider =
@@ -285,8 +256,9 @@ final carNotesProvider =
 
 /// Adds a note as the current user. No-op if not signed in.
 final addNoteProvider = Provider<
-    Future<void> Function(String carId, String text, String sellerFlag)>((ref) {
-  return (carId, text, sellerFlag) async {
+    Future<void> Function(String carId, List<NoteTag> tags, String otherText,
+        String sellerFlag)>((ref) {
+  return (carId, tags, otherText, sellerFlag) async {
     final user = ref.read(authStateProvider).valueOrNull;
     if (user == null) return;
     final profile = ref.read(currentUserModelProvider).valueOrNull;
@@ -299,7 +271,8 @@ final addNoteProvider = Provider<
           carId: carId,
           authorUid: user.uid,
           authorName: name,
-          text: text.trim(),
+          tags: tags,
+          otherText: otherText.trim(),
           sellerFlag: sellerFlag,
         );
   };
@@ -353,6 +326,22 @@ final reportEncounterTallyProvider =
     if (user == null) return;
     await ref.read(carRepositoryProvider).reportEncounterTally(
           carId: carId,
+          reporterUid: user.uid,
+        );
+  };
+});
+
+/// Submits any correction or data-deletion request. No-op if not signed in.
+final submitCorrectionProvider =
+    Provider<Future<void> Function({required String kind, String carId, String note})>(
+        (ref) {
+  return ({required kind, carId = '', note = ''}) async {
+    final user = ref.read(authStateProvider).valueOrNull;
+    if (user == null) return;
+    await ref.read(carRepositoryProvider).submitCorrection(
+          kind: kind,
+          carId: carId,
+          note: note,
           reporterUid: user.uid,
         );
   };

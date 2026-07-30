@@ -12,12 +12,29 @@ class EncounterTally {
   /// What the CURRENT user reported for this car, or null if they haven't.
   final SellerType? myReport;
 
+  /// When the most recent report came in. A percentage with no date implies
+  /// it is current; showing the age lets the reader weigh it.
+  final DateTime? lastReportAt;
+
   const EncounterTally({
     this.privateCount = 0,
     this.agentCount = 0,
     this.dealerCount = 0,
     this.myReport,
+    this.lastReportAt,
   });
+
+  /// Short Hebrew age of the newest report, or null if there are none.
+  String? get lastUpdatedLabel {
+    final t = lastReportAt;
+    if (t == null) return null;
+    final d = DateTime.now().difference(t);
+    if (d.inDays < 1) return 'עודכן היום';
+    if (d.inDays == 1) return 'עודכן אתמול';
+    if (d.inDays < 30) return 'עודכן לפני ${d.inDays} ימים';
+    if (d.inDays < 365) return 'עודכן לפני ${(d.inDays / 30).floor()} חודשים';
+    return 'עודכן לפני ${(d.inDays / 365).floor()} שנים';
+  }
 
   int get total => privateCount + agentCount + dealerCount;
 
