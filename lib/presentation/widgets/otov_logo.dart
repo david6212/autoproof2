@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_strings.dart';
 
 /// The OtoV mark exactly as it looks at the end of the splash animation:
 /// a flat green shield + the car image + a green checkmark. Static (no
@@ -81,23 +80,66 @@ class OtovLogo extends StatelessWidget {
       children: [
         emblem,
         SizedBox(height: size * 0.12),
-        // Latin mark in an RTL app — pin the direction so it never flips.
-        Directionality(
-          textDirection: TextDirection.ltr,
-          child: Text(
-            AppStrings.appName,
+        OtovWordmark(fontSize: size * 0.30),
+      ],
+    );
+  }
+}
+
+/// The name set so its final V *is* the checkmark from the emblem.
+///
+/// "OtoV" was chosen because it reads as auto + tick, so drawing the V as the
+/// same stroke the shield carries makes the name and the mark one idea instead
+/// of two things sitting next to each other.
+class OtovWordmark extends StatelessWidget {
+  const OtovWordmark({
+    super.key,
+    this.fontSize = 34,
+    this.color = AppColors.textPrimary,
+    this.checkColor = AppColors.teal,
+  });
+
+  final double fontSize;
+  final Color color;
+  final Color checkColor;
+
+  @override
+  Widget build(BuildContext context) {
+    // A check is wider than it is tall and sits above the baseline, so it is
+    // sized off cap height rather than the full em.
+    final capHeight = fontSize * 0.72;
+
+    // Latin mark in an RTL app — pin the direction so it never flips.
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            'Oto',
             style: GoogleFonts.poppins(
-              fontSize: size * 0.30,
+              fontSize: fontSize,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-              // OtoV is short and mixed-case; slight tracking keeps the capital
-              // O and V from crowding the lowercase middle.
-              letterSpacing: 1,
+              color: color,
+              letterSpacing: 0.5,
               height: 1,
             ),
           ),
-        ),
-      ],
+          Padding(
+            // Optical spacing: the check's open left arm needs less air than a
+            // letter would, and it sits slightly off the baseline.
+            padding: EdgeInsets.only(
+              left: fontSize * 0.06,
+              bottom: fontSize * 0.04,
+            ),
+            child: CustomPaint(
+              size: Size(capHeight * 1.05, capHeight),
+              painter: CheckPainter(checkColor, 1),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

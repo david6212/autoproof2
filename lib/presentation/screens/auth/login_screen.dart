@@ -88,42 +88,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isCodeStep = state.step == PhoneAuthStep.enterCode;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.appName),
-        automaticallyImplyLeading: false,
-      ),
+      // No app bar: the mark is the identity here, and a title bar repeating
+      // the name above the logo just pushed the form down.
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 380),
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
               const SizedBox(height: 12),
               // Same mark as the splash screen (shield + car + check).
               const OtovLogo(size: 132, withWordmark: true),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
+              const Text(
+                AppStrings.tagline,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.teal),
+              ),
+              const SizedBox(height: 26),
               Text(
                 isCodeStep ? 'הזן את הקוד שקיבלת' : 'התחברות',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 isCodeStep
                     ? 'שלחנו קוד בן 6 ספרות אל ${state.phoneE164}'
                     : 'נשלח אליך קוד אימות ב-SMS',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textMuted),
+                style: const TextStyle(
+                    fontSize: 13.5, color: AppColors.textMuted),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
 
               if (!isCodeStep)
                 _PhoneField(controller: _phoneController)

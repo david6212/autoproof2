@@ -3,15 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/otov_logo.dart';
 
 /// Animated OtoV splash — a Flutter port of the GSAP prototype:
-/// shield scales in → car drops into the shield → the wordmark's letters draw
-/// together → the checkmark draws itself on. Then hold and fade out to the app.
+/// shield scales in → car drops into the shield → the wordmark rises in →
+/// the checkmark draws itself on. Then hold and fade out to the app.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -22,7 +20,6 @@ class SplashScreen extends ConsumerStatefulWidget {
 class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   static const _green = Color(0xFF558B6E);
-  static const _ink = Color(0xFF1A202C);
   static const _bg = Color(0xFFF8FAF9);
 
   late final AnimationController _c;
@@ -139,20 +136,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     ),
                   ),
                   const SizedBox(height: 22),
-                  // ---- Wordmark: OtoV's letters draw together ----
-                  // One word, so the old two-halves convergence is replaced by
-                  // letter-spacing settling from wide to tight as it fades in.
-                  // Force LTR — the Latin mark must not flip in this RTL app.
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Opacity(
-                      opacity: _text.value.clamp(0.0, 1.0),
-                      child: Text(
-                        AppStrings.appName,
-                        style: _wordStyle.copyWith(
-                          letterSpacing: 4 + 16 * (1 - _text.value),
-                        ),
-                      ),
+                  // ---- Wordmark ----
+                  // The same mark used everywhere else, so the check the shield
+                  // just drew reappears as the V of the name. It rises and
+                  // settles rather than sliding, letting the emblem stay the
+                  // moving element.
+                  Opacity(
+                    opacity: _text.value.clamp(0.0, 1.0),
+                    child: Transform.translate(
+                      offset: Offset(0, 10 * (1 - _text.value)),
+                      child: const OtovWordmark(fontSize: 30),
                     ),
                   ),
                 ],
@@ -163,11 +156,4 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       ),
     );
   }
-
-  TextStyle get _wordStyle => GoogleFonts.montserrat(
-        fontSize: 26,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 2,
-        color: _ink,
-      );
 }
