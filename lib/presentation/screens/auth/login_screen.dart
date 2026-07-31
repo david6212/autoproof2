@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,14 +38,39 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
       ref.read(analyticsHelperProvider).loginCompleted();
       context.go('/home');
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      setState(() => _socialLoading = false);
+      // Closing the provider's popup isn't a failure — say nothing.
+      if (e.code == 'popup-closed-by-user' ||
+          e.code == 'cancelled-popup-request' ||
+          e.code == 'web-context-canceled' ||
+          e.code == 'canceled') {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_socialError(e.code))),
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _socialLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ההתחברות נכשלה. נסה שוב.')),
+        const SnackBar(content: Text('ההתחברות נכשלה. נסו שוב.')),
       );
     }
   }
+
+  /// Tells the user what actually happened. "Try again" is wrong advice for a
+  /// provider that isn't switched on, or for an email already used elsewhere.
+  String _socialError(String code) => switch (code) {
+        'operation-not-allowed' =>
+          'שיטת ההתחברות הזו עדיין לא זמינה. נסו עם Google או עם מספר טלפון.',
+        'account-exists-with-different-credential' =>
+          'קיים כבר חשבון עם האימייל הזה. התחברו בשיטה שבה נרשמתם.',
+        'network-request-failed' => 'אין חיבור לאינטרנט. בדקו ונסו שוב.',
+        'too-many-requests' => 'יותר מדי ניסיונות. נסו שוב מאוחר יותר.',
+        _ => 'ההתחברות נכשלה. נסו שוב.',
+      };
 
   @override
   Widget build(BuildContext context) {
