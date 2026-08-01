@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/car_model.dart';
 import '../../core/theme/app_text.dart';
+import 'app_card.dart';
 import 'seller_type_badge.dart';
 
 /// A single car listing card used on Home and Saved screens.
@@ -29,13 +30,9 @@ class CarCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
-      child: Container(
+      child: AppCard(
         margin: const EdgeInsets.only(bottom: 14),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.cardBorder),
-        ),
+        padding: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

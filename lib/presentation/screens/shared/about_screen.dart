@@ -5,6 +5,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../widgets/otov_logo.dart';
 import '../../../core/theme/app_text.dart';
+import '../../widgets/app_card.dart';
+import '../../../core/theme/app_dimens.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -96,14 +98,8 @@ class _LayerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: AppSpace.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

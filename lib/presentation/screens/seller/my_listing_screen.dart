@@ -8,6 +8,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/cars_provider.dart';
 import '../../../core/theme/app_text.dart';
+import '../../widgets/app_card.dart';
+import '../../../core/theme/app_dimens.dart';
 
 class MyListingScreen extends ConsumerWidget {
   const MyListingScreen({super.key});
@@ -46,12 +48,8 @@ class _Content extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.cardBorder),
-          ),
+        AppCard(
+          padding: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -107,14 +105,10 @@ class _Content extends StatelessWidget {
             style: TextStyle(
                 fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.cardBorder),
-          ),
-          child: const Center(
+        const AppCard(
+          padding: EdgeInsets.all(20),
+          radius: AppRadius.sm,
+          child: Center(
             child: Text('כאן יופיעו קונים שמתעניינים ברכב שלך',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textMuted)),
@@ -243,14 +237,10 @@ class _Stat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: AppCard(
+        margin: const EdgeInsets.symmetric(horizontal: AppSpace.xs),
         padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cardBorder),
-        ),
+        radius: AppRadius.sm,
         child: Column(
           children: [
             Icon(icon, color: AppColors.teal, size: 20),

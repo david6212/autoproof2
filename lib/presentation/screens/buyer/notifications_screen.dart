@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../widgets/app_card.dart';
+import '../../../core/theme/app_dimens.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -53,14 +55,10 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: AppSpace.sm),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: unread ? AppColors.tealLight : AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
+      color: unread ? AppColors.tealLight : AppColors.white,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

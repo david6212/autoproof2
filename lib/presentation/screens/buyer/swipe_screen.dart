@@ -13,6 +13,8 @@ import '../../providers/swipe_provider.dart';
 import '../../widgets/login_required_sheet.dart';
 import '../../widgets/verified_badge_widget.dart';
 import '../../../core/theme/app_text.dart';
+import '../../widgets/app_card.dart';
+import '../../../core/theme/app_dimens.dart';
 
 class SwipeScreen extends ConsumerWidget {
   const SwipeScreen({super.key});
@@ -91,19 +93,10 @@ class _SwipeBody extends StatelessWidget {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.cardBorder),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
+            child: AppCard(
+              padding: EdgeInsets.zero,
+              radius: AppRadius.xl,
+              elevated: true,
               clipBehavior: Clip.antiAlias,
               child: Stack(
                 fit: StackFit.expand,

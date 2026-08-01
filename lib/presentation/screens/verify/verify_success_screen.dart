@@ -7,6 +7,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../providers/seller_verification_provider.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../widgets/step_progress_widget.dart';
+import '../../widgets/app_card.dart';
 
 class VerifySuccessScreen extends ConsumerStatefulWidget {
   const VerifySuccessScreen({super.key});
@@ -127,13 +128,7 @@ class _CarPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
+    return AppCard(
       child: Row(
         children: [
           const Icon(Icons.directions_car, color: AppColors.teal),

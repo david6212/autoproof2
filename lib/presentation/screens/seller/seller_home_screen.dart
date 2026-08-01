@@ -9,6 +9,8 @@ import '../../../data/models/car_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../../core/theme/app_text.dart';
+import '../../widgets/app_card.dart';
+import '../../../core/theme/app_dimens.dart';
 
 class SellerHomeScreen extends ConsumerWidget {
   const SellerHomeScreen({super.key});
@@ -100,12 +102,8 @@ class _ActiveListingCard extends StatelessWidget {
     return InkWell(
       onTap: () => context.go('/seller/listing'),
       borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.cardBorder),
-        ),
+      child: AppCard(
+        padding: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         child: Row(
           children: [
@@ -154,14 +152,10 @@ class _Tip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: AppSpace.sm),
+      padding: const EdgeInsets.all(AppSpace.md),
+      radius: AppRadius.sm,
       child: Row(
         children: [
           Icon(icon, color: AppColors.teal, size: 20),
