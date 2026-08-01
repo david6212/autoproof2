@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_text.dart';
 
 /// A full-screen, centered "sign in to continue" prompt shown on tabs that
 /// only make sense for a signed-in user (Saved, Chats, Profile) when the
@@ -39,11 +40,7 @@ class GuestPromptView extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
+              style: AppText.h2,
             ),
             const SizedBox(height: 8),
             Text(

@@ -13,6 +13,7 @@ import '../../../data/models/inspection_center.dart';
 import '../../widgets/app_card.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/gov_api_provider.dart';
+import '../../../core/theme/app_text.dart';
 
 /// The user's current position, or null if unavailable / permission denied.
 /// Used to center the map and find the nearest inspection center.
@@ -424,7 +425,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
           bottom: 2,
           left: 4,
           child: Text('© OpenStreetMap',
-              style: TextStyle(fontSize: 9, color: AppColors.textSubtle)),
+              style: TextStyle(fontSize: 9.5, color: AppColors.textSubtle)),
         ),
         if (me != null)
           Positioned(
@@ -493,7 +494,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
               '${sorted.length} מכונים מורשים · מקור: משרד התחבורה'
               '${me != null ? ' · ממוינים לפי קרבה אליך' : ''}',
               style:
-                  const TextStyle(fontSize: 12, color: AppColors.textSubtle),
+                  const TextStyle(fontSize: 12.5, color: AppColors.textSubtle),
             ),
           );
         }
@@ -677,7 +678,7 @@ class _LocationHint extends StatelessWidget {
           SizedBox(width: 6),
           Flexible(
             child: Text('אפשרו גישה למיקום כדי לראות את המכון הקרוב אליכם',
-                style: TextStyle(fontSize: 12, color: AppColors.warnText)),
+                style: TextStyle(fontSize: 12.5, color: AppColors.warnText)),
           ),
         ],
       ),
@@ -731,7 +732,7 @@ class _CenterCard extends StatelessWidget {
                     Text(center.name,
                         style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 15.5,
+                            fontSize: 15,
                             color: AppColors.textPrimary)),
                     const SizedBox(height: 3),
                     Row(
@@ -741,8 +742,7 @@ class _CenterCard extends StatelessWidget {
                         const SizedBox(width: 3),
                         Expanded(
                           child: Text(center.fullAddress,
-                              style: const TextStyle(
-                                  fontSize: 12.5, color: AppColors.textMuted)),
+                              style: AppText.caption),
                         ),
                       ],
                     ),
@@ -750,7 +750,7 @@ class _CenterCard extends StatelessWidget {
                       const SizedBox(height: 3),
                       const Text('הסיכה במרכז העיר — התקשרו לכתובת המדויקת',
                           style: TextStyle(
-                              fontSize: 11, color: AppColors.textSubtle)),
+                              fontSize: 11.5, color: AppColors.textSubtle)),
                     ],
                   ],
                 ),

@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/cars_provider.dart';
+import '../../../core/theme/app_text.dart';
 
 class MyListingScreen extends ConsumerWidget {
   const MyListingScreen({super.key});
@@ -71,10 +72,7 @@ class _Content extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(car.title,
-                          style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary)),
+                          style: AppText.h3),
                     ),
                     Text('₪${_fmt.format(car.price)}',
                         style: const TextStyle(
@@ -258,13 +256,10 @@ class _Stat extends StatelessWidget {
             Icon(icon, color: AppColors.teal, size: 20),
             const SizedBox(height: 4),
             Text(value,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: AppColors.textPrimary)),
+                style: AppText.title),
             Text(label,
                 style: const TextStyle(
-                    color: AppColors.textSubtle, fontSize: 12)),
+                    color: AppColors.textSubtle, fontSize: 12.5)),
           ],
         ),
       ),

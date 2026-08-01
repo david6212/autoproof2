@@ -8,6 +8,7 @@ import '../../../data/models/car_model.dart';
 import '../../providers/seller_verification_provider.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../widgets/step_progress_widget.dart';
+import '../../../core/theme/app_text.dart';
 
 class VerifyRoleScreen extends ConsumerStatefulWidget {
   const VerifyRoleScreen({super.key});
@@ -40,11 +41,7 @@ class _VerifyRoleScreenState extends ConsumerState<VerifyRoleScreen> {
               const SizedBox(height: 28),
               const Text(
                 'מי אתה?',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+                style: AppText.display,
               ),
               const SizedBox(height: 6),
               const Text(
@@ -128,11 +125,7 @@ class _RoleOption extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
+                    style: AppText.title,
                   ),
                   const SizedBox(height: 4),
                   Text(

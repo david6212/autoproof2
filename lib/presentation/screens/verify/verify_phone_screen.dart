@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/primary_button_widget.dart';
+import '../../../core/theme/app_text.dart';
 
 /// Attaches a phone number to an account that signed in with Google or Apple.
 ///
@@ -114,10 +115,7 @@ class _VerifyPhoneScreenState extends ConsumerState<VerifyPhoneScreen> {
               const Text(
                 'כדי לפרסם מודעה צריך מספר טלפון מאומת',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary),
+                style: AppText.h3,
               ),
               const SizedBox(height: 8),
               const Text(

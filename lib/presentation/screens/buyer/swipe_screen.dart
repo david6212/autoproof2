@@ -12,6 +12,7 @@ import '../../providers/cars_provider.dart';
 import '../../providers/swipe_provider.dart';
 import '../../widgets/login_required_sheet.dart';
 import '../../widgets/verified_badge_widget.dart';
+import '../../../core/theme/app_text.dart';
 
 class SwipeScreen extends ConsumerWidget {
   const SwipeScreen({super.key});
@@ -265,7 +266,7 @@ class _NoMoreCards extends StatelessWidget {
               style: TextStyle(color: AppColors.textMuted)),
           const SizedBox(height: 4),
           const Text('שנה את הסינון בעמוד הבית כדי לראות עוד',
-              style: TextStyle(color: AppColors.textSubtle, fontSize: 12.5)),
+              style: AppText.captionSubtle),
           const SizedBox(height: 16),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.teal),

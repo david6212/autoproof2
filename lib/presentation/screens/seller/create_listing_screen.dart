@@ -11,6 +11,7 @@ import '../../providers/create_listing_provider.dart';
 import '../../providers/seller_verification_provider.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../widgets/step_progress_widget.dart';
+import '../../../core/theme/app_text.dart';
 
 class CreateListingScreen extends ConsumerWidget {
   const CreateListingScreen({super.key});
@@ -92,11 +93,7 @@ class _StepPhotos extends ConsumerWidget {
               children: [
                 const Text(
                   'הוסף תמונות של הרכב',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
+                  style: AppText.h2,
                 ),
                 const SizedBox(height: 4),
                 const Text(
@@ -158,7 +155,7 @@ class _AddTile extends StatelessWidget {
           children: [
             Icon(Icons.add_a_photo_outlined, color: AppColors.teal),
             SizedBox(height: 4),
-            Text('הוסף', style: TextStyle(color: AppColors.teal, fontSize: 12)),
+            Text('הוסף', style: TextStyle(color: AppColors.teal, fontSize: 12.5)),
           ],
         ),
       ),
@@ -204,7 +201,7 @@ class _PhotoThumb extends StatelessWidget {
                 child: const Text(
                   'שער',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.white, fontSize: 11),
+                  style: TextStyle(color: AppColors.white, fontSize: 11.5),
                 ),
               ),
             ),
@@ -395,7 +392,7 @@ class _ReadOnlyCarCard extends StatelessWidget {
                 Text(
                   '${car.year} · ${car.fuelType} · אומת מול משרד התחבורה',
                   style:
-                      const TextStyle(fontSize: 12, color: AppColors.tealText2),
+                      const TextStyle(fontSize: 12.5, color: AppColors.tealText2),
                 ),
               ],
             ),
@@ -429,11 +426,7 @@ class _StepReview extends ConsumerWidget {
               children: [
                 const Text(
                   'סקירה ואישור',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
+                  style: AppText.h2,
                 ),
                 const SizedBox(height: 12),
                 _reviewRow('רכב', car.title),
@@ -544,11 +537,7 @@ class _PublishedScreen extends StatelessWidget {
               const SizedBox(height: 20),
               const Text(
                 'המודעה פורסמה!',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+                style: AppText.display,
               ),
               const SizedBox(height: 8),
               const Text(

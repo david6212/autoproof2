@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_dimens.dart';
-import '../../core/theme/app_text.dart';
 import '../../data/models/car_note_model.dart';
 import '../providers/analytics_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cars_provider.dart';
+import '../../core/theme/app_text.dart';
 import 'app_card.dart';
 import 'login_required_sheet.dart';
 
@@ -191,8 +191,7 @@ class _NoteTile extends StatelessWidget {
                         color: AppColors.textPrimary)),
               ),
               Text(_timeAgo(note.createdAt),
-                  style: const TextStyle(
-                      fontSize: 11.5, color: AppColors.textSubtle)),
+                  style: AppText.micro),
               if (isMine)
                 InkWell(
                   onTap: onDelete,
@@ -231,8 +230,7 @@ class _NoteTile extends StatelessWidget {
                 Icon(Icons.schedule, size: 13, color: AppColors.textSubtle),
                 SizedBox(width: 4),
                 Text('הערה חופשית ממתינה לבדיקה',
-                    style: TextStyle(
-                        fontSize: 11.5, color: AppColors.textSubtle)),
+                    style: AppText.micro),
               ],
             ),
           ],
@@ -396,14 +394,11 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('מה ראיתם בפגישה?',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: AppColors.textPrimary)),
+              style: AppText.title),
           const SizedBox(height: 4),
           const Text(
               'סמנו מה שמתאים. הבחירה מתוך רשימה קבועה שומרת על דיווח עובדתי.',
-              style: TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
+              style: AppText.caption),
           const SizedBox(height: 12),
           // Fixed checklist instead of an open box — see NoteTag's docs.
           Wrap(
@@ -454,7 +449,7 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
           ),
           const SizedBox(height: 8),
           const Text('כיצד פעל המוכר? (לא חובה)',
-              style: TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
+              style: AppText.caption),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,

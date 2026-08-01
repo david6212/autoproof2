@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/car_catalog.dart';
 import '../../data/models/car_model.dart';
 import '../providers/cars_provider.dart';
+import '../../core/theme/app_text.dart';
 
 /// Opens the advanced buyer filter sheet. Functional filters (model, hand,
 /// price, year, km, area) are committed to [carFiltersProvider] on apply;
@@ -129,10 +130,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
           child: Row(
             children: [
               const Text('סינון רכבים מתקדם',
-                  style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary)),
+                  style: AppText.h2),
               const Spacer(),
               _ClearButton(onTap: _clearAll),
             ],

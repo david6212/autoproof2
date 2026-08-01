@@ -141,7 +141,7 @@ class _Header extends StatelessWidget {
         if (chat != null && chat!.carTitle.isNotEmpty)
           Text(
             chat!.carTitle,
-            style: const TextStyle(fontSize: 12, color: AppColors.tealLight),
+            style: const TextStyle(fontSize: 12.5, color: AppColors.tealLight),
           ),
       ],
     );
@@ -160,7 +160,7 @@ class _InfoBanner extends StatelessWidget {
       child: const Text(
         AppStrings.chatWithVerified,
         textAlign: TextAlign.center,
-        style: TextStyle(color: AppColors.tealText2, fontSize: 12),
+        style: TextStyle(color: AppColors.tealText2, fontSize: 12.5),
       ),
     );
   }

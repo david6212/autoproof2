@@ -97,7 +97,7 @@ class _ChatTile extends StatelessWidget {
       ),
       trailing: Text(
         _time(chat.lastMessageAt),
-        style: const TextStyle(color: AppColors.textSubtle, fontSize: 12),
+        style: const TextStyle(color: AppColors.textSubtle, fontSize: 12.5),
       ),
     );
   }

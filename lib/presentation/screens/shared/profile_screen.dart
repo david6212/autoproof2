@@ -7,6 +7,7 @@ import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../widgets/guest_prompt_view.dart';
+import '../../../core/theme/app_text.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -105,10 +106,7 @@ class _Content extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(name,
-                  style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary)),
+                  style: AppText.h2),
               const SizedBox(height: 4),
               if (verified)
                 const Row(

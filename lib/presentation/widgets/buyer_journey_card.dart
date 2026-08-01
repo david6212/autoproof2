@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cars_provider.dart';
+import '../../core/theme/app_text.dart';
 import 'app_card.dart';
 import 'login_required_sheet.dart';
 
@@ -100,7 +101,7 @@ class BuyerJourneyCard extends ConsumerWidget {
                   foregroundColor: AppColors.textMuted,
                   minimumSize: const Size(0, 0),
                   padding: const EdgeInsets.symmetric(horizontal: 6)),
-              child: const Text('אפס', style: TextStyle(fontSize: 12)),
+              child: const Text('אפס', style: TextStyle(fontSize: 12.5)),
             )
           : null,
       child: Column(
@@ -239,8 +240,7 @@ class _StepRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(step.subtitle,
-                      style: const TextStyle(
-                          fontSize: 12.5, color: AppColors.textMuted)),
+                      style: AppText.caption),
                   if (step.findInspection) ...[
                     const SizedBox(height: 8),
                     OutlinedButton.icon(
@@ -279,7 +279,7 @@ class _StepRow extends StatelessWidget {
                           Expanded(
                             child: Text(step.automation!,
                                 style: const TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.tealText)),
                           ),
@@ -300,7 +300,7 @@ class _StepRow extends StatelessWidget {
                         ),
                         onPressed: onAction,
                         child: Text(actionLabel!,
-                            style: const TextStyle(fontSize: 13.5)),
+                            style: const TextStyle(fontSize: 13)),
                       ),
                     ),
                   ],

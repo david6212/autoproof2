@@ -9,6 +9,7 @@ import '../../../data/models/gov_data_model.dart';
 import '../../providers/seller_verification_provider.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../widgets/step_progress_widget.dart';
+import '../../../core/theme/app_text.dart';
 
 class VerifyPlateScreen extends ConsumerStatefulWidget {
   const VerifyPlateScreen({super.key});
@@ -59,11 +60,7 @@ class _VerifyPlateScreenState extends ConsumerState<VerifyPlateScreen> {
               const SizedBox(height: 24),
               const Text(
                 'אימות בעלות',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+                style: AppText.display,
               ),
               const SizedBox(height: 6),
               const Text(
@@ -102,7 +99,7 @@ class _VerifyPlateScreenState extends ConsumerState<VerifyPlateScreen> {
                   Text(
                     AppStrings.idOnlyNote,
                     style:
-                        TextStyle(fontSize: 12, color: AppColors.textSubtle),
+                        TextStyle(fontSize: 12.5, color: AppColors.textSubtle),
                   ),
                 ],
               ),

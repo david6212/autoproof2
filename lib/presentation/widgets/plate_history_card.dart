@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/plate_snapshot_model.dart';
 import '../providers/cars_provider.dart';
 import '../providers/gov_api_provider.dart';
+import '../../core/theme/app_text.dart';
 import 'app_card.dart';
 
 /// Odometer cross-check + cross-listing memory for a plate. Compares the
@@ -221,8 +222,7 @@ class PlateHistoryCard extends ConsumerWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(label,
-                style: const TextStyle(
-                    fontSize: 12.5, color: AppColors.textMuted)),
+                style: AppText.caption),
           ),
           Text('${_fmt.format(km)} ק"מ',
               style: TextStyle(
@@ -230,13 +230,12 @@ class PlateHistoryCard extends ConsumerWidget {
           if (trailing != null) ...[
             const SizedBox(width: 10),
             Text(trailing,
-                style: const TextStyle(
-                    fontSize: 12.5, color: AppColors.textMuted)),
+                style: AppText.caption),
           ] else if (okNote != null && !flagged) ...[
             const SizedBox(width: 8),
             Text(okNote,
                 style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.bold,
                     color: AppColors.teal)),
           ],

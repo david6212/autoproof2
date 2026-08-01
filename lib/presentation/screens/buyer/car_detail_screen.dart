@@ -19,6 +19,7 @@ import '../../widgets/login_required_sheet.dart';
 import '../../widgets/plate_history_card.dart';
 import '../../widgets/seller_encounter_card.dart';
 import '../../widgets/seller_type_badge.dart';
+import '../../../core/theme/app_text.dart';
 
 class CarDetailScreen extends ConsumerWidget {
   const CarDetailScreen({super.key, required this.carId});
@@ -90,11 +91,7 @@ class _Content extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               car.title,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
+                              style: AppText.h1,
                             ),
                           ),
                           Text(
@@ -264,7 +261,7 @@ class _GalleryState extends State<_Gallery> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text('${_index + 1}/${photos.length}',
-                  style: const TextStyle(color: AppColors.white, fontSize: 12)),
+                  style: const TextStyle(color: AppColors.white, fontSize: 12.5)),
             ),
           ),
         // Seller-type pill (bottom-right).
@@ -536,7 +533,7 @@ class _SellerAbout extends StatelessWidget {
           const SizedBox(height: 8),
           Text(text,
               style: const TextStyle(
-                  fontSize: 13.5, height: 1.4, color: AppColors.textPrimary)),
+                  fontSize: 13, height: 1.4, color: AppColors.textPrimary)),
         ],
       ),
     );
@@ -582,7 +579,7 @@ class _SellerCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(_subtitle,
                         style: const TextStyle(
-                            fontSize: 12, color: AppColors.tealText2)),
+                            fontSize: 12.5, color: AppColors.tealText2)),
                   ],
                 ),
               ),
@@ -600,7 +597,7 @@ class _SellerCard extends StatelessWidget {
               Expanded(
                 child: Text(AppStrings.checkScopeNote,
                     style: TextStyle(
-                        fontSize: 11, height: 1.35, color: AppColors.tealText2)),
+                        fontSize: 11.5, height: 1.35, color: AppColors.tealText2)),
               ),
             ],
           ),

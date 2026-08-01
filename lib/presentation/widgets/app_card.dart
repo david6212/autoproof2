@@ -187,7 +187,7 @@ class DataSourceBadge extends StatelessWidget {
           const SizedBox(width: 4),
           Text(label,
               style: TextStyle(
-                  fontSize: 10.5, fontWeight: FontWeight.bold, color: fg)),
+                  fontSize: 11.5, fontWeight: FontWeight.bold, color: fg)),
         ],
       ),
     );
@@ -238,7 +238,7 @@ class AppCountBadge extends StatelessWidget {
       ),
       child: Text('$count',
           style: const TextStyle(
-              fontSize: 12,
+              fontSize: 12.5,
               fontWeight: FontWeight.bold,
               color: AppColors.tealText)),
     );

@@ -6,6 +6,7 @@ import '../../core/constants/app_strings.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/utils/plate_formatter.dart';
 import '../../data/models/gov_data_model.dart';
+import '../../core/theme/app_text.dart';
 import 'app_card.dart';
 
 /// Displays official government vehicle data:
@@ -66,7 +67,7 @@ class GovDataCard extends StatelessWidget {
         const Text(
           AppStrings.govDisclaimer,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 12, color: AppColors.textSubtle),
+          style: TextStyle(fontSize: 12.5, color: AppColors.textSubtle),
         ),
       ],
     );
@@ -168,7 +169,7 @@ class _RecallBanner extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               '• ${r.system.isNotEmpty ? '${r.system}: ' : ''}${r.description}',
-              style: const TextStyle(fontSize: 12, color: AppColors.errorRed),
+              style: const TextStyle(fontSize: 12.5, color: AppColors.errorRed),
             ),
           ],
         ],
@@ -215,7 +216,7 @@ class _SourceBanner extends StatelessWidget {
                 SizedBox(height: 2),
                 Text('מקור: מרשם הרכב הממשלתי (data.gov.il)',
                     style:
-                        TextStyle(fontSize: 12, color: AppColors.tealText2)),
+                        TextStyle(fontSize: 12.5, color: AppColors.tealText2)),
               ],
             ),
           ),
@@ -283,7 +284,7 @@ class _Chip extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(color: AppColors.white, fontSize: 12),
+        style: const TextStyle(color: AppColors.white, fontSize: 12.5),
       ),
     );
   }
@@ -396,15 +397,11 @@ class _StatTile extends StatelessWidget {
         children: [
           Text(label,
               style: const TextStyle(
-                  fontSize: 12, color: AppColors.textSubtle)),
+                  fontSize: 12.5, color: AppColors.textSubtle)),
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
+            style: AppText.title,
           ),
         ],
       ),

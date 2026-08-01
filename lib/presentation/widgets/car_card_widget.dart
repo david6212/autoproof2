@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/models/car_model.dart';
+import '../../core/theme/app_text.dart';
 import 'seller_type_badge.dart';
 
 /// A single car listing card used on Home and Saved screens.
@@ -52,11 +53,7 @@ class CarCard extends StatelessWidget {
                           car.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
+                          style: AppText.title,
                         ),
                       ),
                       Text(
@@ -155,7 +152,7 @@ class CarCard extends StatelessWidget {
                   Text(
                     '${car.reviewCount} חוות דעת',
                     style: const TextStyle(
-                        color: AppColors.white, fontSize: 11),
+                        color: AppColors.white, fontSize: 11.5),
                   ),
                 ],
               ),

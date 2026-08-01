@@ -8,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
+import '../../../core/theme/app_text.dart';
 
 class SellerHomeScreen extends ConsumerWidget {
   const SellerHomeScreen({super.key});
@@ -25,10 +26,7 @@ class SellerHomeScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           children: [
             Text('שלום, $name',
-                style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary)),
+                style: AppText.h1),
             const SizedBox(height: 16),
             listingAsync.when(
               loading: () =>
@@ -129,7 +127,7 @@ class _ActiveListingCard extends StatelessWidget {
                 children: [
                   const Text('המודעה הפעילה שלך',
                       style: TextStyle(
-                          fontSize: 12, color: AppColors.textSubtle)),
+                          fontSize: 12.5, color: AppColors.textSubtle)),
                   const SizedBox(height: 2),
                   Text(car.title,
                       style: const TextStyle(

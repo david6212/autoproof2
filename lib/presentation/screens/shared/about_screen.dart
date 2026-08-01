@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../widgets/otov_logo.dart';
+import '../../../core/theme/app_text.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -35,11 +36,7 @@ class AboutScreen extends StatelessWidget {
                 children: [
                   const Text(
                     '4 שכבות אמון',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
+                    style: AppText.h3,
                   ),
                   const SizedBox(height: 12),
                   for (final l in _layers)
@@ -125,10 +122,7 @@ class _LayerCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: AppColors.textPrimary)),
+                    style: AppText.subtitle),
                 const SizedBox(height: 4),
                 Text(body,
                     style: const TextStyle(

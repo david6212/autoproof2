@@ -227,7 +227,7 @@ class _FilterButton extends StatelessWidget {
                   child: Text('$count',
                       style: const TextStyle(
                           color: AppColors.white,
-                          fontSize: 10,
+                          fontSize: 9.5,
                           fontWeight: FontWeight.bold)),
                 ),
               ),

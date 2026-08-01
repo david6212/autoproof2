@@ -52,7 +52,7 @@ class ChatBubble extends StatelessWidget {
                 color: isMine
                     ? AppColors.tealLight
                     : AppColors.textSubtle,
-                fontSize: 10,
+                fontSize: 9.5,
               ),
             ),
           ],

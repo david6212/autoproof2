@@ -10,6 +10,7 @@ import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/otov_logo.dart';
 import '../../widgets/primary_button_widget.dart';
+import '../../../core/theme/app_text.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -116,11 +117,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Text(
                 isCodeStep ? 'הזן את הקוד שקיבלת' : 'התחברות',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+                style: AppText.h2,
               ),
               const SizedBox(height: 6),
               Text(
@@ -129,7 +126,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     : 'נשלח אליך קוד אימות ב-SMS',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    fontSize: 13.5, color: AppColors.textMuted),
+                    fontSize: 13, color: AppColors.textMuted),
               ),
               const SizedBox(height: 24),
 

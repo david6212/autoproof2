@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../widgets/primary_button_widget.dart';
+import '../../../core/theme/app_text.dart';
 
 class _Slide {
   const _Slide(this.icon, this.title, this.body);
@@ -92,11 +93,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Text(
                           s.title,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
+                          style: AppText.display,
                         ),
                         const SizedBox(height: 12),
                         Text(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_text.dart';
 
 /// Shows a friendly bottom sheet inviting a guest to sign in before doing an
 /// action that requires an account (save, chat, like...).
@@ -41,11 +42,7 @@ Future<void> showLoginRequired(
               Text(
                 'כדי $action צריך חשבון',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+                style: AppText.h3,
               ),
               const SizedBox(height: 6),
               const Text(
