@@ -1,3 +1,5 @@
+import 'model_spec.dart';
+
 enum CarStatus { active, removed, sold }
 
 /// Who is selling the car. Every listing is labeled so buyers always know who
@@ -40,6 +42,12 @@ class CarModel {
   final String color; // e.g. "כסף", "שחור מטלי"
   final String ownership; // e.g. "פרטי", "ליסינג"
 
+  /// Per-model build spec copied from the models dataset at publish time, so
+  /// the buyer filters can use engine size / seats / drivetrain / body without
+  /// hitting the API per listing. Null for listings created before this
+  /// existed, or when the model isn't in the dataset.
+  final ModelSpec? spec;
+
   const CarModel({
     required this.id,
     required this.plate,
@@ -62,6 +70,7 @@ class CarModel {
     this.fuel = '',
     this.color = '',
     this.ownership = '',
+    this.spec,
   });
 
   /// Normalised drivetrain category for filtering.
@@ -127,6 +136,9 @@ class CarModel {
       fuel: data['fuel'] ?? '',
       color: data['color'] ?? '',
       ownership: data['ownership'] ?? '',
+      spec: data['spec'] is Map
+          ? ModelSpec.fromMap(Map<String, dynamic>.from(data['spec']))
+          : null,
     );
   }
 
@@ -151,6 +163,7 @@ class CarModel {
         'fuel': fuel,
         'color': color,
         'ownership': ownership,
+        if (spec != null) 'spec': spec!.toMap(),
       };
 
   String get title => '$make $model'.trim();

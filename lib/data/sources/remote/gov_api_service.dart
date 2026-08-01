@@ -53,6 +53,32 @@ class GovApiService {
     }
   }
 
+  /// Best-effort fetch of the per-MODEL spec (engine capacity, seats,
+  /// drivetrain, body type), which the per-vehicle registry doesn't carry.
+  /// Returns null when the model isn't listed — common for older or imported
+  /// cars — so callers must treat the spec as optional.
+  Future<Map<String, dynamic>?> fetchModelSpec({
+    required String tozeretCd,
+    required String degemCd,
+    required int year,
+  }) async {
+    if (tozeretCd.isEmpty || degemCd.isEmpty || year == 0) return null;
+    try {
+      final filters =
+          '{"tozeret_cd":"$tozeretCd","degem_cd":"$degemCd","shnat_yitzur":"$year"}';
+      final res = await _dio.get(ApiConstants.govApiBase, queryParameters: {
+        'resource_id': ApiConstants.modelSpecResourceId,
+        'filters': filters,
+        'limit': 1,
+      });
+      final records = (res.data?['result']?['records'] as List?) ?? const [];
+      if (records.isEmpty) return null;
+      return Map<String, dynamic>.from(records.first as Map);
+    } catch (_) {
+      return null; // an enrichment, never a blocker
+    }
+  }
+
   /// Fetches licensed pre-purchase inspection centers ("מכוני בדיקה") from the
   /// Ministry of Transport garages dataset, filtered to the pre-sale-inspection
   /// specialty. Returns the raw record maps, or throws GovApiException.

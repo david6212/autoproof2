@@ -436,7 +436,10 @@ class _FullSpecs extends StatelessWidget {
       ('רישום ראשון', data.firstRegistration, false),
       ('שינוי צבע רשום', data.colorChanged ? 'כן' : '', false),
       ('שינוי צמיגים רשום', data.tireChanged ? 'כן' : '', false),
-      ('תג חניה לנכה', data.hasDisabilityTag ? 'כן' : '', false),
+      // A disability parking tag is issued to a PERSON on health grounds. The
+      // data.gov.il licence does not cover data about a person's health and
+      // forbids uses that harm privacy, so it is deliberately NOT surfaced
+      // against an identifiable plate. See BUSINESS_ROADMAP 9.5.
       ('טסט אחרון', data.lastTestDisplay, false),
       ('תוקף רישיון', data.licenseExpiryDisplay, false),
       ('רמת אבזור בטיחותי', data.safetyRating ?? '', false),

@@ -149,6 +149,9 @@ class CreateListingController extends Notifier<CreateListingState> {
         fuel: car.fuelType,
         color: car.color,
         ownership: car.ownershipType,
+        // Per-model build spec (engine cc, seats, drivetrain, body type). Saved
+        // at publish time so filtering never needs a per-listing API call.
+        spec: car.spec,
         photos: const [],
         reasonForSelling: state.reason.trim(),
         description: state.description.trim(),

@@ -32,6 +32,12 @@ class CarFilters {
   final String? ownership; // 'פרטית' / 'ליסינג/חברה'
   final String? colorCat; // colour bucket (לבן / שחור / אפור / כחול / אדום)
 
+  // Backed by the models dataset (see ModelSpec) — these were decorative until
+  // that source was wired in.
+  final String? engineRange; // '1200-1600' / '1600-2000' / '2000+'
+  final int? minSeats; // 5 / 7 / 8
+  final String? drivetrain; // '4X4' / '4X2'
+
   const CarFilters({
     this.types = const {},
     this.maxPrice = priceCap,
@@ -44,6 +50,9 @@ class CarFilters {
     this.fuel,
     this.ownership,
     this.colorCat,
+    this.engineRange,
+    this.minSeats,
+    this.drivetrain,
   });
 
   CarFilters copyWith({
@@ -65,6 +74,12 @@ class CarFilters {
     bool clearOwnership = false,
     String? colorCat,
     bool clearColor = false,
+    String? engineRange,
+    bool clearEngine = false,
+    int? minSeats,
+    bool clearSeats = false,
+    String? drivetrain,
+    bool clearDrivetrain = false,
   }) {
     return CarFilters(
       types: types ?? this.types,
@@ -78,6 +93,9 @@ class CarFilters {
       fuel: clearFuel ? null : (fuel ?? this.fuel),
       ownership: clearOwnership ? null : (ownership ?? this.ownership),
       colorCat: clearColor ? null : (colorCat ?? this.colorCat),
+      engineRange: clearEngine ? null : (engineRange ?? this.engineRange),
+      minSeats: clearSeats ? null : (minSeats ?? this.minSeats),
+      drivetrain: clearDrivetrain ? null : (drivetrain ?? this.drivetrain),
     );
   }
 
@@ -92,7 +110,10 @@ class CarFilters {
       maxHand == null &&
       fuel == null &&
       ownership == null &&
-      colorCat == null;
+      colorCat == null &&
+      engineRange == null &&
+      minSeats == null &&
+      drivetrain == null;
 
   /// Number of active (non-default) filter groups, for the badge.
   int get activeCount =>
@@ -106,15 +127,37 @@ class CarFilters {
       (maxHand != null ? 1 : 0) +
       (fuel != null ? 1 : 0) +
       (ownership != null ? 1 : 0) +
-      (colorCat != null ? 1 : 0);
+      (colorCat != null ? 1 : 0) +
+      (engineRange != null ? 1 : 0) +
+      (minSeats != null ? 1 : 0) +
+      (drivetrain != null ? 1 : 0);
 }
 
 final carFiltersProvider =
     StateProvider<CarFilters>((ref) => const CarFilters());
 
-/// Derives a body-type category from the make/model text so the filter pills
-/// work without a dedicated field. Falls back to "משפחתי".
+/// Body-type category for the filter pills.
+///
+/// Prefers the official `merkav` value from the models dataset when the listing
+/// carries one; the keyword guessing below is the fallback for listings created
+/// before that source existed, or for models it doesn't cover.
 String carBodyType(CarModel c) {
+  final official = c.spec?.bodyType ?? '';
+  if (official.isNotEmpty) {
+    if (official.contains('שטח') || official.contains('פנאי')) {
+      return 'קרוסאובר';
+    }
+    // Powertrain categories outrank shape: an electric sedan belongs under
+    // "חשמלי" for a buyer browsing these pills.
+    final fuel = c.fuelCategory;
+    if (fuel == 'חשמלי') return 'חשמלי';
+    if (fuel == 'היברידי') return 'היברידי';
+    if (official.contains('קופה') || official.contains('ספורט')) {
+      return 'ספורט';
+    }
+    return 'משפחתי';
+  }
+
   final s = '${c.make} ${c.model}'.toLowerCase();
   bool has(List<String> ks) => ks.any((k) => s.contains(k));
   if (has(['cx', 'טוסון', 'tucson', 'קרוסאובר', 'rav', 'x1', 'x3', 'x5',
@@ -130,6 +173,19 @@ String carBodyType(CarModel c) {
     return 'ספורט';
   }
   return 'משפחתי';
+}
+
+/// Whether a listing's engine capacity falls in a filter bucket. Electric cars
+/// have no capacity at all, so they never match a capacity filter.
+bool _engineInRange(CarModel c, String range) {
+  final cc = c.spec?.engineCc;
+  if (cc == null) return false;
+  return switch (range) {
+    '1200-1600' => cc >= 1200 && cc <= 1600,
+    '1600-2000' => cc > 1600 && cc <= 2000,
+    '2000+' => cc > 2000,
+    _ => true,
+  };
 }
 
 /// Stream of all active listings.
@@ -156,6 +212,24 @@ final filteredCarsProvider = Provider<AsyncValue<List<CarModel>>>((ref) {
       if (f.colorCat != null && c.colorCategory != f.colorCat) return false;
       if (f.ownership == 'פרטית' && !c.isPrivateOwnership) return false;
       if (f.ownership == 'ליסינג/חברה' && c.isPrivateOwnership) return false;
+
+      // Spec-backed filters. A listing without a spec is EXCLUDED when one of
+      // these is active — saying "1600-2000cc" and getting cars of unknown
+      // capacity would make the filter meaningless.
+      if (f.engineRange != null && !_engineInRange(c, f.engineRange!)) {
+        return false;
+      }
+      if (f.minSeats != null) {
+        final seats = c.spec?.seats;
+        if (seats == null || seats < f.minSeats!) return false;
+      }
+      if (f.drivetrain != null) {
+        final dt = c.spec?.drivetrain ?? '';
+        if (!dt.toUpperCase().contains(f.drivetrain!.toUpperCase())) {
+          return false;
+        }
+      }
+
       if (query.isNotEmpty) {
         final haystack =
             '${c.make} ${c.model} ${c.area} ${c.plate}'.toLowerCase();

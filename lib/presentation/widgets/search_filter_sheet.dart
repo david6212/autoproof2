@@ -47,11 +47,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
 
   static const _colorCats = ['לבן', 'שחור', 'אפור', 'כחול', 'אדום'];
 
-  // Visual-only selections (not yet backed by listing data).
-  String _engine = 'ללא הגבלה';
-  String _seats = 'הכל';
-  String _inspection = 'הכל';
-  bool _disability = false;
 
   @override
   void initState() {
@@ -99,10 +94,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   void _clearAll() {
     setState(() {
       _draft = const CarFilters();
-      _engine = 'ללא הגבלה';
-      _seats = 'הכל';
-      _inspection = 'הכל';
-      _disability = false;
     });
   }
 
@@ -208,7 +199,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                   Expanded(
                     child: _Dropdown<String>(
                       label: 'נפח מנוע (סמ"ק)',
-                      value: _engine,
+                      value: _draft.engineRange ?? 'ללא הגבלה',
                       items: const [
                         DropdownMenuItem(
                             value: 'ללא הגבלה', child: Text('ללא הגבלה')),
@@ -218,21 +209,25 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                             value: '1600-2000', child: Text('1,600 - 2,000')),
                         DropdownMenuItem(value: '2000+', child: Text('2,000+')),
                       ],
-                      onChanged: (v) => setState(() => _engine = v!),
+                      onChanged: (v) => setState(() => _draft = v == 'ללא הגבלה'
+                          ? _draft.copyWith(clearEngine: true)
+                          : _draft.copyWith(engineRange: v)),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _Dropdown<String>(
                       label: 'מספר מקומות',
-                      value: _seats,
+                      value: _draft.minSeats?.toString() ?? 'הכל',
                       items: const [
                         DropdownMenuItem(value: 'הכל', child: Text('הכל')),
                         DropdownMenuItem(value: '5', child: Text('5 מקומות')),
                         DropdownMenuItem(value: '7', child: Text('7 מקומות')),
                         DropdownMenuItem(value: '8', child: Text('8+ מקומות')),
                       ],
-                      onChanged: (v) => setState(() => _seats = v!),
+                      onChanged: (v) => setState(() => _draft = v == 'הכל'
+                          ? _draft.copyWith(clearSeats: true)
+                          : _draft.copyWith(minSeats: int.parse(v!))),
                     ),
                   ),
                 ],
@@ -240,7 +235,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
               const SizedBox(height: 18),
 
               _PillGroup(
-                label: 'סוג מנוע / הנעה',
+                label: 'סוג מנוע',
                 options: const ['הכל', 'בנזין', 'דיזל', 'היברידי', 'חשמלי'],
                 selected: _draft.fuel ?? 'הכל',
                 onSelect: (v) => setState(() => _draft = v == 'הכל'
@@ -249,11 +244,14 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
               ),
               const SizedBox(height: 16),
 
+              // Drivetrain, from the models dataset ("hanaa_nm").
               _PillGroup(
-                label: 'סטטוס בדיקת מכון לפני קנייה',
-                options: const ['הכל', 'נבדק ואושר ✓', 'עם הערות', 'לא נבדק'],
-                selected: _inspection,
-                onSelect: (v) => setState(() => _inspection = v),
+                label: 'הנעה',
+                options: const ['הכל', '4X2', '4X4'],
+                selected: _draft.drivetrain ?? 'הכל',
+                onSelect: (v) => setState(() => _draft = v == 'הכל'
+                    ? _draft.copyWith(clearDrivetrain: true)
+                    : _draft.copyWith(drivetrain: v)),
               ),
               const SizedBox(height: 18),
 
@@ -322,12 +320,6 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
               ),
               const SizedBox(height: 8),
 
-              _ToggleRow(
-                label: 'מיועד / מתאים לנכים (תו נכה)',
-                value: _disability,
-                onChanged: (v) => setState(() => _disability = v),
-              ),
-              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -561,33 +553,3 @@ class _ColorDots extends StatelessWidget {
   }
 }
 
-class _ToggleRow extends StatelessWidget {
-  const _ToggleRow({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(label,
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary)),
-        ),
-        Switch(
-          value: value,
-          activeColor: AppColors.teal,
-          onChanged: onChanged,
-        ),
-      ],
-    );
-  }
-}

@@ -1,6 +1,7 @@
 import '../../core/utils/plate_formatter.dart';
 import '../models/gov_data_model.dart';
 import '../models/inspection_center.dart';
+import '../models/model_spec.dart';
 import '../sources/remote/gov_api_service.dart';
 
 /// Turns a raw plate string into a parsed GovData object.
@@ -42,12 +43,22 @@ class GovApiRepository {
             ))
         .toList();
 
-    return base.withExtras(
-      history: history,
-      recalls: recalls,
-      offRoad: offRoad,
-      disabilityTag: disabilityTag,
+    // Engine capacity, seats, drivetrain and body type come from the separate
+    // models dataset, keyed by manufacturer + model + year.
+    final specRaw = await _service.fetchModelSpec(
+      tozeretCd: base.tozeretCd,
+      degemCd: base.degemCd,
+      year: base.year,
     );
+
+    return base
+        .withExtras(
+          history: history,
+          recalls: recalls,
+          offRoad: offRoad,
+          disabilityTag: disabilityTag,
+        )
+        .withSpec(specRaw == null ? null : ModelSpec.fromApi(specRaw));
   }
 
   /// Licensed pre-purchase inspection centers, cleaned and sorted by city then

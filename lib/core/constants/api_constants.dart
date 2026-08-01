@@ -17,6 +17,11 @@ class ApiConstants {
   static const disabilityTagResourceId =
       'c8b9f9c8-4612-4068-934f-d4acd2e3c06e'; // disability parking tag
 
+  // Vehicle MODELS ("תוצרים ודגמים של כלי רכב WLTP"). The per-vehicle registry
+  // carries no engine capacity, seat count, drivetrain or body type — those
+  // live here, per model. Join on tozeret_cd + degem_cd + shnat_yitzur.
+  static const modelSpecResourceId = '142afde2-6228-49f9-8a29-9b6c3a0cbe40';
+
   // Licensed garages & inspection institutes ("מוסכים ומכוני רישוי").
   static const garagesResourceId = 'bb68386a-a331-4bbc-b668-bba2766d517d';
 

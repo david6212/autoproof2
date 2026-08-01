@@ -1,4 +1,5 @@
 import '../../core/utils/date_formatter.dart';
+import 'model_spec.dart';
 
 /// A single open manufacturer recall (קריאת שירות שלא בוצעה).
 class RecallItem {
@@ -48,6 +49,12 @@ class GovData {
   final bool offRoad; // vehicle scrapped / finally cancelled
   final String offRoadDate; // bitul_dt
   final bool hasDisabilityTag;
+  // Join keys into the models dataset (manufacturer + model codes).
+  final String tozeretCd;
+  final String degemCd;
+  /// Per-model build spec (engine cc, seats, drivetrain, body). Null until the
+  /// models dataset has been consulted.
+  final ModelSpec? spec;
 
   const GovData({
     required this.plate,
@@ -78,7 +85,13 @@ class GovData {
     this.offRoad = false,
     this.offRoadDate = '',
     this.hasDisabilityTag = false,
+    this.tozeretCd = '',
+    this.degemCd = '',
+    this.spec,
   });
+
+  /// Returns a copy carrying the per-model build spec.
+  GovData withSpec(ModelSpec? s) => _copy(spec: s);
 
   /// Returns a copy with the extra datasets (history, recalls, off-road,
   /// disability tag) merged in.
@@ -94,6 +107,36 @@ class GovData {
       final k = history['kilometer_test_aharon'];
       km = k is int ? k : int.tryParse('${k ?? ''}');
     }
+    return _copy(
+      lastTestKm: km,
+      structuralChange: flag(history?['shinui_mivne_ind']),
+      colorChanged: flag(history?['shnui_zeva_ind']),
+      tireChanged: flag(history?['shinui_zmig_ind']),
+      originality: (history?['mkoriut_nm'] ?? '').toString().trim(),
+      firstRegistration:
+          (history?['rishum_rishon_dt'] ?? '').toString().split(' ').first,
+      recalls: recalls,
+      offRoad: offRoad != null,
+      offRoadDate: (offRoad?['bitul_dt'] ?? '').toString().split(' ').first,
+      hasDisabilityTag: disabilityTag,
+    );
+  }
+
+  /// Single copy point, so adding a field doesn't mean editing several
+  /// hand-written constructor calls that each risk dropping one.
+  GovData _copy({
+    int? lastTestKm,
+    bool? structuralChange,
+    bool? colorChanged,
+    bool? tireChanged,
+    String? originality,
+    String? firstRegistration,
+    List<RecallItem>? recalls,
+    bool? offRoad,
+    String? offRoadDate,
+    bool? hasDisabilityTag,
+    ModelSpec? spec,
+  }) {
     return GovData(
       plate: plate,
       make: make,
@@ -113,18 +156,19 @@ class GovData {
       frontTire: frontTire,
       rearTire: rearTire,
       firstOnRoad: firstOnRoad,
-      lastTestKm: km,
-      structuralChange: flag(history?['shinui_mivne_ind']),
-      colorChanged: flag(history?['shnui_zeva_ind']),
-      tireChanged: flag(history?['shinui_zmig_ind']),
-      originality: (history?['mkoriut_nm'] ?? '').toString().trim(),
-      firstRegistration:
-          (history?['rishum_rishon_dt'] ?? '').toString().split(' ').first,
-      recalls: recalls,
-      offRoad: offRoad != null,
-      offRoadDate:
-          (offRoad?['bitul_dt'] ?? '').toString().split(' ').first,
-      hasDisabilityTag: disabilityTag,
+      lastTestKm: lastTestKm ?? this.lastTestKm,
+      structuralChange: structuralChange ?? this.structuralChange,
+      colorChanged: colorChanged ?? this.colorChanged,
+      tireChanged: tireChanged ?? this.tireChanged,
+      originality: originality ?? this.originality,
+      firstRegistration: firstRegistration ?? this.firstRegistration,
+      recalls: recalls ?? this.recalls,
+      offRoad: offRoad ?? this.offRoad,
+      offRoadDate: offRoadDate ?? this.offRoadDate,
+      hasDisabilityTag: hasDisabilityTag ?? this.hasDisabilityTag,
+      tozeretCd: tozeretCd,
+      degemCd: degemCd,
+      spec: spec ?? this.spec,
     );
   }
 
@@ -147,6 +191,8 @@ class GovData {
 
     return GovData(
       plate: s(r['mispar_rechev']),
+      tozeretCd: s(r['tozeret_cd']),
+      degemCd: s(r['degem_cd']),
       make: s(r['tozeret_nm']),
       commercialName: s(r['kinuy_mishari']),
       model: s(r['degem_nm']),
