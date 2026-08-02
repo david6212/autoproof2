@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/car_model.dart';
+import '../../../app/router.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
@@ -19,6 +20,7 @@ import '../../widgets/login_required_sheet.dart';
 import '../../widgets/plate_history_card.dart';
 import '../../widgets/seller_encounter_card.dart';
 import '../../widgets/seller_type_badge.dart';
+import '../../widgets/share_listing_button.dart';
 import '../../../core/theme/app_text.dart';
 
 class CarDetailScreen extends ConsumerWidget {
@@ -55,7 +57,7 @@ class CarDetailScreen extends ConsumerWidget {
                 style: TextStyle(color: AppColors.textMuted)),
             const SizedBox(height: 12),
             TextButton(
-                onPressed: () => context.pop(), child: const Text('חזרה')),
+                onPressed: () => popOrHome(context), child: const Text('חזרה')),
           ],
         ),
       ),
@@ -238,13 +240,23 @@ class _GalleryState extends State<_Gallery> {
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(8),
-            child: CircleAvatar(
-              backgroundColor: AppColors.white,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_forward,
-                    color: AppColors.textPrimary),
-                onPressed: () => context.pop(),
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircleAvatar(
+                  backgroundColor: AppColors.white,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_forward,
+                        color: AppColors.textPrimary),
+                    onPressed: () => popOrHome(context),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                CircleAvatar(
+                  backgroundColor: AppColors.white,
+                  child: ShareListingButton(car: widget.car),
+                ),
+              ],
             ),
           ),
         ),

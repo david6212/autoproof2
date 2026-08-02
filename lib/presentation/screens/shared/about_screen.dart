@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../app/router.dart';
 import '../../widgets/otov_logo.dart';
 import '../../../core/theme/app_text.dart';
 import '../../widgets/app_card.dart';
@@ -77,7 +78,7 @@ class _Header extends StatelessWidget {
             child: IconButton(
               icon: const Icon(Icons.arrow_forward,
                   color: AppColors.textPrimary),
-              onPressed: () => context.pop(),
+              onPressed: () => popOrHome(context),
             ),
           ),
           // Splash-style brand mark (shield + car + check).

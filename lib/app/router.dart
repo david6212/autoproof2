@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -35,6 +36,19 @@ import '../presentation/screens/shared/legal_screen.dart';
 // Shells
 import '../presentation/widgets/buyer_shell.dart';
 import '../presentation/widgets/seller_shell.dart';
+
+/// Back navigation that survives being opened from a link.
+///
+/// A shared listing URL opens straight onto `/car/:id`, so there is nothing
+/// on the stack to pop and a plain `context.pop()` is a dead button. Fall
+/// back to the listings instead.
+void popOrHome(BuildContext context) {
+  if (context.canPop()) {
+    context.pop();
+  } else {
+    context.go('/home');
+  }
+}
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(

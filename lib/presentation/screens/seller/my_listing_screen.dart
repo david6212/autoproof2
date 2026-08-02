@@ -9,6 +9,7 @@ import '../../../data/models/car_model.dart';
 import '../../providers/cars_provider.dart';
 import '../../../core/theme/app_text.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/share_listing_button.dart';
 import '../../../core/theme/app_dimens.dart';
 
 class MyListingScreen extends ConsumerWidget {
@@ -115,6 +116,18 @@ class _Content extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        // The seller is the one with a reason to spread their own listing,
+        // so this gets a full-width button rather than an icon.
+        FilledButton.icon(
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.teal,
+            minimumSize: const Size.fromHeight(48),
+          ),
+          icon: const Icon(Icons.ios_share),
+          label: const Text('שתף את המודעה'),
+          onPressed: () => shareListing(context, car),
+        ),
+        const SizedBox(height: 10),
         OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.teal,
