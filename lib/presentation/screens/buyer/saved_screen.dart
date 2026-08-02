@@ -34,19 +34,16 @@ class SavedScreen extends ConsumerWidget {
           ),
           data: (cars) {
             if (cars.isEmpty) return const _EmptySaved();
-            return ListView.builder(
+            return CarListView(
+              cars: cars,
               padding: const EdgeInsets.all(16),
-              itemCount: cars.length,
-              itemBuilder: (context, i) {
-                final car = cars[i];
-                return CarCard(
-                  car: car,
-                  saved: savedIds.contains(car.id),
-                  onToggleSave: () =>
-                      ref.read(toggleSavedProvider).call(car.id, false),
-                  onTap: () => context.push('/car/${car.id}'),
-                );
-              },
+              cardBuilder: (car) => CarCard(
+                car: car,
+                saved: savedIds.contains(car.id),
+                onToggleSave: () =>
+                    ref.read(toggleSavedProvider).call(car.id, false),
+                onTap: () => context.push('/car/${car.id}'),
+              ),
             );
           },
         ),

@@ -297,42 +297,33 @@ class _CarList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      itemCount: cars.length + 1,
-      itemBuilder: (context, i) {
-        if (i == 0) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Text(
-              '${cars.length} רכבים בקרבתך',
-              style: const TextStyle(
-                color: AppColors.textMuted,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          );
-        }
-        final car = cars[i - 1];
-        return Consumer(builder: (context, ref, _) {
-          return CarCard(
-            car: car,
-            saved: savedIds.contains(car.id),
-            onToggleSave: () {
-              // Guests can't save — invite them to sign in.
-              if (ref.read(authStateProvider).valueOrNull == null) {
-                ref.read(analyticsHelperProvider).guestPrompt('save');
-                showLoginRequired(context, action: 'לשמור רכבים');
-                return;
-              }
-              ref
-                  .read(toggleSavedProvider)
-                  .call(car.id, !savedIds.contains(car.id));
-            },
-            onTap: () => context.push('/car/${car.id}'),
-          );
-        });
-      },
+    return CarListView(
+      cars: cars,
+      header: Text(
+        '${cars.length} רכבים בקרבתך',
+        style: const TextStyle(
+          color: AppColors.textMuted,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      cardBuilder: (car) => Consumer(builder: (context, ref, _) {
+        return CarCard(
+          car: car,
+          saved: savedIds.contains(car.id),
+          onToggleSave: () {
+            // Guests can't save — invite them to sign in.
+            if (ref.read(authStateProvider).valueOrNull == null) {
+              ref.read(analyticsHelperProvider).guestPrompt('save');
+              showLoginRequired(context, action: 'לשמור רכבים');
+              return;
+            }
+            ref
+                .read(toggleSavedProvider)
+                .call(car.id, !savedIds.contains(car.id));
+          },
+          onTap: () => context.push('/car/${car.id}'),
+        );
+      }),
     );
   }
 }

@@ -17,6 +17,10 @@ class AppColors {
   static const white = Color(0xFFFFFFFF);
   static const cardBorder = Color(0xFFE6EAE8);
 
+  /// Fills the gutters either side of the app on a desktop window. A shade
+  /// deeper than [background] so the app column reads as the page.
+  static const pageBackdrop = Color(0xFFEDF1EF);
+
   // Text — splash ink.
   static const textPrimary = Color(0xFF1A202C);
   static const textMuted = Color(0xFF5A6169);

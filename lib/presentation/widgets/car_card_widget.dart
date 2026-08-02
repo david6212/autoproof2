@@ -6,7 +6,85 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/car_model.dart';
 import '../../core/theme/app_text.dart';
 import 'app_card.dart';
+import 'responsive_frame.dart';
 import 'seller_type_badge.dart';
+
+/// Lays out car cards: one per row on a phone, a grid once the viewport is
+/// wide enough for two. Home and Saved share it so the breakpoint and the
+/// spacing are decided in one place.
+class CarListView extends StatelessWidget {
+  const CarListView({
+    super.key,
+    required this.cars,
+    required this.cardBuilder,
+    this.header,
+    this.padding = const EdgeInsets.fromLTRB(16, 8, 16, 16),
+  });
+
+  final List<CarModel> cars;
+
+  /// Builds the card for one listing. The caller owns save/tap behaviour;
+  /// this widget owns only where the card sits.
+  final Widget Function(CarModel car) cardBuilder;
+
+  /// Optional line above the cards, e.g. a result count.
+  final Widget? header;
+
+  final EdgeInsets padding;
+
+  static const _spacing = 14.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isGrid = constraints.maxWidth > AppBreakpoint.carGrid;
+        return CustomScrollView(
+          slivers: [
+            if (header != null)
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                    padding.left, padding.top, padding.right, 10),
+                sliver: SliverToBoxAdapter(child: header),
+              ),
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                padding.left,
+                header == null ? padding.top : 0,
+                padding.right,
+                padding.bottom,
+              ),
+              sliver: isGrid ? _grid(context) : _column(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _column() {
+    return SliverList.separated(
+      itemCount: cars.length,
+      separatorBuilder: (_, __) => const SizedBox(height: _spacing),
+      itemBuilder: (context, i) => cardBuilder(cars[i]),
+    );
+  }
+
+  Widget _grid(BuildContext context) {
+    return SliverGrid.builder(
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 460,
+        crossAxisSpacing: _spacing,
+        mainAxisSpacing: _spacing,
+        // A car card's height is fixed by its parts, so the cell can be sized
+        // exactly rather than guessed at with an aspect ratio.
+        mainAxisExtent: CarCard.heightFor(context),
+      ),
+      itemCount: cars.length,
+      itemBuilder: (context, i) => cardBuilder(cars[i]),
+    );
+  }
+}
 
 /// A single car listing card used on Home and Saved screens.
 class CarCard extends StatelessWidget {
@@ -23,6 +101,16 @@ class CarCard extends StatelessWidget {
   final bool saved;
   final VoidCallback? onToggleSave;
 
+  /// Height of the photo strip. [CarListView] needs it to size a grid cell.
+  static const photoHeight = 170.0;
+
+  /// The card's total height: the photo, plus padding and two single lines of
+  /// text that grow with the user's text-size setting.
+  static double heightFor(BuildContext context) {
+    final scale = MediaQuery.textScalerOf(context).scale(1);
+    return photoHeight + 24 + (20 + 4 + 17) * scale + 2;
+  }
+
   static final _priceFmt = NumberFormat('#,###', 'en');
 
   @override
@@ -30,8 +118,9 @@ class CarCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
+      // No margin: spacing between cards belongs to [CarListView], which is
+      // the only thing that knows whether they are in a column or a grid.
       child: AppCard(
-        margin: const EdgeInsets.only(bottom: 14),
         padding: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -89,7 +178,7 @@ class CarCard extends StatelessWidget {
     return Stack(
       children: [
         SizedBox(
-          height: 170,
+          height: photoHeight,
           width: double.infinity,
           child: car.coverPhoto == null
               ? Container(
