@@ -145,6 +145,11 @@ class _Content extends StatelessWidget {
           label: 'אודות OtoV',
           onTap: () => context.push('/about'),
         ),
+        _MenuRow(
+          icon: Icons.gavel_outlined,
+          label: 'תנאי שימוש ופרטיות',
+          onTap: () => context.push('/legal'),
+        ),
         const Divider(height: 32),
         // A visible, self-serve route to have personal data removed.
         _MenuRow(

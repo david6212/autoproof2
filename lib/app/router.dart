@@ -31,6 +31,7 @@ import '../presentation/screens/shared/chat_list_screen.dart';
 import '../presentation/screens/shared/chat_screen.dart';
 import '../presentation/screens/shared/profile_screen.dart';
 import '../presentation/screens/shared/about_screen.dart';
+import '../presentation/screens/shared/legal_screen.dart';
 // Shells
 import '../presentation/widgets/buyer_shell.dart';
 import '../presentation/widgets/seller_shell.dart';
@@ -130,6 +131,11 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Shared
       GoRoute(path: '/about', builder: (c, s) => const AboutScreen()),
+      GoRoute(path: '/legal', builder: (c, s) => const LegalScreen()),
+      GoRoute(
+        path: '/legal/:docId',
+        builder: (c, s) => LegalDocScreen(docId: s.pathParameters['docId']!),
+      ),
     ],
   );
 });

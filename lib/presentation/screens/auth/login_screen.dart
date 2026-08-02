@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/constants/legal_info.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/otov_logo.dart';
@@ -196,6 +197,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onPressed: () => context.go('/home'),
                   child: const Text('גלוש בלי להתחבר ←'),
                 ),
+                // Only shown once the documents actually exist — a consent
+                // line pointing at nothing is worse than no line.
+                if (LegalInfo.isPublished) ...[
+                  const SizedBox(height: 4),
+                  const _ConsentNote(),
+                ],
               ],
             ],
                 ),
@@ -204,6 +211,39 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Consent line under the sign-in options. Deliberately one plain button
+/// rather than inline tappable spans: `TextSpan` needs a `TapGestureRecognizer`
+/// per link, which has to be disposed, and this screen rebuilds on every
+/// keystroke in the phone field.
+class _ConsentNote extends StatelessWidget {
+  const _ConsentNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text(
+          'בהתחברות או בגלישה אתם מאשרים את',
+          textAlign: TextAlign.center,
+          style: AppText.micro,
+        ),
+        TextButton(
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          onPressed: () => context.push('/legal'),
+          child: const Text(
+            'תנאי השימוש ומדיניות הפרטיות',
+            style: TextStyle(fontSize: 11.5, color: AppColors.teal),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -43,6 +43,14 @@ class AboutScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   for (final l in _layers)
                     _LayerCard(icon: l.$1, title: l.$2, body: l.$3),
+                  const SizedBox(height: AppSpace.sm),
+                  Center(
+                    child: TextButton.icon(
+                      icon: const Icon(Icons.gavel_outlined, size: 18),
+                      label: const Text('תנאי שימוש, פרטיות ונהלים'),
+                      onPressed: () => context.push('/legal'),
+                    ),
+                  ),
                 ],
               ),
             ),
