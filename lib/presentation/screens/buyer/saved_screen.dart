@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../widgets/car_card_widget.dart';
@@ -28,9 +28,9 @@ class SavedScreen extends ConsumerWidget {
               )
             : savedAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(
+          error: (_, __) => Center(
             child: Text('שגיאה בטעינת השמורים',
-                style: TextStyle(color: AppColors.textMuted)),
+                style: TextStyle(color: context.colors.textMuted)),
           ),
           data: (cars) {
             if (cars.isEmpty) return const _EmptySaved();
@@ -61,14 +61,14 @@ class _EmptySaved extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.favorite_border,
-              size: 64, color: AppColors.textSubtle),
+          Icon(Icons.favorite_border,
+              size: 64, color: context.colors.textSubtle),
           const SizedBox(height: 12),
-          const Text('עדיין לא שמרת רכבים',
-              style: TextStyle(color: AppColors.textMuted)),
+          Text('עדיין לא שמרת רכבים',
+              style: TextStyle(color: context.colors.textMuted)),
           const SizedBox(height: 16),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+            style: FilledButton.styleFrom(backgroundColor: context.colors.teal),
             onPressed: () => context.go('/home'),
             child: const Text('עבור לרכבים'),
           ),

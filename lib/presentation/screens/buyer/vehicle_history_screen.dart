@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/plate_formatter.dart';
 import '../../providers/analytics_provider.dart';
@@ -111,16 +111,16 @@ class _Hint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.only(top: 48),
+    return Padding(
+      padding: const EdgeInsets.only(top: 48),
       child: Column(
         children: [
           Icon(Icons.directions_car_outlined,
-              size: 56, color: AppColors.textSubtle),
-          SizedBox(height: 12),
+              size: 56, color: context.colors.textSubtle),
+          const SizedBox(height: 12),
           Text(
             'הזן מספר רישוי לקבלת נתונים רשמיים',
-            style: TextStyle(color: AppColors.textMuted),
+            style: TextStyle(color: context.colors.textMuted),
           ),
         ],
       ),
@@ -138,17 +138,17 @@ class _ErrorBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.errorBg,
+        color: context.colors.errorBg,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.errorRed, size: 32),
+          Icon(Icons.error_outline, color: context.colors.errorRed, size: 32),
           const SizedBox(height: 8),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.errorRed),
+            style: TextStyle(color: context.colors.errorRed),
           ),
           const SizedBox(height: 12),
           TextButton(onPressed: onRetry, child: const Text(AppStrings.retry)),

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/legal_info.dart';
 import '../../providers/analytics_provider.dart';
@@ -106,13 +106,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               // Same mark as the splash screen (shield + car + check).
               const OtovLogo(size: 132, withWordmark: true),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 AppStrings.tagline,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.teal),
+                    color: context.colors.teal),
               ),
               const SizedBox(height: 26),
               Text(
@@ -126,8 +126,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ? 'שלחנו קוד בן 6 ספרות אל ${state.phoneE164}'
                     : 'נשלח אליך קוד אימות ב-SMS',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 13, color: AppColors.textMuted),
+                style: TextStyle(
+                    fontSize: 13, color: context.colors.textMuted),
               ),
               const SizedBox(height: 24),
 
@@ -174,8 +174,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   label: 'המשך עם Google',
                   leading: Image.asset('assets/google_g.png',
                       width: 22, height: 22),
-                  background: AppColors.surface,
-                  foreground: AppColors.textPrimary,
+                  background: context.colors.surface,
+                  foreground: context.colors.textPrimary,
                   border: true,
                   loading: _socialLoading,
                   onPressed: () => _social(
@@ -184,10 +184,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 10),
                 _SocialButton(
                   label: 'המשך עם Apple',
-                  leading: const Icon(Icons.apple,
-                      color: AppColors.onBrand, size: 22),
+                  leading: Icon(Icons.apple,
+                      color: context.colors.onBrand, size: 22),
                   background: const Color(0xFF111111),
-                  foreground: AppColors.onBrand,
+                  foreground: context.colors.onBrand,
                   loading: _socialLoading,
                   onPressed: () => _social(
                       () => ref.read(authRepositoryProvider).signInWithApple()),
@@ -226,10 +226,10 @@ class _ConsentNote extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Text(
+        Text(
           'בהתחברות או בגלישה אתם מאשרים את',
           textAlign: TextAlign.center,
-          style: AppText.micro,
+          style: context.text.micro,
         ),
         TextButton(
           style: TextButton.styleFrom(
@@ -238,9 +238,9 @@ class _ConsentNote extends StatelessWidget {
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           onPressed: () => context.push('/legal'),
-          child: const Text(
+          child: Text(
             'תנאי השימוש ומדיניות הפרטיות',
-            style: TextStyle(fontSize: 11.5, color: AppColors.teal),
+            style: TextStyle(fontSize: 11.5, color: context.colors.teal),
           ),
         ),
       ],
@@ -306,14 +306,14 @@ class _OrDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       children: [
-        Expanded(child: Divider(color: AppColors.cardBorder)),
+        Expanded(child: Divider(color: context.colors.cardBorder)),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Text('או', style: TextStyle(color: AppColors.textSubtle)),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text('או', style: TextStyle(color: context.colors.textSubtle)),
         ),
-        Expanded(child: Divider(color: AppColors.cardBorder)),
+        Expanded(child: Divider(color: context.colors.cardBorder)),
       ],
     );
   }
@@ -352,7 +352,7 @@ class _SocialButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
             side: border
-                ? const BorderSide(color: AppColors.cardBorder)
+                ? BorderSide(color: context.colors.cardBorder)
                 : BorderSide.none,
           ),
         ),
@@ -381,17 +381,17 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.errorBg,
+        color: context.colors.errorBg,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.errorRed, size: 20),
+          Icon(Icons.error_outline, color: context.colors.errorRed, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: AppColors.errorRed),
+              style: TextStyle(color: context.colors.errorRed),
             ),
           ),
         ],

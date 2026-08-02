@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
+import '../../../core/theme/app_dimens.dart';
+import '../../providers/theme_provider.dart';
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
@@ -35,9 +37,9 @@ class ProfileScreen extends ConsumerWidget {
       body: SafeArea(
         child: userAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(
+          error: (_, __) => Center(
             child: Text('שגיאה בטעינת הפרופיל',
-                style: TextStyle(color: AppColors.textMuted)),
+                style: TextStyle(color: context.colors.textMuted)),
           ),
           data: (user) => _Content(user: user, ref: ref),
         ),
@@ -99,28 +101,28 @@ class _Content extends StatelessWidget {
         Center(
           child: Column(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 44,
-                backgroundColor: AppColors.tealLight,
-                child: Icon(Icons.person, size: 48, color: AppColors.teal),
+                backgroundColor: context.colors.tealLight,
+                child: Icon(Icons.person, size: 48, color: context.colors.teal),
               ),
               const SizedBox(height: 12),
               Text(name,
                   style: AppText.h2),
               const SizedBox(height: 4),
               if (verified)
-                const Row(
+                Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.verified, size: 16, color: AppColors.teal),
-                    SizedBox(width: 4),
+                    Icon(Icons.verified, size: 16, color: context.colors.teal),
+                    const SizedBox(width: 4),
                     Text('נתונים ממרשם הרכב',
-                        style: TextStyle(color: AppColors.teal)),
+                        style: TextStyle(color: context.colors.teal)),
                   ],
                 )
               else
                 Text(user?.phone ?? '',
-                    style: const TextStyle(color: AppColors.textMuted)),
+                    style: TextStyle(color: context.colors.textMuted)),
             ],
           ),
         ),
@@ -150,7 +152,9 @@ class _Content extends StatelessWidget {
           label: 'תנאי שימוש ופרטיות',
           onTap: () => context.push('/legal'),
         ),
-        const Divider(height: 32),
+        const Divider(height: 24),
+        const _ThemePicker(),
+        const Divider(height: 24),
         // A visible, self-serve route to have personal data removed.
         _MenuRow(
           icon: Icons.delete_sweep_outlined,
@@ -160,10 +164,100 @@ class _Content extends StatelessWidget {
         _MenuRow(
           icon: Icons.logout,
           label: 'התנתקות',
-          color: AppColors.errorRed,
+          color: context.colors.errorRed,
           onTap: () => _signOut(context),
         ),
       ],
+    );
+  }
+}
+
+/// Light / dark / follow-the-device.
+///
+/// "לפי המכשיר" is first and is the default: someone who has already set
+/// their phone to dark has answered this question once already.
+class _ThemePicker extends ConsumerWidget {
+  const _ThemePicker();
+
+  static const _options = [
+    (ThemeMode.system, Icons.brightness_auto_outlined, 'לפי המכשיר'),
+    (ThemeMode.light, Icons.light_mode_outlined, 'בהיר'),
+    (ThemeMode.dark, Icons.dark_mode_outlined, 'כהה'),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(themeModeProvider);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('מראה', style: context.text.caption),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              for (final (value, icon, label) in _options)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: _ThemeOption(
+                      icon: icon,
+                      label: label,
+                      selected: mode == value,
+                      onTap: () =>
+                          ref.read(themeModeProvider.notifier).set(value),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ThemeOption extends StatelessWidget {
+  const _ThemeOption({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = selected ? context.colors.onBrand : context.colors.textMuted;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? context.colors.teal : context.colors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(
+            color: selected ? context.colors.teal : context.colors.cardBorder,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 20, color: fg),
+            const SizedBox(height: 4),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w600, color: fg)),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -183,11 +277,11 @@ class _MenuRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? AppColors.textPrimary;
+    final c = color ?? context.colors.textPrimary;
     return ListTile(
       leading: Icon(icon, color: c),
       title: Text(label, style: TextStyle(color: c)),
-      trailing: const Icon(Icons.chevron_left, color: AppColors.textSubtle),
+      trailing: Icon(Icons.chevron_left, color: context.colors.textSubtle),
       onTap: onTap,
     );
   }

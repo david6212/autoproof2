@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -103,17 +103,17 @@ class _SwipeBody extends StatelessWidget {
                 children: [
                   car.coverPhoto == null
                       ? Container(
-                          color: AppColors.tealLight,
-                          child: const Icon(Icons.directions_car,
-                              size: 80, color: AppColors.teal),
+                          color: context.colors.tealLight,
+                          child: Icon(Icons.directions_car,
+                              size: 80, color: context.colors.teal),
                         )
                       : CachedNetworkImage(
                           imageUrl: car.coverPhoto!,
                           fit: BoxFit.cover,
                           errorWidget: (_, __, ___) => Container(
-                            color: AppColors.tealLight,
-                            child: const Icon(Icons.directions_car,
-                                size: 80, color: AppColors.teal),
+                            color: context.colors.tealLight,
+                            child: Icon(Icons.directions_car,
+                                size: 80, color: context.colors.teal),
                           ),
                         ),
                   const Positioned(top: 12, right: 12, child: VerifiedBadge()),
@@ -129,7 +129,7 @@ class _SwipeBody extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            AppColors.tealDark.withValues(alpha: 0.85),
+                            context.colors.tealDark.withValues(alpha: 0.85),
                           ],
                         ),
                       ),
@@ -141,8 +141,8 @@ class _SwipeBody extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   car.title,
-                                  style: const TextStyle(
-                                    color: AppColors.onBrand,
+                                  style: TextStyle(
+                                    color: context.colors.onBrand,
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -150,8 +150,8 @@ class _SwipeBody extends StatelessWidget {
                               ),
                               Text(
                                 '₪${_fmt.format(car.price)}',
-                                style: const TextStyle(
-                                  color: AppColors.onBrand,
+                                style: TextStyle(
+                                  color: context.colors.onBrand,
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -161,8 +161,8 @@ class _SwipeBody extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             '${_fmt.format(car.km)} ק"מ · יד ${car.hand} · ${car.area} · ${car.year}',
-                            style: const TextStyle(
-                                color: AppColors.tealLight, fontSize: 13),
+                            style: TextStyle(
+                                color: context.colors.tealLight, fontSize: 13),
                           ),
                         ],
                       ),
@@ -180,21 +180,21 @@ class _SwipeBody extends StatelessWidget {
             children: [
               _CircleButton(
                 icon: Icons.close,
-                color: AppColors.errorRed,
+                color: context.colors.errorRed,
                 size: 64,
                 onTap: onSkip,
               ),
               const SizedBox(width: 20),
               _CircleButton(
                 icon: Icons.info_outline,
-                color: AppColors.textMuted,
+                color: context.colors.textMuted,
                 size: 52,
                 onTap: onInfo,
               ),
               const SizedBox(width: 20),
               _CircleButton(
                 icon: Icons.favorite,
-                color: AppColors.teal,
+                color: context.colors.teal,
                 size: 64,
                 onTap: onLike,
               ),
@@ -228,7 +228,7 @@ class _CircleButton extends StatelessWidget {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.colors.surface,
           shape: BoxShape.circle,
           border: Border.all(color: color, width: 2),
           boxShadow: [
@@ -253,16 +253,16 @@ class _NoMoreCards extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.done_all, size: 64, color: AppColors.teal),
+          Icon(Icons.done_all, size: 64, color: context.colors.teal),
           const SizedBox(height: 12),
-          const Text('עברת על כל הרכבים המסוננים',
-              style: TextStyle(color: AppColors.textMuted)),
+          Text('עברת על כל הרכבים המסוננים',
+              style: TextStyle(color: context.colors.textMuted)),
           const SizedBox(height: 4),
-          const Text('שנה את הסינון בעמוד הבית כדי לראות עוד',
-              style: AppText.captionSubtle),
+          Text('שנה את הסינון בעמוד הבית כדי לראות עוד',
+              style: context.text.captionSubtle),
           const SizedBox(height: 16),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+            style: FilledButton.styleFrom(backgroundColor: context.colors.teal),
             onPressed: () => context.go('/home'),
             child: const Text('חזרה לפיד'),
           ),

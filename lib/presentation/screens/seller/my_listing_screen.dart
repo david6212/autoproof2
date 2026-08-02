@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/cars_provider.dart';
 import '../../../core/theme/app_text.dart';
@@ -24,9 +24,9 @@ class MyListingScreen extends ConsumerWidget {
       body: SafeArea(
         child: listingAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(
+          error: (_, __) => Center(
             child: Text('שגיאה בטעינה',
-                style: TextStyle(color: AppColors.textMuted)),
+                style: TextStyle(color: context.colors.textMuted)),
           ),
           data: (car) => car == null ? const _Empty() : _Content(car: car),
         ),
@@ -59,9 +59,9 @@ class _Content extends StatelessWidget {
                 height: 160,
                 child: car.coverPhoto == null
                     ? Container(
-                        color: AppColors.tealLight,
-                        child: const Icon(Icons.directions_car,
-                            size: 56, color: AppColors.teal))
+                        color: context.colors.tealLight,
+                        child: Icon(Icons.directions_car,
+                            size: 56, color: context.colors.teal))
                     : CachedNetworkImage(
                         imageUrl: car.coverPhoto!, fit: BoxFit.cover),
               ),
@@ -74,10 +74,10 @@ class _Content extends StatelessWidget {
                           style: AppText.h3),
                     ),
                     Text('₪${_fmt.format(car.price)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.teal)),
+                            color: context.colors.teal)),
                   ],
                 ),
               ),
@@ -102,17 +102,17 @@ class _Content extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 24),
-        const Text('מי מתעניין ברכב שלך',
+        Text('מי מתעניין ברכב שלך',
             style: TextStyle(
-                fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                fontWeight: FontWeight.bold, color: context.colors.textPrimary)),
         const SizedBox(height: 8),
-        const AppCard(
-          padding: EdgeInsets.all(20),
+        AppCard(
+          padding: const EdgeInsets.all(20),
           radius: AppRadius.sm,
           child: Center(
             child: Text('כאן יופיעו קונים שמתעניינים ברכב שלך',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textMuted)),
+                style: TextStyle(color: context.colors.textMuted)),
           ),
         ),
         const SizedBox(height: 16),
@@ -120,7 +120,7 @@ class _Content extends StatelessWidget {
         // so this gets a full-width button rather than an icon.
         FilledButton.icon(
           style: FilledButton.styleFrom(
-            backgroundColor: AppColors.teal,
+            backgroundColor: context.colors.teal,
             minimumSize: const Size.fromHeight(48),
           ),
           icon: const Icon(Icons.ios_share),
@@ -130,8 +130,8 @@ class _Content extends StatelessWidget {
         const SizedBox(height: 10),
         OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.teal,
-            side: const BorderSide(color: AppColors.teal),
+            foregroundColor: context.colors.teal,
+            side: BorderSide(color: context.colors.teal),
             minimumSize: const Size.fromHeight(48),
           ),
           icon: const Icon(Icons.chat_bubble_outline),
@@ -200,7 +200,7 @@ class _SellerActions extends ConsumerWidget {
       children: [
         FilledButton.icon(
           style: FilledButton.styleFrom(
-            backgroundColor: AppColors.teal,
+            backgroundColor: context.colors.teal,
             minimumSize: const Size.fromHeight(48),
           ),
           icon: const Icon(Icons.check_circle_outline),
@@ -211,7 +211,7 @@ class _SellerActions extends ConsumerWidget {
               title: 'לסמן כנמכר?',
               body: 'המודעה תוסר מרשימת הרכבים הפעילים. אפשר לפרסם רכב חדש לאחר מכן.',
               confirmLabel: 'כן, נמכר',
-              confirmColor: AppColors.teal,
+              confirmColor: context.colors.teal,
             );
             if (ok && context.mounted) {
               await _apply(context, ref, CarStatus.sold, 'מזל טוב! המודעה סומנה כנמכרה');
@@ -220,7 +220,7 @@ class _SellerActions extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         TextButton.icon(
-          style: TextButton.styleFrom(foregroundColor: AppColors.errorRed),
+          style: TextButton.styleFrom(foregroundColor: context.colors.errorRed),
           icon: const Icon(Icons.delete_outline),
           label: const Text('הסר מודעה'),
           onPressed: () async {
@@ -229,7 +229,7 @@ class _SellerActions extends ConsumerWidget {
               title: 'להסיר את המודעה?',
               body: 'המודעה תוסר מהמערכת. פעולה זו אינה הפיכה.',
               confirmLabel: 'הסר',
-              confirmColor: AppColors.errorRed,
+              confirmColor: context.colors.errorRed,
             );
             if (ok && context.mounted) {
               await _apply(context, ref, CarStatus.removed, 'המודעה הוסרה');
@@ -256,13 +256,13 @@ class _Stat extends StatelessWidget {
         radius: AppRadius.sm,
         child: Column(
           children: [
-            Icon(icon, color: AppColors.teal, size: 20),
+            Icon(icon, color: context.colors.teal, size: 20),
             const SizedBox(height: 4),
             Text(value,
                 style: AppText.title),
             Text(label,
-                style: const TextStyle(
-                    color: AppColors.textSubtle, fontSize: 12.5)),
+                style: TextStyle(
+                    color: context.colors.textSubtle, fontSize: 12.5)),
           ],
         ),
       ),
@@ -279,14 +279,14 @@ class _Empty extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.directions_car_outlined,
-              size: 64, color: AppColors.textSubtle),
+          Icon(Icons.directions_car_outlined,
+              size: 64, color: context.colors.textSubtle),
           const SizedBox(height: 12),
-          const Text('אין לך מודעה פעילה',
-              style: TextStyle(color: AppColors.textMuted)),
+          Text('אין לך מודעה פעילה',
+              style: TextStyle(color: context.colors.textMuted)),
           const SizedBox(height: 16),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+            style: FilledButton.styleFrom(backgroundColor: context.colors.teal),
             onPressed: () => context.go('/seller/create'),
             child: const Text('פרסם מודעה'),
           ),

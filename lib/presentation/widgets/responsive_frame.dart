@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 
 /// Widths at which the layout stops being a phone-shaped column.
 class AppBreakpoint {
@@ -42,7 +42,7 @@ class ResponsiveFrame extends StatelessWidget {
         // A Row (not Center) so the app column inherits the full window
         // height — a Center would leave its child's height unconstrained.
         return ColoredBox(
-          color: AppColors.pageBackdrop,
+          color: context.colors.pageBackdrop,
           child: Row(
             children: [
               const Expanded(child: SizedBox.expand()),
@@ -62,9 +62,9 @@ class ResponsiveFrame extends StatelessWidget {
 class _Edge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
+    return SizedBox(
       width: 1,
-      child: ColoredBox(color: AppColors.cardBorder),
+      child: ColoredBox(color: context.colors.cardBorder),
     );
   }
 }

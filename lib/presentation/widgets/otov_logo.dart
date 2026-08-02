@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 
 /// The OtoV mark exactly as it looks at the end of the splash animation:
 /// a flat green shield + the car image + a green checkmark. Static (no
@@ -95,19 +95,24 @@ class OtovWordmark extends StatelessWidget {
   const OtovWordmark({
     super.key,
     this.fontSize = 34,
-    this.color = AppColors.textPrimary,
-    this.checkColor = AppColors.teal,
+    this.color,
+    this.checkColor,
   });
 
   final double fontSize;
-  final Color color;
-  final Color checkColor;
+
+  /// Both default to the theme — the wordmark has to stay legible on the
+  /// dark background too, and a default value cannot read the theme.
+  final Color? color;
+  final Color? checkColor;
 
   @override
   Widget build(BuildContext context) {
     // A check is wider than it is tall and sits above the baseline, so it is
     // sized off cap height rather than the full em.
     final capHeight = fontSize * 0.72;
+    final ink = color ?? context.colors.textPrimary;
+    final check = checkColor ?? context.colors.teal;
 
     // Latin mark in an RTL app — pin the direction so it never flips.
     return Directionality(
@@ -121,7 +126,7 @@ class OtovWordmark extends StatelessWidget {
             style: GoogleFonts.poppins(
               fontSize: fontSize,
               fontWeight: FontWeight.w700,
-              color: color,
+              color: ink,
               letterSpacing: 0.5,
               height: 1,
             ),
@@ -135,7 +140,7 @@ class OtovWordmark extends StatelessWidget {
             ),
             child: CustomPaint(
               size: Size(capHeight * 1.05, capHeight),
-              painter: CheckPainter(checkColor, 1),
+              painter: CheckPainter(check, 1),
             ),
           ),
         ],

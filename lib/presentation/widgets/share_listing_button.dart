@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/constants/app_strings.dart';
 import '../../data/models/car_model.dart';
 
@@ -51,16 +51,18 @@ class ShareListingButton extends StatelessWidget {
   const ShareListingButton({
     super.key,
     required this.car,
-    this.color = AppColors.textPrimary,
+    this.color,
   });
 
   final CarModel car;
-  final Color color;
+
+  /// Defaults to the theme's primary text colour.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: Icon(Icons.ios_share, color: color),
+      icon: Icon(Icons.ios_share, color: color ?? context.colors.textPrimary),
       tooltip: 'שתף מודעה',
       onPressed: () => shareListing(context, car),
     );

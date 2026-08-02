@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../app/router.dart';
 import '../../widgets/otov_logo.dart';
@@ -67,26 +67,26 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(bottom: BorderSide(color: AppColors.cardBorder)),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        border: Border(bottom: BorderSide(color: context.colors.cardBorder)),
       ),
       child: Column(
         children: [
           Align(
             alignment: Alignment.centerRight,
             child: IconButton(
-              icon: const Icon(Icons.arrow_forward,
-                  color: AppColors.textPrimary),
+              icon: Icon(Icons.arrow_forward,
+                  color: context.colors.textPrimary),
               onPressed: () => popOrHome(context),
             ),
           ),
           // Splash-style brand mark (shield + car + check).
           const OtovLogo(size: 120, withWordmark: true),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             AppStrings.tagline,
-            style: TextStyle(color: AppColors.teal, fontSize: 15),
+            style: TextStyle(color: context.colors.teal, fontSize: 15),
           ),
         ],
       ),
@@ -116,10 +116,10 @@ class _LayerCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.tealLight,
+              color: context.colors.tealLight,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: AppColors.teal),
+            child: Icon(icon, color: context.colors.teal),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -130,8 +130,8 @@ class _LayerCard extends StatelessWidget {
                     style: AppText.subtitle),
                 const SizedBox(height: 4),
                 Text(body,
-                    style: const TextStyle(
-                        color: AppColors.textMuted, fontSize: 13)),
+                    style: TextStyle(
+                        color: context.colors.textMuted, fontSize: 13)),
               ],
             ),
           ),

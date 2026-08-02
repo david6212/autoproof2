@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/seller_verification_provider.dart';
@@ -44,9 +44,9 @@ class _VerifyRoleScreenState extends ConsumerState<VerifyRoleScreen> {
                 style: AppText.display,
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'הסיווג שתבחר יוצג בבירור במודעה, כדי שהקונה יידע כיצד סיווגת את עצמך.',
-                style: TextStyle(color: AppColors.textMuted),
+                style: TextStyle(color: context.colors.textMuted),
               ),
               const SizedBox(height: 24),
 
@@ -104,20 +104,20 @@ class _RoleOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = selected ? AppColors.teal : AppColors.cardBorder;
+    final borderColor = selected ? context.colors.teal : context.colors.cardBorder;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: selected ? AppColors.tealLight : AppColors.surface,
+          color: selected ? context.colors.tealLight : context.colors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor, width: selected ? 2 : 1),
         ),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.teal, size: 28),
+            Icon(icon, color: context.colors.teal, size: 28),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -130,16 +130,16 @@ class _RoleOption extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.textMuted,
+                      color: context.colors.textMuted,
                     ),
                   ),
                 ],
               ),
             ),
             if (selected)
-              const Icon(Icons.check_circle, color: AppColors.teal),
+              Icon(Icons.check_circle, color: context.colors.teal),
           ],
         ),
       ),

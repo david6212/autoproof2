@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_text.dart';
@@ -15,7 +15,7 @@ class AppCard extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(AppSpace.lg),
     this.margin,
-    this.color = AppColors.surface,
+    this.color,
     this.radius = AppRadius.lg,
     this.bordered = true,
     this.elevated = false,
@@ -26,7 +26,12 @@ class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry? margin;
-  final Color color;
+
+  /// Defaults to the theme's surface. Nullable rather than defaulted in the
+  /// constructor because the default now depends on the active theme, and a
+  /// default value must be a compile-time constant.
+  final Color? color;
+
   final double radius;
   final bool bordered;
   final bool elevated;
@@ -42,9 +47,9 @@ class AppCard extends StatelessWidget {
       padding: padding,
       clipBehavior: clipBehavior,
       decoration: BoxDecoration(
-        color: color,
+        color: color ?? context.colors.surface,
         borderRadius: BorderRadius.circular(radius),
-        border: bordered ? Border.all(color: AppColors.cardBorder) : null,
+        border: bordered ? Border.all(color: context.colors.cardBorder) : null,
         boxShadow: elevated
             ? [
                 BoxShadow(
@@ -124,7 +129,7 @@ class AppSectionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: AppColors.teal),
+              Icon(icon, size: 18, color: context.colors.teal),
               const SizedBox(width: AppSpace.sm - 2),
               Expanded(child: Text(title, style: AppText.subtitle)),
               if (trailing != null) trailing!,
@@ -136,7 +141,7 @@ class AppSectionCard extends StatelessWidget {
           ],
           if (subtitle != null) ...[
             const SizedBox(height: AppSpace.xs),
-            Text(subtitle!, style: AppText.caption),
+            Text(subtitle!, style: context.text.caption),
           ],
           const SizedBox(height: AppSpace.md),
           child,
@@ -158,14 +163,14 @@ class DataSourceBadge extends StatelessWidget {
     // (not two shades of the brand green) so the distinction survives a glance.
     final (bg, fg, icon, label) = switch (source) {
       DataSource.official => (
-          AppColors.agentBlueBg,
-          AppColors.agentBlue,
+          context.colors.agentBlueBg,
+          context.colors.agentBlue,
           Icons.account_balance,
           'מידע רשמי · משרד התחבורה',
         ),
       DataSource.community => (
-          AppColors.dealerOrangeBg,
-          AppColors.dealerOrange,
+          context.colors.dealerOrangeBg,
+          context.colors.dealerOrange,
           Icons.groups_outlined,
           'מידע קהילתי · דיווחי משתמשים',
         ),
@@ -177,7 +182,7 @@ class DataSourceBadge extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(AppRadius.xs),
         border: source == DataSource.community
-            ? Border.all(color: AppColors.cardBorder)
+            ? Border.all(color: context.colors.cardBorder)
             : null,
       ),
       child: Row(
@@ -204,17 +209,17 @@ class LiabilityNotice extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: context.colors.background,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: context.colors.cardBorder),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.gavel_outlined, size: 15, color: AppColors.textSubtle),
-          SizedBox(width: AppSpace.sm - 2),
+          Icon(Icons.gavel_outlined, size: 15, color: context.colors.textSubtle),
+          const SizedBox(width: AppSpace.sm - 2),
           Expanded(
-            child: Text(AppStrings.liabilityNotice, style: AppText.micro),
+            child: Text(AppStrings.liabilityNotice, style: context.text.micro),
           ),
         ],
       ),
@@ -233,14 +238,14 @@ class AppCountBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
       decoration: BoxDecoration(
-        color: AppColors.tealLight,
+        color: context.colors.tealLight,
         borderRadius: BorderRadius.circular(AppRadius.xs + 2),
       ),
       child: Text('$count',
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.bold,
-              color: AppColors.tealText)),
+              color: context.colors.tealText)),
     );
   }
 }

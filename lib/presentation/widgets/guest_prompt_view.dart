@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
 
 /// A full-screen, centered "sign in to continue" prompt shown on tabs that
@@ -30,11 +30,11 @@ class GuestPromptView extends StatelessWidget {
             Container(
               width: 88,
               height: 88,
-              decoration: const BoxDecoration(
-                color: AppColors.tealLight,
+              decoration: BoxDecoration(
+                color: context.colors.tealLight,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 40, color: AppColors.teal),
+              child: Icon(icon, size: 40, color: context.colors.teal),
             ),
             const SizedBox(height: 20),
             Text(
@@ -46,14 +46,14 @@ class GuestPromptView extends StatelessWidget {
             Text(
               body,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textMuted),
+              style: TextStyle(color: context.colors.textMuted),
             ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.teal,
+                  backgroundColor: context.colors.teal,
                   minimumSize: const Size.fromHeight(50),
                 ),
                 onPressed: () => context.push('/login'),

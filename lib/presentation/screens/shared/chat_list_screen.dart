@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../data/models/chat_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
@@ -29,9 +29,9 @@ class ChatListScreen extends ConsumerWidget {
               )
             : chatsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(
+          error: (_, __) => Center(
             child: Text('שגיאה בטעינת הצ\'אטים',
-                style: TextStyle(color: AppColors.textMuted)),
+                style: TextStyle(color: context.colors.textMuted)),
           ),
           data: (chats) {
             if (chats.isEmpty) return const _EmptyChats();
@@ -70,12 +70,12 @@ class _ChatTile extends StatelessWidget {
       onTap: () => context.push('/chat/${chat.id}'),
       leading: CircleAvatar(
         radius: 26,
-        backgroundColor: AppColors.tealLight,
+        backgroundColor: context.colors.tealLight,
         backgroundImage: chat.carPhoto.isNotEmpty
             ? CachedNetworkImageProvider(chat.carPhoto)
             : null,
         child: chat.carPhoto.isEmpty
-            ? const Icon(Icons.directions_car, color: AppColors.teal)
+            ? Icon(Icons.directions_car, color: context.colors.teal)
             : null,
       ),
       title: Row(
@@ -87,7 +87,7 @@ class _ChatTile extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: 4),
-          const Icon(Icons.verified, size: 14, color: AppColors.teal),
+          Icon(Icons.verified, size: 14, color: context.colors.teal),
         ],
       ),
       subtitle: Text(
@@ -95,7 +95,7 @@ class _ChatTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          color: unread ? AppColors.textPrimary : AppColors.textMuted,
+          color: unread ? context.colors.textPrimary : context.colors.textMuted,
           fontWeight: unread ? FontWeight.w600 : FontWeight.normal,
         ),
       ),
@@ -105,15 +105,15 @@ class _ChatTile extends StatelessWidget {
         children: [
           Text(
             _time(chat.lastMessageAt),
-            style: const TextStyle(color: AppColors.textSubtle, fontSize: 12.5),
+            style: TextStyle(color: context.colors.textSubtle, fontSize: 12.5),
           ),
           if (unread) ...[
             const SizedBox(height: 4),
             Container(
               width: 9,
               height: 9,
-              decoration: const BoxDecoration(
-                  color: AppColors.teal, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                  color: context.colors.teal, shape: BoxShape.circle),
             ),
           ],
         ],
@@ -127,15 +127,15 @@ class _EmptyChats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.chat_bubble_outline,
-              size: 64, color: AppColors.textSubtle),
-          SizedBox(height: 12),
+              size: 64, color: context.colors.textSubtle),
+          const SizedBox(height: 12),
           Text('אין עדיין שיחות',
-              style: TextStyle(color: AppColors.textMuted)),
+              style: TextStyle(color: context.colors.textMuted)),
         ],
       ),
     );

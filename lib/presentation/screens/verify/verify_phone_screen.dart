@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../../core/theme/app_text.dart';
@@ -109,8 +109,8 @@ class _VerifyPhoneScreenState extends ConsumerState<VerifyPhoneScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.phone_iphone,
-                  size: 56, color: AppColors.teal),
+              Icon(Icons.phone_iphone,
+                  size: 56, color: context.colors.teal),
               const SizedBox(height: 16),
               const Text(
                 'כדי לפרסם מודעה צריך מספר טלפון מאומת',
@@ -118,12 +118,12 @@ class _VerifyPhoneScreenState extends ConsumerState<VerifyPhoneScreen> {
                 style: AppText.h3,
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'המספר משמש לאימות בלבד ולא יוצג במודעה. הוא מקשה על פתיחת '
                 'חשבונות מזויפים ומגן גם עליך וגם על הקונים.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 13, height: 1.4, color: AppColors.textMuted),
+                    fontSize: 13, height: 1.4, color: context.colors.textMuted),
               ),
               const SizedBox(height: 24),
               TextField(
@@ -154,8 +154,8 @@ class _VerifyPhoneScreenState extends ConsumerState<VerifyPhoneScreen> {
                 const SizedBox(height: 12),
                 Text(_error!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        color: AppColors.errorRed, fontSize: 13)),
+                    style: TextStyle(
+                        color: context.colors.errorRed, fontSize: 13)),
               ],
               const SizedBox(height: 24),
               PrimaryButton(

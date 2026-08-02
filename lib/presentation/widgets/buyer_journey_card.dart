@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cars_provider.dart';
 import '../../core/theme/app_text.dart';
@@ -98,7 +98,7 @@ class BuyerJourneyCard extends ConsumerWidget {
           ? TextButton(
               onPressed: () => ref.read(setJourneyStageProvider).call(carId, 1),
               style: TextButton.styleFrom(
-                  foregroundColor: AppColors.textMuted,
+                  foregroundColor: context.colors.textMuted,
                   minimumSize: const Size(0, 0),
                   padding: const EdgeInsets.symmetric(horizontal: 6)),
               child: const Text('אפס', style: TextStyle(fontSize: 12.5)),
@@ -124,20 +124,20 @@ class BuyerJourneyCard extends ConsumerWidget {
               margin: const EdgeInsets.only(top: 4),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.tealLight,
+                color: context.colors.tealLight,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Row(
+              child: Row(
                 children: [
                   Icon(Icons.celebration_outlined,
-                      size: 17, color: AppColors.teal),
-                  SizedBox(width: 8),
+                      size: 17, color: context.colors.teal),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text('השלמת את מסע הקנייה — בהצלחה עם הרכב החדש!',
                         style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.tealText)),
+                            color: context.colors.tealText)),
                   ),
                 ],
               ),
@@ -182,8 +182,8 @@ class _StepRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reached = isDone || isActive;
-    final circleColor = reached ? AppColors.teal : AppColors.background;
-    final numberColor = reached ? AppColors.onBrand : AppColors.textSubtle;
+    final circleColor = reached ? context.colors.teal : context.colors.background;
+    final numberColor = reached ? context.colors.onBrand : context.colors.textSubtle;
 
     return IntrinsicHeight(
       child: Row(
@@ -200,10 +200,10 @@ class _StepRow extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: reached
                       ? null
-                      : Border.all(color: AppColors.cardBorder, width: 1.5),
+                      : Border.all(color: context.colors.cardBorder, width: 1.5),
                 ),
                 child: isDone
-                    ? const Icon(Icons.check, size: 17, color: AppColors.onBrand)
+                    ? Icon(Icons.check, size: 17, color: context.colors.onBrand)
                     : Center(
                         child: Text('${index + 1}',
                             style: TextStyle(
@@ -216,7 +216,7 @@ class _StepRow extends StatelessWidget {
                 Expanded(
                   child: Container(
                     width: 2,
-                    color: isDone ? AppColors.teal : AppColors.cardBorder,
+                    color: isDone ? context.colors.teal : context.colors.cardBorder,
                   ),
                 ),
             ],
@@ -235,18 +235,18 @@ class _StepRow extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                       color:
-                          reached ? AppColors.textPrimary : AppColors.textMuted,
+                          reached ? context.colors.textPrimary : context.colors.textMuted,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(step.subtitle,
-                      style: AppText.caption),
+                      style: context.text.caption),
                   if (step.findInspection) ...[
                     const SizedBox(height: 8),
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.teal,
-                        side: const BorderSide(color: AppColors.teal),
+                        foregroundColor: context.colors.teal,
+                        side: BorderSide(color: context.colors.teal),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         shape: RoundedRectangleBorder(
@@ -268,20 +268,20 @@ class _StepRow extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 7),
                       decoration: BoxDecoration(
-                        color: AppColors.tealLight,
+                        color: context.colors.tealLight,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.bolt,
-                              size: 15, color: AppColors.teal),
+                          Icon(Icons.bolt,
+                              size: 15, color: context.colors.teal),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(step.automation!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.tealText)),
+                                    color: context.colors.tealText)),
                           ),
                         ],
                       ),
@@ -293,7 +293,7 @@ class _StepRow extends StatelessWidget {
                       width: double.infinity,
                       child: FilledButton(
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.teal,
+                          backgroundColor: context.colors.teal,
                           minimumSize: const Size.fromHeight(42),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
@@ -337,23 +337,23 @@ class _ReportButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.tealLight,
+          color: context.colors.tealLight,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.teal.withValues(alpha: 0.35)),
+          border: Border.all(color: context.colors.teal.withValues(alpha: 0.35)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.description_outlined,
-                size: 16, color: AppColors.teal),
+            Icon(Icons.description_outlined,
+                size: 16, color: context.colors.teal),
             const SizedBox(width: 8),
             Expanded(
               child: Text('הזמנת ${report.label}',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.tealText)),
+                      color: context.colors.tealText)),
             ),
-            const Icon(Icons.open_in_new, size: 15, color: AppColors.teal),
+            Icon(Icons.open_in_new, size: 15, color: context.colors.teal),
           ],
         ),
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../data/models/car_model.dart';
 
 /// Colored pill showing WHO is selling: בעלים פרטי (green) / סוכן (blue) /
@@ -14,9 +14,9 @@ class SellerTypeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bg, fg, icon) = switch (type) {
-      SellerType.private => (AppColors.tealLight, AppColors.tealText2, Icons.verified_user),
-      SellerType.agent => (AppColors.agentBlueBg, AppColors.agentBlue, Icons.handshake_outlined),
-      SellerType.dealer => (AppColors.dealerOrangeBg, AppColors.dealerOrange, Icons.storefront_outlined),
+      SellerType.private => (context.colors.tealLight, context.colors.tealText2, Icons.verified_user),
+      SellerType.agent => (context.colors.agentBlueBg, context.colors.agentBlue, Icons.handshake_outlined),
+      SellerType.dealer => (context.colors.dealerOrangeBg, context.colors.dealerOrange, Icons.storefront_outlined),
     };
 
     return Container(

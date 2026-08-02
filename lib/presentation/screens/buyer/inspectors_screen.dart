@@ -7,7 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../data/models/inspection_center.dart';
 import '../../widgets/app_card.dart';
@@ -387,8 +387,8 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
                           Icons.location_on,
                           size: _selected?.id == cluster.single.id ? 40 : 32,
                           color: _selected?.id == cluster.single.id
-                              ? AppColors.dealerOrange
-                              : AppColors.teal,
+                              ? context.colors.dealerOrange
+                              : context.colors.teal,
                         ),
                       ),
                     )
@@ -421,11 +421,11 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             child: Center(child: _ZoomHint()),
           ),
         // Attribution (OSM tile usage requires credit).
-        const Positioned(
+        Positioned(
           bottom: 2,
           left: 4,
           child: Text('© OpenStreetMap',
-              style: TextStyle(fontSize: 9.5, color: AppColors.textSubtle)),
+              style: TextStyle(fontSize: 9.5, color: context.colors.textSubtle)),
         ),
         if (me != null)
           Positioned(
@@ -435,16 +435,16 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
               children: [
                 FloatingActionButton.small(
                   heroTag: 'nearest',
-                  backgroundColor: AppColors.teal,
-                  foregroundColor: AppColors.onBrand,
+                  backgroundColor: context.colors.teal,
+                  foregroundColor: context.colors.onBrand,
                   onPressed: () => _goToNearest(list, me),
                   child: const Icon(Icons.near_me),
                 ),
                 const SizedBox(height: 8),
                 FloatingActionButton.small(
                   heroTag: 'me',
-                  backgroundColor: AppColors.surface,
-                  foregroundColor: AppColors.teal,
+                  backgroundColor: context.colors.surface,
+                  foregroundColor: context.colors.teal,
                   onPressed: () => _mapController.move(me, 13),
                   child: const Icon(Icons.my_location),
                 ),
@@ -494,7 +494,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
               '${sorted.length} מכונים מורשים · מקור: משרד התחבורה'
               '${me != null ? ' · ממוינים לפי קרבה אליך' : ''}',
               style:
-                  const TextStyle(fontSize: 12.5, color: AppColors.textSubtle),
+                  TextStyle(fontSize: 12.5, color: context.colors.textSubtle),
             ),
           );
         }
@@ -531,7 +531,7 @@ class _SearchBar extends StatelessWidget {
                 )
               : null,
           filled: true,
-          fillColor: AppColors.background,
+          fillColor: context.colors.background,
           contentPadding: const EdgeInsets.symmetric(vertical: 0),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -565,9 +565,9 @@ class _ClusterBubble extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: AppColors.teal,
+            color: context.colors.teal,
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.onBrand, width: 2.5),
+            border: Border.all(color: context.colors.onBrand, width: 2.5),
             boxShadow: [
               BoxShadow(
                   color: Colors.black.withValues(alpha: 0.25),
@@ -577,8 +577,8 @@ class _ClusterBubble extends StatelessWidget {
           ),
           child: Center(
             child: Text('$count',
-                style: const TextStyle(
-                    color: AppColors.onBrand,
+                style: TextStyle(
+                    color: context.colors.onBrand,
                     fontWeight: FontWeight.bold,
                     fontSize: 15)),
           ),
@@ -587,7 +587,7 @@ class _ClusterBubble extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
           decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.92),
+            color: context.colors.surface.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
@@ -595,10 +595,10 @@ class _ClusterBubble extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 9.5,
                 fontWeight: FontWeight.bold,
-                color: AppColors.tealText),
+                color: context.colors.tealText),
           ),
         ),
       ],
@@ -615,23 +615,23 @@ class _ZoomHint extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.94),
+        color: context.colors.surface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
               color: Colors.black.withValues(alpha: 0.12), blurRadius: 8),
         ],
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.zoom_in, size: 15, color: AppColors.teal),
-          SizedBox(width: 5),
+          Icon(Icons.zoom_in, size: 15, color: context.colors.teal),
+          const SizedBox(width: 5),
           Text('הקישו על עיר או התקרבו כדי לראות את המכונים',
               style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.tealText)),
+                  color: context.colors.tealText)),
         ],
       ),
     );
@@ -646,12 +646,12 @@ class _MeDot extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.agentBlue,
+        color: context.colors.agentBlue,
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.onBrand, width: 3),
+        border: Border.all(color: context.colors.onBrand, width: 3),
         boxShadow: [
           BoxShadow(
-              color: AppColors.agentBlue.withValues(alpha: 0.4),
+              color: context.colors.agentBlue.withValues(alpha: 0.4),
               blurRadius: 8,
               spreadRadius: 2),
         ],
@@ -668,17 +668,17 @@ class _LocationHint extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.warnBg,
+        color: context.colors.warnBg,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.location_off, size: 15, color: AppColors.warnText),
-          SizedBox(width: 6),
+          Icon(Icons.location_off, size: 15, color: context.colors.warnText),
+          const SizedBox(width: 6),
           Flexible(
             child: Text('אפשרו גישה למיקום כדי לראות את המכון הקרוב אליכם',
-                style: TextStyle(fontSize: 12.5, color: AppColors.warnText)),
+                style: TextStyle(fontSize: 12.5, color: context.colors.warnText)),
           ),
         ],
       ),
@@ -718,11 +718,11 @@ class _CenterCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 22,
-                backgroundColor: AppColors.tealLight,
+                backgroundColor: context.colors.tealLight,
                 child: Icon(Icons.build_circle_outlined,
-                    color: AppColors.teal, size: 24),
+                    color: context.colors.teal, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -730,27 +730,27 @@ class _CenterCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(center.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
-                            color: AppColors.textPrimary)),
+                            color: context.colors.textPrimary)),
                     const SizedBox(height: 3),
                     Row(
                       children: [
-                        const Icon(Icons.location_on_outlined,
-                            size: 14, color: AppColors.textSubtle),
+                        Icon(Icons.location_on_outlined,
+                            size: 14, color: context.colors.textSubtle),
                         const SizedBox(width: 3),
                         Expanded(
                           child: Text(center.fullAddress,
-                              style: AppText.caption),
+                              style: context.text.caption),
                         ),
                       ],
                     ),
                     if (center.hasCoords && !center.isExact) ...[
                       const SizedBox(height: 3),
-                      const Text('הסיכה במרכז העיר — התקשרו לכתובת המדויקת',
+                      Text('הסיכה במרכז העיר — התקשרו לכתובת המדויקת',
                           style: TextStyle(
-                              fontSize: 11.5, color: AppColors.textSubtle)),
+                              fontSize: 11.5, color: context.colors.textSubtle)),
                     ],
                   ],
                 ),
@@ -760,14 +760,14 @@ class _CenterCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.tealLight,
+                    color: context.colors.tealLight,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(_fmtDistance(distance!),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.tealText)),
+                          color: context.colors.tealText)),
                 ),
             ],
           ),
@@ -778,7 +778,7 @@ class _CenterCard extends StatelessWidget {
                 Expanded(
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.teal,
+                        backgroundColor: context.colors.teal,
                         minimumSize: const Size.fromHeight(44)),
                     icon: const Icon(Icons.phone, size: 18),
                     label: const Text('התקשר'),
@@ -790,8 +790,8 @@ class _CenterCard extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.teal,
-                    side: const BorderSide(color: AppColors.teal),
+                    foregroundColor: context.colors.teal,
+                    side: BorderSide(color: context.colors.teal),
                     minimumSize: const Size.fromHeight(44),
                   ),
                   icon: const Icon(Icons.navigation_outlined, size: 18),
@@ -838,11 +838,11 @@ class _Message extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 44, color: AppColors.textSubtle),
+            Icon(icon, size: 44, color: context.colors.textSubtle),
             const SizedBox(height: 12),
             Text(text,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textMuted)),
+                style: TextStyle(color: context.colors.textMuted)),
             if (actionLabel != null) ...[
               const SizedBox(height: 12),
               TextButton(onPressed: onAction, child: Text(actionLabel!)),

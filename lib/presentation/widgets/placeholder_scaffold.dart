@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
 
 /// Temporary placeholder used by all screens during Phase 1.
@@ -23,7 +23,7 @@ class PlaceholderScaffold extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.construction, size: 48, color: AppColors.teal),
+            Icon(Icons.construction, size: 48, color: context.colors.teal),
             const SizedBox(height: 12),
             Text(
               title,
@@ -33,7 +33,7 @@ class PlaceholderScaffold extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 subtitle!,
-                style: const TextStyle(color: AppColors.textMuted),
+                style: TextStyle(color: context.colors.textMuted),
               ),
             ],
           ],

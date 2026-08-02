@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../data/models/plate_snapshot_model.dart';
 import '../providers/cars_provider.dart';
 import '../providers/gov_api_provider.dart';
@@ -56,13 +56,13 @@ class PlateHistoryCard extends ConsumerWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.errorBg,
+                color: context.colors.errorBg,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.warning_amber_rounded,
-                      size: 20, color: AppColors.errorRed),
+                  Icon(Icons.warning_amber_rounded,
+                      size: 20, color: context.colors.errorRed),
                   const SizedBox(width: 8),
                   // Factual description only. "חשד לגלגול" implied a criminal
                   // act; a mismatch between sources is what we can actually
@@ -75,16 +75,16 @@ class PlateHistoryCard extends ConsumerWidget {
                           govRollback
                               ? 'נמצאה אי-התאמה בין נתוני הקילומטראז\' במקורות שונים: המודעה מציגה פחות ק"מ מהרישום בטסט האחרון.'
                               : 'נמצאה אי-התאמה בין נתוני הקילומטראז\' במקורות שונים: במודעה קודמת נרשמו יותר ק"מ מהמודעה הנוכחית.',
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.errorRed),
+                              color: context.colors.errorRed),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
+                        Text(
                           'מומלץ לבדוק את היסטוריית הרכב לפני השלמת העסקה.',
                           style: TextStyle(
-                              fontSize: 11.5, color: AppColors.errorRed),
+                              fontSize: 11.5, color: context.colors.errorRed),
                         ),
                       ],
                     ),
@@ -98,6 +98,7 @@ class PlateHistoryCard extends ConsumerWidget {
           // Official odometer (from the last annual test).
           if (govKm != null)
             _kmRow(
+              context,
               icon: Icons.verified_user,
               // Naming the source is a licence obligation, not just nice-to-have.
               label: 'מד-אוץ רשמי · משרד התחבורה (טסט אחרון)',
@@ -114,15 +115,17 @@ class PlateHistoryCard extends ConsumerWidget {
             if (govKm != null) const SizedBox(height: 6),
             const SizedBox(height: 6),
             _summaryRow(
+              context,
               icon: Icons.history,
               label: previous.length == 1
                   ? 'נמצאה מודעה קודמת אחת באפליקציה'
                   : 'נמצאו ${previous.length} מודעות קודמות באפליקציה',
             ),
             if (_priceNote(previous) case final note?)
-              _summaryRow(icon: Icons.swap_vert, label: note),
+              _summaryRow(context, icon: Icons.swap_vert, label: note),
             if (_kmNote(previous, currentKm) case final note?)
               _summaryRow(
+              context,
                   icon: Icons.speed, label: note, flagged: histRollback),
           ],
           // Every surface carrying community-derived data offers a way to
@@ -135,7 +138,7 @@ class PlateHistoryCard extends ConsumerWidget {
                 label: const Text('דווח על מידע שגוי',
                     style: TextStyle(fontSize: 11.5)),
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.textMuted,
+                  foregroundColor: context.colors.textMuted,
                   minimumSize: const Size(0, 0),
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -181,18 +184,19 @@ class PlateHistoryCard extends ConsumerWidget {
   }
 
   /// A single summarised line — no odometer column, no price column.
-  Widget _summaryRow({
+  Widget _summaryRow(
+    BuildContext context, {
     required IconData icon,
     required String label,
     bool flagged = false,
   }) {
-    final color = flagged ? AppColors.errorRed : AppColors.textMuted;
+    final color = flagged ? context.colors.errorRed : context.colors.textMuted;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
           Icon(icon,
-              size: 16, color: flagged ? AppColors.errorRed : AppColors.teal),
+              size: 16, color: flagged ? context.colors.errorRed : context.colors.teal),
           const SizedBox(width: 8),
           Expanded(
             child: Text(label,
@@ -203,7 +207,8 @@ class PlateHistoryCard extends ConsumerWidget {
     );
   }
 
-  Widget _kmRow({
+  Widget _kmRow(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required int km,
@@ -211,18 +216,18 @@ class PlateHistoryCard extends ConsumerWidget {
     String? okNote,
     String? trailing,
   }) {
-    final kmColor = flagged ? AppColors.errorRed : AppColors.textPrimary;
+    final kmColor = flagged ? context.colors.errorRed : context.colors.textPrimary;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
           Icon(icon,
               size: 16,
-              color: flagged ? AppColors.errorRed : AppColors.teal),
+              color: flagged ? context.colors.errorRed : context.colors.teal),
           const SizedBox(width: 8),
           Expanded(
             child: Text(label,
-                style: AppText.caption),
+                style: context.text.caption),
           ),
           Text('${_fmt.format(km)} ק"מ',
               style: TextStyle(
@@ -230,14 +235,14 @@ class PlateHistoryCard extends ConsumerWidget {
           if (trailing != null) ...[
             const SizedBox(width: 10),
             Text(trailing,
-                style: AppText.caption),
+                style: context.text.caption),
           ] else if (okNote != null && !flagged) ...[
             const SizedBox(width: 8),
             Text(okNote,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.teal)),
+                    color: context.colors.teal)),
           ],
         ],
       ),

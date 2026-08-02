@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../data/models/car_note_model.dart';
 import '../providers/analytics_provider.dart';
@@ -46,14 +46,14 @@ class CarNotesSection extends ConsumerWidget {
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2))),
             ),
-            error: (_, __) => const Text('לא ניתן לטעון הערות כרגע.',
-                style: AppText.bodySmMuted),
+            error: (_, __) => Text('לא ניתן לטעון הערות כרגע.',
+                style: context.text.bodySmMuted),
             data: (notes) {
               if (notes.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 6),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
                   child: Text('עדיין אין הערות. היה הראשון לשתף מה ראית 👀',
-                      style: AppText.bodySmMuted),
+                      style: context.text.bodySmMuted),
                 );
               }
               final flagCount =
@@ -109,7 +109,7 @@ class CarNotesSection extends ConsumerWidget {
               onPressed: () => Navigator.pop(context, false),
               child: const Text('ביטול')),
           FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+              style: FilledButton.styleFrom(backgroundColor: context.colors.teal),
               onPressed: () => Navigator.pop(context, true),
               child: const Text('דווח')),
         ],
@@ -135,7 +135,7 @@ class CarNotesSection extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.colors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -165,7 +165,7 @@ class _NoteTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: context.colors.background,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -175,41 +175,41 @@ class _NoteTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 14,
-                backgroundColor: AppColors.teal,
+                backgroundColor: context.colors.teal,
                 child: Text(initial,
-                    style: const TextStyle(
-                        color: AppColors.onBrand,
+                    style: TextStyle(
+                        color: context.colors.onBrand,
                         fontSize: 13,
                         fontWeight: FontWeight.bold)),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(note.authorName,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
-                        color: AppColors.textPrimary)),
+                        color: context.colors.textPrimary)),
               ),
               Text(_timeAgo(note.createdAt),
-                  style: AppText.micro),
+                  style: context.text.micro),
               if (isMine)
                 InkWell(
                   onTap: onDelete,
                   borderRadius: BorderRadius.circular(20),
-                  child: const Padding(
-                    padding: EdgeInsets.only(right: 4, left: 2),
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 4, left: 2),
                     child: Icon(Icons.delete_outline,
-                        size: 18, color: AppColors.textSubtle),
+                        size: 18, color: context.colors.textSubtle),
                   ),
                 )
               else if (onReport != null)
                 InkWell(
                   onTap: onReport,
                   borderRadius: BorderRadius.circular(20),
-                  child: const Padding(
-                    padding: EdgeInsets.only(right: 4, left: 2),
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 4, left: 2),
                     child: Icon(Icons.flag_outlined,
-                        size: 17, color: AppColors.textSubtle),
+                        size: 17, color: context.colors.textSubtle),
                   ),
                 ),
             ],
@@ -225,12 +225,12 @@ class _NoteTile extends StatelessWidget {
           ),
           if (note.hasPendingText) ...[
             const SizedBox(height: 8),
-            const Row(
+            Row(
               children: [
-                Icon(Icons.schedule, size: 13, color: AppColors.textSubtle),
-                SizedBox(width: 4),
+                Icon(Icons.schedule, size: 13, color: context.colors.textSubtle),
+                const SizedBox(width: 4),
                 Text('הערה חופשית ממתינה לבדיקה',
-                    style: AppText.micro),
+                    style: context.text.micro),
               ],
             ),
           ],
@@ -240,19 +240,19 @@ class _NoteTile extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.warnBg,
+                color: context.colors.warnBg,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.flag, size: 13, color: AppColors.warnText),
+                  Icon(Icons.flag, size: 13, color: context.colors.warnText),
                   const SizedBox(width: 4),
                   Text(note.flagLabel!,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.warnText)),
+                          color: context.colors.warnText)),
                 ],
               ),
             ),
@@ -283,8 +283,8 @@ class _TagChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final positive = tag.isPositive;
-    final bg = positive ? AppColors.tealLight : AppColors.warnBg;
-    final fg = positive ? AppColors.tealText2 : AppColors.warnText;
+    final bg = positive ? context.colors.tealLight : context.colors.warnBg;
+    final fg = positive ? context.colors.tealText2 : context.colors.warnText;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -316,22 +316,22 @@ class _FlagBanner extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.warnBg,
+        color: context.colors.warnBg,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          const Icon(Icons.report_gmailerrorred, size: 18, color: AppColors.warnText),
+          Icon(Icons.report_gmailerrorred, size: 18, color: context.colors.warnText),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               count == 1
                   ? 'מבקר סימן שהמוכר אינו בהכרח פרטי — קראו את ההערות.'
                   : '$count מבקרים סימנו שהמוכר אינו בהכרח פרטי — קראו את ההערות.',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.warnText),
+                  color: context.colors.warnText),
             ),
           ),
         ],
@@ -396,9 +396,9 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
           const Text('מה ראיתם בפגישה?',
               style: AppText.title),
           const SizedBox(height: 4),
-          const Text(
+          Text(
               'סמנו מה שמתאים. הבחירה מתוך רשימה קבועה שומרת על דיווח עובדתי.',
-              style: AppText.caption),
+              style: context.text.caption),
           const SizedBox(height: 12),
           // Fixed checklist instead of an open box — see NoteTag's docs.
           Wrap(
@@ -410,19 +410,19 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
                   label: Text(tag.label),
                   selected: _tags.contains(tag),
                   showCheckmark: true,
-                  checkmarkColor: AppColors.onBrand,
-                  selectedColor: AppColors.teal,
-                  backgroundColor: AppColors.background,
+                  checkmarkColor: context.colors.onBrand,
+                  selectedColor: context.colors.teal,
+                  backgroundColor: context.colors.background,
                   side: BorderSide(
                       color: _tags.contains(tag)
-                          ? AppColors.teal
-                          : AppColors.cardBorder),
+                          ? context.colors.teal
+                          : context.colors.cardBorder),
                   labelStyle: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                     color: _tags.contains(tag)
-                        ? AppColors.onBrand
-                        : AppColors.textMuted,
+                        ? context.colors.onBrand
+                        : context.colors.textMuted,
                   ),
                   onSelected: (on) => setState(
                       () => on ? _tags.add(tag) : _tags.remove(tag)),
@@ -440,7 +440,7 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
               helperText: 'טקסט חופשי נשלח לבדיקה ולא יוצג עד לאישור.',
               helperMaxLines: 2,
               filled: true,
-              fillColor: AppColors.background,
+              fillColor: context.colors.background,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -448,8 +448,8 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text('כיצד פעל המוכר? (לא חובה)',
-              style: AppText.caption),
+          Text('כיצד פעל המוכר? (לא חובה)',
+              style: context.text.caption),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -463,12 +463,12 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
                   label: Text(opt.$2),
                   selected: _flag == opt.$1,
                   showCheckmark: false,
-                  selectedColor: AppColors.teal,
+                  selectedColor: context.colors.teal,
                   labelStyle: TextStyle(
                     fontSize: 12.5,
                     color: _flag == opt.$1
-                        ? AppColors.onBrand
-                        : AppColors.textMuted,
+                        ? context.colors.onBrand
+                        : context.colors.textMuted,
                   ),
                   onSelected: (_) => setState(() => _flag = opt.$1),
                 ),
@@ -477,16 +477,16 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
           const SizedBox(height: 12),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.teal,
+              backgroundColor: context.colors.teal,
               minimumSize: const Size.fromHeight(48),
             ),
             onPressed: (_saving || _tags.isEmpty) ? null : _submit,
             child: _saving
-                ? const SizedBox(
+                ? SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: AppColors.onBrand))
+                        strokeWidth: 2, color: context.colors.onBrand))
                 : const Text('שלח דיווח'),
           ),
         ],

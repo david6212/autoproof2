@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 
 /// Bottom TabBar shell for buyer screens: בית | שמורים | גילוי | צ'אטים | פרופיל
 class BuyerShell extends StatelessWidget {
@@ -31,13 +31,13 @@ class BuyerShell extends StatelessWidget {
       body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: current,
-        indicatorColor: AppColors.tealLight,
+        indicatorColor: context.colors.tealLight,
         onDestinationSelected: (i) => context.go(_tabs[i].path),
         destinations: [
           for (final t in _tabs)
             NavigationDestination(
               icon: Icon(t.icon),
-              selectedIcon: Icon(t.activeIcon, color: AppColors.teal),
+              selectedIcon: Icon(t.activeIcon, color: context.colors.teal),
               label: t.label,
             ),
         ],

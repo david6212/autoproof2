@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../data/models/chat_model.dart';
@@ -62,12 +62,12 @@ class _MessageTile extends StatelessWidget {
     return AppCard(
       margin: const EdgeInsets.only(bottom: AppSpace.sm),
       padding: const EdgeInsets.all(14),
-      color: AppColors.tealLight,
+      color: context.colors.tealLight,
       onTap: () => context.push('/chat/${chat.id}'),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.chat_bubble_outline, color: AppColors.teal),
+          Icon(Icons.chat_bubble_outline, color: context.colors.teal),
           const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
@@ -83,7 +83,7 @@ class _MessageTile extends StatelessWidget {
                         style: AppText.subtitle,
                       ),
                     ),
-                    Text(_ago(chat.lastMessageAt), style: AppText.micro),
+                    Text(_ago(chat.lastMessageAt), style: context.text.micro),
                   ],
                 ),
                 const SizedBox(height: 2),
@@ -91,7 +91,7 @@ class _MessageTile extends StatelessWidget {
                   chat.lastMessage,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.bodySmMuted,
+                  style: context.text.bodySmMuted,
                 ),
               ],
             ),
@@ -101,8 +101,8 @@ class _MessageTile extends StatelessWidget {
             width: 10,
             height: 10,
             margin: const EdgeInsets.only(top: 4),
-            decoration: const BoxDecoration(
-              color: AppColors.teal,
+            decoration: BoxDecoration(
+              color: context.colors.teal,
               shape: BoxShape.circle,
             ),
           ),
@@ -127,21 +127,21 @@ class _NoNotifications extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(AppSpace.xl),
+        padding: const EdgeInsets.all(AppSpace.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.notifications_none,
-                size: 64, color: AppColors.textSubtle),
-            SizedBox(height: AppSpace.md),
-            Text('אין התראות חדשות', style: AppText.bodyMuted),
-            SizedBox(height: AppSpace.xs),
+                size: 64, color: context.colors.textSubtle),
+            const SizedBox(height: AppSpace.md),
+            Text('אין התראות חדשות', style: context.text.bodyMuted),
+            const SizedBox(height: AppSpace.xs),
             Text(
               'כשמוכר ישיב להודעה שלך, היא תופיע כאן.',
               textAlign: TextAlign.center,
-              style: AppText.caption,
+              style: context.text.caption,
             ),
           ],
         ),

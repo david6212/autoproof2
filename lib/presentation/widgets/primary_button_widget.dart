@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 
 /// Primary teal action button with a loading state.
 class PrimaryButton extends StatelessWidget {
@@ -20,12 +20,12 @@ class PrimaryButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: loading ? null : onPressed,
       child: loading
-          ? const SizedBox(
+          ? SizedBox(
               height: 22,
               width: 22,
               child: CircularProgressIndicator(
                 strokeWidth: 2.5,
-                color: AppColors.onBrand,
+                color: context.colors.onBrand,
               ),
             )
           : Text(label),

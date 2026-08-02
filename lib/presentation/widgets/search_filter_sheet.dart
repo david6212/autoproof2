@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/constants/car_catalog.dart';
 import '../../data/models/car_model.dart';
 import '../providers/cars_provider.dart';
@@ -16,7 +16,7 @@ Future<void> showSearchFilterSheet(
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppColors.surface,
+    backgroundColor: context.colors.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
@@ -112,7 +112,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
           width: 40,
           height: 4,
           decoration: BoxDecoration(
-            color: AppColors.cardBorder,
+            color: context.colors.cardBorder,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -331,7 +331,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
               height: 52,
               child: FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.teal,
+                  backgroundColor: context.colors.teal,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(28)),
                 ),
@@ -368,8 +368,8 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             children: [
               Expanded(child: _SectionLabel(title)),
               Text(display,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: AppColors.teal)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: context.colors.teal)),
             ],
           ),
           Slider(
@@ -377,7 +377,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
             min: min,
             max: max,
             divisions: divisions,
-            activeColor: AppColors.teal,
+            activeColor: context.colors.teal,
             onChanged: onChanged,
           ),
         ],
@@ -393,10 +393,10 @@ class _SectionLabel extends StatelessWidget {
   final String text;
   @override
   Widget build(BuildContext context) => Text(text,
-      style: const TextStyle(
+      style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.bold,
-          color: AppColors.textPrimary));
+          color: context.colors.textPrimary));
 }
 
 class _ClearButton extends StatelessWidget {
@@ -406,8 +406,8 @@ class _ClearButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton(
       style: TextButton.styleFrom(
-        backgroundColor: AppColors.tealLight,
-        foregroundColor: AppColors.tealText,
+        backgroundColor: context.colors.tealLight,
+        foregroundColor: context.colors.tealText,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20)),
       ),
@@ -473,9 +473,9 @@ class _PillGroup extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: AppColors.background,
+            color: context.colors.background,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: context.colors.cardBorder),
           ),
           child: Row(
             children: [
@@ -488,7 +488,7 @@ class _PillGroup extends StatelessWidget {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: selected == o
-                            ? AppColors.teal
+                            ? context.colors.teal
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -499,8 +499,8 @@ class _PillGroup extends StatelessWidget {
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
                           color: selected == o
-                              ? AppColors.onBrand
-                              : AppColors.textMuted,
+                              ? context.colors.onBrand
+                              : context.colors.textMuted,
                         ),
                       ),
                     ),
@@ -542,7 +542,7 @@ class _ColorDots extends StatelessWidget {
                 color: _colors[i],
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: selected == i ? AppColors.teal : AppColors.cardBorder,
+                  color: selected == i ? context.colors.teal : context.colors.cardBorder,
                   width: selected == i ? 2.5 : 1.5,
                 ),
               ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/analytics_provider.dart';
@@ -88,26 +88,26 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      decoration: const BoxDecoration(color: AppColors.teal),
+      decoration: BoxDecoration(color: context.colors.teal),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              const Icon(Icons.verified_user, color: AppColors.onBrand, size: 22),
+              Icon(Icons.verified_user, color: context.colors.onBrand, size: 22),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
                   AppStrings.onlyPrivateSellers,
                   style: TextStyle(
-                    color: AppColors.onBrand,
+                    color: context.colors.onBrand,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.info_outline, color: AppColors.onBrand),
+                icon: Icon(Icons.info_outline, color: context.colors.onBrand),
                 tooltip: 'אודות OtoV',
                 onPressed: () => context.push('/about'),
               ),
@@ -135,7 +135,7 @@ class _NotificationBell extends ConsumerWidget {
       alignment: Alignment.center,
       children: [
         IconButton(
-          icon: const Icon(Icons.notifications_none, color: AppColors.onBrand),
+          icon: Icon(Icons.notifications_none, color: context.colors.onBrand),
           tooltip: 'התראות',
           onPressed: () => context.push('/notifications'),
         ),
@@ -147,14 +147,14 @@ class _NotificationBell extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
               constraints: const BoxConstraints(minWidth: 16),
               decoration: BoxDecoration(
-                color: AppColors.errorRed,
+                color: context.colors.errorRed,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
                 count > 9 ? '9+' : '$count',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: AppColors.onBrand,
+                style: TextStyle(
+                    color: context.colors.onBrand,
                     fontSize: 10,
                     fontWeight: FontWeight.bold),
               ),
@@ -210,7 +210,7 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
                       },
                     ),
               filled: true,
-              fillColor: AppColors.surface,
+              fillColor: context.colors.surface,
               contentPadding: EdgeInsets.zero,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -247,26 +247,26 @@ class _FilterButton extends StatelessWidget {
         width: 52,
         height: 52,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.colors.surface,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Stack(
           alignment: Alignment.center,
           children: [
-            const Icon(Icons.tune, color: AppColors.teal),
+            Icon(Icons.tune, color: context.colors.teal),
             if (count > 0)
               Positioned(
                 top: 8,
                 right: 8,
                 child: Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: AppColors.errorRed,
+                  decoration: BoxDecoration(
+                    color: context.colors.errorRed,
                     shape: BoxShape.circle,
                   ),
                   child: Text('$count',
-                      style: const TextStyle(
-                          color: AppColors.onBrand,
+                      style: TextStyle(
+                          color: context.colors.onBrand,
                           fontSize: 9.5,
                           fontWeight: FontWeight.bold)),
                 ),
@@ -308,16 +308,16 @@ class _FilterPills extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: isActive ? AppColors.teal : AppColors.surface,
+                color: isActive ? context.colors.teal : context.colors.surface,
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(
-                  color: isActive ? AppColors.teal : AppColors.cardBorder,
+                  color: isActive ? context.colors.teal : context.colors.cardBorder,
                 ),
               ),
               child: Text(
                 f,
                 style: TextStyle(
-                  color: isActive ? AppColors.onBrand : AppColors.textMuted,
+                  color: isActive ? context.colors.onBrand : context.colors.textMuted,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -341,8 +341,8 @@ class _CarList extends StatelessWidget {
       cars: cars,
       header: Text(
         '${cars.length} רכבים בקרבתך',
-        style: const TextStyle(
-          color: AppColors.textMuted,
+        style: TextStyle(
+          color: context.colors.textMuted,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -381,11 +381,11 @@ class _EmptyState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(filtering ? Icons.search_off : Icons.directions_car_outlined,
-              size: 64, color: AppColors.textSubtle),
+              size: 64, color: context.colors.textSubtle),
           const SizedBox(height: 12),
           Text(
             filtering ? 'לא נמצאו רכבים תואמים' : 'אין רכבים להצגה כרגע',
-            style: const TextStyle(color: AppColors.textMuted),
+            style: TextStyle(color: context.colors.textMuted),
           ),
           if (filtering && onClear != null) ...[
             const SizedBox(height: 16),
@@ -411,10 +411,10 @@ class _ErrorState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: AppColors.errorRed),
+          Icon(Icons.error_outline, size: 48, color: context.colors.errorRed),
           const SizedBox(height: 12),
-          const Text(AppStrings.errorGeneric,
-              style: TextStyle(color: AppColors.textMuted)),
+          Text(AppStrings.errorGeneric,
+              style: TextStyle(color: context.colors.textMuted)),
           const SizedBox(height: 12),
           TextButton(onPressed: onRetry, child: const Text(AppStrings.retry)),
         ],

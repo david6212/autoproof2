@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../data/models/gov_data_model.dart';
 import '../../providers/create_listing_provider.dart';
 import '../../providers/seller_verification_provider.dart';
@@ -96,9 +96,9 @@ class _StepPhotos extends ConsumerWidget {
                   style: AppText.h2,
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'עד 12 תמונות. הראשונה תשמש כתמונת השער.',
-                  style: TextStyle(color: AppColors.textMuted),
+                  style: TextStyle(color: context.colors.textMuted),
                 ),
                 const SizedBox(height: 16),
                 Expanded(
@@ -146,16 +146,16 @@ class _AddTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.tealLight,
+          color: context.colors.tealLight,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.teal),
+          border: Border.all(color: context.colors.teal),
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_a_photo_outlined, color: AppColors.teal),
-            SizedBox(height: 4),
-            Text('הוסף', style: TextStyle(color: AppColors.teal, fontSize: 12.5)),
+            Icon(Icons.add_a_photo_outlined, color: context.colors.teal),
+            const SizedBox(height: 4),
+            Text('הוסף', style: TextStyle(color: context.colors.teal, fontSize: 12.5)),
           ],
         ),
       ),
@@ -185,7 +185,7 @@ class _PhotoThumb extends StatelessWidget {
             future: file.readAsBytes(),
             builder: (context, snap) {
               if (!snap.hasData) {
-                return Container(color: AppColors.cardBorder);
+                return Container(color: context.colors.cardBorder);
               }
               return Image.memory(snap.data!, fit: BoxFit.cover);
             },
@@ -196,12 +196,12 @@ class _PhotoThumb extends StatelessWidget {
               left: 0,
               right: 0,
               child: Container(
-                color: AppColors.tealDark.withValues(alpha: 0.8),
+                color: context.colors.tealDark.withValues(alpha: 0.8),
                 padding: const EdgeInsets.symmetric(vertical: 2),
-                child: const Text(
+                child: Text(
                   'שער',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.onBrand, fontSize: 11.5),
+                  style: TextStyle(color: context.colors.onBrand, fontSize: 11.5),
                 ),
               ),
             ),
@@ -210,10 +210,10 @@ class _PhotoThumb extends StatelessWidget {
             left: 2,
             child: GestureDetector(
               onTap: onRemove,
-              child: const CircleAvatar(
+              child: CircleAvatar(
                 radius: 12,
                 backgroundColor: Colors.black54,
-                child: Icon(Icons.close, size: 14, color: AppColors.onBrand),
+                child: Icon(Icons.close, size: 14, color: context.colors.onBrand),
               ),
             ),
           ),
@@ -371,12 +371,12 @@ class _ReadOnlyCarCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.tealLight,
+        color: context.colors.tealLight,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
-          const Icon(Icons.lock_outline, color: AppColors.teal),
+          Icon(Icons.lock_outline, color: context.colors.teal),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -384,15 +384,15 @@ class _ReadOnlyCarCard extends StatelessWidget {
               children: [
                 Text(
                   car.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.tealText,
+                    color: context.colors.tealText,
                   ),
                 ),
                 Text(
                   '${car.year} · ${car.fuelType} · אומת מול משרד התחבורה',
                   style:
-                      const TextStyle(fontSize: 12.5, color: AppColors.tealText2),
+                      TextStyle(fontSize: 12.5, color: context.colors.tealText2),
                 ),
               ],
             ),
@@ -429,33 +429,33 @@ class _StepReview extends ConsumerWidget {
                   style: AppText.h2,
                 ),
                 const SizedBox(height: 12),
-                _reviewRow('רכב', car.title),
-                _reviewRow('שנה', '${car.year}'),
-                _reviewRow('מחיר',
+                _reviewRow(context, 'רכב', car.title),
+                _reviewRow(context, 'שנה', '${car.year}'),
+                _reviewRow(context, 'מחיר',
                     '₪${_fmt.format(double.tryParse(s.price) ?? 0)}'),
-                _reviewRow('קילומטראז\'',
+                _reviewRow(context, 'קילומטראז\'',
                     '${_fmt.format(int.tryParse(s.km) ?? 0)} ק"מ'),
-                _reviewRow('אזור', s.area),
-                _reviewRow('תמונות', '${s.photos.length}'),
+                _reviewRow(context, 'אזור', s.area),
+                _reviewRow(context, 'תמונות', '${s.photos.length}'),
                 if (s.description.isNotEmpty)
-                  _reviewRow('על הרכב', s.description),
-                if (s.reason.isNotEmpty) _reviewRow('סיבת המכירה', s.reason),
+                  _reviewRow(context, 'על הרכב', s.description),
+                if (s.reason.isNotEmpty) _reviewRow(context, 'סיבת המכירה', s.reason),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.tealLight,
+                    color: context.colors.tealLight,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.verified, color: AppColors.teal, size: 18),
-                      SizedBox(width: 8),
+                      Icon(Icons.verified, color: context.colors.teal, size: 18),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'תג "נתונים ממרשם הרכב" והסיווג שבחרת יוצגו במודעה',
                           style: TextStyle(
-                              color: AppColors.tealText2, fontSize: 13),
+                              color: context.colors.tealText2, fontSize: 13),
                         ),
                       ),
                     ],
@@ -466,11 +466,11 @@ class _StepReview extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.errorBg,
+                      color: context.colors.errorBg,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(s.error!,
-                        style: const TextStyle(color: AppColors.errorRed)),
+                        style: TextStyle(color: context.colors.errorRed)),
                   ),
                 ],
                 const SizedBox(height: 16),
@@ -487,20 +487,20 @@ class _StepReview extends ConsumerWidget {
     );
   }
 
-  Widget _reviewRow(String label, String value) {
+  Widget _reviewRow(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
           Text('$label:',
-              style: const TextStyle(color: AppColors.textMuted)),
+              style: TextStyle(color: context.colors.textMuted)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary),
+                  color: context.colors.textPrimary),
             ),
           ),
         ],
@@ -527,12 +527,12 @@ class _PublishedScreen extends StatelessWidget {
               Container(
                 width: 110,
                 height: 110,
-                decoration: const BoxDecoration(
-                  color: AppColors.tealLight,
+                decoration: BoxDecoration(
+                  color: context.colors.tealLight,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_circle,
-                    size: 60, color: AppColors.teal),
+                child: Icon(Icons.check_circle,
+                    size: 60, color: context.colors.teal),
               ),
               const SizedBox(height: 20),
               const Text(
@@ -540,10 +540,10 @@ class _PublishedScreen extends StatelessWidget {
                 style: AppText.display,
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'הרכב שלך זמין כעת לקונים ב-OtoV',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textMuted),
+                style: TextStyle(color: context.colors.textMuted),
               ),
               const SizedBox(height: 24),
               const Row(
@@ -577,12 +577,12 @@ class _Stat extends StatelessWidget {
     return Column(
       children: [
         Text(value,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: AppColors.teal)),
+                color: context.colors.teal)),
         Text(label,
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
+            style: TextStyle(color: context.colors.textMuted, fontSize: 13)),
       ],
     );
   }
@@ -602,13 +602,13 @@ class _NeedVerification extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.verified_user_outlined,
-                    size: 64, color: AppColors.textSubtle),
+                Icon(Icons.verified_user_outlined,
+                    size: 64, color: context.colors.textSubtle),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'יש להשלים אימות מוכר לפני פרסום מודעה',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textMuted),
+                  style: TextStyle(color: context.colors.textMuted),
                 ),
                 const SizedBox(height: 20),
                 PrimaryButton(
@@ -641,9 +641,9 @@ class _BottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.cardBorder)),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        border: Border(top: BorderSide(color: context.colors.cardBorder)),
       ),
       child: PrimaryButton(
         label: label,

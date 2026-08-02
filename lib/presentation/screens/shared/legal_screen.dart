@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/legal_docs.dart';
 import '../../../core/constants/legal_info.dart';
 import '../../../core/theme/app_dimens.dart';
@@ -34,8 +34,8 @@ class _Index extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpace.lg),
       children: [
-        const Text('עודכן לאחרונה: ${LegalInfo.lastUpdated}',
-            style: AppText.caption),
+        Text('עודכן לאחרונה: ${LegalInfo.lastUpdated}',
+            style: context.text.caption),
         const SizedBox(height: AppSpace.lg),
         for (final doc in LegalDocs.all)
           AppCard(
@@ -43,7 +43,7 @@ class _Index extends StatelessWidget {
             onTap: () => context.push('/legal/${doc.id}'),
             child: Row(
               children: [
-                Icon(doc.icon, color: AppColors.teal),
+                Icon(doc.icon, color: context.colors.teal),
                 const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: Column(
@@ -51,19 +51,19 @@ class _Index extends StatelessWidget {
                     children: [
                       Text(doc.title, style: AppText.subtitle),
                       const SizedBox(height: AppSpace.xs),
-                      Text(doc.summary, style: AppText.caption),
+                      Text(doc.summary, style: context.text.caption),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_left, color: AppColors.textSubtle),
+                Icon(Icons.chevron_left, color: context.colors.textSubtle),
               ],
             ),
           ),
         const SizedBox(height: AppSpace.sm),
-        const Text(
+        Text(
           'המסמכים נועדו להסביר בשפה ברורה מה השירות עושה ומה לא. '
           'אין בהם ייעוץ משפטי.',
-          style: AppText.caption,
+          style: context.text.caption,
         ),
       ],
     );
@@ -83,17 +83,17 @@ class _PendingNotice extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.description_outlined,
-                size: 48, color: AppColors.textSubtle),
+            Icon(Icons.description_outlined,
+                size: 48, color: context.colors.textSubtle),
             const SizedBox(height: AppSpace.lg),
             const Text('המסמכים המשפטיים בהכנה',
                 style: AppText.h3, textAlign: TextAlign.center),
             const SizedBox(height: AppSpace.sm),
-            const Text(
+            Text(
               'תנאי השימוש, מדיניות הפרטיות ושאר המסמכים ייפורסמו כאן עם '
               'השלמת פרטי המפעיל. עד אז, ההבהרות לגבי מה שהשירות בודק ומה לא '
               'מופיעות במסך "אודות".',
-              style: AppText.bodySmMuted,
+              style: context.text.bodySmMuted,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpace.lg),
@@ -133,8 +133,8 @@ class LegalDocScreen extends StatelessWidget {
           children: [
             Text(doc.title, style: AppText.h2),
             const SizedBox(height: AppSpace.xs),
-            const Text('עודכן לאחרונה: ${LegalInfo.lastUpdated}',
-                style: AppText.caption),
+            Text('עודכן לאחרונה: ${LegalInfo.lastUpdated}',
+                style: context.text.caption),
             const SizedBox(height: AppSpace.xl),
             for (final section in doc.sections) _Section(section: section),
             const SizedBox(height: AppSpace.xl),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
 
 /// Shows a friendly bottom sheet inviting a guest to sign in before doing an
@@ -16,7 +16,7 @@ Future<void> showLoginRequired(
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    backgroundColor: AppColors.surface,
+    backgroundColor: context.colors.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
@@ -31,12 +31,12 @@ Future<void> showLoginRequired(
               Container(
                 width: 64,
                 height: 64,
-                decoration: const BoxDecoration(
-                  color: AppColors.tealLight,
+                decoration: BoxDecoration(
+                  color: context.colors.tealLight,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.lock_outline,
-                    color: AppColors.teal, size: 30),
+                child: Icon(Icons.lock_outline,
+                    color: context.colors.teal, size: 30),
               ),
               const SizedBox(height: 16),
               Text(
@@ -45,17 +45,17 @@ Future<void> showLoginRequired(
                 style: AppText.h3,
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'ההתחברות מהירה — רק מספר טלפון וקוד SMS.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textMuted),
+                style: TextStyle(color: context.colors.textMuted),
               ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.teal,
+                    backgroundColor: context.colors.teal,
                     minimumSize: const Size.fromHeight(50),
                   ),
                   onPressed: () {
@@ -69,8 +69,8 @@ Future<void> showLoginRequired(
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => Navigator.of(sheetContext).pop(),
-                child: const Text('אולי אחר כך',
-                    style: TextStyle(color: AppColors.textMuted)),
+                child: Text('אולי אחר כך',
+                    style: TextStyle(color: context.colors.textMuted)),
               ),
             ],
           ),

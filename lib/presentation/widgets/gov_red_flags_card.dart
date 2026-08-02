@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../providers/gov_api_provider.dart';
 
 /// At-a-glance summary of the official red flags for a plate (accident /
@@ -31,19 +31,19 @@ class GovRedFlagsCard extends ConsumerWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.tealLight,
+          color: context.colors.tealLight,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            Icon(Icons.verified, size: 18, color: AppColors.teal),
-            SizedBox(width: 8),
+            Icon(Icons.verified, size: 18, color: context.colors.teal),
+            const SizedBox(width: 8),
             Expanded(
               child: Text('אין דגלים אדומים רשמיים ברשומות משרד התחבורה',
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.tealText)),
+                      color: context.colors.tealText)),
             ),
           ],
         ),
@@ -53,22 +53,22 @@ class GovRedFlagsCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.errorBg,
+        color: context.colors.errorBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.errorRed.withValues(alpha: 0.35)),
+        border: Border.all(color: context.colors.errorRed.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.report_gmailerrorred, size: 18, color: AppColors.errorRed),
-              SizedBox(width: 6),
+              Icon(Icons.report_gmailerrorred, size: 18, color: context.colors.errorRed),
+              const SizedBox(width: 6),
               Text('דגלים אדומים רשמיים',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
-                      color: AppColors.errorRed)),
+                      color: context.colors.errorRed)),
             ],
           ),
           const SizedBox(height: 10),
@@ -83,15 +83,15 @@ class GovRedFlagsCard extends ConsumerWidget {
                         ? Icons.dangerous
                         : Icons.warning_amber_rounded,
                     size: 17,
-                    color: AppColors.errorRed,
+                    color: context.colors.errorRed,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(text,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary)),
+                            color: context.colors.textPrimary)),
                   ),
                 ],
               ),

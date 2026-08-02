@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 
 /// A "step X / total" progress bar for the verification flow.
 class StepProgress extends StatelessWidget {
@@ -26,7 +26,7 @@ class StepProgress extends StatelessWidget {
                 height: 6,
                 margin: EdgeInsets.only(left: i == total - 1 ? 0 : 6),
                 decoration: BoxDecoration(
-                  color: done ? AppColors.teal : AppColors.cardBorder,
+                  color: done ? context.colors.teal : context.colors.cardBorder,
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),
@@ -36,7 +36,7 @@ class StepProgress extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           'שלב $current מתוך $total',
-          style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+          style: TextStyle(color: context.colors.textMuted, fontSize: 13),
         ),
       ],
     );

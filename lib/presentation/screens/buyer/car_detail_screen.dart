@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/car_model.dart';
 import '../../../app/router.dart';
@@ -50,11 +50,11 @@ class CarDetailScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline,
-                size: 48, color: AppColors.errorRed),
+            Icon(Icons.error_outline,
+                size: 48, color: context.colors.errorRed),
             const SizedBox(height: 12),
-            const Text('הרכב לא נמצא',
-                style: TextStyle(color: AppColors.textMuted)),
+            Text('הרכב לא נמצא',
+                style: TextStyle(color: context.colors.textMuted)),
             const SizedBox(height: 12),
             TextButton(
                 onPressed: () => popOrHome(context), child: const Text('חזרה')),
@@ -98,10 +98,10 @@ class _Content extends ConsumerWidget {
                           ),
                           Text(
                             '₪${_priceFmt.format(car.price)}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.teal,
+                              color: context.colors.teal,
                             ),
                           ),
                         ],
@@ -147,14 +147,14 @@ class _Content extends ConsumerWidget {
                       CarNotesSection(carId: car.id),
                       if (car.reasonForSelling.isNotEmpty) ...[
                         const SizedBox(height: 16),
-                        const Text('סיבת המכירה',
+                        Text('סיבת המכירה',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary)),
+                                color: context.colors.textPrimary)),
                         const SizedBox(height: 6),
                         Text(car.reasonForSelling,
-                            style: const TextStyle(
-                                color: AppColors.textMuted)),
+                            style: TextStyle(
+                                color: context.colors.textMuted)),
                       ],
                       const SizedBox(height: 16),
                       // Official records and user reports sit side by side on
@@ -202,9 +202,9 @@ class _GalleryState extends State<_Gallery> {
           width: double.infinity,
           child: photos.isEmpty
               ? Container(
-                  color: AppColors.tealLight,
-                  child: const Icon(Icons.directions_car,
-                      size: 80, color: AppColors.teal),
+                  color: context.colors.tealLight,
+                  child: Icon(Icons.directions_car,
+                      size: 80, color: context.colors.teal),
                 )
               : PageView.builder(
                   controller: _controller,
@@ -214,9 +214,9 @@ class _GalleryState extends State<_Gallery> {
                     imageUrl: photos[i],
                     fit: BoxFit.cover,
                     errorWidget: (_, __, ___) => Container(
-                      color: AppColors.tealLight,
-                      child: const Icon(Icons.directions_car,
-                          size: 80, color: AppColors.teal),
+                      color: context.colors.tealLight,
+                      child: Icon(Icons.directions_car,
+                          size: 80, color: context.colors.teal),
                     ),
                   ),
                 ),
@@ -244,16 +244,16 @@ class _GalleryState extends State<_Gallery> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircleAvatar(
-                  backgroundColor: AppColors.surface,
+                  backgroundColor: context.colors.surface,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_forward,
-                        color: AppColors.textPrimary),
+                    icon: Icon(Icons.arrow_forward,
+                        color: context.colors.textPrimary),
                     onPressed: () => popOrHome(context),
                   ),
                 ),
                 const SizedBox(width: 8),
                 CircleAvatar(
-                  backgroundColor: AppColors.surface,
+                  backgroundColor: context.colors.surface,
                   child: ShareListingButton(car: widget.car),
                 ),
               ],
@@ -273,7 +273,7 @@ class _GalleryState extends State<_Gallery> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text('${_index + 1}/${photos.length}',
-                  style: const TextStyle(color: AppColors.onBrand, fontSize: 12.5)),
+                  style: TextStyle(color: context.colors.onBrand, fontSize: 12.5)),
             ),
           ),
         // Seller-type pill (bottom-right).
@@ -299,8 +299,8 @@ class _GalleryState extends State<_Gallery> {
                   height: 7,
                   decoration: BoxDecoration(
                     color: active
-                        ? AppColors.onBrand
-                        : AppColors.onBrand.withValues(alpha: 0.55),
+                        ? context.colors.onBrand
+                        : context.colors.onBrand.withValues(alpha: 0.55),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 );
@@ -334,11 +334,11 @@ class _StatsRow extends StatelessWidget {
           for (final it in items)
             Column(
               children: [
-                Icon(it.$1, color: AppColors.teal, size: 22),
+                Icon(it.$1, color: context.colors.teal, size: 22),
                 const SizedBox(height: 4),
                 Text(it.$2,
-                    style: const TextStyle(
-                        fontSize: 13, color: AppColors.textPrimary)),
+                    style: TextStyle(
+                        fontSize: 13, color: context.colors.textPrimary)),
               ],
             ),
         ],
@@ -362,21 +362,21 @@ class _OfficialSpecs extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.tealLight,
+        color: context.colors.tealLight,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.verified_user, size: 16, color: AppColors.teal),
-              SizedBox(width: 6),
+              Icon(Icons.verified_user, size: 16, color: context.colors.teal),
+              const SizedBox(width: 6),
               Text('מפרט רשמי · משרד התחבורה',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: AppColors.tealText)),
+                      color: context.colors.tealText)),
             ],
           ),
           const SizedBox(height: 10),
@@ -389,17 +389,17 @@ class _OfficialSpecs extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: context.colors.surface,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(icon, size: 15, color: AppColors.teal),
+                      Icon(icon, size: 15, color: context.colors.teal),
                       const SizedBox(width: 5),
                       Text(label,
-                          style: const TextStyle(
-                              fontSize: 13, color: AppColors.textPrimary)),
+                          style: TextStyle(
+                              fontSize: 13, color: context.colors.textPrimary)),
                     ],
                   ),
                 ),
@@ -428,16 +428,16 @@ class _ValueInsights extends StatelessWidget {
     Color kmBg, kmFg;
     if (kmPerYear < 12000) {
       kmTag = 'מתחת לממוצע';
-      kmBg = AppColors.tealLight;
-      kmFg = AppColors.tealText;
+      kmBg = context.colors.tealLight;
+      kmFg = context.colors.tealText;
     } else if (kmPerYear <= 18000) {
       kmTag = 'ממוצע';
-      kmBg = AppColors.background;
-      kmFg = AppColors.textMuted;
+      kmBg = context.colors.background;
+      kmFg = context.colors.textMuted;
     } else {
       kmTag = 'מעל הממוצע';
-      kmBg = AppColors.warnBg;
-      kmFg = AppColors.warnText;
+      kmBg = context.colors.warnBg;
+      kmFg = context.colors.warnText;
     }
 
     final ownership = car.ownership.trim();
@@ -448,19 +448,20 @@ class _ValueInsights extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.insights_outlined, size: 16, color: AppColors.teal),
-              SizedBox(width: 6),
+              Icon(Icons.insights_outlined, size: 16, color: context.colors.teal),
+              const SizedBox(width: 6),
               Text('תובנות שווי',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: AppColors.textPrimary)),
+                      color: context.colors.textPrimary)),
             ],
           ),
           const SizedBox(height: 10),
           _insightRow(
+            context,
             icon: Icons.speed,
             label: 'ק"מ ממוצע לשנה',
             value: '${_fmt.format(kmPerYear)} ק"מ',
@@ -471,12 +472,13 @@ class _ValueInsights extends StatelessWidget {
           if (ownership.isNotEmpty) ...[
             const SizedBox(height: 8),
             _insightRow(
+            context,
               icon: Icons.badge_outlined,
               label: 'סוג בעלות',
               value: ownership,
               tag: isPrivate ? 'פרטי ✓' : 'שימוש מסחרי',
-              tagBg: isPrivate ? AppColors.tealLight : AppColors.warnBg,
-              tagFg: isPrivate ? AppColors.tealText : AppColors.warnText,
+              tagBg: isPrivate ? context.colors.tealLight : context.colors.warnBg,
+              tagFg: isPrivate ? context.colors.tealText : context.colors.warnText,
             ),
           ],
         ],
@@ -484,7 +486,8 @@ class _ValueInsights extends StatelessWidget {
     );
   }
 
-  Widget _insightRow({
+  Widget _insightRow(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required String value,
@@ -494,16 +497,16 @@ class _ValueInsights extends StatelessWidget {
   }) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppColors.teal),
+        Icon(icon, size: 18, color: context.colors.teal),
         const SizedBox(width: 8),
         Text(label,
-            style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
+            style: TextStyle(fontSize: 13, color: context.colors.textMuted)),
         const Spacer(),
         Text(value,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary)),
+                color: context.colors.textPrimary)),
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -530,22 +533,22 @@ class _SellerAbout extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(Icons.format_quote_outlined,
-                  size: 16, color: AppColors.teal),
-              SizedBox(width: 6),
+                  size: 16, color: context.colors.teal),
+              const SizedBox(width: 6),
               Text('מהמוכר',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: AppColors.textPrimary)),
+                      color: context.colors.textPrimary)),
             ],
           ),
           const SizedBox(height: 8),
           Text(text,
-              style: const TextStyle(
-                  fontSize: 13, height: 1.4, color: AppColors.textPrimary)),
+              style: TextStyle(
+                  fontSize: 13, height: 1.4, color: context.colors.textPrimary)),
         ],
       ),
     );
@@ -567,7 +570,7 @@ class _SellerCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.tealLight,
+        color: context.colors.tealLight,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -575,9 +578,9 @@ class _SellerCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const CircleAvatar(
-                backgroundColor: AppColors.teal,
-                child: Icon(Icons.person, color: AppColors.onBrand),
+              CircleAvatar(
+                backgroundColor: context.colors.teal,
+                child: Icon(Icons.person, color: context.colors.onBrand),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -585,13 +588,13 @@ class _SellerCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(sellerType.label,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.tealText)),
+                            color: context.colors.tealText)),
                     const SizedBox(height: 2),
                     Text(_subtitle,
-                        style: const TextStyle(
-                            fontSize: 12.5, color: AppColors.tealText2)),
+                        style: TextStyle(
+                            fontSize: 12.5, color: context.colors.tealText2)),
                   ],
                 ),
               ),
@@ -601,15 +604,15 @@ class _SellerCard extends StatelessWidget {
           // States the limits of the check right where the label is read, so
           // the badge can never be mistaken for identity or ownership proof.
           const SizedBox(height: 10),
-          const Row(
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline, size: 13, color: AppColors.tealText2),
-              SizedBox(width: 5),
+              Icon(Icons.info_outline, size: 13, color: context.colors.tealText2),
+              const SizedBox(width: 5),
               Expanded(
                 child: Text(AppStrings.checkScopeNote,
                     style: TextStyle(
-                        fontSize: 11.5, height: 1.35, color: AppColors.tealText2)),
+                        fontSize: 11.5, height: 1.35, color: context.colors.tealText2)),
               ),
             ],
           ),
@@ -627,8 +630,8 @@ class _HistoryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return OutlinedButton.icon(
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.teal,
-        side: const BorderSide(color: AppColors.teal),
+        foregroundColor: context.colors.teal,
+        side: BorderSide(color: context.colors.teal),
         minimumSize: const Size.fromHeight(48),
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -651,16 +654,16 @@ class _ActionBar extends ConsumerWidget {
       top: false,
       child: Container(
         padding: const EdgeInsets.all(12),
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.cardBorder)),
+        decoration: BoxDecoration(
+          color: context.colors.surface,
+          border: Border(top: BorderSide(color: context.colors.cardBorder)),
         ),
         child: Row(
           children: [
             Expanded(
               child: FilledButton.icon(
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.teal,
+                  backgroundColor: context.colors.teal,
                   minimumSize: const Size.fromHeight(50),
                 ),
                 icon: const Icon(Icons.chat_bubble_outline),
@@ -702,7 +705,7 @@ class _ActionBar extends ConsumerWidget {
             const SizedBox(width: 8),
             _RoundAction(
               icon: isSaved ? Icons.favorite : Icons.favorite_border,
-              color: isSaved ? AppColors.errorRed : AppColors.textMuted,
+              color: isSaved ? context.colors.errorRed : context.colors.textMuted,
               onTap: () {
                 // Saving requires an account — prompt guests to sign in.
                 final isGuest =
@@ -737,11 +740,11 @@ class _RoundAction extends StatelessWidget {
         width: 50,
         height: 50,
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: context.colors.background,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: context.colors.cardBorder),
         ),
-        child: Icon(icon, color: color ?? AppColors.textPrimary),
+        child: Icon(icon, color: color ?? context.colors.textPrimary),
       ),
     );
   }

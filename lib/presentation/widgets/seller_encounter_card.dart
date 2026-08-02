@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../data/models/car_model.dart';
@@ -27,14 +27,15 @@ class SellerEncounterCard extends ConsumerWidget {
     SellerType.dealer,
   ];
 
-  (Color, Color, IconData) _style(SellerType t) => switch (t) {
+  (Color, Color, IconData) _style(BuildContext context, SellerType t) =>
+      switch (t) {
         SellerType.private =>
-          (AppColors.tealLight, AppColors.tealText2, Icons.person_outline),
+          (context.colors.tealLight, context.colors.tealText2, Icons.person_outline),
         SellerType.agent =>
-          (AppColors.agentBlueBg, AppColors.agentBlue, Icons.handshake_outlined),
+          (context.colors.agentBlueBg, context.colors.agentBlue, Icons.handshake_outlined),
         SellerType.dealer => (
-            AppColors.dealerOrangeBg,
-            AppColors.dealerOrange,
+            context.colors.dealerOrangeBg,
+            context.colors.dealerOrange,
             Icons.storefront_outlined
           ),
       };
@@ -58,7 +59,7 @@ class SellerEncounterCard extends ConsumerWidget {
               child: CircularProgressIndicator(strokeWidth: 2)),
         ),
         error: (_, __) =>
-            const Text('לא ניתן לטעון דיווחים כרגע.', style: AppText.bodySmMuted),
+            Text('לא ניתן לטעון דיווחים כרגע.', style: context.text.bodySmMuted),
         data: (tally) => _body(context, ref, tally),
       ),
     );
@@ -88,7 +89,7 @@ class SellerEncounterCard extends ConsumerWidget {
                 count: tally.countFor(t),
                 percent: tally.percentFor(t),
                 share: tally.shareFor(t),
-                style: _style(t),
+                style: _style(context, t),
                 highlight: tally.myReport == t,
               ),
           const SizedBox(height: 4),
@@ -97,7 +98,7 @@ class SellerEncounterCard extends ConsumerWidget {
               'מתוך ${tally.total} דיווחי משתמשים',
               if (tally.lastUpdatedLabel case final l?) l,
             ].join(' · '),
-            style: AppText.micro,
+            style: context.text.micro,
           ),
         ],
 
@@ -106,7 +107,7 @@ class SellerEncounterCard extends ConsumerWidget {
           tally.myReport == null
               ? 'נפגשת עם המוכר? כיצד הוא פעל?'
               : 'דיווחת. אפשר לעדכן:',
-          style: AppText.caption,
+          style: context.text.caption,
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -116,7 +117,7 @@ class SellerEncounterCard extends ConsumerWidget {
             for (final t in _types)
               _ReportChip(
                 label: t.label,
-                style: _style(t),
+                style: _style(context, t),
                 selected: tally.myReport == t,
                 onTap: () => _report(context, ref, t),
               ),
@@ -126,21 +127,21 @@ class SellerEncounterCard extends ConsumerWidget {
         // Required framing: this is community input, not an official record,
         // plus a route to challenge it (BUSINESS_ROADMAP 9.2 / 9.6 / 9.10).
         const SizedBox(height: 12),
-        const Divider(height: 1, color: AppColors.cardBorder),
+        Divider(height: 1, color: context.colors.cardBorder),
         const SizedBox(height: 8),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.info_outline, size: 14, color: AppColors.textSubtle),
+            Icon(Icons.info_outline, size: 14, color: context.colors.textSubtle),
             const SizedBox(width: 5),
-            const Expanded(
-              child: Text(AppStrings.communityDataNote, style: AppText.micro),
+            Expanded(
+              child: Text(AppStrings.communityDataNote, style: context.text.micro),
             ),
             if (tally.total > 0)
               TextButton(
                 onPressed: () => _reportWrong(context, ref),
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.textMuted,
+                  foregroundColor: context.colors.textMuted,
                   minimumSize: const Size(0, 0),
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -237,7 +238,7 @@ class _TallyRow extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: highlight ? FontWeight.bold : FontWeight.w600,
-                    color: AppColors.textPrimary)),
+                    color: context.colors.textPrimary)),
           ),
           Expanded(
             child: ClipRRect(
@@ -245,7 +246,7 @@ class _TallyRow extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: share,
                 minHeight: 8,
-                backgroundColor: AppColors.background,
+                backgroundColor: context.colors.background,
                 valueColor: AlwaysStoppedAnimation(fg),
               ),
             ),
@@ -257,7 +258,7 @@ class _TallyRow extends StatelessWidget {
               style: TextStyle(
                   fontSize: 12.5, fontWeight: FontWeight.bold, color: fg)),
           const SizedBox(width: 3),
-          Text('($count)', style: AppText.micro),
+          Text('($count)', style: context.text.micro),
           if (highlight) ...[
             const SizedBox(width: 4),
             Icon(Icons.check_circle, size: 14, color: fg),
@@ -298,13 +299,13 @@ class _ReportChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 15, color: selected ? AppColors.onBrand : fg),
+            Icon(icon, size: 15, color: selected ? context.colors.onBrand : fg),
             const SizedBox(width: 5),
             Text(label,
                 style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.bold,
-                    color: selected ? AppColors.onBrand : fg)),
+                    color: selected ? context.colors.onBrand : fg)),
           ],
         ),
       ),
@@ -335,13 +336,13 @@ class _AttentionBanner extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.warnBg,
+        color: context.colors.warnBg,
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline, size: 18, color: AppColors.warnText),
+          Icon(Icons.info_outline, size: 18, color: context.colors.warnText),
           const SizedBox(width: 8),
           Expanded(
             // "ציינו שנפגשו עם מוכר שפעל כ…" describes the reporters' own
@@ -350,10 +351,10 @@ class _AttentionBanner extends StatelessWidget {
               '$percent% מהמדווחים ($total דיווחים) ציינו שנפגשו עם מוכר '
               'שפעל כ"${reported.label}", בעוד המודעה מסומנת "${declared.label}". '
               'כדאי לבדוק בעצמכם.',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.warnText),
+                  color: context.colors.warnText),
             ),
           ),
         ],
@@ -372,12 +373,12 @@ class _NotEnoughInfo extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: context.colors.background,
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         children: [
-          const Icon(Icons.help_outline, size: 16, color: AppColors.textSubtle),
+          Icon(Icons.help_outline, size: 16, color: context.colors.textSubtle),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -385,7 +386,7 @@ class _NotEnoughInfo extends StatelessWidget {
                   ? 'אין עדיין דיווחים על הרכב הזה.'
                   : 'אין מספיק מידע כדי להציג התפלגות '
                       '($total מתוך ${EncounterTally.minReportsToShow} דיווחים נדרשים).',
-              style: AppText.micro,
+              style: context.text.micro,
             ),
           ),
         ],

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/utils/plate_formatter.dart';
@@ -64,10 +64,10 @@ class GovDataCard extends StatelessWidget {
           _SafetyCard(rating: data.safetyRating!),
         ],
         const SizedBox(height: 16),
-        const Text(
+        Text(
           AppStrings.govDisclaimer,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 12.5, color: AppColors.textSubtle),
+          style: TextStyle(fontSize: 12.5, color: context.colors.textSubtle),
         ),
       ],
     );
@@ -87,23 +87,23 @@ class _OdometerCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.tealLight,
+        color: context.colors.tealLight,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
-          const Icon(Icons.speed, color: AppColors.teal),
+          Icon(Icons.speed, color: context.colors.teal),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Text('מד אוץ רשמי (בטסט האחרון)',
                 style: TextStyle(
-                    fontWeight: FontWeight.bold, color: AppColors.tealText)),
+                    fontWeight: FontWeight.bold, color: context.colors.tealText)),
           ),
           Text('${_fmt.format(km)} ק"מ',
-              style: const TextStyle(
+              style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: AppColors.tealText)),
+                  color: context.colors.tealText)),
         ],
       ),
     );
@@ -121,17 +121,17 @@ class _WarnBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.errorBg,
+        color: context.colors.errorBg,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.errorRed),
+          Icon(icon, color: context.colors.errorRed),
           const SizedBox(width: 10),
           Expanded(
             child: Text(text,
-                style: const TextStyle(
-                    color: AppColors.errorRed, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    color: context.colors.errorRed, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -149,7 +149,7 @@ class _RecallBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.errorBg,
+        color: context.colors.errorBg,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -157,11 +157,11 @@ class _RecallBanner extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.campaign_outlined, color: AppColors.errorRed),
+              Icon(Icons.campaign_outlined, color: context.colors.errorRed),
               const SizedBox(width: 8),
               Text('ריקול פתוח · ${recalls.length} קריאות שירות שלא בוצעו',
-                  style: const TextStyle(
-                      color: AppColors.errorRed,
+                  style: TextStyle(
+                      color: context.colors.errorRed,
                       fontWeight: FontWeight.bold)),
             ],
           ),
@@ -169,7 +169,7 @@ class _RecallBanner extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               '• ${r.system.isNotEmpty ? '${r.system}: ' : ''}${r.description}',
-              style: const TextStyle(fontSize: 12.5, color: AppColors.errorRed),
+              style: TextStyle(fontSize: 12.5, color: context.colors.errorRed),
             ),
           ],
         ],
@@ -188,35 +188,35 @@ class _SourceBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.tealLight,
+        color: context.colors.tealLight,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+        border: Border.all(color: context.colors.teal.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
           Container(
             width: 38,
             height: 38,
-            decoration: const BoxDecoration(
-              color: AppColors.teal,
+            decoration: BoxDecoration(
+              color: context.colors.teal,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.verified_user,
-                color: AppColors.onBrand, size: 20),
+            child: Icon(Icons.verified_user,
+                color: context.colors.onBrand, size: 20),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('נתונים רשמיים · משרד התחבורה',
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: AppColors.tealText)),
-                SizedBox(height: 2),
+                        color: context.colors.tealText)),
+                const SizedBox(height: 2),
                 Text('מקור: מרשם הרכב הממשלתי (data.gov.il)',
                     style:
-                        TextStyle(fontSize: 12.5, color: AppColors.tealText2)),
+                        TextStyle(fontSize: 12.5, color: context.colors.tealText2)),
               ],
             ),
           ),
@@ -235,7 +235,7 @@ class _Header extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.tealDark,
+        color: context.colors.tealDark,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -243,8 +243,8 @@ class _Header extends StatelessWidget {
         children: [
           Text(
             data.title,
-            style: const TextStyle(
-              color: AppColors.onBrand,
+            style: TextStyle(
+              color: context.colors.onBrand,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -252,7 +252,7 @@ class _Header extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '${data.year} · ${data.color}',
-            style: const TextStyle(color: AppColors.tealLight, fontSize: 14),
+            style: TextStyle(color: context.colors.tealLight, fontSize: 14),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -279,12 +279,12 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.onBrand.withValues(alpha: 0.15),
+        color: context.colors.onBrand.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         text,
-        style: const TextStyle(color: AppColors.onBrand, fontSize: 12.5),
+        style: TextStyle(color: context.colors.onBrand, fontSize: 12.5),
       ),
     );
   }
@@ -316,18 +316,18 @@ class _ValidityStrip extends StatelessWidget {
     final String label;
 
     if (!valid) {
-      bg = AppColors.errorBg;
-      fg = AppColors.errorRed;
+      bg = context.colors.errorBg;
+      fg = context.colors.errorRed;
       icon = Icons.cancel_outlined;
       label = 'רישיון פג תוקף · $dateStr';
     } else if (days <= 30) {
-      bg = AppColors.warnBg;
-      fg = AppColors.warnText;
+      bg = context.colors.warnBg;
+      fg = context.colors.warnText;
       icon = Icons.access_time;
       label = 'הרישיון פג בעוד $days ימים · $dateStr';
     } else {
-      bg = AppColors.tealLight;
-      fg = AppColors.tealText;
+      bg = context.colors.tealLight;
+      fg = context.colors.tealText;
       icon = Icons.check_circle;
       label = 'רישיון בתוקף · עד $dateStr';
     }
@@ -396,8 +396,8 @@ class _StatTile extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(label,
-              style: const TextStyle(
-                  fontSize: 12.5, color: AppColors.textSubtle)),
+              style: TextStyle(
+                  fontSize: 12.5, color: context.colors.textSubtle)),
           const SizedBox(height: 4),
           Text(
             value,
@@ -457,23 +457,23 @@ class _FullSpecs extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            color: AppColors.tealLight,
-            child: const Text('כל הפרטים הרשמיים',
+            color: context.colors.tealLight,
+            child: Text('כל הפרטים הרשמיים',
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
-                    color: AppColors.tealText)),
+                    color: context.colors.tealText)),
           ),
           for (var i = 0; i < rows.length; i++)
             Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-              color: i.isOdd ? AppColors.background : AppColors.surface,
+              color: i.isOdd ? context.colors.background : context.colors.surface,
               child: Row(
                 children: [
                   Text(rows[i].$1,
-                      style: const TextStyle(
-                          fontSize: 13, color: AppColors.textMuted)),
+                      style: TextStyle(
+                          fontSize: 13, color: context.colors.textMuted)),
                   const Spacer(),
                   Flexible(
                     child: Text(
@@ -481,10 +481,10 @@ class _FullSpecs extends StatelessWidget {
                       textAlign: TextAlign.end,
                       textDirection:
                           rows[i].$3 ? TextDirection.ltr : TextDirection.rtl,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary),
+                          color: context.colors.textPrimary),
                     ),
                   ),
                 ],
@@ -503,8 +503,8 @@ class _UsageBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final private = data.isPrivate;
-    final bg = private ? AppColors.tealLight : AppColors.errorBg;
-    final fg = private ? AppColors.tealText : AppColors.errorRed;
+    final bg = private ? context.colors.tealLight : context.colors.errorBg;
+    final fg = private ? context.colors.tealText : context.colors.errorRed;
     final icon = private ? Icons.check_circle : Icons.warning_amber_rounded;
     final label = private
         ? 'רכב פרטי'
@@ -543,16 +543,16 @@ class _SafetyCard extends StatelessWidget {
       radius: AppRadius.md,
       child: Row(
         children: [
-          const Icon(Icons.shield_outlined, color: AppColors.teal),
+          Icon(Icons.shield_outlined, color: context.colors.teal),
           const SizedBox(width: 10),
-          const Text('רמת אבזור בטיחותי: ',
-              style: TextStyle(color: AppColors.textMuted)),
+          Text('רמת אבזור בטיחותי: ',
+              style: TextStyle(color: context.colors.textMuted)),
           Expanded(
             child: Text(
               rating,
-              style: const TextStyle(
+              style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary),
+                  color: context.colors.textPrimary),
             ),
           ),
         ],

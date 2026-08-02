@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../../core/theme/app_text.dart';
@@ -61,9 +61,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               alignment: Alignment.centerLeft,
               child: TextButton(
                 onPressed: () => context.go('/login'),
-                child: const Text(
+                child: Text(
                   AppStrings.skip,
-                  style: TextStyle(color: AppColors.textMuted),
+                  style: TextStyle(color: context.colors.textMuted),
                 ),
               ),
             ),
@@ -83,11 +83,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
-                            color: AppColors.tealLight,
+                            color: context.colors.tealLight,
                             borderRadius: BorderRadius.circular(32),
                           ),
                           child: Icon(s.icon,
-                              size: 60, color: AppColors.teal),
+                              size: 60, color: context.colors.teal),
                         ),
                         const SizedBox(height: 32),
                         Text(
@@ -99,9 +99,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Text(
                           s.body,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
-                            color: AppColors.textMuted,
+                            color: context.colors.textMuted,
                           ),
                         ),
                       ],
@@ -120,7 +120,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   width: active ? 22 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: active ? AppColors.teal : AppColors.cardBorder,
+                    color: active ? context.colors.teal : context.colors.cardBorder,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 );
@@ -128,13 +128,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             // Sets expectations before the user ever sees a listing: what the
             // app is a source of, and what it is not evidence of.
-            const Padding(
-              padding: EdgeInsets.fromLTRB(24, 16, 24, 0),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
               child: Text(
                 AppStrings.entryDisclaimer,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 11.5, height: 1.4, color: AppColors.textSubtle),
+                    fontSize: 11.5, height: 1.4, color: context.colors.textSubtle),
               ),
             ),
             Padding(

@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../data/models/car_model.dart';
 import '../../core/theme/app_text.dart';
 import 'app_card.dart';
@@ -126,7 +126,7 @@ class CarCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _photo(),
+            _photo(context),
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -144,10 +144,10 @@ class CarCard extends StatelessWidget {
                       ),
                       Text(
                         '₪${_priceFmt.format(car.price)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.teal,
+                          color: context.colors.teal,
                         ),
                       ),
                     ],
@@ -155,9 +155,9 @@ class CarCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     _subtitle(),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.textMuted,
+                      color: context.colors.textMuted,
                     ),
                   ),
                 ],
@@ -174,7 +174,7 @@ class CarCard extends StatelessWidget {
     return '$km ק"מ · יד ${car.hand} · ${car.area} · ${car.year}';
   }
 
-  Widget _photo() {
+  Widget _photo(BuildContext context) {
     return Stack(
       children: [
         SizedBox(
@@ -182,22 +182,22 @@ class CarCard extends StatelessWidget {
           width: double.infinity,
           child: car.coverPhoto == null
               ? Container(
-                  color: AppColors.tealLight,
-                  child: const Icon(Icons.directions_car,
-                      size: 56, color: AppColors.teal),
+                  color: context.colors.tealLight,
+                  child: Icon(Icons.directions_car,
+                      size: 56, color: context.colors.teal),
                 )
               : CachedNetworkImage(
                   imageUrl: car.coverPhoto!,
                   fit: BoxFit.cover,
                   placeholder: (_, __) => Container(
-                    color: AppColors.tealLight,
+                    color: context.colors.tealLight,
                     child: const Center(
                         child: CircularProgressIndicator(strokeWidth: 2)),
                   ),
                   errorWidget: (_, __, ___) => Container(
-                    color: AppColors.tealLight,
-                    child: const Icon(Icons.directions_car,
-                        size: 56, color: AppColors.teal),
+                    color: context.colors.tealLight,
+                    child: Icon(Icons.directions_car,
+                        size: 56, color: context.colors.teal),
                   ),
                 ),
         ),
@@ -207,13 +207,13 @@ class CarCard extends StatelessWidget {
             top: 6,
             left: 6,
             child: Material(
-              color: AppColors.surface,
+              color: context.colors.surface,
               shape: const CircleBorder(),
               child: IconButton(
                 iconSize: 20,
                 icon: Icon(
                   saved ? Icons.favorite : Icons.favorite_border,
-                  color: saved ? AppColors.errorRed : AppColors.textMuted,
+                  color: saved ? context.colors.errorRed : context.colors.textMuted,
                 ),
                 onPressed: onToggleSave,
               ),
@@ -227,18 +227,18 @@ class CarCard extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.tealDark.withValues(alpha: 0.85),
+                color: context.colors.tealDark.withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.star, size: 13, color: AppColors.starColor),
+                  Icon(Icons.star, size: 13, color: context.colors.starColor),
                   const SizedBox(width: 4),
                   Text(
                     '${car.reviewCount} חוות דעת',
-                    style: const TextStyle(
-                        color: AppColors.onBrand, fontSize: 11.5),
+                    style: TextStyle(
+                        color: context.colors.onBrand, fontSize: 11.5),
                   ),
                 ],
               ),

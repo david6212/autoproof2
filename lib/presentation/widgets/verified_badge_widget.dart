@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/constants/app_strings.dart';
 
 /// Pill badge naming the check that ran, not the person: it says
@@ -19,20 +19,20 @@ class VerifiedBadge extends StatelessWidget {
         vertical: compact ? 4 : 5,
       ),
       decoration: BoxDecoration(
-        color: AppColors.tealLight,
+        color: context.colors.tealLight,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.verified, size: compact ? 13 : 15, color: AppColors.teal),
+          Icon(Icons.verified, size: compact ? 13 : 15, color: context.colors.teal),
           const SizedBox(width: 4),
           Text(
             AppStrings.verifiedSellerBadge,
             style: TextStyle(
               fontSize: compact ? 11 : 12,
               fontWeight: FontWeight.bold,
-              color: AppColors.tealText2,
+              color: context.colors.tealText2,
             ),
           ),
         ],

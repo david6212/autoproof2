@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../providers/seller_verification_provider.dart';
 import '../../widgets/primary_button_widget.dart';
@@ -46,8 +46,8 @@ class _VerifySuccessScreenState extends ConsumerState<VerifySuccessScreen> {
                 child: Container(
                   width: 110,
                   height: 110,
-                  decoration: const BoxDecoration(
-                    color: AppColors.tealLight,
+                  decoration: BoxDecoration(
+                    color: context.colors.tealLight,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -56,8 +56,8 @@ class _VerifySuccessScreenState extends ConsumerState<VerifySuccessScreen> {
                         : Icons.verified_user,
                     size: 60,
                     color: state.error != null
-                        ? AppColors.errorRed
-                        : AppColors.teal,
+                        ? context.colors.errorRed
+                        : context.colors.teal,
                   ),
                 ),
               ),
@@ -66,18 +66,18 @@ class _VerifySuccessScreenState extends ConsumerState<VerifySuccessScreen> {
               if (state.loading) ...[
                 const Center(child: CircularProgressIndicator()),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'שומר את האימות...',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textMuted),
+                  style: TextStyle(color: context.colors.textMuted),
                 ),
               ] else if (state.error != null) ...[
                 Text(
                   state.error!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
-                    color: AppColors.errorRed,
+                    color: context.colors.errorRed,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -88,20 +88,20 @@ class _VerifySuccessScreenState extends ConsumerState<VerifySuccessScreen> {
                       .submit(),
                 ),
               ] else ...[
-                const Text(
+                Text(
                   AppStrings.verifiedSuccess,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: context.colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   AppStrings.verifiedAsPrivate,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textMuted),
+                  style: TextStyle(color: context.colors.textMuted),
                 ),
                 if (car != null) ...[
                   const SizedBox(height: 24),
@@ -131,19 +131,19 @@ class _CarPreview extends StatelessWidget {
     return AppCard(
       child: Row(
         children: [
-          const Icon(Icons.directions_car, color: AppColors.teal),
+          Icon(Icons.directions_car, color: context.colors.teal),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary)),
+                        color: context.colors.textPrimary)),
                 Text(sub,
-                    style: const TextStyle(
-                        fontSize: 13, color: AppColors.textMuted)),
+                    style: TextStyle(
+                        fontSize: 13, color: context.colors.textMuted)),
               ],
             ),
           ),

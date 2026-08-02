@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 
 class ListingRemovedScreen extends StatelessWidget {
   const ListingRemovedScreen({super.key});
@@ -25,14 +25,14 @@ class ListingRemovedScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.errorBg,
+                  color: context.colors.errorBg,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(Icons.warning_amber_rounded,
-                        color: AppColors.errorRed, size: 32),
-                    SizedBox(width: 12),
+                        color: context.colors.errorRed, size: 32),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,10 +41,10 @@ class ListingRemovedScreen extends StatelessWidget {
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
-                                  color: AppColors.errorRed)),
-                          SizedBox(height: 2),
+                                  color: context.colors.errorRed)),
+                          const SizedBox(height: 2),
                           Text('בעקבות דיווחים חוזרים על אי-התאמה',
-                              style: TextStyle(color: AppColors.errorRed)),
+                              style: TextStyle(color: context.colors.errorRed)),
                         ],
                       ),
                     ),
@@ -58,13 +58,13 @@ class ListingRemovedScreen extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.circle,
-                          size: 8, color: AppColors.textSubtle),
+                      Icon(Icons.circle,
+                          size: 8, color: context.colors.textSubtle),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(r,
                             style:
-                                const TextStyle(color: AppColors.textMuted)),
+                                TextStyle(color: context.colors.textMuted)),
                       ),
                     ],
                   ),
@@ -72,7 +72,7 @@ class ListingRemovedScreen extends StatelessWidget {
               const Spacer(),
               FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.teal,
+                  backgroundColor: context.colors.teal,
                   minimumSize: const Size.fromHeight(50),
                 ),
                 onPressed: () {},

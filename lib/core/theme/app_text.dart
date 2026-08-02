@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../constants/app_colors.dart';
+import 'app_palette.dart';
 
 /// Type scale for OtoV.
 ///
@@ -10,67 +10,82 @@ import '../constants/app_colors.dart';
 ///
 /// The font family is deliberately not set: `Text` merges these with the
 /// ambient [DefaultTextStyle], so Heebo from the app theme still applies.
+///
+/// **Nor is the colour.** These used to bake in [AppColors] values, which
+/// froze them to the light theme. The headings and body sizes now inherit the
+/// theme's text colour, so they follow light and dark for free. The quieter
+/// greys can't inherit — they are deliberately *not* the primary colour — so
+/// they live on [AppTextOf] and are reached through `context.text`.
 class AppText {
   AppText._();
 
-  // ---- Headings ----
+  // ---- Headings — colour inherited from the theme ----
 
   /// Big numbers and hero figures (price, splash).
-  static const display = TextStyle(
-      fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary);
+  static const display = TextStyle(fontSize: 24, fontWeight: FontWeight.bold);
 
-  static const h1 = TextStyle(
-      fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary);
+  static const h1 = TextStyle(fontSize: 22, fontWeight: FontWeight.bold);
 
-  static const h2 = TextStyle(
-      fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary);
+  static const h2 = TextStyle(fontSize: 20, fontWeight: FontWeight.bold);
 
-  static const h3 = TextStyle(
-      fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary);
+  static const h3 = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
 
   /// Card headers, section titles, button labels.
-  static const title = TextStyle(
-      fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary);
+  static const title = TextStyle(fontSize: 16, fontWeight: FontWeight.bold);
 
   /// Slightly smaller header — list-item names, sub-sections.
-  static const subtitle = TextStyle(
-      fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary);
+  static const subtitle = TextStyle(fontSize: 15, fontWeight: FontWeight.bold);
 
-  // ---- Body ----
+  // ---- Body — colour inherited from the theme ----
 
-  static const body = TextStyle(
-      fontSize: 14, height: 1.35, color: AppColors.textPrimary);
-
-  static const bodyMuted = TextStyle(
-      fontSize: 14, height: 1.35, color: AppColors.textMuted);
+  static const body = TextStyle(fontSize: 14, height: 1.35);
 
   /// The workhorse size for descriptive text inside cards.
-  static const bodySm = TextStyle(
-      fontSize: 13, height: 1.35, color: AppColors.textPrimary);
+  static const bodySm = TextStyle(fontSize: 13, height: 1.35);
 
-  static const bodySmMuted = TextStyle(
-      fontSize: 13, height: 1.35, color: AppColors.textMuted);
+  // ---- Shapes for the muted family; colour applied by [AppTextOf] ----
 
-  // ---- Small print ----
+  static const _body = TextStyle(fontSize: 14, height: 1.35);
+  static const _bodySm = TextStyle(fontSize: 13, height: 1.35);
+  static const _caption = TextStyle(fontSize: 12.5);
+  static const _captionBold =
+      TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600);
+  static const _micro = TextStyle(fontSize: 11.5);
+  static const _microBold =
+      TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold);
+  static const _tiny = TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold);
+}
+
+/// The text styles whose colour is part of their meaning. Reached through
+/// `context.text` so they follow the active theme.
+class AppTextOf {
+  const AppTextOf(this._p);
+
+  final AppPalette _p;
+
+  TextStyle get bodyMuted => AppText._body.copyWith(color: _p.textMuted);
+
+  TextStyle get bodySmMuted => AppText._bodySm.copyWith(color: _p.textMuted);
 
   /// Explanatory lines under a heading.
-  static const caption =
-      TextStyle(fontSize: 12.5, color: AppColors.textMuted);
+  TextStyle get caption => AppText._caption.copyWith(color: _p.textMuted);
 
-  static const captionBold = TextStyle(
-      fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.textMuted);
+  TextStyle get captionBold =>
+      AppText._captionBold.copyWith(color: _p.textMuted);
 
-  static const captionSubtle =
-      TextStyle(fontSize: 12.5, color: AppColors.textSubtle);
+  TextStyle get captionSubtle =>
+      AppText._caption.copyWith(color: _p.textSubtle);
 
   /// Timestamps, counters, badge text.
-  static const micro =
-      TextStyle(fontSize: 11.5, color: AppColors.textSubtle);
+  TextStyle get micro => AppText._micro.copyWith(color: _p.textSubtle);
 
-  static const microBold = TextStyle(
-      fontSize: 11.5, fontWeight: FontWeight.bold, color: AppColors.textSubtle);
+  TextStyle get microBold => AppText._microBold.copyWith(color: _p.textSubtle);
 
   /// Map labels and other very dense spots — use sparingly.
-  static const tiny = TextStyle(
-      fontSize: 9.5, fontWeight: FontWeight.bold, color: AppColors.tealText);
+  TextStyle get tiny => AppText._tiny.copyWith(color: _p.tealText);
+}
+
+/// `context.text.caption` — the theme-aware half of the type scale.
+extension AppTextContext on BuildContext {
+  AppTextOf get text => AppTextOf(colors);
 }

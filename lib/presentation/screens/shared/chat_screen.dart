@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/chat_model.dart';
 import '../../providers/auth_provider.dart';
@@ -103,9 +103,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: messagesAsync.when(
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
-                error: (_, __) => const Center(
+                error: (_, __) => Center(
                   child: Text(AppStrings.errorGeneric,
-                      style: TextStyle(color: AppColors.textMuted)),
+                      style: TextStyle(color: context.colors.textMuted)),
                 ),
                 data: (messages) {
                   if (messages.isEmpty) return const _EmptyChat();
@@ -151,13 +151,13 @@ class _Header extends StatelessWidget {
           children: [
             Text(title, style: const TextStyle(fontSize: 16)),
             const SizedBox(width: 4),
-            const Icon(Icons.verified, size: 15, color: AppColors.onBrand),
+            Icon(Icons.verified, size: 15, color: context.colors.onBrand),
           ],
         ),
         if (chat != null && chat!.carTitle.isNotEmpty)
           Text(
             chat!.carTitle,
-            style: const TextStyle(fontSize: 12.5, color: AppColors.tealLight),
+            style: TextStyle(fontSize: 12.5, color: context.colors.tealLight),
           ),
       ],
     );
@@ -171,12 +171,12 @@ class _InfoBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: AppColors.tealLight,
+      color: context.colors.tealLight,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      child: const Text(
+      child: Text(
         AppStrings.chatWithVerified,
         textAlign: TextAlign.center,
-        style: TextStyle(color: AppColors.tealText2, fontSize: 12.5),
+        style: TextStyle(color: context.colors.tealText2, fontSize: 12.5),
       ),
     );
   }
@@ -187,15 +187,15 @@ class _EmptyChat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.chat_bubble_outline,
-              size: 56, color: AppColors.textSubtle),
-          SizedBox(height: 12),
+              size: 56, color: context.colors.textSubtle),
+          const SizedBox(height: 12),
           Text('שלח הודעה ראשונה למוכר',
-              style: TextStyle(color: AppColors.textMuted)),
+              style: TextStyle(color: context.colors.textMuted)),
         ],
       ),
     );
@@ -211,9 +211,9 @@ class _InputBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(8),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.cardBorder)),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        border: Border(top: BorderSide(color: context.colors.cardBorder)),
       ),
       child: Row(
         children: [
@@ -225,7 +225,7 @@ class _InputBar extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: 'הקלד הודעה...',
                 filled: true,
-                fillColor: AppColors.background,
+                fillColor: context.colors.background,
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 border: OutlineInputBorder(
@@ -238,9 +238,9 @@ class _InputBar extends StatelessWidget {
           const SizedBox(width: 8),
           CircleAvatar(
             radius: 24,
-            backgroundColor: AppColors.teal,
+            backgroundColor: context.colors.teal,
             child: IconButton(
-              icon: const Icon(Icons.send, color: AppColors.onBrand),
+              icon: Icon(Icons.send, color: context.colors.onBrand),
               onPressed: onSend,
             ),
           ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 
 /// A single chat message bubble. Buyer/own messages are teal on the right;
 /// the other party's are grey on the left.
@@ -18,8 +18,8 @@ class ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isMine ? AppColors.teal : AppColors.surface;
-    final fg = isMine ? AppColors.onBrand : AppColors.textPrimary;
+    final bg = isMine ? context.colors.teal : context.colors.surface;
+    final fg = isMine ? context.colors.onBrand : context.colors.textPrimary;
 
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
@@ -39,7 +39,7 @@ class ChatBubble extends StatelessWidget {
           ),
           border: isMine
               ? null
-              : Border.all(color: AppColors.cardBorder),
+              : Border.all(color: context.colors.cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,8 +50,8 @@ class ChatBubble extends StatelessWidget {
               time,
               style: TextStyle(
                 color: isMine
-                    ? AppColors.tealLight
-                    : AppColors.textSubtle,
+                    ? context.colors.tealLight
+                    : context.colors.textSubtle,
                 fontSize: 9.5,
               ),
             ),

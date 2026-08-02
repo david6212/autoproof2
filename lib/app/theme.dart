@@ -1,38 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../core/constants/app_colors.dart';
 import '../core/theme/app_dimens.dart';
+import '../core/theme/app_palette.dart';
 
 /// OtoV app theme — Heebo font, teal brand palette, clean fintech feel.
+///
+/// Both themes are built from the same recipe; only the [AppPalette] differs.
+/// Writing them separately is how a dark theme drifts out of step with the
+/// light one.
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get light {
-    final base = ThemeData.light(useMaterial3: true);
+  static ThemeData get light => _build(Brightness.light, AppPalette.light);
+
+  static ThemeData get dark => _build(Brightness.dark, AppPalette.dark);
+
+  static ThemeData _build(Brightness brightness, AppPalette p) {
+    final base = ThemeData(brightness: brightness, useMaterial3: true);
 
     return base.copyWith(
-      scaffoldBackgroundColor: AppColors.background,
+      // Widgets read their colours from here via `context.colors`.
+      extensions: [p],
+      scaffoldBackgroundColor: p.background,
       colorScheme: base.colorScheme.copyWith(
-        primary: AppColors.teal,
-        secondary: AppColors.mintAccent,
-        surface: AppColors.surface,
-        error: AppColors.errorRed,
+        primary: p.teal,
+        secondary: p.mintAccent,
+        surface: p.surface,
+        error: p.errorRed,
+        // Without this, Material's own surfaces (dialogs, list tiles, menus)
+        // keep their default ink and go unreadable on the dark palette.
+        onSurface: p.textPrimary,
       ),
       textTheme: GoogleFonts.heeboTextTheme(base.textTheme).apply(
-        bodyColor: AppColors.textPrimary,
-        displayColor: AppColors.textPrimary,
+        bodyColor: p.textPrimary,
+        displayColor: p.textPrimary,
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.teal,
-        foregroundColor: AppColors.onBrand,
+      appBarTheme: AppBarTheme(
+        backgroundColor: p.teal,
+        foregroundColor: p.onBrand,
         elevation: 0,
         centerTitle: true,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.teal,
-          foregroundColor: AppColors.onBrand,
+          backgroundColor: p.teal,
+          foregroundColor: p.onBrand,
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -47,8 +60,8 @@ class AppTheme {
       // defaults mean a plain FilledButton/OutlinedButton already looks right.
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.teal,
-          foregroundColor: AppColors.onBrand,
+          backgroundColor: p.teal,
+          foregroundColor: p.onBrand,
           // Height only — `Size.fromHeight` would set an INFINITE minimum
           // width and stretch every button, including dialog actions.
           minimumSize: const Size(64, 48),
@@ -63,8 +76,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.teal,
-          side: const BorderSide(color: AppColors.teal),
+          foregroundColor: p.teal,
+          side: BorderSide(color: p.teal),
           minimumSize: const Size(64, 46),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -76,27 +89,27 @@ class AppTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        color: AppColors.surface,
+        color: p.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          side: const BorderSide(color: AppColors.cardBorder),
+          side: BorderSide(color: p.cardBorder),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: p.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.cardBorder),
+          borderSide: BorderSide(color: p.cardBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.cardBorder),
+          borderSide: BorderSide(color: p.cardBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.teal, width: 2),
+          borderSide: BorderSide(color: p.teal, width: 2),
         ),
       ),
     );

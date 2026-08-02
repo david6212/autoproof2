@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/gov_data_model.dart';
 import '../../providers/seller_verification_provider.dart';
@@ -63,9 +63,9 @@ class _VerifyPlateScreenState extends ConsumerState<VerifyPlateScreen> {
                 style: AppText.display,
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'הזן את מספר הרישוי של הרכב שברשותך',
-                style: TextStyle(color: AppColors.textMuted),
+                style: TextStyle(color: context.colors.textMuted),
               ),
               const SizedBox(height: 20),
 
@@ -91,15 +91,15 @@ class _VerifyPlateScreenState extends ConsumerState<VerifyPlateScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Row(
+              Row(
                 children: [
                   Icon(Icons.lock_outline,
-                      size: 15, color: AppColors.textSubtle),
-                  SizedBox(width: 6),
+                      size: 15, color: context.colors.textSubtle),
+                  const SizedBox(width: 6),
                   Text(
                     AppStrings.idOnlyNote,
                     style:
-                        TextStyle(fontSize: 12.5, color: AppColors.textSubtle),
+                        TextStyle(fontSize: 12.5, color: context.colors.textSubtle),
                   ),
                 ],
               ),
@@ -160,13 +160,13 @@ class _CarConfirmCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.tealLight,
+        color: context.colors.tealLight,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.teal),
+        border: Border.all(color: context.colors.teal),
       ),
       child: Row(
         children: [
-          const Icon(Icons.check_circle, color: AppColors.teal, size: 28),
+          Icon(Icons.check_circle, color: context.colors.teal, size: 28),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -174,17 +174,17 @@ class _CarConfirmCard extends StatelessWidget {
               children: [
                 Text(
                   car.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.tealText,
+                    color: context.colors.tealText,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${car.year} · ${car.ownershipType}',
-                  style: const TextStyle(
-                      fontSize: 13, color: AppColors.tealText2),
+                  style: TextStyle(
+                      fontSize: 13, color: context.colors.tealText2),
                 ),
               ],
             ),
@@ -204,17 +204,17 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.errorBg,
+        color: context.colors.errorBg,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.errorRed, size: 20),
+          Icon(Icons.error_outline, color: context.colors.errorRed, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: AppColors.errorRed),
+              style: TextStyle(color: context.colors.errorRed),
             ),
           ),
         ],

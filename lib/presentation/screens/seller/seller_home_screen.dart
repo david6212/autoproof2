@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
@@ -39,10 +39,10 @@ class SellerHomeScreen extends ConsumerWidget {
                   : _ActiveListingCard(car: car),
             ),
             const SizedBox(height: 24),
-            const Text('טיפים למכירה מהירה',
+            Text('טיפים למכירה מהירה',
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary)),
+                    color: context.colors.textPrimary)),
             const SizedBox(height: 8),
             const _Tip(
               icon: Icons.photo_camera_outlined,
@@ -65,23 +65,23 @@ class _NoListing extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.tealLight,
+        color: context.colors.tealLight,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
-          const Icon(Icons.add_road, size: 40, color: AppColors.teal),
+          Icon(Icons.add_road, size: 40, color: context.colors.teal),
           const SizedBox(height: 8),
-          const Text('אין לך מודעה פעילה',
+          Text('אין לך מודעה פעילה',
               style: TextStyle(
-                  fontWeight: FontWeight.bold, color: AppColors.tealText)),
+                  fontWeight: FontWeight.bold, color: context.colors.tealText)),
           const SizedBox(height: 4),
-          const Text('פרסם את הרכב שלך ותתחיל לקבל פניות',
+          Text('פרסם את הרכב שלך ותתחיל לקבל פניות',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.tealText2, fontSize: 13)),
+              style: TextStyle(color: context.colors.tealText2, fontSize: 13)),
           const SizedBox(height: 12),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.teal),
+            style: FilledButton.styleFrom(backgroundColor: context.colors.teal),
             onPressed: () => context.go('/seller/create'),
             child: const Text('פרסם מודעה'),
           ),
@@ -112,9 +112,9 @@ class _ActiveListingCard extends StatelessWidget {
               height: 90,
               child: car.coverPhoto == null
                   ? Container(
-                      color: AppColors.tealLight,
-                      child: const Icon(Icons.directions_car,
-                          color: AppColors.teal))
+                      color: context.colors.tealLight,
+                      child: Icon(Icons.directions_car,
+                          color: context.colors.teal))
                   : CachedNetworkImage(
                       imageUrl: car.coverPhoto!, fit: BoxFit.cover),
             ),
@@ -123,20 +123,20 @@ class _ActiveListingCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('המודעה הפעילה שלך',
+                  Text('המודעה הפעילה שלך',
                       style: TextStyle(
-                          fontSize: 12.5, color: AppColors.textSubtle)),
+                          fontSize: 12.5, color: context.colors.textSubtle)),
                   const SizedBox(height: 2),
                   Text(car.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary)),
+                          color: context.colors.textPrimary)),
                   Text('₪${_fmt.format(car.price)}',
-                      style: const TextStyle(color: AppColors.teal)),
+                      style: TextStyle(color: context.colors.teal)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_left, color: AppColors.textSubtle),
+            Icon(Icons.chevron_left, color: context.colors.textSubtle),
             const SizedBox(width: 8),
           ],
         ),
@@ -158,12 +158,12 @@ class _Tip extends StatelessWidget {
       radius: AppRadius.sm,
       child: Row(
         children: [
-          Icon(icon, color: AppColors.teal, size: 20),
+          Icon(icon, color: context.colors.teal, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(text,
-                style: const TextStyle(
-                    color: AppColors.textMuted, fontSize: 13)),
+                style: TextStyle(
+                    color: context.colors.textMuted, fontSize: 13)),
           ),
         ],
       ),
