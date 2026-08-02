@@ -183,7 +183,7 @@ class _StepRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final reached = isDone || isActive;
     final circleColor = reached ? AppColors.teal : AppColors.background;
-    final numberColor = reached ? AppColors.white : AppColors.textSubtle;
+    final numberColor = reached ? AppColors.onBrand : AppColors.textSubtle;
 
     return IntrinsicHeight(
       child: Row(
@@ -203,7 +203,7 @@ class _StepRow extends StatelessWidget {
                       : Border.all(color: AppColors.cardBorder, width: 1.5),
                 ),
                 child: isDone
-                    ? const Icon(Icons.check, size: 17, color: AppColors.white)
+                    ? const Icon(Icons.check, size: 17, color: AppColors.onBrand)
                     : Center(
                         child: Text('${index + 1}',
                             style: TextStyle(

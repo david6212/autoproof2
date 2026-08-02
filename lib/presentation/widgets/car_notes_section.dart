@@ -135,7 +135,7 @@ class CarNotesSection extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -178,7 +178,7 @@ class _NoteTile extends StatelessWidget {
                 backgroundColor: AppColors.teal,
                 child: Text(initial,
                     style: const TextStyle(
-                        color: AppColors.white,
+                        color: AppColors.onBrand,
                         fontSize: 13,
                         fontWeight: FontWeight.bold)),
               ),
@@ -410,7 +410,7 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
                   label: Text(tag.label),
                   selected: _tags.contains(tag),
                   showCheckmark: true,
-                  checkmarkColor: AppColors.white,
+                  checkmarkColor: AppColors.onBrand,
                   selectedColor: AppColors.teal,
                   backgroundColor: AppColors.background,
                   side: BorderSide(
@@ -421,7 +421,7 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                     color: _tags.contains(tag)
-                        ? AppColors.white
+                        ? AppColors.onBrand
                         : AppColors.textMuted,
                   ),
                   onSelected: (on) => setState(
@@ -467,7 +467,7 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
                   labelStyle: TextStyle(
                     fontSize: 12.5,
                     color: _flag == opt.$1
-                        ? AppColors.white
+                        ? AppColors.onBrand
                         : AppColors.textMuted,
                   ),
                   onSelected: (_) => setState(() => _flag = opt.$1),
@@ -486,7 +486,7 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: AppColors.white))
+                        strokeWidth: 2, color: AppColors.onBrand))
                 : const Text('שלח דיווח'),
           ),
         ],

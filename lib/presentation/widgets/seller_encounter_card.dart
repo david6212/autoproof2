@@ -298,13 +298,13 @@ class _ReportChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 15, color: selected ? AppColors.white : fg),
+            Icon(icon, size: 15, color: selected ? AppColors.onBrand : fg),
             const SizedBox(width: 5),
             Text(label,
                 style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.bold,
-                    color: selected ? AppColors.white : fg)),
+                    color: selected ? AppColors.onBrand : fg)),
           ],
         ),
       ),

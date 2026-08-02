@@ -16,7 +16,7 @@ Future<void> showLoginRequired(
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    backgroundColor: AppColors.white,
+    backgroundColor: AppColors.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),

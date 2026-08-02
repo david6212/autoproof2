@@ -201,7 +201,7 @@ class _PhotoThumb extends StatelessWidget {
                 child: const Text(
                   'שער',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.white, fontSize: 11.5),
+                  style: TextStyle(color: AppColors.onBrand, fontSize: 11.5),
                 ),
               ),
             ),
@@ -213,7 +213,7 @@ class _PhotoThumb extends StatelessWidget {
               child: const CircleAvatar(
                 radius: 12,
                 backgroundColor: Colors.black54,
-                child: Icon(Icons.close, size: 14, color: AppColors.white),
+                child: Icon(Icons.close, size: 14, color: AppColors.onBrand),
               ),
             ),
           ),
@@ -642,7 +642,7 @@ class _BottomBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.cardBorder)),
       ),
       child: PrimaryButton(

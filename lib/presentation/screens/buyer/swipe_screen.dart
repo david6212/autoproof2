@@ -142,7 +142,7 @@ class _SwipeBody extends StatelessWidget {
                                 child: Text(
                                   car.title,
                                   style: const TextStyle(
-                                    color: AppColors.white,
+                                    color: AppColors.onBrand,
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -151,7 +151,7 @@ class _SwipeBody extends StatelessWidget {
                               Text(
                                 '₪${_fmt.format(car.price)}',
                                 style: const TextStyle(
-                                  color: AppColors.white,
+                                  color: AppColors.onBrand,
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -228,7 +228,7 @@ class _CircleButton extends StatelessWidget {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.surface,
           shape: BoxShape.circle,
           border: Border.all(color: color, width: 2),
           boxShadow: [

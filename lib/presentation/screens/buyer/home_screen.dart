@@ -94,20 +94,20 @@ class _Header extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.verified_user, color: AppColors.white, size: 22),
+              const Icon(Icons.verified_user, color: AppColors.onBrand, size: 22),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
                   AppStrings.onlyPrivateSellers,
                   style: TextStyle(
-                    color: AppColors.white,
+                    color: AppColors.onBrand,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.info_outline, color: AppColors.white),
+                icon: const Icon(Icons.info_outline, color: AppColors.onBrand),
                 tooltip: 'אודות OtoV',
                 onPressed: () => context.push('/about'),
               ),
@@ -135,7 +135,7 @@ class _NotificationBell extends ConsumerWidget {
       alignment: Alignment.center,
       children: [
         IconButton(
-          icon: const Icon(Icons.notifications_none, color: AppColors.white),
+          icon: const Icon(Icons.notifications_none, color: AppColors.onBrand),
           tooltip: 'התראות',
           onPressed: () => context.push('/notifications'),
         ),
@@ -154,7 +154,7 @@ class _NotificationBell extends ConsumerWidget {
                 count > 9 ? '9+' : '$count',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    color: AppColors.white,
+                    color: AppColors.onBrand,
                     fontSize: 10,
                     fontWeight: FontWeight.bold),
               ),
@@ -210,7 +210,7 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
                       },
                     ),
               filled: true,
-              fillColor: AppColors.white,
+              fillColor: AppColors.surface,
               contentPadding: EdgeInsets.zero,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -247,7 +247,7 @@ class _FilterButton extends StatelessWidget {
         width: 52,
         height: 52,
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Stack(
@@ -266,7 +266,7 @@ class _FilterButton extends StatelessWidget {
                   ),
                   child: Text('$count',
                       style: const TextStyle(
-                          color: AppColors.white,
+                          color: AppColors.onBrand,
                           fontSize: 9.5,
                           fontWeight: FontWeight.bold)),
                 ),
@@ -308,7 +308,7 @@ class _FilterPills extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: isActive ? AppColors.teal : AppColors.white,
+                color: isActive ? AppColors.teal : AppColors.surface,
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(
                   color: isActive ? AppColors.teal : AppColors.cardBorder,
@@ -317,7 +317,7 @@ class _FilterPills extends StatelessWidget {
               child: Text(
                 f,
                 style: TextStyle(
-                  color: isActive ? AppColors.white : AppColors.textMuted,
+                  color: isActive ? AppColors.onBrand : AppColors.textMuted,
                   fontWeight: FontWeight.w600,
                 ),
               ),

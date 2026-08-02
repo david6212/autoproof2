@@ -16,7 +16,7 @@ Future<void> showSearchFilterSheet(
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppColors.white,
+    backgroundColor: AppColors.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
@@ -499,7 +499,7 @@ class _PillGroup extends StatelessWidget {
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
                           color: selected == o
-                              ? AppColors.white
+                              ? AppColors.onBrand
                               : AppColors.textMuted,
                         ),
                       ),

@@ -207,7 +207,7 @@ class CarCard extends StatelessWidget {
             top: 6,
             left: 6,
             child: Material(
-              color: AppColors.white,
+              color: AppColors.surface,
               shape: const CircleBorder(),
               child: IconButton(
                 iconSize: 20,
@@ -238,7 +238,7 @@ class CarCard extends StatelessWidget {
                   Text(
                     '${car.reviewCount} חוות דעת',
                     style: const TextStyle(
-                        color: AppColors.white, fontSize: 11.5),
+                        color: AppColors.onBrand, fontSize: 11.5),
                   ),
                 ],
               ),

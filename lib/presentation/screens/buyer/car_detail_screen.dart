@@ -244,7 +244,7 @@ class _GalleryState extends State<_Gallery> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircleAvatar(
-                  backgroundColor: AppColors.white,
+                  backgroundColor: AppColors.surface,
                   child: IconButton(
                     icon: const Icon(Icons.arrow_forward,
                         color: AppColors.textPrimary),
@@ -253,7 +253,7 @@ class _GalleryState extends State<_Gallery> {
                 ),
                 const SizedBox(width: 8),
                 CircleAvatar(
-                  backgroundColor: AppColors.white,
+                  backgroundColor: AppColors.surface,
                   child: ShareListingButton(car: widget.car),
                 ),
               ],
@@ -273,7 +273,7 @@ class _GalleryState extends State<_Gallery> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text('${_index + 1}/${photos.length}',
-                  style: const TextStyle(color: AppColors.white, fontSize: 12.5)),
+                  style: const TextStyle(color: AppColors.onBrand, fontSize: 12.5)),
             ),
           ),
         // Seller-type pill (bottom-right).
@@ -299,8 +299,8 @@ class _GalleryState extends State<_Gallery> {
                   height: 7,
                   decoration: BoxDecoration(
                     color: active
-                        ? AppColors.white
-                        : AppColors.white.withValues(alpha: 0.55),
+                        ? AppColors.onBrand
+                        : AppColors.onBrand.withValues(alpha: 0.55),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 );
@@ -389,7 +389,7 @@ class _OfficialSpecs extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -577,7 +577,7 @@ class _SellerCard extends StatelessWidget {
             children: [
               const CircleAvatar(
                 backgroundColor: AppColors.teal,
-                child: Icon(Icons.person, color: AppColors.white),
+                child: Icon(Icons.person, color: AppColors.onBrand),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -652,7 +652,7 @@ class _ActionBar extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: const BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.surface,
           border: Border(top: BorderSide(color: AppColors.cardBorder)),
         ),
         child: Row(

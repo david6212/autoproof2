@@ -151,7 +151,7 @@ class _Header extends StatelessWidget {
           children: [
             Text(title, style: const TextStyle(fontSize: 16)),
             const SizedBox(width: 4),
-            const Icon(Icons.verified, size: 15, color: AppColors.white),
+            const Icon(Icons.verified, size: 15, color: AppColors.onBrand),
           ],
         ),
         if (chat != null && chat!.carTitle.isNotEmpty)
@@ -212,7 +212,7 @@ class _InputBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: const BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.cardBorder)),
       ),
       child: Row(
@@ -240,7 +240,7 @@ class _InputBar extends StatelessWidget {
             radius: 24,
             backgroundColor: AppColors.teal,
             child: IconButton(
-              icon: const Icon(Icons.send, color: AppColors.white),
+              icon: const Icon(Icons.send, color: AppColors.onBrand),
               onPressed: onSend,
             ),
           ),

@@ -68,7 +68,7 @@ class _Header extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
       decoration: const BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.surface,
         border: Border(bottom: BorderSide(color: AppColors.cardBorder)),
       ),
       child: Column(

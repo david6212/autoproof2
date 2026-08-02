@@ -14,8 +14,16 @@ class AppColors {
 
   // Backgrounds — cool near-white like the splash background.
   static const background = Color(0xFFF8FAF9);
-  static const white = Color(0xFFFFFFFF);
   static const cardBorder = Color(0xFFE6EAE8);
+
+  /// Cards, sheets, inputs — anything the page's content sits on.
+  /// Distinct from [onBrand]: this one flips in a dark theme.
+  static const surface = Color(0xFFFFFFFF);
+
+  /// Foreground on a brand-coloured or photographic background — the teal
+  /// header, a filled button's label, text over a photo scrim. Stays white in
+  /// every theme, because what it sits on stays dark in every theme.
+  static const onBrand = Color(0xFFFFFFFF);
 
   /// Fills the gutters either side of the app on a desktop window. A shade
   /// deeper than [background] so the app column reads as the page.

@@ -174,7 +174,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   label: 'המשך עם Google',
                   leading: Image.asset('assets/google_g.png',
                       width: 22, height: 22),
-                  background: AppColors.white,
+                  background: AppColors.surface,
                   foreground: AppColors.textPrimary,
                   border: true,
                   loading: _socialLoading,
@@ -185,9 +185,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 _SocialButton(
                   label: 'המשך עם Apple',
                   leading: const Icon(Icons.apple,
-                      color: AppColors.white, size: 22),
+                      color: AppColors.onBrand, size: 22),
                   background: const Color(0xFF111111),
-                  foreground: AppColors.white,
+                  foreground: AppColors.onBrand,
                   loading: _socialLoading,
                   onPressed: () => _social(
                       () => ref.read(authRepositoryProvider).signInWithApple()),

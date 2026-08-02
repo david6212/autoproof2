@@ -16,7 +16,7 @@ class AppTheme {
       colorScheme: base.colorScheme.copyWith(
         primary: AppColors.teal,
         secondary: AppColors.mintAccent,
-        surface: AppColors.white,
+        surface: AppColors.surface,
         error: AppColors.errorRed,
       ),
       textTheme: GoogleFonts.heeboTextTheme(base.textTheme).apply(
@@ -25,14 +25,14 @@ class AppTheme {
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.teal,
-        foregroundColor: AppColors.white,
+        foregroundColor: AppColors.onBrand,
         elevation: 0,
         centerTitle: true,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.teal,
-          foregroundColor: AppColors.white,
+          foregroundColor: AppColors.onBrand,
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -48,7 +48,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.teal,
-          foregroundColor: AppColors.white,
+          foregroundColor: AppColors.onBrand,
           // Height only — `Size.fromHeight` would set an INFINITE minimum
           // width and stretch every button, including dialog actions.
           minimumSize: const Size(64, 48),
@@ -76,7 +76,7 @@ class AppTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        color: AppColors.white,
+        color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -85,7 +85,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.white,
+        fillColor: AppColors.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.cardBorder),

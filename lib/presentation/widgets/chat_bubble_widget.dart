@@ -18,8 +18,8 @@ class ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isMine ? AppColors.teal : AppColors.white;
-    final fg = isMine ? AppColors.white : AppColors.textPrimary;
+    final bg = isMine ? AppColors.teal : AppColors.surface;
+    final fg = isMine ? AppColors.onBrand : AppColors.textPrimary;
 
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,

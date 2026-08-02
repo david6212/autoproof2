@@ -202,7 +202,7 @@ class _SourceBanner extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.verified_user,
-                color: AppColors.white, size: 20),
+                color: AppColors.onBrand, size: 20),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -244,7 +244,7 @@ class _Header extends StatelessWidget {
           Text(
             data.title,
             style: const TextStyle(
-              color: AppColors.white,
+              color: AppColors.onBrand,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
@@ -279,12 +279,12 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: 0.15),
+        color: AppColors.onBrand.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         text,
-        style: const TextStyle(color: AppColors.white, fontSize: 12.5),
+        style: const TextStyle(color: AppColors.onBrand, fontSize: 12.5),
       ),
     );
   }
@@ -468,7 +468,7 @@ class _FullSpecs extends StatelessWidget {
             Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-              color: i.isOdd ? AppColors.background : AppColors.white,
+              color: i.isOdd ? AppColors.background : AppColors.surface,
               child: Row(
                 children: [
                   Text(rows[i].$1,

@@ -436,14 +436,14 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
                 FloatingActionButton.small(
                   heroTag: 'nearest',
                   backgroundColor: AppColors.teal,
-                  foregroundColor: AppColors.white,
+                  foregroundColor: AppColors.onBrand,
                   onPressed: () => _goToNearest(list, me),
                   child: const Icon(Icons.near_me),
                 ),
                 const SizedBox(height: 8),
                 FloatingActionButton.small(
                   heroTag: 'me',
-                  backgroundColor: AppColors.white,
+                  backgroundColor: AppColors.surface,
                   foregroundColor: AppColors.teal,
                   onPressed: () => _mapController.move(me, 13),
                   child: const Icon(Icons.my_location),
@@ -567,7 +567,7 @@ class _ClusterBubble extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.teal,
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.white, width: 2.5),
+            border: Border.all(color: AppColors.onBrand, width: 2.5),
             boxShadow: [
               BoxShadow(
                   color: Colors.black.withValues(alpha: 0.25),
@@ -578,7 +578,7 @@ class _ClusterBubble extends StatelessWidget {
           child: Center(
             child: Text('$count',
                 style: const TextStyle(
-                    color: AppColors.white,
+                    color: AppColors.onBrand,
                     fontWeight: FontWeight.bold,
                     fontSize: 15)),
           ),
@@ -587,7 +587,7 @@ class _ClusterBubble extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
           decoration: BoxDecoration(
-            color: AppColors.white.withValues(alpha: 0.92),
+            color: AppColors.surface.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
@@ -615,7 +615,7 @@ class _ZoomHint extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: 0.94),
+        color: AppColors.surface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -648,7 +648,7 @@ class _MeDot extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.agentBlue,
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.white, width: 3),
+        border: Border.all(color: AppColors.onBrand, width: 3),
         boxShadow: [
           BoxShadow(
               color: AppColors.agentBlue.withValues(alpha: 0.4),
