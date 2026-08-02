@@ -23,6 +23,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _scroll = ScrollController();
 
   @override
+  void initState() {
+    super.initState();
+    // Opening the conversation is what clears its notification. Deferred to
+    // after the first frame so the write never happens during a build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(markChatReadProvider).call(widget.chatId);
+    });
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     _scroll.dispose();
@@ -57,6 +67,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // A message that arrives while the thread is on screen has been seen, so
+    // clear it too rather than badging a conversation the user is reading.
+    ref.listen(messagesProvider(widget.chatId), (_, __) {
+      ref.read(markChatReadProvider).call(widget.chatId);
+    });
+
     final chatAsync = ref.watch(chatProvider(widget.chatId));
     final messagesAsync = ref.watch(messagesProvider(widget.chatId));
     final me = ref.watch(authStateProvider).valueOrNull?.uid ?? '';

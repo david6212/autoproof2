@@ -17,6 +17,33 @@ final userChatsProvider = StreamProvider<List<ChatModel>>((ref) {
   return ref.watch(chatRepositoryProvider).streamUserChats(user.uid);
 });
 
+/// Chats with a message the signed-in user hasn't opened yet, newest first.
+/// This is the whole of the notifications feed — there is no other real
+/// event source on the free plan, and inventing one is how the screen ended
+/// up showing three notifications that never happened.
+final unreadChatsProvider = Provider<List<ChatModel>>((ref) {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid;
+  if (uid == null) return const [];
+  final chats = ref.watch(userChatsProvider).valueOrNull ?? const [];
+  return chats.where((c) => c.isUnreadFor(uid)).toList();
+});
+
+/// Badge count for the bell on the home screen.
+final unreadCountProvider = Provider<int>((ref) {
+  return ref.watch(unreadChatsProvider).length;
+});
+
+/// Marks a chat as read for the signed-in user.
+final markChatReadProvider = Provider<Future<void> Function(String)>((ref) {
+  return (chatId) async {
+    final user = ref.read(authStateProvider).valueOrNull;
+    if (user == null) return;
+    await ref
+        .read(chatRepositoryProvider)
+        .markRead(chatId: chatId, uid: user.uid);
+  };
+});
+
 /// The chat document for a given chatId.
 final chatProvider =
     FutureProvider.family<ChatModel?, String>((ref, chatId) async {

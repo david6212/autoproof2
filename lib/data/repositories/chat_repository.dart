@@ -78,7 +78,21 @@ class ChatRepository {
     await _chats.doc(chatId).update({
       'lastMessage': text,
       'lastMessageAt': now,
+      'lastSenderId': senderId,
+      // Sending counts as reading: the sender must never see their own
+      // message come back as an unread notification.
+      'lastRead.$senderId': now,
     });
+  }
+
+  /// Records that [uid] has seen everything in the chat. Best-effort — a
+  /// failure here must never stop the conversation from opening.
+  Future<void> markRead({required String chatId, required String uid}) async {
+    try {
+      await _chats.doc(chatId).update({'lastRead.$uid': DateTime.now()});
+    } catch (_) {
+      // Offline, or a chat the user can no longer access. Nothing to do.
+    }
   }
 
   /// Chats the user participates in, most recent first (sorted client-side to

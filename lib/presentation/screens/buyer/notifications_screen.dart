@@ -1,96 +1,150 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../widgets/app_card.dart';
 import '../../../core/theme/app_dimens.dart';
+import '../../../core/theme/app_text.dart';
+import '../../../data/models/chat_model.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/chat_provider.dart';
+import '../../widgets/app_card.dart';
+import '../../widgets/guest_prompt_view.dart';
 
-class NotificationsScreen extends StatelessWidget {
+/// Unread messages, and nothing else.
+///
+/// This screen used to list three hardcoded notifications — one of them
+/// announced "המוכר השיב להודעתך" to users nobody had written to. Everything
+/// here now comes from a real chat document; when there is nothing to report
+/// it says so rather than filling the space.
+///
+/// There is no push notification behind this. `firebase_messaging` is in
+/// pubspec.yaml but nothing imports it, so the badge only updates while the
+/// app is open. Real push needs a server to send it, i.e. the Blaze plan.
+class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isGuest = ref.watch(authStateProvider).valueOrNull == null;
+    final unread = ref.watch(unreadChatsProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('התראות')),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(12),
-          children: const [
-            _NotificationTile(
-              icon: Icons.rate_review_outlined,
-              title: 'עזרה לקונה אחר',
-              body: 'מישהו עומד לראות רכב שבדקת — יש לך כמה מילים בשבילו?',
-              unread: true,
-            ),
-            _NotificationTile(
-              icon: Icons.chat_bubble_outline,
-              title: 'הודעה חדשה',
-              body: 'המוכר השיב להודעתך',
-              unread: true,
-            ),
-            _NotificationTile(
-              icon: Icons.verified_user_outlined,
-              title: 'ברוך הבא ל-OtoV',
-              body: 'מוכרים מסווגים ומוצלבים מול המרשם. הכוח בידיים שלך.',
-              unread: false,
-            ),
-          ],
-        ),
+        child: isGuest
+            ? const GuestPromptView(
+                icon: Icons.notifications_none,
+                title: 'ההתראות שלך',
+                body: 'התחבר כדי לקבל עדכון כשמוכר משיב לך.',
+              )
+            : unread.isEmpty
+                ? const _NoNotifications()
+                : ListView.builder(
+                    padding: const EdgeInsets.all(AppSpace.md),
+                    itemCount: unread.length,
+                    itemBuilder: (context, i) =>
+                        _MessageTile(chat: unread[i]),
+                  ),
       ),
     );
   }
 }
 
-class _NotificationTile extends StatelessWidget {
-  const _NotificationTile({
-    required this.icon,
-    required this.title,
-    required this.body,
-    required this.unread,
-  });
+class _MessageTile extends StatelessWidget {
+  const _MessageTile({required this.chat});
 
-  final IconData icon;
-  final String title;
-  final String body;
-  final bool unread;
+  final ChatModel chat;
 
   @override
   Widget build(BuildContext context) {
     return AppCard(
       margin: const EdgeInsets.only(bottom: AppSpace.sm),
       padding: const EdgeInsets.all(14),
-      color: unread ? AppColors.tealLight : AppColors.white,
+      color: AppColors.tealLight,
+      onTap: () => context.push('/chat/${chat.id}'),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.teal),
-          const SizedBox(width: 12),
+          const Icon(Icons.chat_bubble_outline, color: AppColors.teal),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: TextStyle(
-                        fontWeight:
-                            unread ? FontWeight.bold : FontWeight.w600,
-                        color: AppColors.textPrimary)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        chat.carTitle.isEmpty ? 'הודעה חדשה' : chat.carTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.subtitle,
+                      ),
+                    ),
+                    Text(_ago(chat.lastMessageAt), style: AppText.micro),
+                  ],
+                ),
                 const SizedBox(height: 2),
-                Text(body,
-                    style: const TextStyle(
-                        color: AppColors.textMuted, fontSize: 13)),
+                Text(
+                  chat.lastMessage,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.bodySmMuted,
+                ),
               ],
             ),
           ),
-          if (unread)
-            Container(
-              width: 10,
-              height: 10,
-              margin: const EdgeInsets.only(top: 4),
-              decoration: const BoxDecoration(
-                color: AppColors.teal,
-                shape: BoxShape.circle,
-              ),
+          const SizedBox(width: AppSpace.sm),
+          Container(
+            width: 10,
+            height: 10,
+            margin: const EdgeInsets.only(top: 4),
+            decoration: const BoxDecoration(
+              color: AppColors.teal,
+              shape: BoxShape.circle,
             ),
+          ),
         ],
+      ),
+    );
+  }
+
+  static String _ago(DateTime? at) {
+    if (at == null) return '';
+    final d = DateTime.now().difference(at);
+    if (d.inMinutes < 1) return 'עכשיו';
+    if (d.inHours < 1) return 'לפני ${d.inMinutes} דק\'';
+    if (d.inDays < 1) return 'לפני ${d.inHours} שעות';
+    if (d.inDays < 7) return 'לפני ${d.inDays} ימים';
+    return DateFormat('d.M.yy').format(at);
+  }
+}
+
+class _NoNotifications extends StatelessWidget {
+  const _NoNotifications();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(AppSpace.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.notifications_none,
+                size: 64, color: AppColors.textSubtle),
+            SizedBox(height: AppSpace.md),
+            Text('אין התראות חדשות', style: AppText.bodyMuted),
+            SizedBox(height: AppSpace.xs),
+            Text(
+              'כשמוכר ישיב להודעה שלך, היא תופיע כאן.',
+              textAlign: TextAlign.center,
+              style: AppText.caption,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -8,6 +8,7 @@ import '../../../data/models/car_model.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
+import '../../providers/chat_provider.dart';
 import '../../widgets/car_card_widget.dart';
 import '../../widgets/login_required_sheet.dart';
 import '../../widgets/search_filter_sheet.dart';
@@ -110,17 +111,56 @@ class _Header extends StatelessWidget {
                 tooltip: 'אודות OtoV',
                 onPressed: () => context.push('/about'),
               ),
-              IconButton(
-                icon: const Icon(Icons.notifications_none,
-                    color: AppColors.white),
-                onPressed: () => context.push('/notifications'),
-              ),
+              const _NotificationBell(),
             ],
           ),
           const SizedBox(height: 4),
           const _SearchField(),
         ],
       ),
+    );
+  }
+}
+
+/// Bell with a count of genuinely unread messages. No badge when there are
+/// none — the count comes from chat documents, never from a placeholder.
+class _NotificationBell extends ConsumerWidget {
+  const _NotificationBell();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(unreadCountProvider);
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.notifications_none, color: AppColors.white),
+          tooltip: 'התראות',
+          onPressed: () => context.push('/notifications'),
+        ),
+        if (count > 0)
+          Positioned(
+            top: 6,
+            right: 6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              constraints: const BoxConstraints(minWidth: 16),
+              decoration: BoxDecoration(
+                color: AppColors.errorRed,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                count > 9 ? '9+' : '$count',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

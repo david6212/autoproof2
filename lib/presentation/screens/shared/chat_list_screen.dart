@@ -64,6 +64,7 @@ class _ChatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSeller = me == chat.sellerId;
     final title = isSeller ? 'קונה מתעניין' : 'מוכר';
+    final unread = chat.isUnreadFor(me);
 
     return ListTile(
       onTap: () => context.push('/chat/${chat.id}'),
@@ -93,11 +94,29 @@ class _ChatTile extends StatelessWidget {
         chat.lastMessage.isEmpty ? chat.carTitle : chat.lastMessage,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(color: AppColors.textMuted),
+        style: TextStyle(
+          color: unread ? AppColors.textPrimary : AppColors.textMuted,
+          fontWeight: unread ? FontWeight.w600 : FontWeight.normal,
+        ),
       ),
-      trailing: Text(
-        _time(chat.lastMessageAt),
-        style: const TextStyle(color: AppColors.textSubtle, fontSize: 12.5),
+      trailing: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            _time(chat.lastMessageAt),
+            style: const TextStyle(color: AppColors.textSubtle, fontSize: 12.5),
+          ),
+          if (unread) ...[
+            const SizedBox(height: 4),
+            Container(
+              width: 9,
+              height: 9,
+              decoration: const BoxDecoration(
+                  color: AppColors.teal, shape: BoxShape.circle),
+            ),
+          ],
+        ],
       ),
     );
   }
