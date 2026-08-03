@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_palette.dart';
+import 'app_nav_bar.dart';
 
 /// Bottom TabBar shell for seller screens: בית | המודעה | פרסום | צ'אטים | פרופיל
 class SellerShell extends StatelessWidget {
@@ -10,13 +10,13 @@ class SellerShell extends StatelessWidget {
   final Widget child;
 
   static const _tabs = [
-    _Tab('/seller', Icons.home_outlined, Icons.home, 'בית'),
-    _Tab('/seller/listing', Icons.directions_car_outlined,
+    NavTab('/seller', Icons.home_outlined, Icons.home, 'בית'),
+    NavTab('/seller/listing', Icons.directions_car_outlined,
         Icons.directions_car, 'המודעה'),
-    _Tab('/seller/create', Icons.add_circle_outline, Icons.add_circle,
+    NavTab('/seller/create', Icons.add_circle_outline, Icons.add_circle,
         'פרסום'),
-    _Tab('/chats', Icons.chat_bubble_outline, Icons.chat_bubble, 'צ\'אטים'),
-    _Tab('/profile', Icons.person_outline, Icons.person, 'פרופיל'),
+    NavTab('/chats', Icons.chat_bubble_outline, Icons.chat_bubble, 'צ\'אטים'),
+    NavTab('/profile', Icons.person_outline, Icons.person, 'פרופיל'),
   ];
 
   int _indexFor(String location) {
@@ -40,27 +40,11 @@ class SellerShell extends StatelessWidget {
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: current,
-        indicatorColor: context.colors.tealLight,
-        onDestinationSelected: (i) => context.go(_tabs[i].path),
-        destinations: [
-          for (final t in _tabs)
-            NavigationDestination(
-              icon: Icon(t.icon),
-              selectedIcon: Icon(t.activeIcon, color: context.colors.teal),
-              label: t.label,
-            ),
-        ],
+      bottomNavigationBar: AppNavBar(
+        tabs: _tabs,
+        currentIndex: current,
+        onSelected: (i) => context.go(_tabs[i].path),
       ),
     );
   }
-}
-
-class _Tab {
-  const _Tab(this.path, this.icon, this.activeIcon, this.label);
-  final String path;
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
 }

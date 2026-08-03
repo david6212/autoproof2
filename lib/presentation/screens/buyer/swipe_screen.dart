@@ -35,7 +35,7 @@ class SwipeScreen extends ConsumerWidget {
     ref.read(swipedIdsProvider.notifier).update((s) => {...s, car.id});
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('נשמר למועדפים ❤')),
+        const SnackBar(content: Text('סימנת וי — הרכב נשמר ✓')),
       );
     }
   }
@@ -193,7 +193,7 @@ class _SwipeBody extends StatelessWidget {
               ),
               const SizedBox(width: 20),
               _CircleButton(
-                icon: Icons.favorite,
+                icon: Icons.check,
                 color: context.colors.teal,
                 size: 64,
                 onTap: onLike,
