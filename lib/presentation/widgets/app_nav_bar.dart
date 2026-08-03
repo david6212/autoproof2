@@ -5,12 +5,18 @@ import '../../core/theme/app_palette.dart';
 
 /// One destination in [AppNavBar].
 class NavTab {
-  const NavTab(this.path, this.icon, this.activeIcon, this.label);
+  const NavTab(this.path, this.icon, this.activeIcon, this.label,
+      {this.iconBuilder});
 
   final String path;
   final IconData icon;
   final IconData activeIcon;
   final String label;
+
+  /// Draws the icon instead of [icon]/[activeIcon], for a tab whose mark is
+  /// not a Material glyph. Gets the pill's foreground and background so it
+  /// can match either state.
+  final Widget Function(bool selected, Color fg, Color bg)? iconBuilder;
 }
 
 /// The app's bottom navigation: a floating rounded bar, with the selected
@@ -84,6 +90,7 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = selected ? context.colors.onBrand : context.colors.textSubtle;
+    final bg = selected ? context.colors.teal : context.colors.surface;
 
     return Semantics(
       selected: selected,
@@ -100,13 +107,15 @@ class _NavItem extends StatelessWidget {
             vertical: 10,
           ),
           decoration: BoxDecoration(
-            color: selected ? context.colors.teal : Colors.transparent,
+            color: selected ? bg : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(selected ? tab.activeIcon : tab.icon, size: 22, color: fg),
+              tab.iconBuilder?.call(selected, fg, bg) ??
+                  Icon(selected ? tab.activeIcon : tab.icon,
+                      size: 22, color: fg),
               // The label belongs to the pill, so it appears and disappears
               // with it rather than being permanently squeezed in.
               if (selected) ...[

@@ -22,6 +22,7 @@ import '../../widgets/seller_encounter_card.dart';
 import '../../widgets/seller_type_badge.dart';
 import '../../widgets/share_listing_button.dart';
 import '../../../core/theme/app_text.dart';
+import '../../widgets/heart_check_icon.dart';
 
 class CarDetailScreen extends ConsumerWidget {
   const CarDetailScreen({super.key, required this.carId});
@@ -704,8 +705,14 @@ class _ActionBar extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             _RoundAction(
-              icon: isSaved ? Icons.favorite : Icons.favorite_border,
-              color: isSaved ? context.colors.errorRed : context.colors.textMuted,
+              icon: Icons.favorite_border,
+              iconWidget: HeartCheckIcon(
+                size: 24,
+                filled: isSaved,
+                color:
+                    isSaved ? context.colors.teal : context.colors.textMuted,
+                checkColor: context.colors.background,
+              ),
               onTap: () {
                 // Saving requires an account — prompt guests to sign in.
                 final isGuest =
@@ -726,10 +733,13 @@ class _ActionBar extends ConsumerWidget {
 }
 
 class _RoundAction extends StatelessWidget {
-  const _RoundAction({required this.icon, required this.onTap, this.color});
+  const _RoundAction(
+      {required this.icon, required this.onTap, this.iconWidget});
   final IconData icon;
   final VoidCallback onTap;
-  final Color? color;
+
+  /// Drawn instead of [icon] when the mark isn't a Material glyph.
+  final Widget? iconWidget;
 
   @override
   Widget build(BuildContext context) {
@@ -744,7 +754,8 @@ class _RoundAction extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: context.colors.cardBorder),
         ),
-        child: Icon(icon, color: color ?? context.colors.textPrimary),
+        child: iconWidget ??
+            Icon(icon, color: context.colors.textPrimary),
       ),
     );
   }

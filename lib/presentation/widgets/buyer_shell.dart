@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'app_nav_bar.dart';
+import 'heart_check_icon.dart';
 
 /// Bottom TabBar shell for buyer screens: בית | שמורים | גילוי | צ'אטים | פרופיל
 class BuyerShell extends StatelessWidget {
@@ -11,7 +12,8 @@ class BuyerShell extends StatelessWidget {
 
   static const _tabs = [
     NavTab('/home', Icons.home_outlined, Icons.home, 'בית'),
-    NavTab('/saved', Icons.favorite_border, Icons.favorite, 'שמורים'),
+    NavTab('/saved', Icons.favorite_border, Icons.favorite, 'שמורים',
+        iconBuilder: savedTabIcon),
     NavTab('/discover', Icons.explore_outlined, Icons.explore, 'גילוי'),
     NavTab('/chats', Icons.chat_bubble_outline, Icons.chat_bubble, 'צ\'אטים'),
     NavTab('/profile', Icons.person_outline, Icons.person, 'פרופיל'),

@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../widgets/car_card_widget.dart';
 import '../../widgets/guest_prompt_view.dart';
+import '../../widgets/heart_check_icon.dart';
 
 class SavedScreen extends ConsumerWidget {
   const SavedScreen({super.key});
@@ -21,8 +22,10 @@ class SavedScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('רכבים שמורים')),
       body: SafeArea(
         child: isGuest
-            ? const GuestPromptView(
+            ? GuestPromptView(
                 icon: Icons.favorite_border,
+                iconWidget:
+                    HeartCheckIcon(size: 40, color: context.colors.teal),
                 title: 'שמור רכבים שאהבת',
                 body: 'התחבר כדי לשמור רכבים ולחזור אליהם בקלות.',
               )
@@ -61,8 +64,7 @@ class _EmptySaved extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.favorite_border,
-              size: 64, color: context.colors.textSubtle),
+          HeartCheckIcon(size: 64, color: context.colors.textSubtle),
           const SizedBox(height: 12),
           Text('עדיין לא שמרת רכבים',
               style: TextStyle(color: context.colors.textMuted)),

@@ -8,6 +8,7 @@ import '../../core/theme/app_text.dart';
 import 'app_card.dart';
 import 'responsive_frame.dart';
 import 'seller_type_badge.dart';
+import 'heart_check_icon.dart';
 
 /// Lays out car cards: one per row on a phone, a grid once the viewport is
 /// wide enough for two. Home and Saved share it so the breakpoint and the
@@ -211,9 +212,12 @@ class CarCard extends StatelessWidget {
               shape: const CircleBorder(),
               child: IconButton(
                 iconSize: 20,
-                icon: Icon(
-                  saved ? Icons.favorite : Icons.favorite_border,
-                  color: saved ? context.colors.errorRed : context.colors.textMuted,
+                icon: HeartCheckIcon(
+                  size: 20,
+                  filled: saved,
+                  color:
+                      saved ? context.colors.teal : context.colors.textMuted,
+                  checkColor: context.colors.surface,
                 ),
                 onPressed: onToggleSave,
               ),

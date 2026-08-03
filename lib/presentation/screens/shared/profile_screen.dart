@@ -9,6 +9,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../widgets/guest_prompt_view.dart';
 import '../../../core/theme/app_text.dart';
+import '../../widgets/heart_check_icon.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -133,6 +134,8 @@ class _Content extends StatelessWidget {
         ),
         _MenuRow(
           icon: Icons.favorite_border,
+          iconWidget:
+              HeartCheckIcon(size: 24, color: context.colors.textPrimary),
           label: 'רכבים שמורים',
           onTap: () => context.go('/saved'),
         ),
@@ -241,9 +244,13 @@ class _MenuRow extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.color,
+    this.iconWidget,
   });
 
   final IconData icon;
+
+  /// Drawn instead of [icon] when the mark isn't a Material glyph.
+  final Widget? iconWidget;
   final String label;
   final VoidCallback onTap;
   final Color? color;
@@ -252,7 +259,7 @@ class _MenuRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = color ?? context.colors.textPrimary;
     return ListTile(
-      leading: Icon(icon, color: c),
+      leading: iconWidget ?? Icon(icon, color: c),
       title: Text(label, style: TextStyle(color: c)),
       trailing: Icon(Icons.chevron_left, color: context.colors.textSubtle),
       onTap: onTap,

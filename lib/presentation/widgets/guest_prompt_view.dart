@@ -13,9 +13,13 @@ class GuestPromptView extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.body,
+    this.iconWidget,
   });
 
   final IconData icon;
+
+  /// Drawn instead of [icon] when the mark isn't a Material glyph.
+  final Widget? iconWidget;
   final String title;
   final String body;
 
@@ -34,7 +38,10 @@ class GuestPromptView extends StatelessWidget {
                 color: context.colors.tealLight,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 40, color: context.colors.teal),
+              child: Center(
+                child: iconWidget ??
+                    Icon(icon, size: 40, color: context.colors.teal),
+              ),
             ),
             const SizedBox(height: 20),
             Text(

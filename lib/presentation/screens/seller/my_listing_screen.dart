@@ -11,6 +11,7 @@ import '../../../core/theme/app_text.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/share_listing_button.dart';
 import '../../../core/theme/app_dimens.dart';
+import '../../widgets/heart_check_icon.dart';
 
 class MyListingScreen extends ConsumerWidget {
   const MyListingScreen({super.key});
@@ -91,8 +92,10 @@ class _Content extends StatelessWidget {
                 icon: Icons.remove_red_eye_outlined,
                 label: 'צפיות',
                 value: '—'),
-            const _Stat(
+            _Stat(
                 icon: Icons.favorite_border,
+                iconWidget: HeartCheckIcon(
+                    size: 20, color: context.colors.teal),
                 label: 'מתעניינים',
                 value: '—'),
             _Stat(
@@ -242,8 +245,15 @@ class _SellerActions extends ConsumerWidget {
 }
 
 class _Stat extends StatelessWidget {
-  const _Stat({required this.icon, required this.label, required this.value});
+  const _Stat(
+      {required this.icon,
+      required this.label,
+      required this.value,
+      this.iconWidget});
   final IconData icon;
+
+  /// Drawn instead of [icon] when the mark isn't a Material glyph.
+  final Widget? iconWidget;
   final String label;
   final String value;
 
@@ -256,7 +266,7 @@ class _Stat extends StatelessWidget {
         radius: AppRadius.sm,
         child: Column(
           children: [
-            Icon(icon, color: context.colors.teal, size: 20),
+            iconWidget ?? Icon(icon, color: context.colors.teal, size: 20),
             const SizedBox(height: 4),
             Text(value,
                 style: AppText.title),
