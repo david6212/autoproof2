@@ -97,6 +97,9 @@ class OtovWordmark extends StatelessWidget {
     this.fontSize = 34,
     this.color,
     this.checkColor,
+    this.checkScale = 1.0,
+    this.entrance = 1.0,
+    this.checkProgress = 1.0,
   });
 
   final double fontSize;
@@ -106,13 +109,30 @@ class OtovWordmark extends StatelessWidget {
   final Color? color;
   final Color? checkColor;
 
+  /// Enlarges the V relative to the cap height. Above 1 it rises over the
+  /// letters, which is the point on the splash — there the V is the subject,
+  /// not a letterform.
+  final double checkScale;
+
+  /// 0 = the two halves start apart, 1 = joined. Drives the splash, where the
+  /// name assembles the same way the emblem does: "Oto" in from the left, the
+  /// V in from the right, meeting. Everywhere else it is simply 1.
+  final double entrance;
+
+  /// How much of the V's stroke is drawn, 0..1.
+  final double checkProgress;
+
   @override
   Widget build(BuildContext context) {
     // A check is wider than it is tall and sits above the baseline, so it is
     // sized off cap height rather than the full em.
-    final capHeight = fontSize * 0.72;
+    final capHeight = fontSize * 0.72 * checkScale;
     final ink = color ?? context.colors.textPrimary;
     final check = checkColor ?? context.colors.teal;
+
+    // Each half travels this far, in opposite directions. Proportional to the
+    // type size so the gesture is the same at any scale.
+    final travel = fontSize * 2.2 * (1 - entrance.clamp(0.0, 1.0));
 
     // Latin mark in an RTL app — pin the direction so it never flips.
     return Directionality(
@@ -121,14 +141,19 @@ class OtovWordmark extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Text(
-            'Oto',
-            style: GoogleFonts.poppins(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w700,
-              color: ink,
-              letterSpacing: 0.5,
-              height: 1,
+          // Translating rather than re-laying-out: the Row keeps its slots, so
+          // the mark never reflows while it assembles.
+          Transform.translate(
+            offset: Offset(-travel, 0),
+            child: Text(
+              'Oto',
+              style: GoogleFonts.poppins(
+                fontSize: fontSize,
+                fontWeight: FontWeight.w700,
+                color: ink,
+                letterSpacing: 0.5,
+                height: 1,
+              ),
             ),
           ),
           Padding(
@@ -138,9 +163,12 @@ class OtovWordmark extends StatelessWidget {
               left: fontSize * 0.06,
               bottom: fontSize * 0.04,
             ),
-            child: CustomPaint(
-              size: Size(capHeight * 1.05, capHeight),
-              painter: CheckPainter(check, 1),
+            child: Transform.translate(
+              offset: Offset(travel, 0),
+              child: CustomPaint(
+                size: Size(capHeight * 1.05, capHeight),
+                painter: CheckPainter(check, checkProgress),
+              ),
             ),
           ),
         ],

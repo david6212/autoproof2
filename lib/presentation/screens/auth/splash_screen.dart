@@ -13,8 +13,10 @@ import '../../widgets/otov_logo.dart';
 /// from opposite sides and meet inside it — the car being approved, in one
 /// gesture. They share an interval and a curve so the convergence is
 /// symmetrical, and the check finishes drawing itself just before it lands.
-/// Then the wordmark rises, and the check the shield drew reappears as the V
-/// of the name.
+/// Then the name does the same thing: "Oto" in from the left, its V in from
+/// the right, meeting — so the check the shield just drew reappears as the V,
+/// arriving the same way. The V is enlarged there because on this screen it is
+/// the subject rather than a letterform.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -31,11 +33,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late final Animation<double> _shield; // 0..1  (0–450ms)
   late final Animation<double> _car; //    0..1  (350–1000ms)
   late final Animation<double> _check; //  0..1  (350–1000ms)
-  late final Animation<double> _text; //   0..1  (1000–1400ms)
+  late final Animation<double> _text; //   0..1  (1000–1700ms)
 
   /// How far out the car and the check start, in logical pixels. They travel
   /// the same distance from opposite sides so they meet in the middle.
   static const _approach = 130.0;
+
+  /// Total length of the intro. The wordmark's own convergence needs room
+  /// after the emblem's, so this is longer than the emblem alone required.
+  static const _introMs = 1700;
 
   bool _exiting = false;
   Timer? _holdTimer;
@@ -46,13 +52,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     // Total intro = 1400ms; each stage is an Interval within it.
     _c = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: _introMs),
     );
 
     Animation<double> stage(double startMs, double endMs, Curve curve) {
       return CurvedAnimation(
         parent: _c,
-        curve: Interval(startMs / 1400, endMs / 1400, curve: curve),
+        curve: Interval(startMs / _introMs, endMs / _introMs, curve: curve),
       );
     }
 
@@ -63,7 +69,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     // an approach. This accelerates out and decelerates into the meeting.
     _car = stage(350, 1000, Curves.easeInOutCubic);
     _check = stage(350, 1000, Curves.easeInOutCubic);
-    _text = stage(1000, 1400, Curves.easeOut);
+    // Same curve as the emblem's convergence, so the name assembles with the
+    // same motion rather than a different one.
+    _text = stage(1000, 1700, Curves.easeInOutCubic);
 
     _c.forward();
 
@@ -164,15 +172,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   ),
                   const SizedBox(height: 22),
                   // ---- Wordmark ----
-                  // The same mark used everywhere else, so the check the shield
-                  // just drew reappears as the V of the name. It rises and
-                  // settles rather than sliding, letting the emblem stay the
-                  // moving element.
+                  // The same mark used everywhere else, driven through its
+                  // entrance: the two halves come together exactly as the car
+                  // and the check just did, and its V draws itself on arrival.
                   Opacity(
                     opacity: _text.value.clamp(0.0, 1.0),
-                    child: Transform.translate(
-                      offset: Offset(0, 10 * (1 - _text.value)),
-                      child: const OtovWordmark(fontSize: 30),
+                    child: OtovWordmark(
+                      fontSize: 30,
+                      checkScale: 1.4,
+                      entrance: _text.value.clamp(0.0, 1.0),
+                      checkProgress: (_text.value * 1.3).clamp(0.0, 1.0),
                     ),
                   ),
                 ],

@@ -18,9 +18,9 @@ void main() {
       ),
     );
 
-    // The intro runs 1400ms; step through it finely enough to land inside
+    // The intro runs 1700ms; step through it finely enough to land inside
     // every stage, including the overshoot at the end of each.
-    for (var t = 0; t <= 1600; t += 50) {
+    for (var t = 0; t <= 1900; t += 50) {
       await tester.pump(const Duration(milliseconds: 50));
       expect(tester.takeException(), isNull, reason: 'threw at ${t}ms');
     }
@@ -54,21 +54,45 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('they have met by the time the intro ends', (tester) async {
+  testWidgets('the name assembles from opposite sides too', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(home: SplashScreen()),
       ),
     );
 
-    await tester.pump(const Duration(milliseconds: 1400));
+    // The emblem has landed; the wordmark's own stage (1000–1700ms) is running.
+    await tester.pump(const Duration(milliseconds: 1300));
+
+    final dxs = tester
+        .widgetList<Transform>(find.byType(Transform))
+        .map((t) => t.transform.getTranslation().x)
+        .where((x) => x.abs() > 1)
+        .toList();
+
+    expect(dxs.any((x) => x < 0), isTrue,
+        reason: '"Oto" should still be coming in from the left');
+    expect(dxs.any((x) => x > 0), isTrue,
+        reason: 'the V should still be coming in from the right');
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('everything has met by the time the intro ends', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(home: SplashScreen()),
+      ),
+    );
+
+    // Intro is 1700ms; a little past it, nothing should still be travelling.
+    await tester.pump(const Duration(milliseconds: 1750));
 
     final dxs = tester
         .widgetList<Transform>(find.byType(Transform))
         .map((t) => t.transform.getTranslation().x)
         .toList();
 
-    // Everything has settled onto its resting x.
     for (final dx in dxs) {
       expect(dx.abs(), lessThan(1.0));
     }
