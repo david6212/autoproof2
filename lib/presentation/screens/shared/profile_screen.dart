@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_palette.dart';
-import '../../../core/theme/app_dimens.dart';
 import '../../providers/theme_provider.dart';
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
@@ -153,7 +152,7 @@ class _Content extends StatelessWidget {
           onTap: () => context.push('/legal'),
         ),
         const Divider(height: 24),
-        const _ThemePicker(),
+        const _ThemeToggle(),
         const Divider(height: 24),
         // A visible, self-serve route to have personal data removed.
         _MenuRow(
@@ -172,92 +171,66 @@ class _Content extends StatelessWidget {
   }
 }
 
-/// Light / dark / follow-the-device.
+/// Dark mode as a plain on/off switch, like the location toggle in a phone's
+/// settings.
 ///
-/// "לפי המכשיר" is first and is the default: someone who has already set
-/// their phone to dark has answered this question once already.
-class _ThemePicker extends ConsumerWidget {
-  const _ThemePicker();
-
-  static const _options = [
-    (ThemeMode.system, Icons.brightness_auto_outlined, 'לפי המכשיר'),
-    (ThemeMode.light, Icons.light_mode_outlined, 'בהיר'),
-    (ThemeMode.dark, Icons.dark_mode_outlined, 'כהה'),
-  ];
+/// The underlying setting still has three states — light, dark, and follow
+/// the device — and the device is still the default, since someone whose
+/// phone is already dark has answered this question once. A switch can only
+/// show two, so while the setting is "follow the device" the switch mirrors
+/// what the device is currently doing and says so underneath. Touching it is
+/// what turns that into a deliberate choice, and a reset link appears to hand
+/// the decision back.
+class _ThemeToggle extends ConsumerWidget {
+  const _ThemeToggle();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
+    final deviceIsDark =
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('מראה', style: context.text.caption),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              for (final (value, icon, label) in _options)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: _ThemeOption(
-                      icon: icon,
-                      label: label,
-                      selected: mode == value,
-                      onTap: () =>
-                          ref.read(themeModeProvider.notifier).set(value),
-                    ),
-                  ),
-                ),
-            ],
+    final isDark = switch (mode) {
+      ThemeMode.dark => true,
+      ThemeMode.light => false,
+      ThemeMode.system => deviceIsDark,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SwitchListTile(
+          value: isDark,
+          onChanged: (on) => ref
+              .read(themeModeProvider.notifier)
+              .set(on ? ThemeMode.dark : ThemeMode.light),
+          title: const Text('מצב כהה'),
+          subtitle: Text(
+            mode == ThemeMode.system
+                ? 'לפי הגדרות המכשיר'
+                : (isDark ? 'דולק' : 'כבוי'),
+            style: context.text.caption,
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ThemeOption extends StatelessWidget {
-  const _ThemeOption({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final fg = selected ? context.colors.onBrand : context.colors.textMuted;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.sm),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? context.colors.teal : context.colors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(
-            color: selected ? context.colors.teal : context.colors.cardBorder,
+          secondary: Icon(
+            isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+            color: context.colors.textPrimary,
           ),
         ),
-        child: Column(
-          children: [
-            Icon(icon, size: 20, color: fg),
-            const SizedBox(height: 4),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w600, color: fg)),
-          ],
-        ),
-      ),
+        if (mode != ThemeMode.system)
+          Padding(
+            padding: const EdgeInsets.only(right: 16, bottom: 4),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton.icon(
+                icon: const Icon(Icons.brightness_auto_outlined, size: 18),
+                label: const Text('חזרה להגדרות המכשיר'),
+                onPressed: () => ref
+                    .read(themeModeProvider.notifier)
+                    .set(ThemeMode.system),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
