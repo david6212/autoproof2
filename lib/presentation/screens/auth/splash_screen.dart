@@ -7,9 +7,14 @@ import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/otov_logo.dart';
 
-/// Animated OtoV splash — a Flutter port of the GSAP prototype:
-/// shield scales in → car drops into the shield → the wordmark rises in →
-/// the checkmark draws itself on. Then hold and fade out to the app.
+/// Animated OtoV splash.
+///
+/// The shield scales in, then the car and the check travel toward each other
+/// from opposite sides and meet inside it — the car being approved, in one
+/// gesture. They share an interval and a curve so the convergence is
+/// symmetrical, and the check finishes drawing itself just before it lands.
+/// Then the wordmark rises, and the check the shield drew reappears as the V
+/// of the name.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -23,10 +28,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   static const _bg = Color(0xFFF8FAF9);
 
   late final AnimationController _c;
-  late final Animation<double> _shield; // 0..1  (0–500ms)
-  late final Animation<double> _car; //    0..1  (300–900ms)
-  late final Animation<double> _text; //   0..1  (600–1100ms)
-  late final Animation<double> _check; //  0..1  (1000–1400ms)
+  late final Animation<double> _shield; // 0..1  (0–450ms)
+  late final Animation<double> _car; //    0..1  (350–1000ms)
+  late final Animation<double> _check; //  0..1  (350–1000ms)
+  late final Animation<double> _text; //   0..1  (1000–1400ms)
+
+  /// How far out the car and the check start, in logical pixels. They travel
+  /// the same distance from opposite sides so they meet in the middle.
+  static const _approach = 130.0;
 
   bool _exiting = false;
   Timer? _holdTimer;
@@ -47,10 +56,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       );
     }
 
-    _shield = stage(0, 500, Curves.easeOutBack); // back.out
-    _car = stage(300, 900, Curves.bounceOut); //   bounce.out
-    _text = stage(600, 1100, Curves.easeOut); //   power2.out
-    _check = stage(1000, 1400, Curves.easeInOut); // power1.inOut
+    _shield = stage(0, 450, Curves.easeOutBack);
+    // Same interval and same curve for both, so they converge symmetrically.
+    // easeInOutCubic rather than a back-out: back-out puts ~95% of the travel
+    // into the first fifth of the window, which reads as a snap rather than
+    // an approach. This accelerates out and decelerates into the meeting.
+    _car = stage(350, 1000, Curves.easeInOutCubic);
+    _check = stage(350, 1000, Curves.easeInOutCubic);
+    _text = stage(1000, 1400, Curves.easeOut);
 
     _c.forward();
 
@@ -109,13 +122,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                             ),
                           ),
                         ),
-                        // Car: opacity + drop from above, settling slightly
-                        // above centre so the check sits at the shield's base.
+                        // Car: comes in from the left, settling slightly above
+                        // centre so the check has the shield's base to itself.
                         Opacity(
                           opacity: _car.value.clamp(0.0, 1.0),
                           child: Transform.translate(
                             offset: Offset(
-                                0, (-90 * (1 - _car.value)) - 6 * _car.value),
+                              -_approach * (1 - _car.value),
+                              -6 * _car.value,
+                            ),
                             child: Image.asset(
                               'assets/layers/car.png',
                               width: 72,
@@ -123,13 +138,25 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                             ),
                           ),
                         ),
-                        // Checkmark: draws itself on, bottom-right.
+                        // Check: comes to meet it from the right, drawing
+                        // itself on the way. The stroke runs slightly ahead of
+                        // the travel so it is complete as it lands.
                         Positioned(
                           right: 0,
-                          bottom: 12,
-                          child: CustomPaint(
-                            size: const Size(48, 48),
-                            painter: CheckPainter(_green, _check.value),
+                          bottom: 8,
+                          child: Opacity(
+                            opacity: _check.value.clamp(0.0, 1.0),
+                            child: Transform.translate(
+                              offset:
+                                  Offset(_approach * (1 - _check.value), 0),
+                              child: CustomPaint(
+                                size: const Size(62, 62),
+                                painter: CheckPainter(
+                                  _green,
+                                  (_check.value * 1.3).clamp(0.0, 1.0),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ],
