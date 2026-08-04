@@ -6,6 +6,7 @@ import '../../data/repositories/storage_repository.dart';
 import 'auth_provider.dart';
 import 'cars_provider.dart';
 import 'seller_verification_provider.dart';
+import '../../core/utils/validators.dart';
 
 final storageRepositoryProvider = Provider<StorageRepository>((ref) {
   return StorageRepository();
@@ -96,6 +97,22 @@ class CreateListingController extends Notifier<CreateListingState> {
     final p = double.tryParse(state.price) ?? 0;
     final k = int.tryParse(state.km) ?? -1;
     return p > 0 && k >= 0 && state.area.trim().isNotEmpty;
+  }
+
+  /// Non-null when the entered km is below the official last-test reading.
+  ///
+  /// Surfaced as a warning the seller must acknowledge, not a block: an
+  /// odometer can be legitimately replaced and the registry reading can be
+  /// stale, so refusing outright would assert more than we checked. The
+  /// discrepancy is shown to buyers either way, by PlateHistoryCard.
+  String? get kmWarning {
+    final car = ref.read(sellerVerificationControllerProvider).carData;
+    final entered = int.tryParse(state.km);
+    if (car == null || entered == null) return null;
+    return Validators.kmAgainstLastTest(
+      enteredKm: entered,
+      lastTestKm: car.lastTestKm,
+    );
   }
 
   Future<void> publish() async {

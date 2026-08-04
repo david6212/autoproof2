@@ -481,10 +481,56 @@ class _StepReview extends ConsumerWidget {
         _BottomBar(
           label: 'פרסם מודעה',
           loading: s.publishing,
-          onPressed: () => notifier.publish(),
+          onPressed: () async {
+            // A reading below the last official test is usually a typo and
+            // occasionally worse. Either way the seller gets to see the two
+            // numbers before the listing goes out.
+            final warning = notifier.kmWarning;
+            if (warning != null &&
+                !await _confirmKm(context, warning)) {
+              return;
+            }
+            notifier.publish();
+          },
         ),
       ],
     );
+  }
+
+  /// Shows the mismatch and asks whether to go ahead. Returns false if the
+  /// seller backs out to fix the number.
+  Future<bool> _confirmKm(BuildContext context, String warning) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: Icon(Icons.speed, color: dialogContext.colors.warnText),
+        title: const Text('לבדוק את הקילומטראז\''),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(warning, style: AppText.body),
+            const SizedBox(height: 12),
+            Text(
+              'ייתכן שזו טעות הקלדה. אם המספר נכון — למשל לאחר החלפת מד-אוץ — '
+              'אפשר להמשיך, וההפרש יוצג לקונים לצד הנתון הרשמי.',
+              style: dialogContext.text.bodySmMuted,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('חזרה לתיקון'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('המספר נכון, פרסם'),
+          ),
+        ],
+      ),
+    );
+    return ok ?? false;
   }
 
   Widget _reviewRow(BuildContext context, String label, String value) {
