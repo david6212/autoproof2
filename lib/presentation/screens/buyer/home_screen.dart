@@ -12,6 +12,7 @@ import '../../providers/chat_provider.dart';
 import '../../widgets/car_card_widget.dart';
 import '../../widgets/login_required_sheet.dart';
 import '../../widgets/search_filter_sheet.dart';
+import '../../widgets/skeleton.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -59,8 +60,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             Expanded(
               child: carsAsync.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                loading: () => const CarListSkeleton(),
                 error: (e, _) => _ErrorState(
                   onRetry: () => ref.invalidate(activeCarsProvider),
                 ),

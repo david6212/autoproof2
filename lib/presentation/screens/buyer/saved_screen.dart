@@ -8,6 +8,7 @@ import '../../providers/cars_provider.dart';
 import '../../widgets/car_card_widget.dart';
 import '../../widgets/guest_prompt_view.dart';
 import '../../widgets/heart_check_icon.dart';
+import '../../widgets/skeleton.dart';
 
 class SavedScreen extends ConsumerWidget {
   const SavedScreen({super.key});
@@ -30,7 +31,8 @@ class SavedScreen extends ConsumerWidget {
                 body: 'התחבר כדי לשמור רכבים ולחזור אליהם בקלות.',
               )
             : savedAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () =>
+              const CarListSkeleton(padding: EdgeInsets.all(16)),
           error: (_, __) => Center(
             child: Text('שגיאה בטעינת השמורים',
                 style: TextStyle(color: context.colors.textMuted)),

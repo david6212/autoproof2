@@ -8,6 +8,7 @@ import '../../../data/models/chat_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../widgets/guest_prompt_view.dart';
+import '../../widgets/skeleton.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
@@ -28,7 +29,7 @@ class ChatListScreen extends ConsumerWidget {
                 body: 'התחבר כדי לפתוח שיחות עם בעלי הרכבים.',
               )
             : chatsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const ChatListSkeleton(),
           error: (_, __) => Center(
             child: Text('שגיאה בטעינת הצ\'אטים',
                 style: TextStyle(color: context.colors.textMuted)),
