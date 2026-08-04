@@ -18,6 +18,7 @@ import '../../widgets/car_notes_section.dart';
 import '../../widgets/gov_red_flags_card.dart';
 import '../../widgets/login_required_sheet.dart';
 import '../../widgets/plate_history_card.dart';
+import '../../widgets/report_listing_sheet.dart';
 import '../../widgets/seller_encounter_card.dart';
 import '../../widgets/seller_type_badge.dart';
 import '../../widgets/share_listing_button.dart';
@@ -161,7 +162,22 @@ class _Content extends ConsumerWidget {
                       // Official records and user reports sit side by side on
                       // this page, so the notice belongs here.
                       const LiabilityNotice(),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 8),
+                      // The content-removal policy promises a route to report
+                      // a whole listing, not just an individual note. This is
+                      // it, placed with the other fine print.
+                      Center(
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.flag_outlined, size: 18),
+                          label: const Text('דווח על המודעה'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: context.colors.textMuted,
+                          ),
+                          onPressed: () =>
+                              showReportListing(context, ref, carId: car.id),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
