@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>OtoV — נתוני מרשם הרכב על כל מודעה יד שנייה</title>
+<meta name="description" content="OtoV מצליב כל מודעת רכב יד שנייה מול מאגרי משרד התחבורה: קילומטראז' מהטסט האחרון, שינוי מבנה, ריקולים פתוחים ובעלות. בחינם, לפני שנוסעים לראות את הרכב.">
+<link rel="canonical" href="https://otov.web.app/">
+<meta name="theme-color" content="#558B6E">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="OtoV">
+<meta property="og:locale" content="he_IL">
+<meta property="og:url" content="https://otov.web.app/">
+<meta property="og:title" content="OtoV — נתוני מרשם הרכב על כל מודעה יד שנייה">
+<meta property="og:description" content="לדעת מה כתוב על הרכב לפני שנוסעים לראות אותו. נתוני משרד התחבורה על כל מודעה, בחינם.">
+<meta name="twitter:card" content="summary">
+
+<link rel="icon" href="/app/favicon.png">
+<link rel="apple-touch-icon" href="/app/icons/Icon-192.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "OtoV",
+  "applicationCategory": "AutoAndVehiclesApplication",
+  "operatingSystem": "Android, Web",
+  "url": "https://otov.web.app/",
+  "inLanguage": "he-IL",
+  "description": "פלטפורמה לרכב יד שנייה בישראל שמצליבה כל מודעה מול מאגרי משרד התחבורה.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "ILS" }
+}
+</script>
+
+<script>
+  // A listing link shared before the app moved to /app/ looks like
+  // https://otov.web.app/#/car/xyz — and a URL fragment never reaches the
+  // server, so no hosting redirect can catch it. This does, before anything
+  // renders. Runs first so a shared link never flashes the landing page.
+  (function () {
+    var h = window.location.hash;
+    if (h && h.length > 2 && h.charAt(1) === '/') {
+      window.location.replace('/app/' + h);
+    }
+  })();
+</script>
+
+<style>
+  :root{
+    --brand:#558B6E; --brand-deep:#3C614C; --brand-wash:#E7EFEA;
+    --ink:#1A202C; --muted:#5A6169; --subtle:#767C81;
+    --ground:#F8FAF9; --surface:#FFFFFF; --line:#E6EAE8;
+    --official:#3E6DB5; --official-wash:#E7EFFA;
+    --community:#B4671C; --community-wash:#FBEFE0;
+    --sans:"Heebo","Assistant","Noto Sans Hebrew","Segoe UI",system-ui,sans-serif;
+    --mark:"Poppins","Century Gothic","Futura",system-ui,sans-serif;
+    --gap:clamp(3.2rem,7vw,6rem); --pad:clamp(1.15rem,5vw,3rem);
+    --r:14px; --pill:999px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --brand-wash:#1F2B25; --ink:#E8EBEA; --muted:#A2ABA6; --subtle:#8A938D;
+      --ground:#101312; --surface:#191D1C; --line:#2A302E;
+      --official:#7FA8E0; --official-wash:#1B2534;
+      --community:#E0A05A; --community-wash:#33261A;
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; font-family:var(--sans); color:var(--ink); background:var(--surface);
+    line-height:1.6; font-size:clamp(.95rem,.9rem + .2vw,1.05rem);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{margin:0;line-height:1.15;text-wrap:balance;letter-spacing:-.015em}
+  p{margin:0}
+  a{color:inherit;text-decoration:none}
+  img{max-width:100%}
+  .inner{max-width:1120px;margin-inline:auto;padding-inline:var(--pad)}
+  .sec{padding-block:var(--gap)}
+  .sec--tint{background:var(--ground)}
+  .head{text-align:center;max-width:58ch;margin:0 auto clamp(2rem,4vw,3.2rem)}
+  .head h2{font-size:clamp(1.55rem,1.1rem + 1.8vw,2.35rem);font-weight:800}
+  .head p{color:var(--muted);margin-top:.85rem}
+  .eyebrow{font-size:.74rem;font-weight:800;letter-spacing:.12em;color:var(--brand);display:block;margin-bottom:.7rem}
+
+  .nav{position:sticky;top:0;z-index:30;background:var(--surface);border-bottom:1px solid var(--line)}
+  .nav__in{display:flex;align-items:center;gap:1.5rem;height:4.1rem}
+  .nav__links{display:flex;gap:1.5rem;font-size:.88rem;color:var(--muted);margin-inline-start:auto}
+  .nav__links a:hover{color:var(--brand)}
+  @media (max-width:860px){.nav__links{display:none}.nav .btn{margin-inline-start:auto}}
+
+  .mark{display:flex;align-items:center;gap:.55rem}
+  .mark__word{font-family:var(--mark);font-weight:700;font-size:1.4rem;display:flex;align-items:flex-end;gap:.05em;direction:ltr;line-height:1}
+  .mark__v{width:.7em;height:.7em;margin-bottom:.03em}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:.55rem;
+    font:inherit;font-weight:700;font-size:.94rem;cursor:pointer;
+    padding:.82rem 1.7rem;border-radius:var(--pill);border:1.5px solid transparent;
+    transition:transform .12s,background .2s,border-color .2s;
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
+  .btn--go{background:var(--brand);color:#fff}
+  .btn--go:hover{background:var(--brand-deep)}
+  .btn--onDark{background:#fff;color:var(--brand-deep)}
+  .btn--onDark:hover{background:var(--brand-wash)}
+  .btn--wireDark{background:transparent;color:#fff;border-color:rgb(255 255 255/.42)}
+  .btn--wireDark:hover{border-color:#fff}
+  .btn--sm{padding:.55rem 1.15rem;font-size:.85rem}
+  .ctas{display:flex;flex-wrap:wrap;gap:.7rem}
+  .fine{font-size:.79rem;color:rgb(255 255 255/.62);flex-basis:100%}
+
+  .hero{
+    position:relative;overflow:hidden;color:#fff;
+    background:radial-gradient(120% 90% at 50% -20%,#6FA98A 0,transparent 55%),
+               linear-gradient(200deg,#4A7C61 0,var(--brand-deep) 55%,#2C4A39 100%);
+    padding-block:clamp(3.4rem,9vw,6rem);
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.16;
+    background:repeating-linear-gradient(115deg,transparent 0 46px,rgb(255 255 255/.5) 46px 50px);
+    -webkit-mask-image:radial-gradient(80% 70% at 50% 40%,#000 0,transparent 78%);
+    mask-image:radial-gradient(80% 70% at 50% 40%,#000 0,transparent 78%);
+  }
+  .hero .inner{position:relative;z-index:1}
+  .hero__grid{display:grid;grid-template-columns:1fr .82fr;gap:clamp(2rem,5vw,4rem);align-items:center}
+  @media (max-width:900px){
+    .hero__grid{grid-template-columns:1fr;text-align:center}
+    .hero .ctas{justify-content:center}
+    .hero h1,.hero p{margin-inline:auto}
+  }
+  .hero h1{font-size:clamp(2rem,1.2rem + 3.4vw,3.4rem);font-weight:800;max-width:17ch}
+  .hero p{color:rgb(255 255 255/.86);max-width:44ch;margin:1.15rem 0 2.1rem;font-size:clamp(1rem,.95rem + .35vw,1.15rem)}
+  .hero .eyebrow{color:rgb(255 255 255/.72)}
+
+  .phones{position:relative;display:flex;justify-content:center;align-items:flex-end;min-height:clamp(19rem,42vw,27rem)}
+  .phone{
+    --w:clamp(9.5rem,17vw,12.2rem);width:var(--w);aspect-ratio:9/18.6;flex:none;
+    background:#0E1412;border:.42rem solid #0E1412;border-radius:1.7rem;
+    box-shadow:0 26px 50px -22px rgb(0 0 0/.65),0 0 0 1px rgb(255 255 255/.07);
+    overflow:hidden;position:relative;
+  }
+  .phone__screen{width:100%;height:100%;background:#F8FAF9;overflow:hidden;position:relative;direction:rtl}
+  .phone--back{transform:rotate(-7deg) translate(9%,-5%) scale(.93);z-index:1}
+  .phone--front{transform:rotate(3deg) translate(-9%,3%);z-index:2}
+  @media (max-width:900px){
+    .phone--back{transform:rotate(-7deg) translate(14%,-3%) scale(.93)}
+    .phone--front{transform:rotate(3deg) translate(-14%,3%)}
+  }
+  .phone__notch{position:absolute;top:.28rem;left:50%;transform:translateX(-50%);width:26%;height:.42rem;border-radius:var(--pill);background:#0E1412;z-index:5}
+
+  .emblem{position:relative;width:9.1rem;height:9.75rem;transform:scale(.62);margin:-1.9rem 0}
+  .emblem__shield{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:7.8rem;height:8.78rem}
+  .emblem__car{position:absolute;left:50%;top:50%;transform:translate(-50%,calc(-50% - .39rem));width:4.68rem;height:auto}
+  .emblem__badge{position:absolute;right:0;bottom:.13rem;width:3.9rem;height:3.9rem;border-radius:50%;background:#fff;border:.195rem solid #558B6E;display:grid;place-items:center}
+  .emblem__badge svg{width:2.21rem;height:2.21rem}
+  .splash{height:100%;display:grid;place-content:center;justify-items:center;gap:.4rem;background:#F8FAF9}
+  .splash__word{font-family:var(--mark);font-weight:700;font-size:1.15rem;color:#1A202C;display:flex;align-items:flex-end;gap:.04em;direction:ltr;line-height:1}
+  .splash__word svg{width:.7em;height:.7em;margin-bottom:.03em}
+  .splash__tag{font-size:.44rem;color:#558B6E;font-weight:700;letter-spacing:.04em}
+
+  .list{height:100%;display:flex;flex-direction:column;background:#F8FAF9}
+  .list__top{background:#558B6E;padding:.5rem .45rem .55rem;color:#fff;flex:none}
+  .list__brand{display:flex;align-items:center;gap:.22rem;font-size:.4rem;font-weight:700}
+  .list__search{margin-top:.4rem;background:#fff;border-radius:.42rem;height:1.15rem;display:flex;align-items:center;gap:.22rem;padding:0 .35rem;font-size:.38rem;color:#767C81}
+  .list__pills{display:flex;gap:.2rem;padding:.35rem .45rem 0;flex:none}
+  .pill{font-size:.36rem;font-weight:700;padding:.16rem .38rem;border-radius:var(--pill);border:1px solid #E6EAE8;background:#fff;color:#5A6169;white-space:nowrap}
+  .pill--on{background:#558B6E;border-color:#558B6E;color:#fff}
+  .list__body{padding:.35rem .45rem;display:grid;gap:.35rem;overflow:hidden}
+  .lc{background:#fff;border:1px solid #E6EAE8;border-radius:.5rem;overflow:hidden}
+  .lc__img{height:2.5rem;position:relative;display:grid;place-items:center;background:linear-gradient(135deg,#E7EFEA,#D6E2DA)}
+  .lc__badge{position:absolute;top:.2rem;right:.2rem;font-size:.3rem;font-weight:700;padding:.08rem .25rem;border-radius:.2rem;background:#fff;color:#294539;border:1px solid #E6EAE8}
+  .lc__badge--agent{color:#3E6DB5}
+  .lc__body{padding:.28rem .35rem .3rem}
+  .lc__row{display:flex;align-items:baseline;justify-content:space-between;gap:.3rem}
+  .lc__name{font-size:.42rem;font-weight:800;color:#1A202C}
+  .lc__price{font-size:.42rem;font-weight:800;color:#558B6E;font-variant-numeric:tabular-nums}
+  .lc__meta{font-size:.34rem;color:#5A6169;margin-top:.1rem;font-variant-numeric:tabular-nums}
+  .lc__gov{display:inline-flex;align-items:center;gap:.12rem;margin-top:.18rem;font-size:.3rem;font-weight:700;color:#3E6DB5;background:#E7EFFA;padding:.07rem .22rem;border-radius:.2rem}
+  .list__nav{margin:auto .35rem .35rem;flex:none;background:#fff;border:1px solid #E6EAE8;border-radius:var(--pill);height:1.4rem;display:flex;align-items:center;justify-content:space-around;padding:0 .2rem}
+  .nav-pill{background:#558B6E;border-radius:var(--pill);height:1rem;padding:0 .3rem;display:flex;align-items:center;gap:.15rem;color:#fff;font-size:.32rem;font-weight:700}
+  .nav-dot{width:.3rem;height:.3rem;border-radius:50%;background:#C9D2CD}
+
+  .props{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.8rem,4vw,3rem);text-align:center}
+  @media (max-width:800px){.props{grid-template-columns:1fr;gap:2.4rem}}
+  .prop__ico{width:3.4rem;height:3.4rem;margin:0 auto .95rem;border-radius:var(--pill);display:grid;place-items:center;background:var(--brand-wash);color:var(--brand)}
+  .prop h3{font-size:1.12rem;font-weight:800;margin-bottom:.45rem}
+  .prop p{color:var(--muted);font-size:.93rem}
+
+  .nine{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.4rem,3vw,2.4rem)}
+  @media (max-width:860px){.nine{grid-template-columns:1fr 1fr}}
+  @media (max-width:560px){.nine{grid-template-columns:1fr}}
+  .nine__i{display:flex;gap:.85rem;align-items:flex-start}
+  .nine__ico{flex:none;width:2.3rem;height:2.3rem;border-radius:10px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);color:var(--brand)}
+  .nine h4{font-size:.99rem;font-weight:800;margin-bottom:.22rem}
+  .nine p{font-size:.87rem;color:var(--muted)}
+  .tag{display:inline-flex;align-items:center;gap:.3rem;margin-top:.35rem;font-size:.7rem;font-weight:800;padding:.16rem .5rem;border-radius:7px}
+  .tag--off{background:var(--official-wash);color:var(--official)}
+  .tag--com{background:var(--community-wash);color:var(--community)}
+
+  .honest{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1.2rem,3vw,2.2rem)}
+  @media (max-width:760px){.honest{grid-template-columns:1fr}}
+  .honest__col{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:1.5rem}
+  .honest__col h3{font-size:1.02rem;font-weight:800;margin-bottom:.9rem}
+  .honest ul{list-style:none;margin:0;padding:0;display:grid;gap:.6rem;font-size:.9rem}
+  .honest li{display:flex;gap:.6rem;align-items:flex-start}
+  .honest svg{flex:none;width:1.15rem;height:1.15rem;margin-top:.2rem}
+  .honest__foot{font-size:.82rem;color:var(--subtle);margin-top:1rem}
+
+  .faq{max-width:56rem;margin-inline:auto;display:grid;gap:.6rem}
+  .q{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .q summary{cursor:pointer;list-style:none;padding:1.05rem 1.25rem;font-weight:700;font-size:.98rem;display:flex;align-items:center;gap:.8rem}
+  .q summary::-webkit-details-marker{display:none}
+  .q summary:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
+  .q__plus{flex:none;margin-inline-start:auto;width:1.4rem;height:1.4rem;border-radius:var(--pill);background:var(--brand-wash);color:var(--brand);display:grid;place-items:center;font-weight:800;line-height:1;transition:transform .2s}
+  .q[open] .q__plus{transform:rotate(45deg)}
+  .q__a{padding:0 1.25rem 1.15rem;color:var(--muted);font-size:.92rem}
+
+  .close{text-align:center;color:#fff;background:linear-gradient(200deg,#4A7C61 0,var(--brand-deep) 100%);padding-block:clamp(3rem,7vw,5rem)}
+  .close h2{font-size:clamp(1.6rem,1.1rem + 2vw,2.4rem);font-weight:800}
+  .close p{color:rgb(255 255 255/.85);margin:.9rem auto 1.9rem;max-width:44ch}
+  .close .ctas{justify-content:center}
+
+  .foot{background:#121917;color:rgb(255 255 255/.7);padding-block:2.6rem 2rem;font-size:.86rem}
+  .foot__grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:2rem}
+  @media (max-width:760px){.foot__grid{grid-template-columns:1fr;gap:1.6rem}}
+  .foot h5{color:#fff;font-size:.9rem;font-weight:800;margin:0 0 .7rem}
+  .foot ul{list-style:none;margin:0;padding:0;display:grid;gap:.45rem}
+  .foot a:hover{color:#fff}
+  .foot__src{margin-top:2rem;padding-top:1.2rem;border-top:1px solid rgb(255 255 255/.12);font-size:.78rem;color:rgb(255 255 255/.5);display:flex;flex-wrap:wrap;gap:.5rem 1.4rem}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="inner nav__in">
+    <a class="mark" href="/">
+      <svg width="26" height="30" viewBox="0 0 100 115" fill="none" aria-hidden="true">
+        <path d="M50 14C70 14 87 25 87 33L87 63C87 85 62 98 50 102C38 98 13 85 13 63L13 33C13 25 30 14 50 14Z" fill="#558B6E"/>
+        <path d="M26 60L40 74L62 46" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="mark__word">Oto<svg class="mark__v" viewBox="0 0 60 60" fill="none" aria-hidden="true"><path d="M10 30l14 14 26-30" stroke="#558B6E" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+    <nav class="nav__links">
+      <a href="#what">מה תקבלו</a>
+      <a href="#data">הנתונים</a>
+      <a href="#checked">מה נבדק</a>
+      <a href="#faq">שאלות</a>
+    </nav>
+    <a class="btn btn--go btn--sm" href="#get">הורדה</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="inner">
+    <div class="hero__grid">
+      <div>
+        <span class="eyebrow">רכב יד שנייה · ישראל</span>
+        <h1>לדעת מה כתוב על הרכב, לפני שנוסעים לראות אותו.</h1>
+        <p>OtoV מצליב כל מודעה מול מאגרי משרד התחבורה ומראה לכם את מה שהמרשם יודע — קילומטראז' בטסט האחרון, שינוי מבנה, ריקולים פתוחים ובעלות. בחינם.</p>
+        <div class="ctas">
+          <a class="btn btn--onDark" href="https://github.com/david6212/autoproof2/releases/latest/download/app-arm64-v8a-release.apk">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            הורדה ל‑Android
+          </a>
+          <a class="btn btn--wireDark" href="/app/">פתחו בדפדפן</a>
+          <span class="fine">בלי הרשמה כדי לגלוש · בלי פרסומות</span>
+        </div>
+      </div>
+
+      <div class="phones" aria-hidden="true">
+        <div class="phone phone--back">
+          <span class="phone__notch"></span>
+          <div class="phone__screen">
+            <div class="splash">
+              <div class="emblem">
+                <svg class="emblem__shield" viewBox="0 0 100 115" fill="none">
+                  <path d="M50 5C75 5 95 18 95 28L95 65C95 92 65 108 50 112C35 108 5 92 5 65L5 28C5 18 25 5 50 5Z" stroke="#558B6E" stroke-width="6" stroke-linejoin="round"/>
+                  <path d="M50 14C70 14 87 25 87 33L87 63C87 85 62 98 50 102C38 98 13 85 13 63L13 33C13 25 30 14 50 14Z" fill="#558B6E"/>
+                </svg>
+                <img class="emblem__car" src="/car.png" alt="" width="360" height="200" loading="lazy">
+                <span class="emblem__badge">
+                  <svg viewBox="0 0 60 60" fill="none"><path d="M12 30L26 44L48 16" stroke="#558B6E" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </div>
+              <span class="splash__word">Oto<svg viewBox="0 0 60 60" fill="none"><path d="M10 30l14 14 26-30" stroke="#558B6E" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span class="splash__tag">הכוח בידיים שלך</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="phone phone--front">
+          <span class="phone__notch"></span>
+          <div class="phone__screen">
+            <div class="list">
+              <div class="list__top">
+                <div class="list__brand">
+                  <svg width="8" height="9" viewBox="0 0 100 115" fill="none"><path d="M50 5C75 5 95 18 95 28L95 65C95 92 65 108 50 112C35 108 5 92 5 65L5 28C5 18 25 5 50 5Z" stroke="#fff" stroke-width="8" stroke-linejoin="round"/></svg>
+                  מוכרים מסווגים · נתוני משרד התחבורה
+                </div>
+                <div class="list__search">
+                  <svg width="6" height="6" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#767C81" stroke-width="2.6"/><path d="M16.5 16.5 21 21" stroke="#767C81" stroke-width="2.6" stroke-linecap="round"/></svg>
+                  חפש יצרן, דגם או אזור
+                </div>
+              </div>
+              <div class="list__pills">
+                <span class="pill pill--on">הכל</span><span class="pill">משפחתי</span><span class="pill">קרוסאובר</span><span class="pill">היברידי</span>
+              </div>
+              <div class="list__body">
+                <div class="lc">
+                  <div class="lc__img"><span class="lc__badge">בעלים פרטי</span>
+                    <svg width="34" height="18" viewBox="0 0 100 52" fill="none" opacity=".5"><path d="M8 40 10 30l16-2 10-10h32l10 10 16 2 2 10H8Z" fill="#558B6E"/><circle cx="28" cy="42" r="7" fill="#3C614C"/><circle cx="74" cy="42" r="7" fill="#3C614C"/></svg>
+                  </div>
+                  <div class="lc__body">
+                    <div class="lc__row"><span class="lc__name">מאזדה 3</span><span class="lc__price">₪78,000</span></div>
+                    <div class="lc__meta">84,000 ק"מ · יד 2 · חיפה · 2019</div>
+                    <span class="lc__gov">נתונים ממרשם הרכב</span>
+                  </div>
+                </div>
+                <div class="lc">
+                  <div class="lc__img"><span class="lc__badge lc__badge--agent">סוכן</span>
+                    <svg width="34" height="18" viewBox="0 0 100 52" fill="none" opacity=".5"><path d="M6 40 8 26l14-2 8-12h40l8 12 14 2 2 14H6Z" fill="#558B6E"/><circle cx="27" cy="42" r="7" fill="#3C614C"/><circle cx="75" cy="42" r="7" fill="#3C614C"/></svg>
+                  </div>
+                  <div class="lc__body">
+                    <div class="lc__row"><span class="lc__name">יונדאי טוסון</span><span class="lc__price">₪112,000</span></div>
+                    <div class="lc__meta">61,500 ק"מ · יד 1 · תל אביב · 2021</div>
+                    <span class="lc__gov">נתונים ממרשם הרכב</span>
+                  </div>
+                </div>
+              </div>
+              <div class="list__nav">
+                <span class="nav-pill"><svg width="6" height="6" viewBox="0 0 24 24" fill="none"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1v-8Z" fill="#fff"/></svg>בית</span>
+                <span class="nav-dot"></span><span class="nav-dot"></span><span class="nav-dot"></span><span class="nav-dot"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="what">
+  <div class="inner">
+    <div class="head">
+      <span class="eyebrow">מה תקבלו</span>
+      <h2>שלוש דקות עכשיו, במקום נסיעה מיותרת</h2>
+      <p>כל מה שאפשר לדעת על הרכב לפני שיוצאים מהבית — בחינם, בלי הרשמה, ובלי לשלם על דוח.</p>
+    </div>
+    <div class="props">
+      <div class="prop">
+        <div class="prop__ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 3l8 3v6c0 5-3.5 8-8 9.5C7.5 20 4 17 4 12V6l8-3Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 12.2l2.1 2.1L15.2 10" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>המידע הרשמי, בלי לחפש אותו</h3>
+        <p>קילומטראז' מהטסט האחרון, שינוי מבנה, ריקולים פתוחים ובעלות. חמישה מאגרים של משרד התחבורה, מרוכזים בעמוד אחד לכל מודעה.</p>
+      </div>
+      <div class="prop">
+        <div class="prop__ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.3" stroke="currentColor" stroke-width="1.9"/><path d="M4.7 20c1-3.5 3.9-5.4 7.3-5.4S18.3 16.5 19.3 20" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></div>
+        <h3>לא כל מודעה "פרטית" היא פרטית</h3>
+        <p>כל מוכר בוחר סיווג — בעלים פרטי, סוכן או סוחר — והוא מוצג על המודעה לצד סוג הבעלות הרשום במרשם. קונים שכבר נפגשו איתו מדווחים מה מצאו בפועל.</p>
+      </div>
+      <div class="prop">
+        <div class="prop__ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.3" stroke="currentColor" stroke-width="1.9"/></svg></div>
+        <h3>מכון בדיקה מורשה, לפי מרחק</h3>
+        <p>כל מכוני הבדיקה שמשרד התחבורה הסמיך, על מפה לפי הקרוב אליכם, עם ניווט וחיוג. את הבדיקה אתם קובעים ישירות מולם.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec sec--tint" id="data">
+  <div class="inner">
+    <div class="head">
+      <span class="eyebrow">הנתונים</span>
+      <h2>מה בדיוק מוצג על כל רכב</h2>
+      <p>מה שמסומן בכחול מגיע ממאגרי המדינה. מה שמסומן בכתום מגיע מקונים אחרים — ואף פעם לא מעורבב.</p>
+    </div>
+    <div class="nine">
+      <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 17h16M6 17V9l6-4 6 4v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div><h4>קילומטראז' בטסט האחרון</h4><p>הקריאה שנרשמה רשמית, לצד המספר שהמוכר הזין.</p><span class="tag tag--off">רשמי</span></div></div>
+      <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 3l9.5 17h-19L12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.4M12 17.3v.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+        <div><h4>שינוי מבנה</h4><p>האינדיקציה הרשמית הקרובה ביותר לתאונה משמעותית.</p><span class="tag tag--off">רשמי</span></div></div>
+      <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2"/><path d="M12 7.5v5M12 15.6v.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+        <div><h4>ריקולים פתוחים</h4><p>קריאות שירות שהיצרן פרסם ועדיין לא בוצעו ברכב.</p><span class="tag tag--off">רשמי</span></div></div>
+      <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 6l14 12M19 6L5 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div><h4>ירידה מהכביש</h4><p>רכב שרישומו בוטל או שהורד מהכביש — נדיר, וקריטי לדעת.</p><span class="tag tag--off">רשמי</span></div></div>
+      <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="6" width="17" height="12" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17" stroke="currentColor" stroke-width="2"/></svg></div>
+        <div><h4>בעלות ומספר בעלים</h4><p>סוג הבעלות הרשום — פרטי או מסחרי — ומה זה אומר על הרכב.</p><span class="tag tag--off">רשמי</span></div></div>
+      <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 12h16M4 7h16M4 17h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div><h4>מפרט הדגם המלא</h4><p>נפח מנוע, כוח סוס, מושבים, הנעה ומרכב — מהמאגר הרשמי של הדגמים.</p><span class="tag tag--off">רשמי</span></div></div>
+      <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 19V5m0 0 8 3 8-3v10l-8 3-8-3" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
+        <div><h4>מי המוכר שפגשו</h4><p>קונים שנפגשו איתו מדווחים מה הוא היה בפועל. מוצג כאחוזים, לא כקביעה.</p><span class="tag tag--com">קהילתי</span></div></div>
+      <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M20 15a3 3 0 0 1-3 3H8l-4 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
+        <div><h4>הערות מבקרים</h4><p>הערות עובדתיות על הרכב מקונים שכבר ראו אותו — עם זכות תגובה למוכר.</p><span class="tag tag--com">קהילתי</span></div></div>
+      <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 21V3M5 10l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div><h4>היסטוריית פרסום</h4><p>אם הרכב כבר פורסם כאן בעבר — כמה פעמים, ולאן הלך המחיר והק"מ.</p><span class="tag tag--com">קהילתי</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="checked">
+  <div class="inner">
+    <div class="head">
+      <span class="eyebrow">בלי אותיות קטנות</span>
+      <h2>מה אנחנו בודקים — ומה לא</h2>
+      <p>אפליקציה שמבטיחה יותר ממה שהיא עושה לא שווה כלום. אז זה מה שיש, במדויק.</p>
+    </div>
+    <div class="honest">
+      <div class="honest__col">
+        <h3>מה שכן</h3>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5 11-12" stroke="#558B6E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>שמספר הרישוי קיים במרשם הרכב</li>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5 11-12" stroke="#558B6E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>שסוג הבעלות תואם לסיווג שהמוכר בחר</li>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5 11-12" stroke="#558B6E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>שהקילומטראז' במודעה אינו נמוך מהקריאה הרשמית</li>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5 11-12" stroke="#558B6E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>שלמפרסם יש מספר טלפון מאומת בחשבון</li>
+        </ul>
+      </div>
+      <div class="honest__col">
+        <h3>מה שלא</h3>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#767C81" stroke-width="3" stroke-linecap="round"/></svg>את זהות המוכר — לא נדרשת תעודה</li>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#767C81" stroke-width="3" stroke-linecap="round"/></svg>שהוא בעל הרכב או מורשה למכור אותו</li>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#767C81" stroke-width="3" stroke-linecap="round"/></svg>את מצבו המכני של הרכב</li>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#767C81" stroke-width="3" stroke-linecap="round"/></svg>אובדן להלכה, עיקולים או שעבודים</li>
+        </ul>
+        <p class="honest__foot">בדקו מסמכים מול המוכר ובצעו בדיקה עצמאית לפני כל עסקה.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec sec--tint" id="faq">
+  <div class="inner">
+    <div class="head"><span class="eyebrow">שאלות</span><h2>מה שרוב האנשים שואלים</h2></div>
+    <div class="faq">
+      <details class="q" open><summary>זה באמת בחינם?<span class="q__plus">+</span></summary>
+        <div class="q__a">כן. הנתונים מגיעים ממאגרים ציבוריים של משרד התחבורה שפתוחים לשימוש, כולל מסחרי. אין תשלום, אין מנוי, ואין פרסומות באפליקציה.</div></details>
+      <details class="q"><summary>מאיפה המידע מגיע?<span class="q__plus">+</span></summary>
+        <div class="q__a">מ‑data.gov.il, אתר הנתונים הפתוחים של ממשלת ישראל — חמישה מאגרים של משרד התחבורה לכל רכב, ועוד אחד לרשימת מכוני הבדיקה. אנחנו מושכים ישירות, לא דרך ספק. המידע ניתן כפי שהוא, וייתכנו בו טעויות והשמטות.</div></details>
+      <details class="q"><summary>אתם קשורים למשרד התחבורה?<span class="q__plus">+</span></summary>
+        <div class="q__a">לא. אנחנו מציינים את מקור הנתונים כפי שהרישיון מחייב, ותו לא. אין ל‑OtoV מעמד רשמי, חסות או גושפנקא מטעם המדינה. במקרה של סתירה — הפרסום הרשמי בכתב גובר.</div></details>
+      <details class="q"><summary>אתם מוכרים רכבים או גובים עמלה?<span class="q__plus">+</span></summary>
+        <div class="q__a">לא. OtoV אינה צד לעסקה — איננו מוכרים, קונים, מתווכים או גובים עמלה, ואיננו מחזיקים בכספי הצדדים. המודעות מפורסמות על ידי המשתמשים עצמם.</div></details>
+      <details class="q"><summary>מה עם דיווחים לא נכונים על מוכר?<span class="q__plus">+</span></summary>
+        <div class="q__a">כל תוכן קהילתי מוצג כדיווח של משתמשים, לא כקביעה שלנו, ומתחת לשלושה דיווחים לא מוצגת סטטיסטיקה בכלל. לצד כל פריט יש כפתור דיווח, וגם המוכר עצמו רואה את מה שנכתב ויכול לבקש תיקון או הסרה.</div></details>
+      <details class="q"><summary>יש גרסה לאייפון?<span class="q__plus">+</span></summary>
+        <div class="q__a">עדיין לא. בינתיים הגרסה לדפדפן עובדת במלואה בכל מכשיר, כולל אייפון — אותן מודעות, אותם נתונים, בלי התקנה.</div></details>
+    </div>
+  </div>
+</section>
+
+<section class="close" id="get">
+  <div class="inner">
+    <h2>הכוח בידיים שלך</h2>
+    <p>פתחו את המודעה הבאה שאתם שוקלים, ותראו מה המרשם אומר עליה.</p>
+    <div class="ctas">
+      <a class="btn btn--onDark" href="https://github.com/david6212/autoproof2/releases/latest/download/app-arm64-v8a-release.apk">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 19h16" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        הורדה ל‑Android
+      </a>
+      <a class="btn btn--wireDark" href="/app/">פתחו בדפדפן</a>
+      <span class="fine">האפליקציה עדיין לא בחנויות. הגרסה לדפדפן מלאה וזהה, ועובדת גם באייפון.</span>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="inner">
+    <div class="foot__grid">
+      <div>
+        <div class="mark" style="color:#fff;margin-bottom:.7rem">
+          <span class="mark__word">Oto<svg class="mark__v" viewBox="0 0 60 60" fill="none"><path d="M10 30l14 14 26-30" stroke="#6FA98A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </div>
+        <p style="max-width:34ch">פלטפורמה לרכב יד שנייה בישראל, שמצליבה כל מודעה מול מאגרי משרד התחבורה.</p>
+      </div>
+      <div>
+        <h5>האפליקציה</h5>
+        <ul>
+          <li><a href="https://github.com/david6212/autoproof2/releases/latest">הורדה ל‑Android</a></li>
+          <li><a href="/app/">פתיחה בדפדפן</a></li>
+          <li><a href="#what">מה תקבלו</a></li>
+          <li><a href="#faq">שאלות נפוצות</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>מידע משפטי</h5>
+        <ul>
+          <li><a href="/app/#/legal/terms">תנאי שימוש</a></li>
+          <li><a href="/app/#/legal/privacy">מדיניות פרטיות</a></li>
+          <li><a href="/app/#/legal/cookies">מדיניות עוגיות</a></li>
+          <li><a href="/app/#/legal/removal">הסרת תוכן ותלונות</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot__src">
+      <span>© OtoV</span>
+      <span>מקור הנתונים: data.gov.il — משרד התחבורה. המידע ניתן כפי שהוא.</span>
+      <span>אין ל‑OtoV קשר, חסות או גושפנקא מטעם המדינה.</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

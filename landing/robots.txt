@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# The app itself is a Flutter canvas — there is nothing in it for a crawler to
+# read, and its routes are hash fragments a crawler never sees anyway.
+Disallow: /app/
+
+Sitemap: https://otov.web.app/sitemap.xml

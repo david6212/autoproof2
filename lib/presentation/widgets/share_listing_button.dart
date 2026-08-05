@@ -9,7 +9,12 @@ import '../../data/models/car_model.dart';
 final _priceFmt = NumberFormat('#,###', 'en');
 
 /// Public link to a listing.
-String listingLink(CarModel car) => '${AppStrings.siteUrl}/#/car/${car.id}';
+/// The app lives under /app/ — the site root is the landing page. A link
+/// built without it would land a buyer on the marketing page instead of
+/// the car. (Links shared before the move are caught by a redirect on the
+/// landing page, since a fragment never reaches the server.)
+String listingLink(CarModel car) =>
+    '${AppStrings.siteUrl}/app/#/car/${car.id}';
 
 /// The text that gets forwarded.
 ///

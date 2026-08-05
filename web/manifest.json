@@ -5,7 +5,7 @@
     "display": "standalone",
     "background_color": "#FFFFFF",
     "theme_color": "#0B3D33",
-    "description": "שוק מהימן לרכבי יד שנייה בישראל — מוכרים מאומתים ומתויגים, עם נתונים רשמיים ממשרד התחבורה.",
+    "description": "מודעות רכב יד שנייה בישראל, מוצלבות מול מאגרי משרד התחבורה. המוכר מסומן לפי הסיווג שבחר.",
     "lang": "he",
     "dir": "rtl",
     "orientation": "portrait-primary",

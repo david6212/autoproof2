@@ -27,9 +27,9 @@
   },
   "hosting": [
     {
-      "//": "Canonical site — https://otov.web.app",
+      "//": "Canonical site - https://otov.web.app. Serves the static landing page at / and the Flutter app at /app/, assembled into build/hosting by tool/build_site.sh.",
       "site": "otov",
-      "public": "build/web",
+      "public": "build/hosting",
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -37,21 +37,63 @@
       ],
       "rewrites": [
         {
-          "source": "**",
-          "destination": "/index.html"
+          "source": "/app/**",
+          "destination": "/app/index.html"
         }
       ],
       "headers": [
         {
+          "source": "/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
           "source": "/index.html",
           "headers": [
-            { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/app/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/app/index.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
           ]
         },
         {
           "source": "/flutter_service_worker.js",
           "headers": [
-            { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/app/flutter_service_worker.js",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
           ]
         }
       ]
@@ -59,7 +101,7 @@
     {
       "//": "Old URL from the AutoProof days. The project ID cannot be renamed, so instead of serving the app it now forwards to otov.web.app — old links keep working AND the address bar updates itself. The #/route fragment is preserved by the browser across the redirect.",
       "site": "autoproof-8d827",
-      "public": "build/web",
+      "public": "build/hosting",
       "ignore": [
         "firebase.json",
         "**/.*",
