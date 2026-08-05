@@ -47,6 +47,31 @@
   })();
 </script>
 
+
+<style>
+  /* Self-hosted rather than linked from a font CDN. The privacy policy
+     enumerates exactly who sees a visitor's IP — Google/Firebase, data.gov.il
+     and the map tile server — and hotlinking would quietly add a fourth.
+     Heebo and Poppins are both SIL OFL, so hosting them is permitted.
+     Heebo here is variable (400-800 in one file per subset). */
+  @font-face{
+    font-family:'Heebo';font-style:normal;font-weight:400 800;font-display:swap;
+    src:url('/fonts/heebo-hebrew.woff2') format('woff2');
+    unicode-range:U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F;
+  }
+  @font-face{
+    font-family:'Heebo';font-style:normal;font-weight:400 800;font-display:swap;
+    src:url('/fonts/heebo-latin.woff2') format('woff2');
+    unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215;
+  }
+  @font-face{
+    font-family:'Poppins';font-style:normal;font-weight:700;font-display:swap;
+    src:url('/fonts/poppins-700-latin.woff2') format('woff2');
+    unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+2000-206F,U+2122,U+2212;
+  }
+</style>
+<link rel="preload" href="/fonts/heebo-hebrew.woff2" as="font" type="font/woff2" crossorigin>
+
 <style>
   :root{
     --brand:#558B6E; --brand-deep:#3C614C; --brand-wash:#E7EFEA;
@@ -75,6 +100,8 @@
     -webkit-font-smoothing:antialiased;
   }
   h1,h2,h3,h4{margin:0;line-height:1.15;text-wrap:balance;letter-spacing:-.015em}
+  p{text-wrap:pretty}
+  .num,[class*="__price"],[class*="__meta"]{font-variant-numeric:tabular-nums}
   p{margin:0}
   a{color:inherit;text-decoration:none}
   img{max-width:100%}
@@ -90,6 +117,8 @@
   .nav__in{display:flex;align-items:center;gap:1.5rem;height:4.1rem}
   .nav__links{display:flex;gap:1.5rem;font-size:.88rem;color:var(--muted);margin-inline-start:auto}
   .nav__links a:hover{color:var(--brand)}
+  a:focus-visible{outline:2px solid var(--brand);outline-offset:3px;border-radius:4px}
+  .hero a:focus-visible,.close a:focus-visible,.foot a:focus-visible{outline-color:#fff}
   @media (max-width:860px){.nav__links{display:none}.nav .btn{margin-inline-start:auto}}
 
   .mark{display:flex;align-items:center;gap:.55rem}
@@ -120,11 +149,22 @@
                linear-gradient(200deg,#4A7C61 0,var(--brand-deep) 55%,#2C4A39 100%);
     padding-block:clamp(3.4rem,9vw,6rem);
   }
+  /* Soft diagonal light rather than hard stripes: at full strength the
+     repeating gradient read as a pattern laid over the panel instead of
+     light falling across it. */
   .hero::after{
-    content:"";position:absolute;inset:0;pointer-events:none;opacity:.16;
-    background:repeating-linear-gradient(115deg,transparent 0 46px,rgb(255 255 255/.5) 46px 50px);
-    -webkit-mask-image:radial-gradient(80% 70% at 50% 40%,#000 0,transparent 78%);
-    mask-image:radial-gradient(80% 70% at 50% 40%,#000 0,transparent 78%);
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background:
+      repeating-linear-gradient(112deg,
+        transparent 0 64px, rgb(255 255 255/.055) 64px 66px),
+      radial-gradient(70% 55% at 78% 8%, rgb(255 255 255/.14) 0, transparent 60%);
+    -webkit-mask-image:radial-gradient(95% 80% at 50% 35%,#000 0,transparent 88%);
+    mask-image:radial-gradient(95% 80% at 50% 35%,#000 0,transparent 88%);
+  }
+  /* Grounds the panel so the section below does not butt against it flatly. */
+  .hero::before{
+    content:"";position:absolute;inset:auto 0 0;height:38%;pointer-events:none;
+    background:linear-gradient(to top,rgb(0 0 0/.22),transparent);
   }
   .hero .inner{position:relative;z-index:1}
   .hero__grid{display:grid;grid-template-columns:1fr .82fr;gap:clamp(2rem,5vw,4rem);align-items:center}
@@ -137,53 +177,63 @@
   .hero p{color:rgb(255 255 255/.86);max-width:44ch;margin:1.15rem 0 2.1rem;font-size:clamp(1rem,.95rem + .35vw,1.15rem)}
   .hero .eyebrow{color:rgb(255 255 255/.72)}
 
-  .phones{position:relative;display:flex;justify-content:center;align-items:flex-end;min-height:clamp(19rem,42vw,27rem)}
+  /* The screens are laid out at a real phone's dimensions and the whole
+     device is then scaled down. Sizing the contents directly produced
+     font-size:0.3rem — under 5px, which renders as mush. */
+  .phones{
+    --pw:270px; --ph:558px; --s:.82;
+    position:relative;display:flex;justify-content:center;align-items:center;
+    height:calc(var(--ph) * var(--s) + 2.5rem);
+  }
+  @media (max-width:1080px){.phones{--s:.7}}
+  @media (max-width:900px){.phones{--s:.8}}
+  @media (max-width:560px){.phones{--s:.6}}
   .phone{
-    --w:clamp(9.5rem,17vw,12.2rem);width:var(--w);aspect-ratio:9/18.6;flex:none;
-    background:#0E1412;border:.42rem solid #0E1412;border-radius:1.7rem;
-    box-shadow:0 26px 50px -22px rgb(0 0 0/.65),0 0 0 1px rgb(255 255 255/.07);
-    overflow:hidden;position:relative;
+    position:absolute;width:var(--pw);height:var(--ph);flex:none;
+    background:#0E1412;border:9px solid #0E1412;border-radius:38px;
+    box-shadow:0 30px 60px -26px rgb(0 0 0/.7),0 0 0 1px rgb(255 255 255/.08);
+    overflow:hidden;
   }
+  .phone--back{transform:scale(var(--s)) translate(26%,-7%) rotate(-7deg);z-index:1}
+  .phone--front{transform:scale(var(--s)) translate(-26%,5%) rotate(3deg);z-index:2}
   .phone__screen{width:100%;height:100%;background:#F8FAF9;overflow:hidden;position:relative;direction:rtl}
-  .phone--back{transform:rotate(-7deg) translate(9%,-5%) scale(.93);z-index:1}
-  .phone--front{transform:rotate(3deg) translate(-9%,3%);z-index:2}
-  @media (max-width:900px){
-    .phone--back{transform:rotate(-7deg) translate(14%,-3%) scale(.93)}
-    .phone--front{transform:rotate(3deg) translate(-14%,3%)}
-  }
-  .phone__notch{position:absolute;top:.28rem;left:50%;transform:translateX(-50%);width:26%;height:.42rem;border-radius:var(--pill);background:#0E1412;z-index:5}
+  .phone__notch{position:absolute;top:7px;left:50%;transform:translateX(-50%);width:72px;height:7px;border-radius:var(--pill);background:#0E1412;z-index:5}
 
-  .emblem{position:relative;width:9.1rem;height:9.75rem;transform:scale(.62);margin:-1.9rem 0}
-  .emblem__shield{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:7.8rem;height:8.78rem}
-  .emblem__car{position:absolute;left:50%;top:50%;transform:translate(-50%,calc(-50% - .39rem));width:4.68rem;height:auto}
-  .emblem__badge{position:absolute;right:0;bottom:.13rem;width:3.9rem;height:3.9rem;border-radius:50%;background:#fff;border:.195rem solid #558B6E;display:grid;place-items:center}
-  .emblem__badge svg{width:2.21rem;height:2.21rem}
-  .splash{height:100%;display:grid;place-content:center;justify-items:center;gap:.4rem;background:#F8FAF9}
-  .splash__word{font-family:var(--mark);font-weight:700;font-size:1.15rem;color:#1A202C;display:flex;align-items:flex-end;gap:.04em;direction:ltr;line-height:1}
+  /* screen 1 — the entrance. Proportions taken from OtovLogo: a 140x150 box
+     holding a 120x135 shield, the car 72 wide nudged 6 up, and the check on a
+     60px badge pinned bottom-right. */
+  .splash{height:100%;display:grid;place-content:center;justify-items:center;gap:14px;background:#F8FAF9}
+  .emblem{position:relative;width:140px;height:150px}
+  .emblem__shield{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:120px;height:135px}
+  .emblem__car{position:absolute;left:50%;top:50%;transform:translate(-50%,calc(-50% - 6px));width:72px;height:auto}
+  .emblem__badge{position:absolute;right:0;bottom:2px;width:60px;height:60px;border-radius:50%;background:#fff;border:3px solid #558B6E;display:grid;place-items:center}
+  .emblem__badge svg{width:34px;height:34px}
+  .splash__word{font-family:var(--mark);font-weight:700;font-size:34px;color:#1A202C;display:flex;align-items:flex-end;gap:1px;direction:ltr;line-height:1}
   .splash__word svg{width:.7em;height:.7em;margin-bottom:.03em}
-  .splash__tag{font-size:.44rem;color:#558B6E;font-weight:700;letter-spacing:.04em}
+  .splash__tag{font-size:13px;color:#558B6E;font-weight:600;letter-spacing:.02em}
 
+  /* screen 2 — the listings */
   .list{height:100%;display:flex;flex-direction:column;background:#F8FAF9}
-  .list__top{background:#558B6E;padding:.5rem .45rem .55rem;color:#fff;flex:none}
-  .list__brand{display:flex;align-items:center;gap:.22rem;font-size:.4rem;font-weight:700}
-  .list__search{margin-top:.4rem;background:#fff;border-radius:.42rem;height:1.15rem;display:flex;align-items:center;gap:.22rem;padding:0 .35rem;font-size:.38rem;color:#767C81}
-  .list__pills{display:flex;gap:.2rem;padding:.35rem .45rem 0;flex:none}
-  .pill{font-size:.36rem;font-weight:700;padding:.16rem .38rem;border-radius:var(--pill);border:1px solid #E6EAE8;background:#fff;color:#5A6169;white-space:nowrap}
+  .list__top{background:#558B6E;padding:14px 12px 15px;color:#fff;flex:none}
+  .list__brand{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700}
+  .list__search{margin-top:11px;background:#fff;border-radius:12px;height:38px;display:flex;align-items:center;gap:7px;padding:0 11px;font-size:12px;color:#767C81}
+  .list__pills{display:flex;gap:6px;padding:11px 12px 0;flex:none}
+  .pill{font-size:11px;font-weight:700;padding:5px 12px;border-radius:var(--pill);border:1px solid #E6EAE8;background:#fff;color:#5A6169;white-space:nowrap}
   .pill--on{background:#558B6E;border-color:#558B6E;color:#fff}
-  .list__body{padding:.35rem .45rem;display:grid;gap:.35rem;overflow:hidden}
-  .lc{background:#fff;border:1px solid #E6EAE8;border-radius:.5rem;overflow:hidden}
-  .lc__img{height:2.5rem;position:relative;display:grid;place-items:center;background:linear-gradient(135deg,#E7EFEA,#D6E2DA)}
-  .lc__badge{position:absolute;top:.2rem;right:.2rem;font-size:.3rem;font-weight:700;padding:.08rem .25rem;border-radius:.2rem;background:#fff;color:#294539;border:1px solid #E6EAE8}
+  .list__body{padding:11px 12px;display:grid;gap:11px;overflow:hidden}
+  .lc{background:#fff;border:1px solid #E6EAE8;border-radius:14px;overflow:hidden}
+  .lc__img{height:96px;position:relative;display:grid;place-items:center;background:linear-gradient(135deg,#E7EFEA,#D6E2DA)}
+  .lc__badge{position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:7px;background:#fff;color:#294539;border:1px solid #E6EAE8}
   .lc__badge--agent{color:#3E6DB5}
-  .lc__body{padding:.28rem .35rem .3rem}
-  .lc__row{display:flex;align-items:baseline;justify-content:space-between;gap:.3rem}
-  .lc__name{font-size:.42rem;font-weight:800;color:#1A202C}
-  .lc__price{font-size:.42rem;font-weight:800;color:#558B6E;font-variant-numeric:tabular-nums}
-  .lc__meta{font-size:.34rem;color:#5A6169;margin-top:.1rem;font-variant-numeric:tabular-nums}
-  .lc__gov{display:inline-flex;align-items:center;gap:.12rem;margin-top:.18rem;font-size:.3rem;font-weight:700;color:#3E6DB5;background:#E7EFFA;padding:.07rem .22rem;border-radius:.2rem}
-  .list__nav{margin:auto .35rem .35rem;flex:none;background:#fff;border:1px solid #E6EAE8;border-radius:var(--pill);height:1.4rem;display:flex;align-items:center;justify-content:space-around;padding:0 .2rem}
-  .nav-pill{background:#558B6E;border-radius:var(--pill);height:1rem;padding:0 .3rem;display:flex;align-items:center;gap:.15rem;color:#fff;font-size:.32rem;font-weight:700}
-  .nav-dot{width:.3rem;height:.3rem;border-radius:50%;background:#C9D2CD}
+  .lc__body{padding:9px 11px 11px}
+  .lc__row{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .lc__name{font-size:14px;font-weight:800;color:#1A202C}
+  .lc__price{font-size:14px;font-weight:800;color:#558B6E;font-variant-numeric:tabular-nums}
+  .lc__meta{font-size:11px;color:#5A6169;margin-top:3px;font-variant-numeric:tabular-nums}
+  .lc__gov{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:10px;font-weight:700;color:#3E6DB5;background:#E7EFFA;padding:2px 7px;border-radius:6px}
+  .list__nav{margin:auto 11px 11px;flex:none;background:#fff;border:1px solid #E6EAE8;border-radius:var(--pill);height:46px;display:flex;align-items:center;justify-content:space-around;padding:0 7px}
+  .nav-pill{background:#558B6E;border-radius:var(--pill);height:32px;padding:0 11px;display:flex;align-items:center;gap:5px;color:#fff;font-size:11px;font-weight:700}
+  .nav-dot{width:9px;height:9px;border-radius:50%;background:#C9D2CD}
 
   .props{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.8rem,4vw,3rem);text-align:center}
   @media (max-width:800px){.props{grid-template-columns:1fr;gap:2.4rem}}
@@ -198,9 +248,18 @@
   .nine__ico{flex:none;width:2.3rem;height:2.3rem;border-radius:10px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);color:var(--brand)}
   .nine h4{font-size:.99rem;font-weight:800;margin-bottom:.22rem}
   .nine p{font-size:.87rem;color:var(--muted)}
-  .tag{display:inline-flex;align-items:center;gap:.3rem;margin-top:.35rem;font-size:.7rem;font-weight:800;padding:.16rem .5rem;border-radius:7px}
-  .tag--off{background:var(--official-wash);color:var(--official)}
-  .tag--com{background:var(--community-wash);color:var(--community)}
+  /* One label per group beats a badge on every card: the split between
+     official and community is the product's core idea, and repeating it nine
+     times turned it into wallpaper. */
+  .group{
+    display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;
+    font-size:1.02rem;font-weight:800;color:var(--ink);
+    margin:0 0 1.2rem;padding-bottom:.75rem;border-bottom:1px solid var(--line);
+  }
+  .group:not(:first-of-type){margin-top:2.6rem}
+  .group__tag{font-size:.72rem;font-weight:800;padding:.2rem .6rem;border-radius:7px}
+  .group__tag--off{background:var(--official-wash);color:var(--official)}
+  .group__tag--com{background:var(--community-wash);color:var(--community)}
 
   .honest{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1.2rem,3vw,2.2rem)}
   @media (max-width:760px){.honest{grid-template-columns:1fr}}
@@ -283,7 +342,7 @@
                   <path d="M50 5C75 5 95 18 95 28L95 65C95 92 65 108 50 112C35 108 5 92 5 65L5 28C5 18 25 5 50 5Z" stroke="#558B6E" stroke-width="6" stroke-linejoin="round"/>
                   <path d="M50 14C70 14 87 25 87 33L87 63C87 85 62 98 50 102C38 98 13 85 13 63L13 33C13 25 30 14 50 14Z" fill="#558B6E"/>
                 </svg>
-                <img class="emblem__car" src="/car.png" alt="" width="360" height="200" loading="lazy">
+                <img class="emblem__car" src="/car.png" alt="">
                 <span class="emblem__badge">
                   <svg viewBox="0 0 60 60" fill="none"><path d="M12 30L26 44L48 16" stroke="#558B6E" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
@@ -300,11 +359,11 @@
             <div class="list">
               <div class="list__top">
                 <div class="list__brand">
-                  <svg width="8" height="9" viewBox="0 0 100 115" fill="none"><path d="M50 5C75 5 95 18 95 28L95 65C95 92 65 108 50 112C35 108 5 92 5 65L5 28C5 18 25 5 50 5Z" stroke="#fff" stroke-width="8" stroke-linejoin="round"/></svg>
+                  <svg width="14" height="16" viewBox="0 0 100 115" fill="none"><path d="M50 5C75 5 95 18 95 28L95 65C95 92 65 108 50 112C35 108 5 92 5 65L5 28C5 18 25 5 50 5Z" stroke="#fff" stroke-width="8" stroke-linejoin="round"/></svg>
                   מוכרים מסווגים · נתוני משרד התחבורה
                 </div>
                 <div class="list__search">
-                  <svg width="6" height="6" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#767C81" stroke-width="2.6"/><path d="M16.5 16.5 21 21" stroke="#767C81" stroke-width="2.6" stroke-linecap="round"/></svg>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#767C81" stroke-width="2.6"/><path d="M16.5 16.5 21 21" stroke="#767C81" stroke-width="2.6" stroke-linecap="round"/></svg>
                   חפש יצרן, דגם או אזור
                 </div>
               </div>
@@ -314,7 +373,7 @@
               <div class="list__body">
                 <div class="lc">
                   <div class="lc__img"><span class="lc__badge">בעלים פרטי</span>
-                    <svg width="34" height="18" viewBox="0 0 100 52" fill="none" opacity=".5"><path d="M8 40 10 30l16-2 10-10h32l10 10 16 2 2 10H8Z" fill="#558B6E"/><circle cx="28" cy="42" r="7" fill="#3C614C"/><circle cx="74" cy="42" r="7" fill="#3C614C"/></svg>
+                    <svg width="86" height="45" viewBox="0 0 100 52" fill="none" opacity=".5"><path d="M8 40 10 30l16-2 10-10h32l10 10 16 2 2 10H8Z" fill="#558B6E"/><circle cx="28" cy="42" r="7" fill="#3C614C"/><circle cx="74" cy="42" r="7" fill="#3C614C"/></svg>
                   </div>
                   <div class="lc__body">
                     <div class="lc__row"><span class="lc__name">מאזדה 3</span><span class="lc__price">₪78,000</span></div>
@@ -324,7 +383,7 @@
                 </div>
                 <div class="lc">
                   <div class="lc__img"><span class="lc__badge lc__badge--agent">סוכן</span>
-                    <svg width="34" height="18" viewBox="0 0 100 52" fill="none" opacity=".5"><path d="M6 40 8 26l14-2 8-12h40l8 12 14 2 2 14H6Z" fill="#558B6E"/><circle cx="27" cy="42" r="7" fill="#3C614C"/><circle cx="75" cy="42" r="7" fill="#3C614C"/></svg>
+                    <svg width="86" height="45" viewBox="0 0 100 52" fill="none" opacity=".5"><path d="M6 40 8 26l14-2 8-12h40l8 12 14 2 2 14H6Z" fill="#558B6E"/><circle cx="27" cy="42" r="7" fill="#3C614C"/><circle cx="75" cy="42" r="7" fill="#3C614C"/></svg>
                   </div>
                   <div class="lc__body">
                     <div class="lc__row"><span class="lc__name">יונדאי טוסון</span><span class="lc__price">₪112,000</span></div>
@@ -334,7 +393,7 @@
                 </div>
               </div>
               <div class="list__nav">
-                <span class="nav-pill"><svg width="6" height="6" viewBox="0 0 24 24" fill="none"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1v-8Z" fill="#fff"/></svg>בית</span>
+                <span class="nav-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1v-8Z" fill="#fff"/></svg>בית</span>
                 <span class="nav-dot"></span><span class="nav-dot"></span><span class="nav-dot"></span><span class="nav-dot"></span>
               </div>
             </div>
@@ -377,27 +436,33 @@
     <div class="head">
       <span class="eyebrow">הנתונים</span>
       <h2>מה בדיוק מוצג על כל רכב</h2>
-      <p>מה שמסומן בכחול מגיע ממאגרי המדינה. מה שמסומן בכתום מגיע מקונים אחרים — ואף פעם לא מעורבב.</p>
+      <p>שני סוגי מידע, שאף פעם לא מוצגים כאותו דבר.</p>
     </div>
+
+    <h3 class="group"><span class="group__tag group__tag--off">מידע רשמי</span>ממאגרי משרד התחבורה</h3>
     <div class="nine">
       <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 17h16M6 17V9l6-4 6 4v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div><h4>קילומטראז' בטסט האחרון</h4><p>הקריאה שנרשמה רשמית, לצד המספר שהמוכר הזין.</p><span class="tag tag--off">רשמי</span></div></div>
+        <div><h4>קילומטראז' בטסט האחרון</h4><p>הקריאה שנרשמה רשמית, לצד המספר שהמוכר הזין.</p></div></div>
       <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 3l9.5 17h-19L12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.4M12 17.3v.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div>
-        <div><h4>שינוי מבנה</h4><p>האינדיקציה הרשמית הקרובה ביותר לתאונה משמעותית.</p><span class="tag tag--off">רשמי</span></div></div>
+        <div><h4>שינוי מבנה</h4><p>האינדיקציה הרשמית הקרובה ביותר לתאונה משמעותית.</p></div></div>
       <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2"/><path d="M12 7.5v5M12 15.6v.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div>
-        <div><h4>ריקולים פתוחים</h4><p>קריאות שירות שהיצרן פרסם ועדיין לא בוצעו ברכב.</p><span class="tag tag--off">רשמי</span></div></div>
+        <div><h4>ריקולים פתוחים</h4><p>קריאות שירות שהיצרן פרסם ועדיין לא בוצעו ברכב.</p></div></div>
       <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 6l14 12M19 6L5 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
-        <div><h4>ירידה מהכביש</h4><p>רכב שרישומו בוטל או שהורד מהכביש — נדיר, וקריטי לדעת.</p><span class="tag tag--off">רשמי</span></div></div>
+        <div><h4>ירידה מהכביש</h4><p>רכב שרישומו בוטל או שהורד מהכביש — נדיר, וקריטי לדעת.</p></div></div>
       <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="6" width="17" height="12" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17" stroke="currentColor" stroke-width="2"/></svg></div>
-        <div><h4>בעלות ומספר בעלים</h4><p>סוג הבעלות הרשום — פרטי או מסחרי — ומה זה אומר על הרכב.</p><span class="tag tag--off">רשמי</span></div></div>
+        <div><h4>בעלות ומספר בעלים</h4><p>סוג הבעלות הרשום — פרטי או מסחרי — ומה זה אומר על הרכב.</p></div></div>
       <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 12h16M4 7h16M4 17h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
-        <div><h4>מפרט הדגם המלא</h4><p>נפח מנוע, כוח סוס, מושבים, הנעה ומרכב — מהמאגר הרשמי של הדגמים.</p><span class="tag tag--off">רשמי</span></div></div>
+        <div><h4>מפרט הדגם המלא</h4><p>נפח מנוע, כוח סוס, מושבים, הנעה ומרכב — מהמאגר הרשמי של הדגמים.</p></div></div>
+    </div>
+
+    <h3 class="group"><span class="group__tag group__tag--com">מידע קהילתי</span>מדיווחי קונים אחרים</h3>
+    <div class="nine">
       <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 19V5m0 0 8 3 8-3v10l-8 3-8-3" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
-        <div><h4>מי המוכר שפגשו</h4><p>קונים שנפגשו איתו מדווחים מה הוא היה בפועל. מוצג כאחוזים, לא כקביעה.</p><span class="tag tag--com">קהילתי</span></div></div>
+        <div><h4>מי המוכר שפגשו</h4><p>קונים שנפגשו איתו מדווחים מה הוא היה בפועל. מוצג כאחוזים, לא כקביעה.</p></div></div>
       <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M20 15a3 3 0 0 1-3 3H8l-4 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v9Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
-        <div><h4>הערות מבקרים</h4><p>הערות עובדתיות על הרכב מקונים שכבר ראו אותו — עם זכות תגובה למוכר.</p><span class="tag tag--com">קהילתי</span></div></div>
+        <div><h4>הערות מבקרים</h4><p>הערות עובדתיות על הרכב מקונים שכבר ראו אותו — עם זכות תגובה למוכר.</p></div></div>
       <div class="nine__i"><div class="nine__ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 21V3M5 10l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div><h4>היסטוריית פרסום</h4><p>אם הרכב כבר פורסם כאן בעבר — כמה פעמים, ולאן הלך המחיר והק"מ.</p><span class="tag tag--com">קהילתי</span></div></div>
+        <div><h4>היסטוריית פרסום</h4><p>אם הרכב כבר פורסם כאן בעבר — כמה פעמים, ולאן הלך המחיר והק"מ.</p></div></div>
     </div>
   </div>
 </section>
