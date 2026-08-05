@@ -32,7 +32,9 @@ class AppColors {
   // Text — splash ink.
   static const textPrimary = Color(0xFF1A202C);
   static const textMuted = Color(0xFF5A6169);
-  static const textSubtle = Color(0xFF9AA0A6);
+  /// Darkened from #9AA0A6, which measured only 2.64:1 on white — under the
+  /// 3:1 floor for the small print this is used for. Now ~4.2:1.
+  static const textSubtle = Color(0xFF767C81);
 
   // Seller-type accents (private uses the brand teal)
   static const agentBlue = Color(0xFF3E6DB5);

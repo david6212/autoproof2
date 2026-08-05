@@ -49,3 +49,10 @@ app.*.map.json
 
 # Office temp / lock files (e.g. ~$Document.docx)
 ~$*
+
+# Android release signing. The keystore IS the app's identity — an update
+# signed with a different key is refused by Android — so it lives outside
+# the repo and is backed up separately. See DEVELOPMENT_LOG / README.
+android/key.properties
+*.jks
+*.keystore

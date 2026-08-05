@@ -70,18 +70,23 @@ void main() {
       expect(ratio(dark.textMuted, dark.surface), greaterThan(4.5));
     });
 
-    test('the light theme’s subtle grey is the one that misses 3:1', () {
-      // Not introduced by the dark theme — #9AA0A6 on white has always
-      // measured about 2.64:1, below the 3:1 floor for small text. Pinned
-      // rather than quietly corrected, because changing it is a brand
-      // decision. Darkening textSubtle to roughly #767C81 would clear it.
+    test('the light theme clears it too, now', () {
+      // #9AA0A6 used to measure 2.64:1 on white, under the floor. Darkened to
+      // #767C81 after the measurement; this stops it drifting back.
       double ratio(Color a, Color b) {
         final (x, y) = (a.computeLuminance(), b.computeLuminance());
         final (hi, lo) = x > y ? (x, y) : (y, x);
         return (hi + 0.05) / (lo + 0.05);
       }
 
-      expect(ratio(light.textSubtle, light.surface), closeTo(2.64, 0.05));
+      expect(ratio(light.textSubtle, light.surface), greaterThan(3.0));
+      expect(ratio(light.textMuted, light.surface), greaterThan(4.5));
+    });
+
+    test('subtle stays quieter than muted in the light theme', () {
+      // Darkening subtle must not push it past muted and invert the hierarchy.
+      expect(light.textSubtle.computeLuminance(),
+          greaterThan(light.textMuted.computeLuminance()));
     });
 
     test('body text stays readable on the card it sits on', () {
