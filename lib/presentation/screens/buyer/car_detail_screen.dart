@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,13 +14,13 @@ import '../../providers/chat_provider.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/buyer_journey_card.dart';
 import '../../widgets/car_notes_section.dart';
+import '../../widgets/car_photo_gallery.dart';
 import '../../widgets/gov_red_flags_card.dart';
 import '../../widgets/login_required_sheet.dart';
 import '../../widgets/plate_history_card.dart';
 import '../../widgets/report_listing_sheet.dart';
 import '../../widgets/seller_encounter_card.dart';
 import '../../widgets/seller_type_badge.dart';
-import '../../widgets/share_listing_button.dart';
 import '../../../core/theme/app_text.dart';
 import '../../widgets/heart_check_icon.dart';
 
@@ -83,7 +82,7 @@ class _Content extends ConsumerWidget {
         Expanded(
           child: CustomScrollView(
             slivers: [
-              SliverToBoxAdapter(child: _Gallery(car: car)),
+              SliverToBoxAdapter(child: CarPhotoGallery(car: car)),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -186,144 +185,6 @@ class _Content extends ConsumerWidget {
           ),
         ),
         _ActionBar(car: car, isSaved: isSaved),
-      ],
-    );
-  }
-}
-
-class _Gallery extends StatefulWidget {
-  const _Gallery({required this.car});
-  final CarModel car;
-
-  @override
-  State<_Gallery> createState() => _GalleryState();
-}
-
-class _GalleryState extends State<_Gallery> {
-  final _controller = PageController();
-  int _index = 0;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final photos = widget.car.photos;
-    return Stack(
-      children: [
-        SizedBox(
-          height: 280,
-          width: double.infinity,
-          child: photos.isEmpty
-              ? Container(
-                  color: context.colors.tealLight,
-                  child: Icon(Icons.directions_car,
-                      size: 80, color: context.colors.teal),
-                )
-              : PageView.builder(
-                  controller: _controller,
-                  itemCount: photos.length,
-                  onPageChanged: (i) => setState(() => _index = i),
-                  itemBuilder: (_, i) => CachedNetworkImage(
-                    imageUrl: photos[i],
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => Container(
-                      color: context.colors.tealLight,
-                      child: Icon(Icons.directions_car,
-                          size: 80, color: context.colors.teal),
-                    ),
-                  ),
-                ),
-        ),
-        // Top scrim so the back button stays legible over bright photos.
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            height: 90,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.black.withValues(alpha: 0.28), Colors.transparent],
-              ),
-            ),
-          ),
-        ),
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircleAvatar(
-                  backgroundColor: context.colors.surface,
-                  child: IconButton(
-                    icon: Icon(Icons.arrow_forward,
-                        color: context.colors.textPrimary),
-                    onPressed: () => popOrHome(context),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                CircleAvatar(
-                  backgroundColor: context.colors.surface,
-                  child: ShareListingButton(car: widget.car),
-                ),
-              ],
-            ),
-          ),
-        ),
-        // Photo counter (top-left).
-        if (photos.length > 1)
-          Positioned(
-            top: 16,
-            left: 12,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.45),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text('${_index + 1}/${photos.length}',
-                  style: TextStyle(color: context.colors.onBrand, fontSize: 12.5)),
-            ),
-          ),
-        // Seller-type pill (bottom-right).
-        Positioned(
-          bottom: 12,
-          right: 12,
-          child: SellerTypeBadge(type: widget.car.sellerType),
-        ),
-        // Page dots (bottom-center).
-        if (photos.length > 1)
-          Positioned(
-            bottom: 14,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(photos.length, (i) {
-                final active = i == _index;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: active ? 18 : 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: active
-                        ? context.colors.onBrand
-                        : context.colors.onBrand.withValues(alpha: 0.55),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                );
-              }),
-            ),
-          ),
       ],
     );
   }
