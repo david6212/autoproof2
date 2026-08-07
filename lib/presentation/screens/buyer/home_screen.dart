@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../../core/theme/app_text.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/analytics_provider.dart';
@@ -11,6 +13,7 @@ import '../../providers/cars_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../widgets/car_card_widget.dart';
 import '../../widgets/login_required_sheet.dart';
+import '../../widgets/otov_logo.dart';
 import '../../widgets/search_filter_sheet.dart';
 import '../../widgets/skeleton.dart';
 
@@ -83,38 +86,51 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
+/// The top of Home: the mark, the two utility actions, and search.
+///
+/// This used to be a solid teal band carrying a slogan in large white bold.
+/// It was the loudest thing on the screen and it competed with the listings,
+/// which are the reason anyone opens the app. It now sits on the page colour
+/// and lets the brand mark do the identifying, with the positioning line
+/// demoted to a caption under it — still said, no longer shouted.
 class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      decoration: BoxDecoration(color: context.colors.teal),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      color: context.colors.background,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Icon(Icons.verified_user, color: context.colors.onBrand, size: 22),
-              const SizedBox(width: 8),
+              const OtovLogo(size: 34),
+              const SizedBox(width: AppSpace.sm),
               Expanded(
-                child: Text(
-                  AppStrings.onlyPrivateSellers,
-                  style: TextStyle(
-                    color: context.colors.onBrand,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const OtovWordmark(fontSize: 22),
+                    const SizedBox(height: 1),
+                    Text(
+                      AppStrings.onlyPrivateSellers,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.text.micro,
+                    ),
+                  ],
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.info_outline, color: context.colors.onBrand),
+                icon: Icon(Icons.info_outline, color: context.colors.textMuted),
                 tooltip: 'אודות OtoV',
                 onPressed: () => context.push('/about'),
               ),
               const _NotificationBell(),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpace.sm),
           const _SearchField(),
         ],
       ),
@@ -135,7 +151,8 @@ class _NotificationBell extends ConsumerWidget {
       alignment: Alignment.center,
       children: [
         IconButton(
-          icon: Icon(Icons.notifications_none, color: context.colors.onBrand),
+          icon:
+              Icon(Icons.notifications_none, color: context.colors.textMuted),
           tooltip: 'התראות',
           onPressed: () => context.push('/notifications'),
         ),
@@ -212,9 +229,20 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
               filled: true,
               fillColor: context.colors.surface,
               contentPadding: EdgeInsets.zero,
+              // The field used to sit on a teal band, where being borderless
+              // white was enough to define it. On the page colour it needs an
+              // edge or it dissolves into the background.
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(color: context.colors.cardBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(color: context.colors.cardBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(color: context.colors.teal, width: 1.5),
               ),
             ),
           ),
@@ -232,7 +260,7 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
   }
 }
 
-/// White square button that opens the filter sheet, with an active-count badge.
+/// Square button that opens the filter sheet, with an active-count badge.
 class _FilterButton extends StatelessWidget {
   const _FilterButton({required this.count, required this.onTap});
   final int count;
@@ -248,7 +276,9 @@ class _FilterButton extends StatelessWidget {
         height: 52,
         decoration: BoxDecoration(
           color: context.colors.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          // Matches the search field beside it, for the same reason.
+          border: Border.all(color: context.colors.cardBorder),
         ),
         child: Stack(
           alignment: Alignment.center,

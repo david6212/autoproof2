@@ -105,12 +105,45 @@ class CarCard extends StatelessWidget {
   /// Height of the photo strip. [CarListView] needs it to size a grid cell.
   static const photoHeight = 170.0;
 
-  /// The card's total height: the photo, plus padding and two single lines of
-  /// text that grow with the user's text-size setting.
+  /// The card's total height. The grid on a wide window has to size a cell
+  /// before the card exists, so this has to be right — an under-estimate
+  /// overflows and Flutter paints the yellow-and-black stripes.
+  ///
+  /// The three text lines are **measured**, not approximated. The previous
+  /// version multiplied hand-tuned pixel guesses (20, 17…) by the text scale,
+  /// which silently assumed a font. A guess tuned against one font overflows
+  /// under another, and that failure only appears on a real device — which is
+  /// exactly where nobody is looking.
   static double heightFor(BuildContext context) {
-    final scale = MediaQuery.textScalerOf(context).scale(1);
-    return photoHeight + 24 + (20 + 4 + 17) * scale + 2;
+    final scaler = MediaQuery.textScalerOf(context);
+    final base = DefaultTextStyle.of(context).style;
+
+    double line(TextStyle style) {
+      final painter = TextPainter(
+        // Any single glyph: only the line's height is wanted, not its width.
+        text: TextSpan(text: 'X', style: base.merge(style)),
+        // Not a literal: `intl` also exports a `TextDirection`, and the
+        // ambient one is the right answer anyway.
+        textDirection: Directionality.of(context),
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      return painter.height;
+    }
+
+    final text = line(AppText.title) +
+        2 + // gap under the title
+        line(AppText.h3) + // the price
+        4 + // gap above the subtitle
+        line(_subtitleStyle);
+    // 24 = the 12px padding above and below the text block.
+    // 2  = AppCard's 1px border, top and bottom. (This is what the original
+    //      formula's unexplained trailing "+ 2" was paying for.)
+    return photoHeight + 24 + text + 2;
   }
+
+  /// Shared so [heightFor] measures the very style the card renders.
+  static const _subtitleStyle = TextStyle(fontSize: 13);
 
   static final _priceFmt = NumberFormat('#,###', 'en');
 
@@ -133,33 +166,29 @@ class CarCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          car.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppText.title,
-                        ),
-                      ),
-                      Text(
-                        '₪${_priceFmt.format(car.price)}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: context.colors.teal,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    car.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.title,
+                  ),
+                  const SizedBox(height: 2),
+                  // The price is the number people scan a list for, so it gets
+                  // its own line and a step more size than the title.
+                  Text(
+                    '₪${_priceFmt.format(car.price)}',
+                    style: AppText.h3.copyWith(color: context.colors.teal),
                   ),
                   const SizedBox(height: 4),
+                  // One line, always. [heightFor] budgets for exactly one, so
+                  // a wrap here would overflow the grid cell — and this line
+                  // wraps easily at a large text scale or on a narrow phone.
                   Text(
                     _subtitle(),
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: context.colors.textMuted,
-                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: _subtitleStyle.copyWith(
+                        color: context.colors.textMuted),
                   ),
                 ],
               ),
@@ -202,7 +231,13 @@ class CarCard extends StatelessWidget {
                   ),
                 ),
         ),
-        Positioned(top: 10, right: 10, child: SellerTypeBadge(type: car.sellerType)),
+        // The badge sits at the foot of the photo and the save button at its
+        // head, so the two never compete for the same corner and the top of
+        // the image — usually the car itself — stays clear.
+        Positioned(
+            bottom: 10,
+            right: 10,
+            child: SellerTypeBadge(type: car.sellerType)),
         if (onToggleSave != null)
           Positioned(
             top: 6,
