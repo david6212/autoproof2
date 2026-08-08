@@ -198,12 +198,17 @@ class CarCard extends StatelessWidget {
                   // One line, always. [heightFor] budgets for exactly one, so
                   // a wrap here would overflow the grid cell — and this line
                   // wraps easily at a large text scale or on a narrow phone.
+                  // `textMuted`, not `textSubtle`. The design file uses the
+                  // lighter one, but this line is four facts a buyer actually
+                  // reads, and subtle measures 4.23:1 on white — below the
+                  // 4.5 floor for text this size. `palette_test` pins subtle
+                  // at only 3.0 precisely because it is for incidental print.
                   Text(
                     _subtitle(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: _subtitleStyle.copyWith(
-                        color: context.colors.textSubtle),
+                        color: context.colors.textMuted),
                   ),
                 ],
               ),

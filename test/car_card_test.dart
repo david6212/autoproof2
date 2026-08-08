@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:otov/app/theme.dart';
+import 'package:otov/core/theme/app_palette.dart';
 import 'package:otov/data/models/car_model.dart';
 import 'package:otov/presentation/widgets/car_card_widget.dart';
 
@@ -83,6 +84,26 @@ void main() {
     // The price is on its own line now, so it survives a title long enough to
     // have squeezed it out of the old shared row.
     expect(find.text('₪132,000'), findsOneWidget);
+  });
+
+  testWidgets('the meta line uses ink that clears 4.5:1 on the card', (t) async {
+    // A design reference had this line in `textSubtle`, which measures 4.23:1
+    // on white — fine for the incidental print it is meant for, under the
+    // floor for four facts a buyer reads off a listing. `palette_test` pins
+    // subtle at only 3.0, so nothing there would have caught the swap.
+    double ratio(Color a, Color b) {
+      final (x, y) = (a.computeLuminance(), b.computeLuminance());
+      final (hi, lo) = x > y ? (x, y) : (y, x);
+      return (hi + 0.05) / (lo + 0.05);
+    }
+
+    await t.pumpWidget(host(car()));
+    final style = t.widget<Text>(find.textContaining('ק"מ')).style!;
+    for (final p in [AppPalette.light, AppPalette.dark]) {
+      expect(style.color, isNot(p.textSubtle),
+          reason: 'the meta line must not use textSubtle');
+    }
+    expect(ratio(style.color!, AppPalette.light.surface), greaterThan(4.5));
   });
 
   testWidgets('the seller badge and the review chip do not share a corner',

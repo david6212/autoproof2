@@ -182,16 +182,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       () => ref.read(authRepositoryProvider).signInWithGoogle()),
                 ),
                 const SizedBox(height: 10),
-                _SocialButton(
-                  label: 'המשך עם Apple',
-                  leading: Icon(Icons.apple,
-                      color: context.colors.onBrand, size: 22),
-                  background: const Color(0xFF111111),
-                  foreground: context.colors.onBrand,
-                  loading: _socialLoading,
-                  onPressed: () => _social(
-                      () => ref.read(authRepositoryProvider).signInWithApple()),
-                ),
+                // Apple's mark inverts with the theme, which is both what
+                // Apple's own guidance asks for and the only way this button
+                // stays visible: the old hard-coded #111111 sat on a #101312
+                // page in the dark theme — a contrast ratio of about 1.01,
+                // i.e. an invisible button.
+                Builder(builder: (context) {
+                  final onDark =
+                      Theme.of(context).brightness == Brightness.dark;
+                  final bg = onDark
+                      ? context.colors.onBrand
+                      : const Color(0xFF111111);
+                  final fg =
+                      onDark ? const Color(0xFF111111) : context.colors.onBrand;
+                  return _SocialButton(
+                    label: 'המשך עם Apple',
+                    leading: Icon(Icons.apple, color: fg, size: 22),
+                    background: bg,
+                    foreground: fg,
+                    loading: _socialLoading,
+                    onPressed: () => _social(() =>
+                        ref.read(authRepositoryProvider).signInWithApple()),
+                  );
+                }),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => context.go('/home'),
