@@ -109,7 +109,7 @@ class CarNotesSection extends ConsumerWidget {
               onPressed: () => Navigator.pop(context, false),
               child: const Text('ביטול')),
           FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: context.colors.teal),
+              style: FilledButton.styleFrom(backgroundColor: context.colors.tealFill),
               onPressed: () => Navigator.pop(context, true),
               child: const Text('דווח')),
         ],
@@ -175,7 +175,7 @@ class _NoteTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 14,
-                backgroundColor: context.colors.teal,
+                backgroundColor: context.colors.tealFill,
                 child: Text(initial,
                     style: TextStyle(
                         color: context.colors.onBrand,
@@ -477,7 +477,7 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
           const SizedBox(height: 12),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: context.colors.teal,
+              backgroundColor: context.colors.tealFill,
               minimumSize: const Size.fromHeight(48),
             ),
             onPressed: (_saving || _tags.isEmpty) ? null : _submit,

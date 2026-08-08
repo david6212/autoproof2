@@ -7,6 +7,14 @@ class AppColors {
 
   // Primary — matched to the splash screen palette (sage green #558B6E).
   static const teal = Color(0xFF558B6E);
+
+  /// The same green, 6% darker in lightness, for use **under white text**.
+  ///
+  /// White on [teal] measures 3.96:1 — below the 4.5 floor for a button label
+  /// at 15–16px bold. This measures 5.07:1. Hue (147.8°) and saturation are
+  /// identical, so it reads as the same green; only buttons and app bars use
+  /// it. The emblem and the wordmark's check stay on [teal].
+  static const tealFill = Color(0xFF4A785F);
   static const tealDark = Color(0xFF3C614C);
   static const tealLight = Color(0xFFE7EFEA);
   static const tealText = Color(0xFF294539);

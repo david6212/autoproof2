@@ -112,7 +112,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: context.colors.teal),
+                    color: context.colors.tealText2),
               ),
               const SizedBox(height: 26),
               Text(
@@ -253,7 +253,7 @@ class _ConsentNote extends StatelessWidget {
           onPressed: () => context.push('/legal'),
           child: Text(
             'תנאי השימוש ומדיניות הפרטיות',
-            style: TextStyle(fontSize: 11.5, color: context.colors.teal),
+            style: TextStyle(fontSize: 11.5, color: context.colors.tealText2),
           ),
         ),
       ],

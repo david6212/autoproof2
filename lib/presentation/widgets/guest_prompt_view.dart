@@ -60,7 +60,7 @@ class GuestPromptView extends StatelessWidget {
               width: double.infinity,
               child: FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: context.colors.teal,
+                  backgroundColor: context.colors.tealFill,
                   minimumSize: const Size.fromHeight(50),
                 ),
                 onPressed: () => context.push('/login'),

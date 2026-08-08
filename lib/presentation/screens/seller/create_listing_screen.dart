@@ -155,7 +155,7 @@ class _AddTile extends StatelessWidget {
           children: [
             Icon(Icons.add_a_photo_outlined, color: context.colors.teal),
             const SizedBox(height: 4),
-            Text('הוסף', style: TextStyle(color: context.colors.teal, fontSize: 12.5)),
+            Text('הוסף', style: TextStyle(color: context.colors.tealText2, fontSize: 12.5)),
           ],
         ),
       ),
@@ -626,7 +626,7 @@ class _Stat extends StatelessWidget {
             style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: context.colors.teal)),
+                color: context.colors.tealText2)),
         Text(label,
             style: TextStyle(color: context.colors.textMuted, fontSize: 13)),
       ],

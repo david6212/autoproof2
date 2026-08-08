@@ -37,14 +37,14 @@ class AppTheme {
         displayColor: p.textPrimary,
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: p.teal,
+        backgroundColor: p.tealFill,
         foregroundColor: p.onBrand,
         elevation: 0,
         centerTitle: true,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: p.teal,
+          backgroundColor: p.tealFill,
           foregroundColor: p.onBrand,
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
@@ -60,7 +60,7 @@ class AppTheme {
       // defaults mean a plain FilledButton/OutlinedButton already looks right.
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: p.teal,
+          backgroundColor: p.tealFill,
           foregroundColor: p.onBrand,
           // Height only — `Size.fromHeight` would set an INFINITE minimum
           // width and stretch every button, including dialog actions.
@@ -76,7 +76,10 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: p.teal,
+          // Label is green ink on the page, so it takes the ink token (6.74:1
+          // light / 8.09:1 dark). The border stays [teal] — an outline is a
+          // graphic, and 3:1 is its floor.
+          foregroundColor: p.tealText2,
           side: BorderSide(color: p.teal),
           minimumSize: const Size(64, 46),
           shape: RoundedRectangleBorder(

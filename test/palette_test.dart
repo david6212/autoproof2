@@ -57,6 +57,36 @@ void main() {
       });
     });
 
+    test('the brand green is split by job, and each job passes', () {
+      double ratio(Color a, Color b) {
+        final (x, y) = (a.computeLuminance(), b.computeLuminance());
+        final (hi, lo) = x > y ? (x, y) : (y, x);
+        return (hi + 0.05) / (lo + 0.05);
+      }
+
+      // Measured before the split: white on the brand green was 3.96:1 and the
+      // green as text was 3.96 on white / 4.30 on a dark card. All three sit
+      // under the 4.5 floor, and no single green can fix them — the first two
+      // need a *darker* value, the third a *lighter* one. Hence two tokens.
+      for (final p in [light, dark]) {
+        expect(ratio(p.onBrand, p.tealFill), greaterThan(4.5),
+            reason: 'a button label must be readable on its fill');
+      }
+      expect(ratio(light.tealText2, light.surface), greaterThan(4.5),
+          reason: 'green ink on a white card');
+      expect(ratio(dark.tealText2, dark.surface), greaterThan(4.5),
+          reason: 'green ink on a dark card');
+
+      // The identity colour itself must NOT be dragged along by that fix: the
+      // emblem and the wordmark's check depend on it, and it is deliberately
+      // the same in both themes.
+      expect(light.teal, dark.teal);
+      expect(light.teal, isNot(light.tealFill));
+      expect(light.tealFill.computeLuminance(),
+          lessThan(light.teal.computeLuminance()),
+          reason: 'the fill is the darker one');
+    });
+
     test('even the quietest ink clears 3:1 on its surface', () {
       double ratio(Color a, Color b) {
         final (x, y) = (a.computeLuminance(), b.computeLuminance());

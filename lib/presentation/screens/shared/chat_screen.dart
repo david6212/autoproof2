@@ -238,7 +238,7 @@ class _InputBar extends StatelessWidget {
           const SizedBox(width: 8),
           CircleAvatar(
             radius: 24,
-            backgroundColor: context.colors.teal,
+            backgroundColor: context.colors.tealFill,
             child: IconButton(
               icon: Icon(Icons.send, color: context.colors.onBrand),
               onPressed: onSend,

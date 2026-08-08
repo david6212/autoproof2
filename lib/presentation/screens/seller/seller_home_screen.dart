@@ -81,7 +81,7 @@ class _NoListing extends StatelessWidget {
               style: TextStyle(color: context.colors.tealText2, fontSize: 13)),
           const SizedBox(height: 12),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: context.colors.teal),
+            style: FilledButton.styleFrom(backgroundColor: context.colors.tealFill),
             onPressed: () => context.go('/seller/create'),
             child: const Text('פרסם מודעה'),
           ),
@@ -132,7 +132,7 @@ class _ActiveListingCard extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: context.colors.textPrimary)),
                   Text('₪${_fmt.format(car.price)}',
-                      style: TextStyle(color: context.colors.teal)),
+                      style: TextStyle(color: context.colors.tealText2)),
                 ],
               ),
             ),

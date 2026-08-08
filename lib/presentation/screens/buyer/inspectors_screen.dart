@@ -435,7 +435,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
               children: [
                 FloatingActionButton.small(
                   heroTag: 'nearest',
-                  backgroundColor: context.colors.teal,
+                  backgroundColor: context.colors.tealFill,
                   foregroundColor: context.colors.onBrand,
                   onPressed: () => _goToNearest(list, me),
                   child: const Icon(Icons.near_me),
@@ -444,7 +444,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
                 FloatingActionButton.small(
                   heroTag: 'me',
                   backgroundColor: context.colors.surface,
-                  foregroundColor: context.colors.teal,
+                  foregroundColor: context.colors.tealText2,
                   onPressed: () => _mapController.move(me, 13),
                   child: const Icon(Icons.my_location),
                 ),
@@ -778,7 +778,7 @@ class _CenterCard extends StatelessWidget {
                 Expanded(
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(
-                        backgroundColor: context.colors.teal,
+                        backgroundColor: context.colors.tealFill,
                         minimumSize: const Size.fromHeight(44)),
                     icon: const Icon(Icons.phone, size: 18),
                     label: const Text('התקשר'),
@@ -790,7 +790,7 @@ class _CenterCard extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: context.colors.teal,
+                    foregroundColor: context.colors.tealText2,
                     side: BorderSide(color: context.colors.teal),
                     minimumSize: const Size.fromHeight(44),
                   ),

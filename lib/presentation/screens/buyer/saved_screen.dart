@@ -72,7 +72,7 @@ class _EmptySaved extends StatelessWidget {
               style: TextStyle(color: context.colors.textMuted)),
           const SizedBox(height: 16),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: context.colors.teal),
+            style: FilledButton.styleFrom(backgroundColor: context.colors.tealFill),
             onPressed: () => context.go('/home'),
             child: const Text('עבור לרכבים'),
           ),

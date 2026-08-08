@@ -72,7 +72,7 @@ class ListingRemovedScreen extends StatelessWidget {
               const Spacer(),
               FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: context.colors.teal,
+                  backgroundColor: context.colors.tealFill,
                   minimumSize: const Size.fromHeight(50),
                 ),
                 onPressed: () {},

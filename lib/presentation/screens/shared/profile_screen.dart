@@ -117,7 +117,7 @@ class _Content extends StatelessWidget {
                     Icon(Icons.verified, size: 16, color: context.colors.teal),
                     const SizedBox(width: 4),
                     Text('נתונים ממרשם הרכב',
-                        style: TextStyle(color: context.colors.teal)),
+                        style: TextStyle(color: context.colors.tealText2)),
                   ],
                 )
               else

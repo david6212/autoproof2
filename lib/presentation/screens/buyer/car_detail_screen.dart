@@ -102,7 +102,7 @@ class _Content extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: context.colors.teal,
+                              color: context.colors.tealText2,
                             ),
                           ),
                         ],
@@ -457,7 +457,7 @@ class _SellerCard extends StatelessWidget {
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: context.colors.teal,
+                backgroundColor: context.colors.tealFill,
                 child: Icon(Icons.person, color: context.colors.onBrand),
               ),
               const SizedBox(width: 12),
@@ -508,7 +508,7 @@ class _HistoryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return OutlinedButton.icon(
       style: OutlinedButton.styleFrom(
-        foregroundColor: context.colors.teal,
+        foregroundColor: context.colors.tealText2,
         side: BorderSide(color: context.colors.teal),
         minimumSize: const Size.fromHeight(48),
         shape:
@@ -541,7 +541,7 @@ class _ActionBar extends ConsumerWidget {
             Expanded(
               child: FilledButton.icon(
                 style: FilledButton.styleFrom(
-                  backgroundColor: context.colors.teal,
+                  backgroundColor: context.colors.tealFill,
                   minimumSize: const Size.fromHeight(50),
                 ),
                 icon: const Icon(Icons.chat_bubble_outline),

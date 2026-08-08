@@ -245,7 +245,7 @@ class _StepRow extends StatelessWidget {
                     const SizedBox(height: 8),
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: context.colors.teal,
+                        foregroundColor: context.colors.tealText2,
                         side: BorderSide(color: context.colors.teal),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
@@ -293,7 +293,7 @@ class _StepRow extends StatelessWidget {
                       width: double.infinity,
                       child: FilledButton(
                         style: FilledButton.styleFrom(
-                          backgroundColor: context.colors.teal,
+                          backgroundColor: context.colors.tealFill,
                           minimumSize: const Size.fromHeight(42),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),

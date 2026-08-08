@@ -191,7 +191,7 @@ class CarCard extends StatelessWidget {
                     textDirection: TextDirection.ltr,
                     child: Text(
                       '₪${_priceFmt.format(car.price)}',
-                      style: AppText.title.copyWith(color: context.colors.teal),
+                      style: AppText.title.copyWith(color: context.colors.tealText2),
                     ),
                   ),
                   const SizedBox(height: 4),

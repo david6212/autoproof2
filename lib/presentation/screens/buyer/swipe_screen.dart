@@ -262,7 +262,7 @@ class _NoMoreCards extends StatelessWidget {
               style: context.text.captionSubtle),
           const SizedBox(height: 16),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: context.colors.teal),
+            style: FilledButton.styleFrom(backgroundColor: context.colors.tealFill),
             onPressed: () => context.go('/home'),
             child: const Text('חזרה לפיד'),
           ),

@@ -86,7 +86,7 @@ class _Header extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             AppStrings.tagline,
-            style: TextStyle(color: context.colors.teal, fontSize: 15),
+            style: TextStyle(color: context.colors.tealText2, fontSize: 15),
           ),
         ],
       ),

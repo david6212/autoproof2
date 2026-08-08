@@ -16,6 +16,7 @@ import '../constants/app_colors.dart';
 class AppPalette extends ThemeExtension<AppPalette> {
   const AppPalette({
     required this.teal,
+    required this.tealFill,
     required this.tealDark,
     required this.tealLight,
     required this.tealText,
@@ -41,6 +42,17 @@ class AppPalette extends ThemeExtension<AppPalette> {
   });
 
   final Color teal;
+
+  /// The brand green **as a fill under white text** — filled buttons, the app
+  /// bar. Measurably darker than [teal], because white on `#558B6E` is only
+  /// 3.96:1 and the floor for a button label is 4.5. This is 5.07.
+  ///
+  /// It is a separate token rather than a darker [teal] because the two do
+  /// different jobs: [teal] identifies the product (the emblem, the check in
+  /// the wordmark, icons, borders) and must not drift, while this one only has
+  /// to carry white legibly. Same hue and saturation, 6% less lightness.
+  final Color tealFill;
+
   final Color tealDark;
   final Color tealLight;
   final Color tealText;
@@ -70,6 +82,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
 
   static const light = AppPalette(
     teal: AppColors.teal,
+    tealFill: AppColors.tealFill,
     tealDark: AppColors.tealDark,
     tealLight: AppColors.tealLight,
     tealText: AppColors.tealText,
@@ -102,6 +115,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
   /// the same colour, with its text lightened to match.
   static const dark = AppPalette(
     teal: AppColors.teal,
+    // Same value in both themes: what it carries is white either way.
+    tealFill: AppColors.tealFill,
     tealDark: Color(0xFF2C4A39),
     // Was a pale wash behind icons and banners; now a deep one.
     tealLight: Color(0xFF1F2B25),
@@ -135,6 +150,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   @override
   AppPalette copyWith({
     Color? teal,
+    Color? tealFill,
     Color? tealDark,
     Color? tealLight,
     Color? tealText,
@@ -160,6 +176,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   }) {
     return AppPalette(
       teal: teal ?? this.teal,
+      tealFill: tealFill ?? this.tealFill,
       tealDark: tealDark ?? this.tealDark,
       tealLight: tealLight ?? this.tealLight,
       tealText: tealText ?? this.tealText,
@@ -191,6 +208,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color c(Color a, Color b) => Color.lerp(a, b, t)!;
     return AppPalette(
       teal: c(teal, other.teal),
+      tealFill: c(tealFill, other.tealFill),
       tealDark: c(tealDark, other.tealDark),
       tealLight: c(tealLight, other.tealLight),
       tealText: c(tealText, other.tealText),

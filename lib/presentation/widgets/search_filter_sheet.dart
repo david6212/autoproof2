@@ -331,7 +331,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
               height: 52,
               child: FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: context.colors.teal,
+                  backgroundColor: context.colors.tealFill,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(28)),
                 ),

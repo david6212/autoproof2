@@ -78,7 +78,7 @@ class _Content extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: context.colors.teal)),
+                            color: context.colors.tealText2)),
                   ],
                 ),
               ),
@@ -123,7 +123,7 @@ class _Content extends StatelessWidget {
         // so this gets a full-width button rather than an icon.
         FilledButton.icon(
           style: FilledButton.styleFrom(
-            backgroundColor: context.colors.teal,
+            backgroundColor: context.colors.tealFill,
             minimumSize: const Size.fromHeight(48),
           ),
           icon: const Icon(Icons.ios_share),
@@ -133,7 +133,7 @@ class _Content extends StatelessWidget {
         const SizedBox(height: 10),
         OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
-            foregroundColor: context.colors.teal,
+            foregroundColor: context.colors.tealText2,
             side: BorderSide(color: context.colors.teal),
             minimumSize: const Size.fromHeight(48),
           ),
@@ -203,7 +203,7 @@ class _SellerActions extends ConsumerWidget {
       children: [
         FilledButton.icon(
           style: FilledButton.styleFrom(
-            backgroundColor: context.colors.teal,
+            backgroundColor: context.colors.tealFill,
             minimumSize: const Size.fromHeight(48),
           ),
           icon: const Icon(Icons.check_circle_outline),
@@ -296,7 +296,7 @@ class _Empty extends StatelessWidget {
               style: TextStyle(color: context.colors.textMuted)),
           const SizedBox(height: 16),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: context.colors.teal),
+            style: FilledButton.styleFrom(backgroundColor: context.colors.tealFill),
             onPressed: () => context.go('/seller/create'),
             child: const Text('פרסם מודעה'),
           ),
