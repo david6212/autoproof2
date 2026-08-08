@@ -93,7 +93,7 @@ class _Content extends StatelessWidget {
                 label: 'צפיות',
                 value: '—'),
             _Stat(
-                icon: Icons.favorite_border,
+                icon: Icons.check_rounded,
                 iconWidget: SavedCheckIcon(
                     size: 20, color: context.colors.teal),
                 label: 'מתעניינים',

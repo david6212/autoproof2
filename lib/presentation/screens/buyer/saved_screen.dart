@@ -24,7 +24,7 @@ class SavedScreen extends ConsumerWidget {
       body: SafeArea(
         child: isGuest
             ? GuestPromptView(
-                icon: Icons.favorite_border,
+                icon: Icons.check_rounded,
                 iconWidget:
                     SavedCheckIcon(size: 40, color: context.colors.teal),
                 title: 'שמור רכבים שאהבת',

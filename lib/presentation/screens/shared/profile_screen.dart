@@ -133,7 +133,7 @@ class _Content extends StatelessWidget {
           onTap: () => context.go('/seller'),
         ),
         _MenuRow(
-          icon: Icons.favorite_border,
+          icon: Icons.check_rounded,
           iconWidget:
               SavedCheckIcon(size: 24, color: context.colors.textPrimary),
           label: 'רכבים שמורים',

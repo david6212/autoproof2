@@ -582,7 +582,7 @@ class _ActionBar extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             _RoundAction(
-              icon: Icons.favorite_border,
+              icon: Icons.check_rounded,
               iconWidget: SavedCheckIcon(
                 size: 24,
                 filled: isSaved,

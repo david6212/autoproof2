@@ -12,7 +12,7 @@ class BuyerShell extends StatelessWidget {
 
   static const _tabs = [
     NavTab('/home', Icons.home_outlined, Icons.home, 'בית'),
-    NavTab('/saved', Icons.favorite_border, Icons.favorite, 'שמורים',
+    NavTab('/saved', Icons.check_rounded, Icons.check_rounded, 'שמורים',
         iconBuilder: savedTabIcon),
     NavTab('/discover', Icons.explore_outlined, Icons.explore, 'גילוי'),
     NavTab('/chats', Icons.chat_bubble_outline, Icons.chat_bubble, 'צ\'אטים'),
