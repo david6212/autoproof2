@@ -91,8 +91,11 @@ class HomeScreen extends ConsumerWidget {
 /// This used to be a solid teal band carrying a slogan in large white bold.
 /// It was the loudest thing on the screen and it competed with the listings,
 /// which are the reason anyone opens the app. It now sits on the page colour
-/// and lets the brand mark do the identifying, with the positioning line
-/// demoted to a caption under it — still said, no longer shouted.
+/// and lets the brand mark do the identifying.
+///
+/// The mark is deliberately small — 26px of emblem against an 18px wordmark.
+/// A home screen does not have to announce which app it is; the person opening
+/// it already knows.
 class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -104,24 +107,10 @@ class _Header extends StatelessWidget {
         children: [
           Row(
             children: [
-              const OtovLogo(size: 34),
+              const OtovLogo(size: 26),
               const SizedBox(width: AppSpace.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const OtovWordmark(fontSize: 22),
-                    const SizedBox(height: 1),
-                    Text(
-                      AppStrings.onlyPrivateSellers,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: context.text.micro,
-                    ),
-                  ],
-                ),
-              ),
+              const OtovWordmark(fontSize: 18),
+              const Spacer(),
               IconButton(
                 icon: Icon(Icons.info_outline, color: context.colors.textMuted),
                 tooltip: 'אודות OtoV',
@@ -207,55 +196,57 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
   @override
   Widget build(BuildContext context) {
     final count = ref.watch(carFiltersProvider).activeCount;
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: _controller,
-            textInputAction: TextInputAction.search,
-            onChanged: _set,
-            decoration: InputDecoration(
-              hintText: 'חפש יצרן, דגם או אזור',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _controller.text.isEmpty
-                  ? null
-                  : IconButton(
-                      icon: const Icon(Icons.close, size: 20),
-                      onPressed: () {
-                        _controller.clear();
-                        _set('');
-                      },
-                    ),
-              filled: true,
-              fillColor: context.colors.surface,
-              contentPadding: EdgeInsets.zero,
-              // The field used to sit on a teal band, where being borderless
-              // white was enough to define it. On the page colour it needs an
-              // edge or it dissolves into the background.
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: context.colors.cardBorder),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: context.colors.cardBorder),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: context.colors.teal, width: 1.5),
+
+    // One pill holding search and filter, rather than a field plus a separate
+    // 52px square beside it. They are two halves of one question — "which
+    // cars?" — and the square was reading as an unrelated third control.
+    return Container(
+      height: 48,
+      padding: const EdgeInsetsDirectional.only(start: 14, end: 4),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        // On the old teal band, being borderless white was enough to define
+        // the field. On the page colour it needs an edge or it dissolves.
+        border: Border.all(color: context.colors.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.search, size: 20, color: context.colors.textSubtle),
+          const SizedBox(width: AppSpace.sm),
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              textInputAction: TextInputAction.search,
+              onChanged: _set,
+              style: AppText.body,
+              decoration: InputDecoration.collapsed(
+                hintText: 'חיפוש לפי יצרן, דגם, אזור או מספר רכב',
+                hintStyle: AppText.body.copyWith(
+                  color: context.colors.textSubtle,
+                ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        _FilterButton(
-          count: count,
-          onTap: () => showSearchFilterSheet(
-            context,
-            ref.read(activeCarsProvider).valueOrNull ?? const [],
+          if (_controller.text.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.close, size: 18),
+              color: context.colors.textSubtle,
+              tooltip: 'נקה חיפוש',
+              onPressed: () {
+                _controller.clear();
+                _set('');
+              },
+            ),
+          _FilterButton(
+            count: count,
+            onTap: () => showSearchFilterSheet(
+              context,
+              ref.read(activeCarsProvider).valueOrNull ?? const [],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -268,40 +259,49 @@ class _FilterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-          color: context.colors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          // Matches the search field beside it, for the same reason.
-          border: Border.all(color: context.colors.cardBorder),
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Icon(Icons.tune, color: context.colors.teal),
-            if (count > 0)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: context.colors.errorRed,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text('$count',
+    return Semantics(
+      button: true,
+      label: count > 0 ? 'סינון · $count מסננים פעילים' : 'סינון',
+      excludeSemantics: true,
+      child: InkResponse(
+        onTap: onTap,
+        radius: 24,
+        // No chrome of its own — it lives inside the search pill now.
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              Icon(Icons.tune, size: 20, color: context.colors.textPrimary),
+              if (count > 0)
+                PositionedDirectional(
+                  top: 3,
+                  end: 3,
+                  // Teal, not red. A filter count is a state the user chose,
+                  // not a fault — red made "2 filters on" look like an error.
+                  child: Container(
+                    width: 15,
+                    height: 15,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: context.colors.teal,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '$count',
                       style: TextStyle(
-                          color: context.colors.onBrand,
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.bold)),
+                        color: context.colors.onBrand,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                        height: 1,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -1,6 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+// `intl` exports its own TextDirection, which shadows Flutter's and turns any
+// use of the real one into a confusing "getter 'ltr' isn't defined". Only
+// NumberFormat is wanted here.
+import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../core/theme/app_palette.dart';
 import '../../data/models/car_model.dart';
@@ -132,8 +135,8 @@ class CarCard extends StatelessWidget {
     }
 
     final text = line(AppText.title) +
-        2 + // gap under the title
-        line(AppText.h3) + // the price
+        4 + // gap under the title
+        line(AppText.title) + // the price, same step as the title
         4 + // gap above the subtitle
         line(_subtitleStyle);
     // 24 = the 12px padding above and below the text block.
@@ -143,7 +146,11 @@ class CarCard extends StatelessWidget {
   }
 
   /// Shared so [heightFor] measures the very style the card renders.
-  static const _subtitleStyle = TextStyle(fontSize: 13);
+  ///
+  /// 11.5 is the scale's `micro` step. This line is four facts in a row and it
+  /// is the least important thing on the card — it should be readable when
+  /// looked at, not competing when not.
+  static const _subtitleStyle = TextStyle(fontSize: 11.5);
 
   static final _priceFmt = NumberFormat('#,###', 'en');
 
@@ -172,12 +179,20 @@ class CarCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppText.title,
                   ),
-                  const SizedBox(height: 2),
-                  // The price is the number people scan a list for, so it gets
-                  // its own line and a step more size than the title.
-                  Text(
-                    '₪${_priceFmt.format(car.price)}',
-                    style: AppText.h3.copyWith(color: context.colors.teal),
+                  const SizedBox(height: 4),
+                  // Its own line, so a long title no longer has to be cut to
+                  // make room for it. Colour carries the emphasis, not size.
+                  //
+                  // Pinned LTR: "₪132,000" is a neutral symbol followed by
+                  // digits, and in an RTL paragraph bidi is free to resolve
+                  // that either way. Pinning it means the shekel sign cannot
+                  // wander to the other end of the number on some devices.
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      '₪${_priceFmt.format(car.price)}',
+                      style: AppText.title.copyWith(color: context.colors.teal),
+                    ),
                   ),
                   const SizedBox(height: 4),
                   // One line, always. [heightFor] budgets for exactly one, so
@@ -188,7 +203,7 @@ class CarCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: _subtitleStyle.copyWith(
-                        color: context.colors.textMuted),
+                        color: context.colors.textSubtle),
                   ),
                 ],
               ),
@@ -231,37 +246,47 @@ class CarCard extends StatelessWidget {
                   ),
                 ),
         ),
-        // The badge sits at the foot of the photo and the save button at its
-        // head, so the two never compete for the same corner and the top of
-        // the image — usually the car itself — stays clear.
-        Positioned(
-            bottom: 10,
-            right: 10,
-            child: SellerTypeBadge(type: car.sellerType)),
+        // Badge at the foot, save button at the head, both on the leading
+        // edge — the two never share a corner, and the middle of the photo
+        // (which is the car) stays clear.
+        PositionedDirectional(
+          bottom: 10,
+          start: 10,
+          child: SellerTypeBadge(type: car.sellerType),
+        ),
         if (onToggleSave != null)
-          Positioned(
-            top: 6,
-            left: 6,
+          PositionedDirectional(
+            top: 10,
+            start: 10,
+            // A dark scrim rather than a solid surface circle. The button sits
+            // on a photograph, and a white disc is invisible on a photo of a
+            // white car — the same reason the gallery's chrome works this way.
             child: Material(
-              color: context.colors.surface,
+              color: Colors.black.withValues(alpha: 0.40),
               shape: const CircleBorder(),
-              child: IconButton(
-                iconSize: 20,
-                icon: HeartCheckIcon(
-                  size: 20,
-                  filled: saved,
-                  color:
-                      saved ? context.colors.teal : context.colors.textMuted,
-                  checkColor: context.colors.surface,
+              clipBehavior: Clip.antiAlias,
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  iconSize: 20,
+                  tooltip: saved ? 'הסר מהשמורים' : 'שמור',
+                  icon: HeartCheckIcon(
+                    size: 20,
+                    filled: saved,
+                    color: saved ? context.colors.teal : context.colors.onBrand,
+                    checkColor: context.colors.onBrand,
+                  ),
+                  onPressed: onToggleSave,
                 ),
-                onPressed: onToggleSave,
               ),
             ),
           ),
         if (car.reviewCount > 0)
-          Positioned(
+          PositionedDirectional(
             bottom: 8,
-            left: 8,
+            end: 8,
             child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
