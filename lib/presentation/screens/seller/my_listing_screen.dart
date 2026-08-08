@@ -11,7 +11,7 @@ import '../../../core/theme/app_text.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/share_listing_button.dart';
 import '../../../core/theme/app_dimens.dart';
-import '../../widgets/heart_check_icon.dart';
+import '../../widgets/saved_check_icon.dart';
 
 class MyListingScreen extends ConsumerWidget {
   const MyListingScreen({super.key});
@@ -94,7 +94,7 @@ class _Content extends StatelessWidget {
                 value: '—'),
             _Stat(
                 icon: Icons.favorite_border,
-                iconWidget: HeartCheckIcon(
+                iconWidget: SavedCheckIcon(
                     size: 20, color: context.colors.teal),
                 label: 'מתעניינים',
                 value: '—'),

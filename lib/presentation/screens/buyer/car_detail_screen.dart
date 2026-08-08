@@ -22,7 +22,7 @@ import '../../widgets/report_listing_sheet.dart';
 import '../../widgets/seller_encounter_card.dart';
 import '../../widgets/seller_type_badge.dart';
 import '../../../core/theme/app_text.dart';
-import '../../widgets/heart_check_icon.dart';
+import '../../widgets/saved_check_icon.dart';
 
 class CarDetailScreen extends ConsumerWidget {
   const CarDetailScreen({super.key, required this.carId});
@@ -583,12 +583,11 @@ class _ActionBar extends ConsumerWidget {
             const SizedBox(width: 8),
             _RoundAction(
               icon: Icons.favorite_border,
-              iconWidget: HeartCheckIcon(
+              iconWidget: SavedCheckIcon(
                 size: 24,
                 filled: isSaved,
                 color:
                     isSaved ? context.colors.teal : context.colors.textMuted,
-                checkColor: context.colors.background,
               ),
               onTap: () {
                 // Saving requires an account — prompt guests to sign in.

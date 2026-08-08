@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'app_nav_bar.dart';
-import 'heart_check_icon.dart';
+import 'saved_check_icon.dart';
 
 /// Bottom TabBar shell for buyer screens: בית | שמורים | גילוי | צ'אטים | פרופיל
 class BuyerShell extends StatelessWidget {

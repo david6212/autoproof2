@@ -9,7 +9,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../widgets/guest_prompt_view.dart';
 import '../../../core/theme/app_text.dart';
-import '../../widgets/heart_check_icon.dart';
+import '../../widgets/saved_check_icon.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -135,7 +135,7 @@ class _Content extends StatelessWidget {
         _MenuRow(
           icon: Icons.favorite_border,
           iconWidget:
-              HeartCheckIcon(size: 24, color: context.colors.textPrimary),
+              SavedCheckIcon(size: 24, color: context.colors.textPrimary),
           label: 'רכבים שמורים',
           onTap: () => context.go('/saved'),
         ),

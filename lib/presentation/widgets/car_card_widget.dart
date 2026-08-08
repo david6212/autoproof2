@@ -11,7 +11,7 @@ import '../../core/theme/app_text.dart';
 import 'app_card.dart';
 import 'responsive_frame.dart';
 import 'seller_type_badge.dart';
-import 'heart_check_icon.dart';
+import 'saved_check_icon.dart';
 
 /// Lays out car cards: one per row on a phone, a grid once the viewport is
 /// wide enough for two. Home and Saved share it so the breakpoint and the
@@ -263,13 +263,21 @@ class CarCard extends StatelessWidget {
           PositionedDirectional(
             top: 10,
             start: 10,
-            // A dark scrim rather than a solid surface circle. The button sits
-            // on a photograph, and a white disc is invisible on a photo of a
-            // white car — the same reason the gallery's chrome works this way.
-            child: Material(
-              color: Colors.black.withValues(alpha: 0.40),
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
+            // The circle carries the state, the check never changes colour.
+            // Unsaved it is a dark scrim — the button sits on a photograph,
+            // and a white disc is invisible on a photo of a white car. Saved,
+            // it fills with the brand green. White reads on both (5.07:1 on
+            // the fill), so the tick stays legible either way and the only
+            // thing that moves is the disc behind it.
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              decoration: BoxDecoration(
+                color: saved
+                    ? context.colors.tealFill
+                    : Colors.black.withValues(alpha: 0.40),
+                shape: BoxShape.circle,
+              ),
               child: SizedBox(
                 width: 40,
                 height: 40,
@@ -277,11 +285,10 @@ class CarCard extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   iconSize: 20,
                   tooltip: saved ? 'הסר מהשמורים' : 'שמור',
-                  icon: HeartCheckIcon(
+                  icon: SavedCheckIcon(
                     size: 20,
                     filled: saved,
-                    color: saved ? context.colors.teal : context.colors.onBrand,
-                    checkColor: context.colors.onBrand,
+                    color: context.colors.onBrand,
                   ),
                   onPressed: onToggleSave,
                 ),
