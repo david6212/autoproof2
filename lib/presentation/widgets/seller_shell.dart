@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'app_nav_bar.dart';
+import 'fuel_fab.dart';
 
 /// Bottom TabBar shell for seller screens: בית | המודעה | פרסום | צ'אטים | פרופיל
 class SellerShell extends StatelessWidget {
@@ -40,6 +41,8 @@ class SellerShell extends StatelessWidget {
 
     return Scaffold(
       body: child,
+      floatingActionButton:
+          FuelFab.visibleAt(location) ? const FuelFab() : null,
       bottomNavigationBar: AppNavBar(
         tabs: _tabs,
         currentIndex: current,

@@ -145,11 +145,6 @@ class _Content extends StatelessWidget {
           onTap: () => context.push('/verify/role'),
         ),
         _MenuRow(
-          icon: Icons.local_gas_station_outlined,
-          label: 'תחנות דלק',
-          onTap: () => context.push('/fuel'),
-        ),
-        _MenuRow(
           icon: Icons.info_outline,
           label: 'אודות OtoV',
           onTap: () => context.push('/about'),
