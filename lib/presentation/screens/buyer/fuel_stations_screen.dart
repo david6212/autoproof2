@@ -7,9 +7,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../data/models/fuel_report.dart';
 import '../../../data/models/fuel_station.dart';
+import '../../providers/fuel_report_provider.dart';
 import '../../providers/gov_api_provider.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/fuel_report_sheet.dart';
 import '../../widgets/map_cluster.dart';
 import '../../widgets/skeleton.dart';
 import 'inspectors_screen.dart' show userLocationProvider;
@@ -40,6 +43,9 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
   double _zoom = 8;
   FuelStation? _selected;
   String _query = '';
+
+  /// Sort by reported price instead of distance.
+  bool _byPrice = false;
 
   /// Empty means "every company".
   final _companies = <String>{};
@@ -225,13 +231,29 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
   }
 
   Widget _list(List<FuelStation> list, LatLng? me) {
+    final medians = ref.watch(fuelMediansProvider).valueOrNull ?? const {};
     final sorted = [...list];
-    if (me != null) {
+
+    if (_byPrice) {
+      // Only stations with a fresh report can be ranked by price at all, so
+      // the unreported ones fall to the bottom rather than being silently
+      // dropped — a station with no report is unknown, not expensive.
+      sorted.sort((a, b) {
+        final pa = medians[a.id], pb = medians[b.id];
+        if (pa == null && pb == null) return 0;
+        if (pa == null) return 1;
+        if (pb == null) return -1;
+        return pa.compareTo(pb);
+      });
+    } else if (me != null) {
       sorted.sort((a, b) => _distance
           .as(LengthUnit.Meter, me, LatLng(a.lat!, a.lng!))
           .compareTo(
               _distance.as(LengthUnit.Meter, me, LatLng(b.lat!, b.lng!))));
     }
+
+    final reported = medians.keys.where((k) => list.any((s) => s.id == k)).length;
+
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(
           AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.xl),
@@ -241,10 +263,38 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
         if (i == 0) {
           return Padding(
             padding: const EdgeInsets.only(bottom: AppSpace.sm),
-            child: Text(
-              '${sorted.length} תחנות · מקור: משרד האנרגיה'
-              '${me != null ? ' · ממוינות לפי קרבה אליך' : ''}',
-              style: context.text.captionSubtle,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _SortChip(
+                      label: 'הקרובות אליי',
+                      on: !_byPrice,
+                      enabled: me != null,
+                      onTap: () => setState(() => _byPrice = false),
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                    _SortChip(
+                      label: 'המחיר שדווח',
+                      on: _byPrice,
+                      enabled: reported > 0,
+                      onTap: () => setState(() => _byPrice = true),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpace.sm),
+                Text(
+                  _byPrice
+                      // Never "the cheapest diesel" — only what drivers said,
+                      // and only for the minority of stations anyone reported.
+                      ? 'לפי המחיר הזול ביותר שדיווחו נהגים ב-14 הימים האחרונים · '
+                          '$reported מתוך ${sorted.length} תחנות עם דיווח'
+                      : '${sorted.length} תחנות · מקור: משרד האנרגיה'
+                          '${me != null ? ' · ממוינות לפי קרבה אליך' : ''}',
+                  style: context.text.captionSubtle,
+                ),
+              ],
             ),
           );
         }
@@ -385,7 +435,7 @@ class _Filters extends StatelessWidget {
   }
 }
 
-class _StationCard extends StatelessWidget {
+class _StationCard extends ConsumerWidget {
   const _StationCard({
     required this.station,
     required this.me,
@@ -397,11 +447,12 @@ class _StationCard extends StatelessWidget {
   final bool elevated;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final away = me == null
         ? null
         : _distance.as(
             LengthUnit.Meter, me!, LatLng(station.lat!, station.lng!));
+    final tally = ref.watch(fuelTallyProvider(station.id)).valueOrNull;
 
     return AppCard(
       elevated: elevated,
@@ -420,21 +471,108 @@ class _StationCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(station.fullAddress, style: context.text.bodySmMuted),
           const SizedBox(height: AppSpace.md),
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(44),
-            ),
-            icon: const Icon(Icons.directions_outlined, size: 18),
-            label: const Text('ניווט'),
-            onPressed: () {
-              final q = '${station.lat},${station.lng}';
-              launchUrl(
-                Uri.parse(
-                    'https://www.google.com/maps/search/?api=1&query=$q'),
-                mode: LaunchMode.externalApplication,
-              );
-            },
+          _DieselLine(tally: tally),
+          const SizedBox(height: AppSpace.md),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(44),
+                  ),
+                  icon: const Icon(Icons.directions_outlined, size: 18),
+                  label: const Text('ניווט'),
+                  onPressed: () {
+                    final q = '${station.lat},${station.lng}';
+                    launchUrl(
+                      Uri.parse(
+                          'https://www.google.com/maps/search/?api=1&query=$q'),
+                      mode: LaunchMode.externalApplication,
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: AppSpace.sm),
+              Expanded(
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(44),
+                  ),
+                  icon: const Icon(Icons.local_offer_outlined, size: 18),
+                  label: Text(tally?.myAgorot == null ? 'דווח מחיר' : 'עדכן'),
+                  onPressed: () => showFuelReportSheet(
+                    context,
+                    ref,
+                    station: station,
+                    current: tally?.myAgorot,
+                  ),
+                ),
+              ),
+            ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// What the crowd says about diesel here — or an honest blank.
+///
+/// The price is never stated on its own. It always carries how many drivers
+/// reported it and when, because a bare number reads as something the app is
+/// vouching for, and the app checked nothing.
+class _DieselLine extends StatelessWidget {
+  const _DieselLine({required this.tally});
+  final FuelPriceTally? tally;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = tally;
+    final headline = t?.headline;
+
+    if (headline == null) {
+      return Row(
+        children: [
+          Icon(Icons.help_outline, size: 16, color: context.colors.textSubtle),
+          const SizedBox(width: AppSpace.xs),
+          Expanded(
+            child: Text(
+              t?.newestAt == null
+                  ? 'אין דיווח על מחיר סולר בתחנה הזו'
+                  : 'הדיווח האחרון כאן ישן מדי (${t!.ageLabel})',
+              style: context.text.captionSubtle,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.md, vertical: AppSpace.sm),
+      decoration: BoxDecoration(
+        color: context.colors.tealLight,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.local_gas_station,
+              size: 16, color: context.colors.tealText2),
+          const SizedBox(width: AppSpace.sm),
+          Expanded(
+            child: Text(
+              headline,
+              style: AppText.bodySm.copyWith(
+                  color: context.colors.tealText,
+                  fontWeight: FontWeight.w600),
+            ),
+          ),
+          if (t != null && !t.isConfident)
+            Tooltip(
+              message: 'מעט דיווחים — ייתכן שאינו מייצג',
+              child: Icon(Icons.info_outline,
+                  size: 15, color: context.colors.tealText2),
+            ),
         ],
       ),
     );
@@ -532,6 +670,51 @@ class _Message extends StatelessWidget {
                 textAlign: TextAlign.center, style: context.text.bodyMuted),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A two-state sort toggle. Disabled rather than hidden when it cannot apply,
+/// so the option is discoverable before there is data behind it.
+class _SortChip extends StatelessWidget {
+  const _SortChip({
+    required this.label,
+    required this.on,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool on;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = !enabled
+        ? context.colors.textSubtle
+        : on
+            ? context.colors.onBrand
+            : context.colors.textMuted;
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.md, vertical: AppSpace.xs + 2),
+        decoration: BoxDecoration(
+          color: on && enabled
+              ? context.colors.tealFill
+              : context.colors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(
+              color: on && enabled
+                  ? context.colors.tealFill
+                  : context.colors.cardBorder),
+        ),
+        child: Text(label,
+            style: AppText.bodySm
+                .copyWith(fontWeight: FontWeight.w600, color: fg)),
       ),
     );
   }

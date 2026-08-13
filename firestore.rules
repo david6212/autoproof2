@@ -76,6 +76,27 @@ service cloud.firestore {
       }
     }
 
+    // ---- Driver-reported diesel prices, per fuel station ----
+    //
+    // Israel publishes no per-station fuel price, so this is the only source
+    // there is. Public read (the whole point is the shared tally); the doc is
+    // keyed by the reporter's uid, so a driver can write, replace and delete
+    // exactly one report per station and nobody else's.
+    //
+    // The price bounds are enforced HERE and not only in the client: a client
+    // check stops a typo, a rules check stops someone posting 0.01 ₪ to make a
+    // station look cheap. 300–1500 agorot is 3–15 ₪ a litre.
+    match /fuel_reports/{stationId}/reports/{uid} {
+      allow read: if true;
+      allow write: if isSignedIn()
+                   && request.auth.uid == uid
+                   && request.resource.data.agorot is int
+                   && request.resource.data.agorot >= 300
+                   && request.resource.data.agorot <= 1500
+                   && request.resource.data.at == request.time;
+      allow delete: if isSignedIn() && request.auth.uid == uid;
+    }
+
     // ---- Chats (private, participants only) ----
     match /chats/{chatId} {
       // `resource == null` lets a buyer safely `get()` a not-yet-created chat
