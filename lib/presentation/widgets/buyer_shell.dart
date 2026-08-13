@@ -29,6 +29,9 @@ class BuyerShell extends StatelessWidget {
   /// exists is a runtime blank page, not a compile error.
   static List<String> get tabPaths => [for (final t in _tabs) t.path];
 
+  /// The destinations themselves, so a test can render the real bar.
+  static List<NavTab> get tabs => _tabs;
+
   int _indexFor(String location) {
     final i = _tabs.indexWhere((t) => location.startsWith(t.path));
     return i < 0 ? 0 : i;
