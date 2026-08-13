@@ -18,6 +18,8 @@ class AppCard extends StatelessWidget {
     this.color,
     this.radius = AppRadius.lg,
     this.bordered = true,
+    this.borderColor,
+    this.borderWidth = 1,
     this.elevated = false,
     this.onTap,
     this.clipBehavior = Clip.none,
@@ -34,6 +36,13 @@ class AppCard extends StatelessWidget {
 
   final double radius;
   final bool bordered;
+
+  /// Overrides the hairline border — for a card that is selected or otherwise
+  /// singled out. Defaults to the theme's neutral card border.
+  final Color? borderColor;
+
+  final double borderWidth;
+
   final bool elevated;
   final VoidCallback? onTap;
 
@@ -49,7 +58,12 @@ class AppCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color ?? context.colors.surface,
         borderRadius: BorderRadius.circular(radius),
-        border: bordered ? Border.all(color: context.colors.cardBorder) : null,
+        border: bordered
+            ? Border.all(
+                color: borderColor ?? context.colors.cardBorder,
+                width: borderWidth,
+              )
+            : null,
         boxShadow: elevated
             ? [
                 BoxShadow(
@@ -190,9 +204,16 @@ class DataSourceBadge extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: fg),
           const SizedBox(width: 4),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 11.5, fontWeight: FontWeight.bold, color: fg)),
+          // Flexible, because this badge now also appears inside a narrow
+          // comparison column. Everywhere it has room it is unchanged — a
+          // `min` row only gives a Flexible child the space it asked for.
+          Flexible(
+            child: Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 11.5, fontWeight: FontWeight.bold, color: fg)),
+          ),
         ],
       ),
     );

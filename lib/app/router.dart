@@ -21,6 +21,7 @@ import '../presentation/screens/buyer/vehicle_history_screen.dart';
 import '../presentation/screens/buyer/fuel_stations_screen.dart';
 import '../presentation/screens/buyer/inspectors_screen.dart';
 import '../presentation/screens/buyer/saved_screen.dart';
+import '../presentation/screens/buyer/compare_screen.dart';
 import '../presentation/screens/buyer/notifications_screen.dart';
 // Seller
 import '../presentation/screens/seller/seller_home_screen.dart';
@@ -123,6 +124,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/notifications',
           builder: (c, s) => const NotificationsScreen()),
+      // Outside the tab shell: the comparison is a full-width table and the
+      // nav bar would eat the room it needs.
+      GoRoute(path: '/compare', builder: (c, s) => const CompareScreen()),
 
       // Seller shell
       ShellRoute(

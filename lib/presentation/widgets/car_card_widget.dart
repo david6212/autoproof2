@@ -98,12 +98,19 @@ class CarCard extends StatelessWidget {
     required this.onTap,
     this.saved = false,
     this.onToggleSave,
+    this.selected,
   });
 
   final CarModel car;
   final VoidCallback onTap;
   final bool saved;
   final VoidCallback? onToggleSave;
+
+  /// Non-null puts the card in selection mode (comparison picking): the save
+  /// button gives way to a tick circle and the border marks the choice. The
+  /// card only DISPLAYS the state — what a tap does stays with [onTap], so the
+  /// screen owning the selection owns the behaviour.
+  final bool? selected;
 
   /// Height of the photo strip. [CarListView] needs it to size a grid cell.
   static const photoHeight = 170.0;
@@ -164,6 +171,8 @@ class CarCard extends StatelessWidget {
       child: AppCard(
         padding: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
+        borderColor: selected == true ? context.colors.teal : null,
+        borderWidth: selected == true ? 2 : 1,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -259,7 +268,30 @@ class CarCard extends StatelessWidget {
           start: 10,
           child: SellerTypeBadge(type: car.sellerType),
         ),
-        if (onToggleSave != null)
+        if (selected != null)
+          PositionedDirectional(
+            top: 10,
+            start: 10,
+            // Not a button: in selection mode the whole card is the target,
+            // and a second tappable circle inside it would give the same tap
+            // two meanings.
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: selected!
+                    ? context.colors.tealFill
+                    : Colors.black.withValues(alpha: 0.40),
+                shape: BoxShape.circle,
+                border: Border.all(color: context.colors.onBrand, width: 1.5),
+              ),
+              child: selected!
+                  ? Icon(Icons.check,
+                      size: 22, color: context.colors.onBrand)
+                  : null,
+            ),
+          )
+        else if (onToggleSave != null)
           PositionedDirectional(
             top: 10,
             start: 10,
