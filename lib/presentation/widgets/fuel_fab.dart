@@ -3,22 +3,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_palette.dart';
 
-/// The shortcut to the fuel-station map, floating on every tab.
+/// Floating shortcut to the fuel-station map.
 ///
-/// It used to be a row in the profile menu, which meant nobody found it — a
-/// map of what is near you right now is not something you go looking for in
-/// settings. It sits above the nav bar rather than inside it because the five
-/// tabs are places you *are*, and this is an errand you *do*.
+/// The buyer side gives fuel its own tab, so this is only used by the seller
+/// shell, whose five slots are all spoken for. It briefly had a rule for
+/// hiding itself over the swipe deck's buttons; the deck is gone, and so is
+/// the rule.
 class FuelFab extends StatelessWidget {
   const FuelFab({super.key});
-
-  /// Routes that already own their bottom corner. `/discover` is the swipe
-  /// deck, whose skip/save buttons sit exactly here — a floating button on top
-  /// of them would be both ugly and easy to hit by accident.
-  static const _hiddenOn = {'/discover'};
-
-  static bool visibleAt(String location) =>
-      !_hiddenOn.any(location.startsWith);
 
   @override
   Widget build(BuildContext context) {

@@ -41,8 +41,9 @@ class SellerShell extends StatelessWidget {
 
     return Scaffold(
       body: child,
-      floatingActionButton:
-          FuelFab.visibleAt(location) ? const FuelFab() : null,
+      // The buyer side gives fuel a tab; this side has no spare slot, so it
+      // keeps the floating shortcut rather than losing the route.
+      floatingActionButton: const FuelFab(),
       bottomNavigationBar: AppNavBar(
         tabs: _tabs,
         currentIndex: current,

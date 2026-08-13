@@ -20,7 +20,6 @@ import '../presentation/screens/buyer/car_detail_screen.dart';
 import '../presentation/screens/buyer/vehicle_history_screen.dart';
 import '../presentation/screens/buyer/fuel_stations_screen.dart';
 import '../presentation/screens/buyer/inspectors_screen.dart';
-import '../presentation/screens/buyer/swipe_screen.dart';
 import '../presentation/screens/buyer/saved_screen.dart';
 import '../presentation/screens/buyer/notifications_screen.dart';
 // Seller
@@ -96,8 +95,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/home', builder: (c, s) => const HomeScreen()),
           GoRoute(path: '/saved', builder: (c, s) => const SavedScreen()),
-          GoRoute(
-              path: '/discover', builder: (c, s) => const SwipeScreen()),
+          GoRoute(path: '/fuel', builder: (c, s) => const FuelStationsScreen()),
           GoRoute(path: '/chats', builder: (c, s) => const ChatListScreen()),
           GoRoute(path: '/profile', builder: (c, s) => const ProfileScreen()),
         ],
@@ -122,8 +120,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (c, s) =>
             InspectorsScreen(carId: s.pathParameters['carId']!),
       ),
-      GoRoute(
-          path: '/fuel', builder: (c, s) => const FuelStationsScreen()),
       GoRoute(
           path: '/notifications',
           builder: (c, s) => const NotificationsScreen()),
