@@ -25,6 +25,27 @@ class ApiConstants {
   // Licensed garages & inspection institutes ("מוסכים ומכוני רישוי").
   static const garagesResourceId = 'bb68386a-a331-4bbc-b668-bba2766d517d';
 
+  /// Public fuel stations, Ministry of Energy — 1,255 records, and unusually
+  /// for a gov dataset they already carry WGS84 coordinates, so nothing has to
+  /// be geocoded. Fields: מס_מינהל_הדלק · חברה · שם_תחנה · כתובת ·
+  /// רשות_מקומית · X · Y (Israeli grid) · "נ.צ. אורך"/"נ.צ. רוחב" (lon/lat).
+  static const fuelStationsResourceId =
+      '5537a0ef-3eeb-449c-90c8-51e27564f0cb';
+
+  /// Maximum petroleum prices **at the refinery gate**, Ministry of Energy,
+  /// one national figure per product per month.
+  ///
+  /// This is NOT a pump price and must never be shown as one — it is the
+  /// wholesale price before excise and VAT, roughly half of what a driver
+  /// pays. There is no per-station price dataset in Israel at all; diesel is
+  /// not price-controlled, so nobody publishes it. Fields: תאריך · מוצר ·
+  /// יחידת מידה · מחיר (₪ per kilolitre).
+  static const refineryPricesResourceId =
+      'aaa40832-ac82-4c86-bac6-0d05c83f576f';
+
+  /// The product row used as the diesel reference.
+  static const dieselProduct = 'סולר לתחבורה במכלית';
+
   // The `miktzoa` (specialty) value marking a pre-purchase/sale inspection
   // center — exactly the "בדיקת רכב לפני קנייה" a buyer needs (~134 nationwide).
   static const inspectionMiktzoa = 'בדיקות-רכב )קניה ומכירה)';

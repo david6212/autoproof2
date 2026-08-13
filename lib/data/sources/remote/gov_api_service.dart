@@ -82,6 +82,47 @@ class GovApiService {
   /// Fetches licensed pre-purchase inspection centers ("מכוני בדיקה") from the
   /// Ministry of Transport garages dataset, filtered to the pre-sale-inspection
   /// specialty. Returns the raw record maps, or throws GovApiException.
+  /// Every public fuel station. All 1,255 come back in one request, so there
+  /// is no paging to get wrong.
+  Future<List<Map<String, dynamic>>> fetchFuelStations() =>
+      _records(ApiConstants.fuelStationsResourceId, limit: 2000);
+
+  /// Refinery-gate prices. 204 monthly rows across all products; the caller
+  /// picks the latest diesel one.
+  Future<List<Map<String, dynamic>>> fetchRefineryPrices() =>
+      _records(ApiConstants.refineryPricesResourceId, limit: 500);
+
+  /// The shared shape of a datastore read: same success check, same error
+  /// wording, so a new dataset does not mean a new copy of both.
+  Future<List<Map<String, dynamic>>> _records(
+    String resourceId, {
+    required int limit,
+    Map<String, dynamic> extra = const {},
+  }) async {
+    try {
+      final res = await _dio.get(
+        ApiConstants.govApiBase,
+        queryParameters: {
+          'resource_id': resourceId,
+          'limit': limit,
+          ...extra,
+        },
+      );
+      final data = res.data;
+      if (data is! Map || data['success'] != true) {
+        throw GovApiException('שירות הנתונים הממשלתי אינו זמין כרגע.');
+      }
+      final records = (data['result']?['records'] as List?) ?? const [];
+      return records.map((r) => Map<String, dynamic>.from(r as Map)).toList();
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw GovApiException('הבקשה ארכה מדי. בדוק את החיבור לאינטרנט.');
+      }
+      throw GovApiException('שגיאת רשת. נסה שוב.');
+    }
+  }
+
   Future<List<Map<String, dynamic>>> fetchInspectionCenters() async {
     try {
       final res = await _dio.get(

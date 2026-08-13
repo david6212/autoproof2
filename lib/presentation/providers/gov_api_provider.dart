@@ -4,6 +4,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/gov_data_model.dart';
+import '../../data/models/fuel_station.dart';
 import '../../data/models/inspection_center.dart';
 import '../../data/repositories/gov_api_repository.dart';
 import '../../data/sources/remote/gov_api_service.dart';
@@ -81,3 +82,19 @@ final govLookupControllerProvider =
     AutoDisposeAsyncNotifierProvider<GovLookupController, GovData?>(
   GovLookupController.new,
 );
+
+
+/// Every public fuel station, fetched once per session. The list is ~1,255
+/// rows and never changes while the app is open.
+final fuelStationsProvider = FutureProvider<List<FuelStation>>(
+    (ref) => ref.read(govApiRepositoryProvider).fuelStations());
+
+/// The refinery-gate diesel reference. Nullable and non-blocking: the map is
+/// still useful without it, so a failure here must never take the screen down.
+final dieselReferenceProvider = FutureProvider<FuelReference?>((ref) async {
+  try {
+    return await ref.read(govApiRepositoryProvider).dieselReference();
+  } catch (_) {
+    return null;
+  }
+});

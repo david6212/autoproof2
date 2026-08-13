@@ -1,16 +1,21 @@
+import '../../presentation/widgets/map_cluster.dart';
+
 /// A licensed pre-purchase vehicle inspection center ("מכון בדיקה") from the
 /// Ministry of Transport garages dataset. Read-only public data — the buyer
 /// finds one nearby, then calls it or navigates there for an inspection.
-class InspectionCenter {
+class InspectionCenter implements MapPoint {
   final String id;
   final String name;
+  @override
   final String city;
   final String address;
   final String phone;
 
   /// Coordinates from the bundled geocode asset — null when we couldn't place
   /// it (then it won't get a map pin, but still shows in the list).
+  @override
   final double? lat;
+  @override
   final double? lng;
 
   /// How precise [lat]/[lng] are: 'street' (exact address) or 'city' (the town
@@ -51,6 +56,7 @@ class InspectionCenter {
         accuracy: accuracy,
       );
 
+  @override
   bool get hasCoords => lat != null && lng != null;
 
   /// True when the pin sits on the real address rather than the town centre.

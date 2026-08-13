@@ -1,10 +1,11 @@
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+
+import '../../widgets/map_cluster.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_palette.dart';
@@ -40,138 +41,6 @@ final userLocationProvider = FutureProvider<LatLng?>((ref) async {
 
 const _israelCenter = LatLng(31.7, 34.9);
 const _distance = Distance();
-
-/// From this zoom on, each center gets its own pin so streets become useful.
-/// Below it, centers are grouped per city so the buyer sees how many each town
-/// has.
-const _streetZoom = 12.0;
-
-/// How close two markers may sit (in screen pixels) before they merge. Both are
-/// wider than the widest bubble (46px), which is what stops the pile-ups that
-/// used to happen in dense areas like Gush Dan.
-const _cityRadiusPx = 64.0;
-const _streetRadiusPx = 78.0;
-
-String _fmtDistance(double meters) => meters < 1000
-    ? '${meters.round()} מ׳'
-    : '${(meters / 1000).toStringAsFixed(1)} ק״מ';
-
-/// Web-Mercator pixel position of a coordinate at a given integer zoom. Used
-/// only to measure on-screen distances for clustering.
-({double x, double y}) _project(double lat, double lng, int zoom) {
-  final scale = 256.0 * (1 << zoom);
-  final s = math.sin(lat * math.pi / 180).clamp(-0.9999, 0.9999);
-  return (
-    x: (lng + 180) / 360 * scale,
-    y: (0.5 - math.log((1 + s) / (1 - s)) / (4 * math.pi)) * scale,
-  );
-}
-
-/// A group of centers close enough on screen to share one marker. A cluster of
-/// one renders as a normal pin; larger ones render as a counted bubble.
-class _Cluster {
-  _Cluster(this.centers, this.point);
-
-  final List<InspectionCenter> centers;
-  final LatLng point;
-
-  int get count => centers.length;
-  bool get isSingle => count == 1;
-  InspectionCenter get single => centers.first;
-
-  List<LatLng> get points =>
-      [for (final c in centers) LatLng(c.lat!, c.lng!)];
-
-  /// The city name when every member shares one, else null (mixed area).
-  String? get soleCity {
-    final city = centers.first.city;
-    return centers.every((c) => c.city == city) ? city : null;
-  }
-
-  /// Caption under the bubble: the town itself, or — when neighbouring towns
-  /// were folded in — the busiest one marked as a whole area.
-  String get label {
-    final sole = soleCity;
-    if (sole != null) return sole;
-    final tally = <String, int>{};
-    for (final c in centers) {
-      tally[c.city] = (tally[c.city] ?? 0) + 1;
-    }
-    var best = centers.first.city, top = 0;
-    tally.forEach((city, n) {
-      if (n > top) {
-        top = n;
-        best = city;
-      }
-    });
-    return 'אזור $best';
-  }
-
-  static LatLng _centroid(List<InspectionCenter> group) {
-    var lat = 0.0, lng = 0.0;
-    for (final c in group) {
-      lat += c.lat!;
-      lng += c.lng!;
-    }
-    return LatLng(lat / group.length, lng / group.length);
-  }
-
-  /// What gets placed on the map before collision-merging: whole cities when
-  /// zoomed out (so counts per town are visible), single centers once zoomed in
-  /// far enough for street positions to matter.
-  static List<List<InspectionCenter>> _nodes(
-      bool cityMode, List<InspectionCenter> centers) {
-    if (!cityMode) return [for (final c in centers) [c]];
-    final byCity = <String, List<InspectionCenter>>{};
-    for (final c in centers) {
-      byCity.putIfAbsent(c.city, () => []).add(c);
-    }
-    return byCity.values.toList();
-  }
-
-  /// Groups centers for display at [zoom], merging any two markers that would
-  /// overlap on screen. Greedy and O(n²) — trivial for ~134 points.
-  static List<_Cluster> at(double zoom, List<InspectionCenter> centers) {
-    final z = zoom.round().clamp(3, 18);
-    final cityMode = zoom < _streetZoom;
-    final radius = cityMode ? _cityRadiusPx : _streetRadiusPx;
-
-    final nodes = _nodes(cityMode, centers.where((c) => c.hasCoords).toList())
-        .map((g) => (group: g, at: _centroid(g)))
-        .toList()
-      // Seed each cluster with the busiest node so bubbles settle on the
-      // biggest town rather than an arbitrary neighbour.
-      ..sort((a, b) => b.group.length.compareTo(a.group.length));
-
-    final pts = [
-      for (final n in nodes) (n: n, p: _project(n.at.latitude, n.at.longitude, z)),
-    ];
-
-    final taken = List<bool>.filled(pts.length, false);
-    final clusters = <_Cluster>[];
-    final r2 = radius * radius;
-
-    for (var i = 0; i < pts.length; i++) {
-      if (taken[i]) continue;
-      taken[i] = true;
-      final group = [...pts[i].n.group];
-      for (var j = i + 1; j < pts.length; j++) {
-        if (taken[j]) continue;
-        final dx = pts[i].p.x - pts[j].p.x;
-        final dy = pts[i].p.y - pts[j].p.y;
-        if (dx * dx + dy * dy <= r2) {
-          taken[j] = true;
-          group.addAll(pts[j].n.group);
-        }
-      }
-      clusters.add(_Cluster(group, _centroid(group)));
-    }
-
-    // Bigger clusters last so they paint on top of smaller ones.
-    clusters.sort((a, b) => a.count.compareTo(b.count));
-    return clusters;
-  }
-}
 
 /// Directory + live map of licensed pre-purchase inspection centers ("מכוני
 /// בדיקה") from official Ministry of Transport data. Opens on a map centered on
@@ -313,7 +182,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
   }
 
   /// Zooms into a tapped cluster so it breaks apart into its member centers.
-  void _openCluster(_Cluster cluster) {
+  void _openCluster(MapCluster<InspectionCenter> cluster) {
     setState(() => _selected = null);
     final pts = cluster.points;
     // A lone center — or several sharing one coordinate — has no extent to fit,
@@ -341,8 +210,8 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
     final initialZoom = me != null ? 12.0 : (withCoords.isNotEmpty ? 11.0 : 7.0);
     // Zoomed out: one labelled bubble per town (merged where they'd collide).
     // Zoomed in: individual street pins. Nothing overlaps at any zoom.
-    final cityMode = _zoom < _streetZoom;
-    final clusters = _Cluster.at(_zoom, withCoords);
+    final cityMode = _zoom < kStreetZoom;
+    final clusters = MapCluster.at<InspectionCenter>(_zoom, withCoords);
     final anyClustered = cityMode || clusters.any((c) => !c.isSingle);
 
     return Stack(
@@ -548,7 +417,7 @@ class _SearchBar extends StatelessWidget {
 /// cluster sits in one, so overlapping labels can't clutter dense areas.
 class _ClusterBubble extends StatelessWidget {
   const _ClusterBubble({required this.cluster});
-  final _Cluster cluster;
+  final MapCluster<InspectionCenter> cluster;
 
   @override
   Widget build(BuildContext context) {
@@ -763,7 +632,7 @@ class _CenterCard extends StatelessWidget {
                     color: context.colors.tealLight,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(_fmtDistance(distance!),
+                  child: Text(fmtDistance(distance!),
                       style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.bold,

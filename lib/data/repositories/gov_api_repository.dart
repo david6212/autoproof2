@@ -1,5 +1,7 @@
+import '../../core/constants/api_constants.dart';
 import '../../core/utils/plate_formatter.dart';
 import '../models/gov_data_model.dart';
+import '../models/fuel_station.dart';
 import '../models/inspection_center.dart';
 import '../models/model_spec.dart';
 import '../sources/remote/gov_api_service.dart';
@@ -74,5 +76,39 @@ class GovApiRepository {
       return byCity != 0 ? byCity : a.name.compareTo(b.name);
     });
     return list;
+  }
+
+  /// Every legal public fuel station, nearest-agnostic (the screen sorts by
+  /// distance once it knows where the user is).
+  ///
+  /// Two of the 1,255 rows ship without coordinates and a stray row could put
+  /// a pin in the sea, so anything outside Israel's bounding box is dropped
+  /// rather than drawn — [FuelStation.plausible] also catches a lat/lng swap.
+  Future<List<FuelStation>> fuelStations() async {
+    final raw = await _service.fetchFuelStations();
+    final list = raw
+        .map(FuelStation.fromApi)
+        .where((s) => s.name.isNotEmpty && s.plausible)
+        .toList();
+    list.sort((a, b) {
+      final byCity = a.city.compareTo(b.city);
+      return byCity != 0 ? byCity : a.displayName.compareTo(b.displayName);
+    });
+    return list;
+  }
+
+  /// The most recent refinery-gate diesel figure, or null if the dataset has
+  /// nothing usable. Deliberately a single number with its month attached —
+  /// it is a reference, not a price anyone pays.
+  Future<FuelReference?> dieselReference() async {
+    final raw = await _service.fetchRefineryPrices();
+    final diesel = raw
+        .map(FuelReference.fromApi)
+        .where((p) => p.product == ApiConstants.dieselProduct)
+        .where((p) => p.shekelsPerLitre > 0)
+        .toList();
+    if (diesel.isEmpty) return null;
+    diesel.sort((a, b) => b.date.compareTo(a.date));
+    return diesel.first;
   }
 }

@@ -1,0 +1,538 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../../core/theme/app_dimens.dart';
+import '../../../core/theme/app_palette.dart';
+import '../../../core/theme/app_text.dart';
+import '../../../data/models/fuel_station.dart';
+import '../../providers/gov_api_provider.dart';
+import '../../widgets/app_card.dart';
+import '../../widgets/map_cluster.dart';
+import '../../widgets/skeleton.dart';
+import 'inspectors_screen.dart' show userLocationProvider;
+
+const _israelCenter = LatLng(31.7, 34.9);
+const _distance = Distance();
+
+/// Every legal public fuel station in Israel, on a map, nearest first.
+///
+/// **There are no prices here, and that is not an omission.** Israel publishes
+/// no per-station fuel price anywhere: 95 octane is price-controlled and
+/// therefore identical at every pump, and diesel is *not* controlled, so it
+/// genuinely varies — and nobody publishes it. The only official figure that
+/// exists is the refinery-gate reference shown at the top, which is a
+/// wholesale number before excise and VAT, roughly half of what a driver pays.
+/// It is labelled as such rather than dressed up as a pump price.
+class FuelStationsScreen extends ConsumerStatefulWidget {
+  const FuelStationsScreen({super.key});
+
+  @override
+  ConsumerState<FuelStationsScreen> createState() => _FuelStationsScreenState();
+}
+
+class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
+  final _mapController = MapController();
+  bool _mapMode = true;
+  bool _movedToUser = false;
+  double _zoom = 8;
+  FuelStation? _selected;
+  String _query = '';
+
+  /// Empty means "every company".
+  final _companies = <String>{};
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
+  List<FuelStation> _filter(List<FuelStation> all) {
+    final q = _query.trim();
+    return all.where((s) {
+      if (_companies.isNotEmpty && !_companies.contains(s.company)) return false;
+      if (q.isEmpty) return true;
+      return s.name.contains(q) ||
+          s.city.contains(q) ||
+          s.address.contains(q) ||
+          s.company.contains(q);
+    }).toList();
+  }
+
+  void _openCluster(MapCluster<FuelStation> cluster) {
+    if (cluster.isSingle) {
+      setState(() => _selected = cluster.single);
+      _mapController.move(cluster.point, 15);
+      return;
+    }
+    final pts = cluster.points;
+    final same = pts.every((p) =>
+        (p.latitude - pts.first.latitude).abs() < 1e-6 &&
+        (p.longitude - pts.first.longitude).abs() < 1e-6);
+    if (same) {
+      // fitCamera on a zero-extent set misbehaves; step in instead.
+      _mapController.move(cluster.point, 15);
+      return;
+    }
+    _mapController.fitCamera(
+      CameraFit.coordinates(
+        coordinates: pts,
+        padding: const EdgeInsets.all(60),
+        maxZoom: 16,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(fuelStationsProvider);
+    final me = ref.watch(userLocationProvider).valueOrNull;
+
+    ref.listen(userLocationProvider, (_, next) {
+      final loc = next.valueOrNull;
+      if (loc != null && !_movedToUser && _mapMode) {
+        _movedToUser = true;
+        _mapController.move(loc, 12);
+      }
+    });
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('תחנות דלק'),
+        actions: [
+          IconButton(
+            tooltip: _mapMode ? 'תצוגת רשימה' : 'תצוגת מפה',
+            icon: Icon(_mapMode ? Icons.list : Icons.map_outlined),
+            onPressed: () => setState(() {
+              _mapMode = !_mapMode;
+              _selected = null;
+            }),
+          ),
+        ],
+      ),
+      body: async.when(
+        loading: () => const _Loading(),
+        error: (_, __) => const _Message(
+          icon: Icons.cloud_off,
+          text: 'לא ניתן לטעון את רשימת התחנות כרגע.\nבדקו את החיבור ונסו שוב.',
+        ),
+        data: (all) {
+          final list = _filter(all);
+          return Column(
+            children: [
+              const _ReferencePriceCard(),
+              _Filters(
+                companies: _topCompanies(all),
+                selected: _companies,
+                query: _query,
+                onQuery: (v) => setState(() => _query = v),
+                onToggle: (c) => setState(() {
+                  _companies.contains(c)
+                      ? _companies.remove(c)
+                      : _companies.add(c);
+                }),
+              ),
+              Expanded(
+                child: list.isEmpty
+                    ? const _Message(
+                        icon: Icons.search_off,
+                        text: 'לא נמצאו תחנות שמתאימות לחיפוש.',
+                      )
+                    : _mapMode
+                        ? _map(list, me)
+                        : _list(list, me),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// The handful of operators worth offering as chips — the long tail is
+  /// reachable through search.
+  List<String> _topCompanies(List<FuelStation> all) {
+    final tally = <String, int>{};
+    for (final s in all) {
+      if (s.company.isNotEmpty) tally[s.company] = (tally[s.company] ?? 0) + 1;
+    }
+    final sorted = tally.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return [for (final e in sorted.take(6)) e.key];
+  }
+
+  Widget _map(List<FuelStation> list, LatLng? me) {
+    final cityMode = _zoom < kStreetZoom;
+    final clusters = MapCluster.at<FuelStation>(_zoom, list);
+
+    return Stack(
+      children: [
+        FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: me ?? _israelCenter,
+            initialZoom: me != null ? 12 : 8,
+            onTap: (_, __) => setState(() => _selected = null),
+            onPositionChanged: (camera, _) {
+              // Clusters are computed per integer zoom, and this can fire
+              // during layout — so the rebuild is deferred.
+              final changed = camera.zoom.round() != _zoom.round();
+              _zoom = camera.zoom;
+              if (changed) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) setState(() {});
+                });
+              }
+            },
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'il.autoproof.autoproof',
+            ),
+            MarkerLayer(
+              markers: [
+                for (final cluster in clusters)
+                  Marker(
+                    point: cluster.point,
+                    width: cluster.isSingle && !cityMode ? 38 : 62,
+                    height: cluster.isSingle && !cityMode ? 38 : 46,
+                    child: GestureDetector(
+                      onTap: () => _openCluster(cluster),
+                      child: cluster.isSingle && !cityMode
+                          ? const _Pin()
+                          : _Bubble(cluster: cluster),
+                    ),
+                  ),
+                if (me != null)
+                  Marker(point: me, width: 22, height: 22, child: const _MeDot()),
+              ],
+            ),
+          ],
+        ),
+        if (_selected != null)
+          Positioned(
+            left: AppSpace.md,
+            right: AppSpace.md,
+            bottom: AppSpace.md,
+            child: _StationCard(station: _selected!, me: me, elevated: true),
+          ),
+      ],
+    );
+  }
+
+  Widget _list(List<FuelStation> list, LatLng? me) {
+    final sorted = [...list];
+    if (me != null) {
+      sorted.sort((a, b) => _distance
+          .as(LengthUnit.Meter, me, LatLng(a.lat!, a.lng!))
+          .compareTo(
+              _distance.as(LengthUnit.Meter, me, LatLng(b.lat!, b.lng!))));
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.xl),
+      itemCount: sorted.length + 1,
+      separatorBuilder: (_, __) => const SizedBox(height: AppSpace.md),
+      itemBuilder: (_, i) {
+        if (i == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppSpace.sm),
+            child: Text(
+              '${sorted.length} תחנות · מקור: משרד האנרגיה'
+              '${me != null ? ' · ממוינות לפי קרבה אליך' : ''}',
+              style: context.text.captionSubtle,
+            ),
+          );
+        }
+        return _StationCard(station: sorted[i - 1], me: me);
+      },
+    );
+  }
+}
+
+/// The one official price that exists, stated for exactly what it is.
+class _ReferencePriceCard extends ConsumerWidget {
+  const _ReferencePriceCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ref_ = ref.watch(dieselReferenceProvider).valueOrNull;
+    if (ref_ == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg, AppSpace.md, AppSpace.lg, 0),
+      child: AppCard(
+        color: context.colors.tealLight,
+        bordered: false,
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, size: 20, color: context.colors.tealText2),
+            const SizedBox(width: AppSpace.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'סולר לתחבורה — ${ref_.shekelsPerLitre.toStringAsFixed(2)} ₪ לליטר '
+                    'בשער בית הזיקוק (${ref_.monthLabel})',
+                    style: AppText.bodySm.copyWith(
+                        color: context.colors.tealText,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'מחיר סיטונאי לפני בלו ומע"מ, לא המחיר במשאבה. '
+                    'מחירי סולר בפועל אינם מפוקחים ואינם מתפרסמים לפי תחנה.',
+                    style: AppText.bodySm
+                        .copyWith(color: context.colors.tealText2, height: 1.4),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Filters extends StatelessWidget {
+  const _Filters({
+    required this.companies,
+    required this.selected,
+    required this.query,
+    required this.onQuery,
+    required this.onToggle,
+  });
+
+  final List<String> companies;
+  final Set<String> selected;
+  final String query;
+  final ValueChanged<String> onQuery;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+              AppSpace.lg, AppSpace.md, AppSpace.lg, 0),
+          child: TextField(
+            onChanged: onQuery,
+            decoration: InputDecoration(
+              hintText: 'חיפוש לפי עיר, שם תחנה או חברה…',
+              prefixIcon: const Icon(Icons.search),
+              filled: true,
+              fillColor: context.colors.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                borderSide: BorderSide(color: context.colors.cardBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                borderSide: BorderSide(color: context.colors.cardBorder),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 46,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.lg, vertical: AppSpace.sm),
+            itemCount: companies.length,
+            separatorBuilder: (_, __) => const SizedBox(width: AppSpace.sm),
+            itemBuilder: (_, i) {
+              final c = companies[i];
+              final on = selected.contains(c);
+              return GestureDetector(
+                onTap: () => onToggle(c),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.md, vertical: AppSpace.xs),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: on ? context.colors.tealFill : context.colors.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(
+                        color: on
+                            ? context.colors.tealFill
+                            : context.colors.cardBorder),
+                  ),
+                  child: Text(
+                    c,
+                    style: AppText.bodySm.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: on
+                          ? context.colors.onBrand
+                          : context.colors.textMuted,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StationCard extends StatelessWidget {
+  const _StationCard({
+    required this.station,
+    required this.me,
+    this.elevated = false,
+  });
+
+  final FuelStation station;
+  final LatLng? me;
+  final bool elevated;
+
+  @override
+  Widget build(BuildContext context) {
+    final away = me == null
+        ? null
+        : _distance.as(
+            LengthUnit.Meter, me!, LatLng(station.lat!, station.lng!));
+
+    return AppCard(
+      elevated: elevated,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(station.displayName, style: AppText.subtitle),
+              ),
+              if (away != null)
+                Text(fmtDistance(away), style: context.text.captionBold),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(station.fullAddress, style: context.text.bodySmMuted),
+          const SizedBox(height: AppSpace.md),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(44),
+            ),
+            icon: const Icon(Icons.directions_outlined, size: 18),
+            label: const Text('ניווט'),
+            onPressed: () {
+              final q = '${station.lat},${station.lng}';
+              launchUrl(
+                Uri.parse(
+                    'https://www.google.com/maps/search/?api=1&query=$q'),
+                mode: LaunchMode.externalApplication,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Pin extends StatelessWidget {
+  const _Pin();
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(Icons.local_gas_station,
+        size: 30, color: context.colors.tealFill);
+  }
+}
+
+class _Bubble extends StatelessWidget {
+  const _Bubble({required this.cluster});
+  final MapCluster<FuelStation> cluster;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpace.sm, vertical: AppSpace.xxs),
+          decoration: BoxDecoration(
+            color: context.colors.tealFill,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: Border.all(color: context.colors.onBrand, width: 1.5),
+          ),
+          child: Text('${cluster.count}',
+              style: AppText.bodySm.copyWith(
+                  color: context.colors.onBrand,
+                  fontWeight: FontWeight.bold)),
+        ),
+        Text(
+          cluster.label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.text.tiny,
+        ),
+      ],
+    );
+  }
+}
+
+class _MeDot extends StatelessWidget {
+  const _MeDot();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF2D7FF9),
+        shape: BoxShape.circle,
+        border: Border.all(color: context.colors.onBrand, width: 3),
+      ),
+    );
+  }
+}
+
+class _Loading extends StatelessWidget {
+  const _Loading();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(AppSpace.lg),
+      itemCount: 6,
+      separatorBuilder: (_, __) => const SizedBox(height: AppSpace.md),
+      itemBuilder: (_, __) => const Skeleton(height: 96, radius: AppRadius.lg),
+    );
+  }
+}
+
+class _Message extends StatelessWidget {
+  const _Message({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpace.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 56, color: context.colors.textSubtle),
+            const SizedBox(height: AppSpace.md),
+            Text(text,
+                textAlign: TextAlign.center, style: context.text.bodyMuted),
+          ],
+        ),
+      ),
+    );
+  }
+}
