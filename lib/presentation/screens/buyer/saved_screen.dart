@@ -9,6 +9,7 @@ import '../../../core/utils/car_compare.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/compare_provider.dart';
+import '../../widgets/app_bar_action.dart';
 import '../../widgets/car_card_widget.dart';
 import '../../widgets/guest_prompt_view.dart';
 import '../../widgets/saved_check_icon.dart';
@@ -33,10 +34,9 @@ class SavedScreen extends ConsumerWidget {
         title: Text(comparing ? 'בחרו רכבים להשוואה' : 'רכבים שמורים'),
         actions: [
           if (!isGuest && canCompare)
-            TextButton.icon(
-              icon: Icon(comparing ? Icons.close : Icons.compare_arrows,
-                  size: 18),
-              label: Text(comparing ? 'ביטול' : 'השוואה'),
+            AppBarAction(
+              icon: comparing ? Icons.close : Icons.compare_arrows,
+              label: comparing ? 'ביטול' : 'השוואה',
               onPressed: () {
                 final next = !comparing;
                 ref.read(compareModeProvider.notifier).state = next;

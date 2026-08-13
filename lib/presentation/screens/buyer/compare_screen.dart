@@ -13,6 +13,7 @@ import '../../../core/utils/car_compare.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/compare_provider.dart';
 import '../../providers/gov_api_provider.dart';
+import '../../widgets/app_bar_action.dart';
 import '../../widgets/app_card.dart';
 
 /// Two or three shortlisted listings, side by side.
@@ -51,12 +52,12 @@ class CompareScreen extends ConsumerWidget {
         title: const Text('השוואת רכבים'),
         actions: [
           if (cars.isNotEmpty)
-            TextButton(
+            AppBarAction(
+              label: 'נקה',
               onPressed: () {
                 ref.read(compareSelectionProvider.notifier).clear();
                 popOrHome(context);
               },
-              child: const Text('נקה'),
             ),
         ],
       ),
