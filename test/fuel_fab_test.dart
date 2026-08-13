@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:otov/presentation/widgets/fuel_fab.dart';
+import 'package:bonnetcheck/presentation/widgets/fuel_fab.dart';
 
 /// The fuel shortcut floats over every tab, which means it also floats over
 /// whatever each tab already put in that corner. `/discover` is the swipe deck

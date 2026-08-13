@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:otov/data/models/fuel_station.dart';
-import 'package:otov/presentation/widgets/map_cluster.dart';
+import 'package:bonnetcheck/data/models/fuel_station.dart';
+import 'package:bonnetcheck/presentation/widgets/map_cluster.dart';
 
 /// Fixtures copied verbatim from a live data.gov.il response, including the
 /// awkward column names: the coordinate keys contain a space and a full stop,

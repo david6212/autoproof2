@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:otov/presentation/screens/auth/splash_screen.dart';
+import 'package:bonnetcheck/presentation/screens/auth/splash_screen.dart';
 
 void main() {
   testWidgets('plays the whole intro without throwing', (tester) async {
@@ -71,7 +71,7 @@ void main() {
         .toList();
 
     expect(dxs.any((x) => x < 0), isTrue,
-        reason: '"Oto" should still be coming in from the left');
+        reason: '"Bonnet" should still be coming in from the left');
     expect(dxs.any((x) => x > 0), isTrue,
         reason: 'the V should still be coming in from the right');
 

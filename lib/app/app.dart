@@ -7,8 +7,8 @@ import '../presentation/widgets/responsive_frame.dart';
 import 'router.dart';
 import 'theme.dart';
 
-class OtovApp extends ConsumerWidget {
-  const OtovApp({super.key});
+class BonnetCheckApp extends ConsumerWidget {
+  const BonnetCheckApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:otov/core/theme/app_palette.dart';
+import 'package:bonnetcheck/core/theme/app_palette.dart';
 
 /// The Apple button was a hard-coded `#111111`. That is a deliberate brand
 /// colour on a white page and an invisible rectangle on a dark one — it sat on

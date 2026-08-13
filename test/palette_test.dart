@@ -6,7 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:otov/core/theme/app_palette.dart';
+import 'package:bonnetcheck/core/theme/app_palette.dart';
 
 const light = AppPalette.light;
 const dark = AppPalette.dark;

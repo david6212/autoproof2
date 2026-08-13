@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:otov/app/theme.dart';
-import 'package:otov/presentation/widgets/saved_check_icon.dart';
+import 'package:bonnetcheck/app/theme.dart';
+import 'package:bonnetcheck/presentation/widgets/saved_check_icon.dart';
 
 /// The saved mark used to be a heart with a check tucked inside it — two
 /// shapes competing inside 20 logical pixels. It is now the brand's check on

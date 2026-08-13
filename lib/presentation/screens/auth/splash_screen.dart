@@ -5,15 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../providers/auth_provider.dart';
-import '../../widgets/otov_logo.dart';
+import '../../widgets/brand_logo.dart';
 
-/// Animated OtoV splash.
+/// Animated BonnetCheck splash.
 ///
 /// The shield scales in, then the car and the check travel toward each other
 /// from opposite sides and meet inside it — the car being approved, in one
 /// gesture. They share an interval and a curve so the convergence is
 /// symmetrical, and the check finishes drawing itself just before it lands.
-/// Then the name does the same thing: "Oto" in from the left, its V in from
+/// Then the name does the same thing: "Bonnet" in from the left, its check in from
 /// the right, meeting — so the check the shield just drew reappears as the V,
 /// arriving the same way. The V is enlarged there because on this screen it is
 /// the subject rather than a letterform.
@@ -177,7 +177,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   // and the check just did, and its V draws itself on arrival.
                   Opacity(
                     opacity: _text.value.clamp(0.0, 1.0),
-                    child: OtovWordmark(
+                    child: BrandWordmark(
                       fontSize: 30,
                       checkScale: 1.4,
                       entrance: _text.value.clamp(0.0, 1.0),

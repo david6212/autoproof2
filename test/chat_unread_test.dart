@@ -4,7 +4,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:otov/data/models/chat_model.dart';
+import 'package:bonnetcheck/data/models/chat_model.dart';
 
 const me = 'me';
 const them = 'them';

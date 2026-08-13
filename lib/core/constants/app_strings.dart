@@ -4,7 +4,7 @@ class AppStrings {
   AppStrings._();
 
   // App
-  static const appName = 'OtoV';
+  static const appName = 'BonnetCheck';
   static const tagline = 'הכוח בידיים שלך';
 
   /// Canonical public address, used to build shareable listing links.
@@ -64,7 +64,7 @@ class AppStrings {
 
   /// Shown on the first screen a user meets, before anything else.
   static const entryDisclaimer =
-      'OtoV מספק מידע ממקורות רשמיים ומדיווחי משתמשים. אין לראות במידע זה '
+      'BonnetCheck מספק מידע ממקורות רשמיים ומדיווחי משתמשים. אין לראות במידע זה '
       'אישור לבעלות, לזהות המוכר או לתקינות הרכב.';
 
   // Common states

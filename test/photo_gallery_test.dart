@@ -8,11 +8,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:otov/core/theme/app_palette.dart';
-import 'package:otov/data/models/car_model.dart';
-import 'package:otov/presentation/widgets/car_photo_gallery.dart';
-import 'package:otov/presentation/widgets/photo_viewer.dart';
-import 'package:otov/presentation/widgets/seller_type_badge.dart';
+import 'package:bonnetcheck/core/theme/app_palette.dart';
+import 'package:bonnetcheck/data/models/car_model.dart';
+import 'package:bonnetcheck/presentation/widgets/car_photo_gallery.dart';
+import 'package:bonnetcheck/presentation/widgets/photo_viewer.dart';
+import 'package:bonnetcheck/presentation/widgets/seller_type_badge.dart';
 
 CarModel car({List<String> photos = const []}) => CarModel(
       id: 'c1',

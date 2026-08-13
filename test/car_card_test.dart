@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:otov/app/theme.dart';
-import 'package:otov/core/theme/app_palette.dart';
-import 'package:otov/data/models/car_model.dart';
-import 'package:otov/presentation/widgets/car_card_widget.dart';
+import 'package:bonnetcheck/app/theme.dart';
+import 'package:bonnetcheck/core/theme/app_palette.dart';
+import 'package:bonnetcheck/data/models/car_model.dart';
+import 'package:bonnetcheck/presentation/widgets/car_card_widget.dart';
 
 /// The card's height is not laid out — it is *computed* by
 /// [CarCard.heightFor], because the grid on a wide window has to size a cell

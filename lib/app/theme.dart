@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_dimens.dart';
 import '../core/theme/app_palette.dart';
 
-/// OtoV app theme — Heebo font, teal brand palette, clean fintech feel.
+/// BonnetCheck app theme — Heebo font, teal brand palette, clean fintech feel.
 ///
 /// Both themes are built from the same recipe; only the [AppPalette] differs.
 /// Writing them separately is how a dark theme drifts out of step with the

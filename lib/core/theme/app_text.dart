@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_palette.dart';
 
-/// Type scale for OtoV.
+/// Type scale for BonnetCheck.
 ///
 /// The app had grown 20 different `fontSize` values (12 and 12.5, 13 and 13.5,
 /// 15 and 15.5 …) with no system. These are the steps that replace them —

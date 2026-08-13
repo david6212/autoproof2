@@ -11,7 +11,7 @@ import 'app_card.dart';
 
 /// Odometer cross-check + cross-listing memory for a plate. Compares the
 /// current listing's km against BOTH the official gov odometer (last test) and
-/// this plate's past OtoV listings, flagging a rollback (any earlier
+/// this plate's past BonnetCheck listings, flagging a rollback (any earlier
 /// reading higher than now). Renders nothing when there's nothing to compare.
 class PlateHistoryCard extends ConsumerWidget {
   const PlateHistoryCard({

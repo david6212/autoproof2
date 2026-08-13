@@ -9,7 +9,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/legal_info.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/otov_logo.dart';
+import '../../widgets/brand_logo.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../../core/theme/app_text.dart';
 
@@ -104,7 +104,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
               const SizedBox(height: 12),
               // Same mark as the splash screen (shield + car + check).
-              const OtovLogo(size: 132, withWordmark: true),
+              const BrandLogo(size: 132, withWordmark: true),
               const SizedBox(height: 10),
               Text(
                 AppStrings.tagline,

@@ -13,7 +13,7 @@ import '../../providers/cars_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../widgets/car_card_widget.dart';
 import '../../widgets/login_required_sheet.dart';
-import '../../widgets/otov_logo.dart';
+import '../../widgets/brand_logo.dart';
 import '../../widgets/search_filter_sheet.dart';
 import '../../widgets/skeleton.dart';
 
@@ -107,13 +107,13 @@ class _Header extends StatelessWidget {
         children: [
           Row(
             children: [
-              const OtovLogo(size: 26),
+              const BrandLogo(size: 26),
               const SizedBox(width: AppSpace.sm),
-              const OtovWordmark(fontSize: 18),
+              const BrandWordmark(fontSize: 18),
               const Spacer(),
               IconButton(
                 icon: Icon(Icons.info_outline, color: context.colors.textMuted),
-                tooltip: 'אודות OtoV',
+                tooltip: 'אודות BonnetCheck',
                 onPressed: () => context.push('/about'),
               ),
               const _NotificationBell(),

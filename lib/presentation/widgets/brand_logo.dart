@@ -3,17 +3,17 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/app_palette.dart';
 
-/// The OtoV mark exactly as it looks at the end of the splash animation:
+/// The BonnetCheck mark exactly as it looks at the end of the splash animation:
 /// a flat green shield + the car image + a green checkmark. Static (no
 /// animation) so it can be reused anywhere a brand logo is needed. Pass
-/// [withWordmark] to show the OtoV wordmark beneath the emblem.
-class OtovLogo extends StatelessWidget {
-  const OtovLogo({super.key, this.size = 120, this.withWordmark = false});
+/// [withWordmark] to show the BonnetCheck wordmark beneath the emblem.
+class BrandLogo extends StatelessWidget {
+  const BrandLogo({super.key, this.size = 120, this.withWordmark = false});
 
   /// Target width in logical pixels (height scales proportionally).
   final double size;
 
-  /// When true, renders the OtoV wordmark under the emblem.
+  /// When true, renders the BonnetCheck wordmark under the emblem.
   final bool withWordmark;
 
   static const _green = Color(0xFF558B6E);
@@ -80,19 +80,22 @@ class OtovLogo extends StatelessWidget {
       children: [
         emblem,
         SizedBox(height: size * 0.12),
-        OtovWordmark(fontSize: size * 0.30),
+        BrandWordmark(fontSize: size * 0.30),
       ],
     );
   }
 }
 
-/// The name set so its final V *is* the checkmark from the emblem.
+/// The name set so the mark *is* the second half of it.
 ///
-/// "OtoV" was chosen because it reads as auto + tick, so drawing the V as the
-/// same stroke the shield carries makes the name and the mark one idea instead
-/// of two things sitting next to each other.
-class OtovWordmark extends StatelessWidget {
-  const OtovWordmark({
+/// The app was called BonnetCheck, and its wordmark ended in a V drawn as the
+/// emblem's checkmark — name and mark as one idea rather than two things side
+/// by side. "BonnetCheck" has no V, but it has something better: the second
+/// word *names* the mark. So the mark plays it. The type reads "Bonnet" and
+/// the check finishes the word, which is why it is set larger here than a
+/// letterform would be — it is standing in for five letters, not one.
+class BrandWordmark extends StatelessWidget {
+  const BrandWordmark({
     super.key,
     this.fontSize = 34,
     this.color,
@@ -109,24 +112,26 @@ class OtovWordmark extends StatelessWidget {
   final Color? color;
   final Color? checkColor;
 
-  /// Enlarges the V relative to the cap height. Above 1 it rises over the
-  /// letters, which is the point on the splash — there the V is the subject,
-  /// not a letterform.
+  /// Enlarges the check relative to the cap height. Above 1 it rises over the
+  /// letters, which is the point on the splash — there the mark is the
+  /// subject, not a piece of type.
   final double checkScale;
 
   /// 0 = the two halves start apart, 1 = joined. Drives the splash, where the
-  /// name assembles the same way the emblem does: "Oto" in from the left, the
-  /// V in from the right, meeting. Everywhere else it is simply 1.
+  /// name assembles the same way the emblem does: "Bonnet" in from the left,
+  /// the check in from the right, meeting. Everywhere else it is simply 1.
   final double entrance;
 
-  /// How much of the V's stroke is drawn, 0..1.
+  /// How much of the check's stroke is drawn, 0..1.
   final double checkProgress;
 
   @override
   Widget build(BuildContext context) {
     // A check is wider than it is tall and sits above the baseline, so it is
     // sized off cap height rather than the full em.
-    final capHeight = fontSize * 0.72 * checkScale;
+    // 0.86 rather than 0.72: this check replaces the word "Check", so it has
+    // to carry more weight than the single letter it used to be.
+    final capHeight = fontSize * 0.86 * checkScale;
     final ink = color ?? context.colors.textPrimary;
     final check = checkColor ?? context.colors.teal;
 
@@ -146,7 +151,7 @@ class OtovWordmark extends StatelessWidget {
           Transform.translate(
             offset: Offset(-travel, 0),
             child: Text(
-              'Oto',
+              'Bonnet',
               style: GoogleFonts.poppins(
                 fontSize: fontSize,
                 fontWeight: FontWeight.w700,

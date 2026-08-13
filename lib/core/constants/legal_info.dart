@@ -1,4 +1,4 @@
-/// Who operates OtoV, and how to reach them.
+/// Who operates BonnetCheck, and how to reach them.
 ///
 /// Every legal document reads its identifying details from here, so the
 /// operator's details live in exactly one place.
@@ -11,7 +11,7 @@
 class LegalInfo {
   LegalInfo._();
 
-  /// The full name of the person or company operating OtoV, exactly as it
+  /// The full name of the person or company operating BonnetCheck, exactly as it
   /// should appear in "מופעל על ידי ___".
   static const operatorName = '';
 

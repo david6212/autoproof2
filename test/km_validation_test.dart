@@ -4,7 +4,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:otov/core/utils/validators.dart';
+import 'package:bonnetcheck/core/utils/validators.dart';
 
 String? check(int entered, int? lastTest) =>
     Validators.kmAgainstLastTest(enteredKm: entered, lastTestKm: lastTest);

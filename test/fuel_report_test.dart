@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:otov/data/models/fuel_report.dart';
+import 'package:bonnetcheck/data/models/fuel_report.dart';
 
 /// The tally is the only place the app states a fuel price, and it is stating
 /// something nobody verified. These tests pin the three rules that keep that

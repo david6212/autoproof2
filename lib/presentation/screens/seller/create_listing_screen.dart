@@ -587,7 +587,7 @@ class _PublishedScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'הרכב שלך זמין כעת לקונים ב-OtoV',
+                'הרכב שלך זמין כעת לקונים ב-BonnetCheck',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: context.colors.textMuted),
               ),

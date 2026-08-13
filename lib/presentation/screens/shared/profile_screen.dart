@@ -92,7 +92,7 @@ class _Content extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = (user?.name.isNotEmpty ?? false)
         ? user!.name
-        : 'משתמש OtoV';
+        : 'משתמש BonnetCheck';
     final verified = user?.verified ?? false;
 
     return ListView(
@@ -146,7 +146,7 @@ class _Content extends StatelessWidget {
         ),
         _MenuRow(
           icon: Icons.info_outline,
-          label: 'אודות OtoV',
+          label: 'אודות BonnetCheck',
           onTap: () => context.push('/about'),
         ),
         _MenuRow(

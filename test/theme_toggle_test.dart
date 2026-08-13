@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:otov/presentation/providers/theme_provider.dart';
+import 'package:bonnetcheck/presentation/providers/theme_provider.dart';
 
 /// The rule the switch reads, lifted out so it can be checked directly.
 bool switchIsOn(ThemeMode mode, {required bool deviceIsDark}) => switch (mode) {

@@ -7,8 +7,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:otov/presentation/widgets/car_card_widget.dart';
-import 'package:otov/presentation/widgets/responsive_frame.dart';
+import 'package:bonnetcheck/presentation/widgets/car_card_widget.dart';
+import 'package:bonnetcheck/presentation/widgets/responsive_frame.dart';
 
 /// Pumps [child] into a window [width] logical pixels across.
 Future<void> _pumpAt(WidgetTester tester, double width, Widget child) async {

@@ -1,6 +1,6 @@
 {
-    "name": "OtoV",
-    "short_name": "OtoV",
+    "name": "BonnetCheck",
+    "short_name": "BonnetCheck",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",

@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../app/router.dart';
-import '../../widgets/otov_logo.dart';
+import '../../widgets/brand_logo.dart';
 import '../../../core/theme/app_text.dart';
 import '../../widgets/app_card.dart';
 import '../../../core/theme/app_dimens.dart';
@@ -82,7 +82,7 @@ class _Header extends StatelessWidget {
             ),
           ),
           // Splash-style brand mark (shield + car + check).
-          const OtovLogo(size: 120, withWordmark: true),
+          const BrandLogo(size: 120, withWordmark: true),
           const SizedBox(height: 8),
           Text(
             AppStrings.tagline,
