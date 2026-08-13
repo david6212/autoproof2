@@ -19,8 +19,13 @@ class BuyerShell extends StatelessWidget {
     NavTab('/home', Icons.home_outlined, Icons.home, 'בית'),
     NavTab('/saved', Icons.check_rounded, Icons.check_rounded, 'שמורים',
         iconBuilder: savedTabIcon),
-    NavTab('/fuel', Icons.local_gas_station_outlined, Icons.local_gas_station,
-        'דלק'),
+    // Both states use the FILLED glyph, unlike the other tabs. The outlined
+    // variant is a separate codepoint used nowhere else, and `flutter build`
+    // shrinks the icon font to only the glyphs in use — so a browser holding a
+    // font from a build without it renders an invisible tab. The filled glyph
+    // ships with the fuel feature anyway (the map pin and the seller shell's
+    // shortcut both use it), so leaning on it removes the whole failure mode.
+    NavTab('/fuel', Icons.local_gas_station, Icons.local_gas_station, 'דלק'),
     NavTab('/chats', Icons.chat_bubble_outline, Icons.chat_bubble, 'צ\'אטים'),
     NavTab('/profile', Icons.person_outline, Icons.person, 'פרופיל'),
   ];

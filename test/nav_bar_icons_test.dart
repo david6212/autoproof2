@@ -60,7 +60,11 @@ void main() {
 
     await t.pumpWidget(_bar(selected: 0));
     expect(find.byIcon(fuel.icon), findsOneWidget,
-        reason: 'unselected fuel tab should draw its outline glyph');
+        reason: 'unselected fuel tab should draw its glyph');
+
+    // Deliberately the same codepoint in both states — see the comment on the
+    // tab. A second, rarely-used glyph is what made this tab invisible.
+    expect(fuel.icon.codePoint, fuel.activeIcon.codePoint);
   });
 
   testWidgets('only the selected tab shows a label', (t) async {
