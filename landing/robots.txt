@@ -5,4 +5,4 @@ Allow: /
 # read, and its routes are hash fragments a crawler never sees anyway.
 Disallow: /app/
 
-Sitemap: https://otov.web.app/sitemap.xml
+Sitemap: https://bonnetcheck.web.app/sitemap.xml

@@ -27,8 +27,8 @@
   },
   "hosting": [
     {
-      "//": "Canonical site - https://otov.web.app. Serves the static landing page at / and the Flutter app at /app/, assembled into build/hosting by tool/build_site.sh.",
-      "site": "otov",
+      "//": "Canonical site - https://bonnetcheck.web.app. Serves the static landing page at / and the Flutter app at /app/, assembled into build/hosting by tool/build_site.sh.",
+      "site": "bonnetcheck",
       "public": "build/hosting",
       "ignore": [
         "firebase.json",
@@ -99,7 +99,7 @@
       ]
     },
     {
-      "//": "Old URL from the AutoProof days. The project ID cannot be renamed, so instead of serving the app it now forwards to otov.web.app — old links keep working AND the address bar updates itself. The #/route fragment is preserved by the browser across the redirect.",
+      "//": "Old URLs. The Firebase project ID cannot be renamed and a Hosting site cannot be renamed either, so previous names live on as 301 redirects to the current one rather than serving a second copy of the app.",
       "site": "autoproof-8d827",
       "public": "build/hosting",
       "ignore": [
@@ -109,8 +109,35 @@
       ],
       "redirects": [
         {
-          "source": "**",
-          "destination": "https://otov.web.app",
+          "source": "/",
+          "destination": "https://bonnetcheck.web.app/",
+          "type": 301
+        },
+        {
+          "source": "/:rest*",
+          "destination": "https://bonnetcheck.web.app/:rest*",
+          "type": 301
+        }
+      ]
+    },
+    {
+      "//": "Old URLs. The Firebase project ID cannot be renamed and a Hosting site cannot be renamed either, so previous names live on as 301 redirects to the current one rather than serving a second copy of the app.",
+      "site": "otov",
+      "public": "build/hosting",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "redirects": [
+        {
+          "source": "/",
+          "destination": "https://bonnetcheck.web.app/",
+          "type": 301
+        },
+        {
+          "source": "/:rest*",
+          "destination": "https://bonnetcheck.web.app/:rest*",
           "type": 301
         }
       ]

@@ -1,18 +1,18 @@
-# AutoProof — Flutter App
+# BonnetCheck — Flutter App
 ## Claude Code Build Instructions
 > **Read this entire file before writing a single line of code.**
 > Build one phase at a time. Confirm each phase works before moving to the next.
 > Always write complete files — never use `// TODO` or `// implement this`.
 ---
 ## WHAT YOU ARE BUILDING
-**App name:** AutoProof  
+**App name:** BonnetCheck  
 **Tagline:** הכוח בידיים שלך / The Power is Yours  
 **Platform:** Flutter 3.x — iOS + Android from one codebase  
 **Backend:** Firebase (Auth, Firestore, Storage, FCM, Functions)  
 **External API:** data.gov.il — Israeli Ministry of Transport (free, public)  
 **Language:** Hebrew — full RTL layout throughout  
 **Mission:** Make buying a used car in Israel fast, safe, and transparent.  
-AutoProof verifies every seller against the government vehicle registry,
+BonnetCheck verifies every seller against the government vehicle registry,
 shows official car data inside the app, connects buyers with independent
 inspectors, and enables direct real-time chat — all in one place.
 ---
@@ -83,7 +83,7 @@ dev_dependencies:
 ## PROJECT STRUCTURE
 Create this exact folder structure:
 ```
-autoproof/
+bonnetcheck/
 ├── CLAUDE.md                          ← this file
 ├── pubspec.yaml
 ├── firebase.json
@@ -92,7 +92,7 @@ autoproof/
 │   ├── app/
 │   │   ├── app.dart                   # MaterialApp + theme + RTL
 │   │   ├── router.dart                # go_router — all 24 routes
-│   │   └── theme.dart                 # ThemeData with AutoProof colors
+│   │   └── theme.dart                 # ThemeData with BonnetCheck colors
 │   │
 │   ├── core/
 │   │   ├── constants/
@@ -192,7 +192,7 @@ autoproof/
 ```
 ---
 ## FIREBASE STRUCTURE
-**Project ID:** `autoproof-app`  
+**Project ID:** `bonnetcheck-app`  
 **Enable these services:**
 - Authentication: Phone OTP + Google + Apple
 - Firestore: start in test mode
@@ -365,7 +365,7 @@ class GovData {
 ### א — ONBOARDING
 **01 · SplashScreen**
 - Full screen gradient: #0B3D33 → #0F6E56
-- Center: AutoProof shield logo + name
+- Center: BonnetCheck shield logo + name
 - Tagline: "הכוח בידיים שלך"
 - Logic: if `FirebaseAuth.currentUser != null` → go `/home`, else → go `/onboarding`
 - Duration: 1500ms
@@ -489,7 +489,7 @@ class GovData {
 - Filled: same CarCardWidget as HomeScreen
 **17 · NotificationsScreen**
 - "התראות"
-- AutoProof bell notifications: review requests (→ QuickReviewScreen)
+- BonnetCheck bell notifications: review requests (→ QuickReviewScreen)
 - Chat message previews
 - Unread = bold + green dot
 **18 · QuickReviewScreen**
@@ -536,7 +536,7 @@ class GovData {
 **24 · ProfileScreen**
 - Large avatar + name + verified badge
 - Stats: listings | reviews | rating
-- Menu rows: המודעות שלי | שמורים | סטטוס אימות | אודות AutoProof | הגדרות
+- Menu rows: המודעות שלי | שמורים | סטטוס אימות | אודות BonnetCheck | הגדרות
 - AboutScreen: teal header + shield + "הכוח בידיים שלך" + 4 trust layers
 ---
 ## BUSINESS LOGIC RULES
@@ -648,7 +648,7 @@ exports.notifyPrevViewers = functions.https.onCall(async (data, context) => {
       await admin.messaging().sendMulticast({
         tokens,
         notification: {
-          title: 'AutoProof',
+          title: 'BonnetCheck',
           body: 'מישהו הולך לראות את הרכב שבדקת. יש לך כמה מילים בשבילו?'
         },
         data: { screen: 'quick_review', carId }
@@ -833,7 +833,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 ### Phase 1 — Foundation ✅ START HERE
 ```bash
 flutter create autoproof --org il.autoproof
-cd autoproof
+cd bonnetcheck
 ```
 1. Replace `pubspec.yaml` with the full version above
 2. Run `flutter pub get`
@@ -900,5 +900,5 @@ First output should be:
 3. The complete `lib/app/theme.dart`
 4. The complete `lib/core/constants/app_colors.dart`
 Then ask me to confirm the app compiles before moving to Phase 2.
-Firebase project `autoproof-app` is already created with
+Firebase project `bonnetcheck-app` is already created with
 Auth, Firestore, Storage, and FCM enabled.

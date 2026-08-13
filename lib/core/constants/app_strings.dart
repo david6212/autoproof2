@@ -10,7 +10,7 @@ class AppStrings {
   /// Canonical public address, used to build shareable listing links.
   /// The legacy autoproof-8d827 host 301-redirects here, so old links keep
   /// working — but anything we hand out ourselves should use this one.
-  static const siteUrl = 'https://otov.web.app';
+  static const siteUrl = 'https://bonnetcheck.web.app';
 
   // Onboarding
   static const onboard1Title = 'תדעו כיצד המוכר סיווג את עצמו';
