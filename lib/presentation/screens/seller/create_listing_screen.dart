@@ -10,6 +10,7 @@ import '../../../data/models/gov_data_model.dart';
 import '../../providers/create_listing_provider.dart';
 import '../../providers/seller_verification_provider.dart';
 import '../../widgets/primary_button_widget.dart';
+import '../../widgets/app_card.dart';
 import '../../widgets/step_progress_widget.dart';
 import '../../../core/theme/app_text.dart';
 
@@ -91,10 +92,9 @@ class _StepPhotos extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'הוסף תמונות של הרכב',
-                  style: AppText.h2,
-                ),
+                // h3 across all three steps. The step bar above already says
+                // where you are; the title does not also need to shout.
+                const Text('הוסף תמונות של הרכב', style: AppText.h3),
                 const SizedBox(height: 4),
                 Text(
                   'עד 12 תמונות. הראשונה תשמש כתמונת השער.',
@@ -278,6 +278,10 @@ class _StepDetailsState extends ConsumerState<_StepDetails> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Step 2 was the only step without a title, so the flow read
+                // as "add photos" → a form with no name → "review".
+                const Text('פרטי הרכב', style: AppText.h3),
+                const SizedBox(height: 12),
                 _ReadOnlyCarCard(car: car),
                 const SizedBox(height: 16),
                 TextField(
@@ -424,22 +428,41 @@ class _StepReview extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'סקירה ואישור',
-                  style: AppText.h2,
-                ),
+                const Text('סקירה ואישור', style: AppText.h3),
                 const SizedBox(height: 12),
-                _reviewRow(context, 'רכב', car.title),
-                _reviewRow(context, 'שנה', '${car.year}'),
-                _reviewRow(context, 'מחיר',
-                    '₪${_fmt.format(double.tryParse(s.price) ?? 0)}'),
-                _reviewRow(context, 'קילומטראז\'',
-                    '${_fmt.format(int.tryParse(s.km) ?? 0)} ק"מ'),
-                _reviewRow(context, 'אזור', s.area),
-                _reviewRow(context, 'תמונות', '${s.photos.length}'),
-                if (s.description.isNotEmpty)
-                  _reviewRow(context, 'על הרכב', s.description),
-                if (s.reason.isNotEmpty) _reviewRow(context, 'סיבת המכירה', s.reason),
+                // One card with hairlines between the rows, rather than eight
+                // free-floating lines. A summary is a single object — this is
+                // the last thing the seller reads before publishing, and it
+                // should look like a document, not a list of leftovers.
+                AppCard(
+                  padding: EdgeInsets.zero,
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    children: [
+                      for (final (i, (label, value)) in <(String, String)>[
+                        ('רכב', car.title),
+                        ('שנה', '${car.year}'),
+                        ('מחיר',
+                            '₪${_fmt.format(double.tryParse(s.price) ?? 0)}'),
+                        ('קילומטראז\'',
+                            '${_fmt.format(int.tryParse(s.km) ?? 0)} ק"מ'),
+                        ('אזור', s.area),
+                        ('תמונות', '${s.photos.length}'),
+                        if (s.description.isNotEmpty)
+                          ('על הרכב', s.description),
+                        if (s.reason.isNotEmpty)
+                          ('סיבת המכירה', s.reason),
+                      ].indexed) ...[
+                        if (i > 0)
+                          Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: context.colors.cardBorder),
+                        _reviewRow(context, label, value),
+                      ],
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -535,18 +558,21 @@ class _StepReview extends ConsumerWidget {
 
   Widget _reviewRow(BuildContext context, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$label:',
-              style: TextStyle(color: context.colors.textMuted)),
+          // No colon: the divider and the alignment already separate the two,
+          // and eight colons down a card is visual noise.
+          SizedBox(
+            width: 92,
+            child: Text(label, style: context.text.caption),
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: context.colors.textPrimary),
+              style: AppText.bodySm.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -571,33 +597,33 @@ class _PublishedScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 110,
-                height: 110,
+                width: 76,
+                height: 76,
                 decoration: BoxDecoration(
                   color: context.colors.tealLight,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.check_circle,
-                    size: 60, color: context.colors.teal),
+                // The bare mark, not `check_circle` — a filled ring inside a
+                // filled ring was two circles saying the same thing.
+                child: Icon(Icons.check,
+                    size: 34, color: context.colors.tealText),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'המודעה פורסמה!',
-                style: AppText.display,
-              ),
+              const Text('המודעה פורסמה!', style: AppText.h2),
               const SizedBox(height: 8),
               Text(
                 'הרכב שלך זמין כעת לקונים ב-BonnetCheck',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: context.colors.textMuted),
+                style: context.text.bodySmMuted,
               ),
               const SizedBox(height: 24),
               const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _Stat(label: 'צפיות', value: '0'),
-                  _Stat(label: 'שמירות', value: '0'),
-                  _Stat(label: 'הודעות', value: '0'),
+                  Expanded(child: _Stat(label: 'צפיות', value: '0')),
+                  SizedBox(width: 10),
+                  Expanded(child: _Stat(label: 'שמירות', value: '0')),
+                  SizedBox(width: 10),
+                  Expanded(child: _Stat(label: 'הודעות', value: '0')),
                 ],
               ),
               const SizedBox(height: 32),
@@ -620,16 +646,20 @@ class _Stat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(value,
-            style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: context.colors.tealText2)),
-        Text(label,
-            style: TextStyle(color: context.colors.textMuted, fontSize: 13)),
-      ],
+    // A bordered tile rather than a bare number, so three zeros on a blank
+    // screen read as counters waiting to move rather than as an error.
+    return AppCard(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      child: Column(
+        children: [
+          Text(value, style: AppText.h3),
+          const SizedBox(height: 2),
+          Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.text.micro),
+        ],
+      ),
     );
   }
 }

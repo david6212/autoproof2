@@ -23,11 +23,16 @@ class StepProgress extends StatelessWidget {
             final done = i < current;
             return Expanded(
               child: Container(
-                height: 6,
+                // Thinner than it was: a progress bar is a hint about where
+                // you are, not a component in its own right.
+                height: 4,
                 margin: EdgeInsets.only(left: i == total - 1 ? 0 : 6),
                 decoration: BoxDecoration(
-                  color: done ? context.colors.teal : context.colors.cardBorder,
-                  borderRadius: BorderRadius.circular(3),
+                  // The fill token, because this is a filled bar. `teal` is
+                  // the identity colour and stays on the mark.
+                  color:
+                      done ? context.colors.tealFill : context.colors.cardBorder,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
             );

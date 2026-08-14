@@ -7,6 +7,8 @@ import '../../providers/theme_provider.dart';
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
+import '../../../core/theme/app_dimens.dart';
+import '../../widgets/app_card.dart';
 import '../../widgets/guest_prompt_view.dart';
 import '../../../core/theme/app_text.dart';
 import '../../widgets/saved_check_icon.dart';
@@ -96,80 +98,131 @@ class _Content extends StatelessWidget {
     final verified = user?.verified ?? false;
 
     return ListView(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
       children: [
-        const SizedBox(height: 20),
         Center(
           child: Column(
             children: [
               CircleAvatar(
-                radius: 44,
+                radius: 38,
                 backgroundColor: context.colors.tealLight,
-                child: Icon(Icons.person, size: 48, color: context.colors.teal),
+                child: Icon(Icons.person, size: 34, color: context.colors.teal),
               ),
-              const SizedBox(height: 12),
-              Text(name,
-                  style: AppText.h2),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpace.md),
+              Text(name, style: AppText.title),
+              const SizedBox(height: AppSpace.sm),
+              // Completed comparison is a STATE, so it reads as a badge. When
+              // it hasn't been done it is a task instead, and appears as a row
+              // in the menu below — a thing to do does not belong in a badge.
               if (verified)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.verified, size: 16, color: context.colors.teal),
-                    const SizedBox(width: 4),
-                    Text('נתונים ממרשם הרכב',
-                        style: TextStyle(color: context.colors.tealText2)),
-                  ],
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.md, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: context.colors.tealLight,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check, size: 13, color: context.colors.tealText),
+                      const SizedBox(width: AppSpace.xs + 1),
+                      Text('השוואה למרשם: הושלמה',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                            color: context.colors.tealText,
+                          )),
+                    ],
+                  ),
                 )
-              else
-                Text(user?.phone ?? '',
-                    style: TextStyle(color: context.colors.textMuted)),
+              else if ((user?.phone ?? '').isNotEmpty)
+                Text(user!.phone, style: context.text.caption),
             ],
           ),
         ),
-        const SizedBox(height: 24),
-        _MenuRow(
-          icon: Icons.directions_car_outlined,
-          label: 'המודעות שלי',
-          onTap: () => context.go('/seller'),
-        ),
-        _MenuRow(
-          icon: Icons.check_rounded,
-          iconWidget:
-              SavedCheckIcon(size: 24, color: context.colors.textPrimary),
-          label: 'רכבים שמורים',
-          onTap: () => context.go('/saved'),
-        ),
-        _MenuRow(
-          icon: Icons.verified_user_outlined,
-          label: verified ? 'השוואה למרשם: הושלמה ✓' : 'השוואה למרשם הרכב',
-          onTap: () => context.push('/verify/role'),
-        ),
-        _MenuRow(
-          icon: Icons.info_outline,
-          label: 'אודות BonnetCheck',
-          onTap: () => context.push('/about'),
-        ),
-        _MenuRow(
-          icon: Icons.gavel_outlined,
-          label: 'תנאי שימוש ופרטיות',
-          onTap: () => context.push('/legal'),
-        ),
-        const Divider(height: 24),
+        const SizedBox(height: AppSpace.xl),
+        _MenuGroup(rows: [
+          _MenuRow(
+            icon: Icons.directions_car_outlined,
+            label: 'המודעות שלי',
+            onTap: () => context.go('/seller'),
+          ),
+          _MenuRow(
+            icon: Icons.check_rounded,
+            iconWidget:
+                SavedCheckIcon(size: 18, color: context.colors.textMuted),
+            label: 'רכבים שמורים',
+            onTap: () => context.go('/saved'),
+          ),
+          if (!verified)
+            _MenuRow(
+              icon: Icons.verified_user_outlined,
+              label: 'השוואה למרשם הרכב',
+              onTap: () => context.push('/verify/role'),
+            ),
+          _MenuRow(
+            icon: Icons.info_outline,
+            label: 'אודות BonnetCheck',
+            onTap: () => context.push('/about'),
+          ),
+          _MenuRow(
+            icon: Icons.gavel_outlined,
+            label: 'תנאי שימוש ופרטיות',
+            onTap: () => context.push('/legal'),
+          ),
+        ]),
+        const SizedBox(height: AppSpace.md),
         const _ThemeToggle(),
-        const Divider(height: 24),
-        // A visible, self-serve route to have personal data removed.
-        _MenuRow(
-          icon: Icons.delete_sweep_outlined,
-          label: 'בקשת מחיקת המידע שלי',
-          onTap: () => _requestDeletion(context, ref),
-        ),
-        _MenuRow(
-          icon: Icons.logout,
-          label: 'התנתקות',
-          color: context.colors.errorRed,
-          onTap: () => _signOut(context),
-        ),
+        const SizedBox(height: AppSpace.md),
+        // The two actions you cannot simply undo, kept apart from navigation
+        // and marked. The reference design put the terms-of-use link in this
+        // group and coloured it red too — that would flag a page of text as
+        // dangerous, so it stays above with the rest of the navigation.
+        _MenuGroup(rows: [
+          _MenuRow(
+            icon: Icons.delete_sweep_outlined,
+            label: 'בקשת מחיקת המידע שלי',
+            color: context.colors.errorRed,
+            showChevron: false,
+            onTap: () => _requestDeletion(context, ref),
+          ),
+          _MenuRow(
+            icon: Icons.logout,
+            label: 'התנתקות',
+            color: context.colors.errorRed,
+            showChevron: false,
+            onTap: () => _signOut(context),
+          ),
+        ]),
       ],
+    );
+  }
+}
+
+/// Menu rows as one card with hairlines between them, rather than a run of
+/// full-bleed list tiles. The grouping is the information: navigation in one
+/// block, the settings in another, the things you cannot undo in a third.
+class _MenuGroup extends StatelessWidget {
+  const _MenuGroup({required this.rows});
+
+  final List<Widget> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0)
+              Divider(height: 1, thickness: 1, color: context.colors.cardBorder),
+            rows[i],
+          ],
+        ],
+      ),
     );
   }
 }
@@ -199,41 +252,59 @@ class _ThemeToggle extends ConsumerWidget {
       ThemeMode.system => deviceIsDark,
     };
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SwitchListTile(
-          value: isDark,
-          onChanged: (on) => ref
-              .read(themeModeProvider.notifier)
-              .set(on ? ThemeMode.dark : ThemeMode.light),
-          title: const Text('מצב כהה'),
-          subtitle: Text(
-            mode == ThemeMode.system
-                ? 'לפי הגדרות המכשיר'
-                : (isDark ? 'דולק' : 'כבוי'),
-            style: context.text.caption,
+    return AppCard(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg, AppSpace.sm, AppSpace.md, AppSpace.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                size: 18,
+                color: context.colors.textMuted,
+              ),
+              const SizedBox(width: AppSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('מצב כהה', style: AppText.bodySm),
+                    const SizedBox(height: 1),
+                    Text(
+                      mode == ThemeMode.system
+                          ? 'לפי הגדרות המכשיר'
+                          : (isDark ? 'דולק' : 'כבוי'),
+                      style: context.text.micro,
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: isDark,
+                onChanged: (on) => ref
+                    .read(themeModeProvider.notifier)
+                    .set(on ? ThemeMode.dark : ThemeMode.light),
+              ),
+            ],
           ),
-          secondary: Icon(
-            isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-            color: context.colors.textPrimary,
-          ),
-        ),
-        if (mode != ThemeMode.system)
-          Padding(
-            padding: const EdgeInsets.only(right: 16, bottom: 4),
-            child: Align(
+          if (mode != ThemeMode.system)
+            Align(
               alignment: AlignmentDirectional.centerStart,
               child: TextButton.icon(
-                icon: const Icon(Icons.brightness_auto_outlined, size: 18),
+                style: TextButton.styleFrom(
+                  foregroundColor: context.colors.tealText2,
+                  textStyle: const TextStyle(fontSize: 12.5),
+                ),
+                icon: const Icon(Icons.brightness_auto_outlined, size: 16),
                 label: const Text('חזרה להגדרות המכשיר'),
-                onPressed: () => ref
-                    .read(themeModeProvider.notifier)
-                    .set(ThemeMode.system),
+                onPressed: () =>
+                    ref.read(themeModeProvider.notifier).set(ThemeMode.system),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -245,6 +316,7 @@ class _MenuRow extends StatelessWidget {
     required this.onTap,
     this.color,
     this.iconWidget,
+    this.showChevron = true,
   });
 
   final IconData icon;
@@ -255,14 +327,37 @@ class _MenuRow extends StatelessWidget {
   final VoidCallback onTap;
   final Color? color;
 
+  /// A chevron means "this opens a page". Rows that fire an action instead —
+  /// signing out, filing a deletion request — do not get one, because it would
+  /// promise a screen they can back out of.
+  final bool showChevron;
+
   @override
   Widget build(BuildContext context) {
-    final c = color ?? context.colors.textPrimary;
-    return ListTile(
-      leading: iconWidget ?? Icon(icon, color: c),
-      title: Text(label, style: TextStyle(color: c)),
-      trailing: Icon(Icons.chevron_left, color: context.colors.textSubtle),
+    final label_ = color ?? context.colors.textPrimary;
+    final iconColor = color ?? context.colors.textMuted;
+
+    return InkWell(
       onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.lg, vertical: AppSpace.md + 2),
+        child: Row(
+          children: [
+            iconWidget ?? Icon(icon, size: 18, color: iconColor),
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.bodySm.copyWith(color: label_)),
+            ),
+            if (showChevron)
+              Icon(Icons.chevron_left,
+                  size: 18, color: context.colors.textSubtle),
+          ],
+        ),
+      ),
     );
   }
 }

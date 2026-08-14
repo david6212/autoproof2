@@ -485,7 +485,10 @@ class _FilterButton extends StatelessWidget {
                     height: 15,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: context.colors.teal,
+                      // The fill token: this disc carries white digits at
+                      // 9.5px. On `teal` that is 3.96:1 — a graphic ratio
+                      // holding text, and the smallest text in the app.
+                      color: context.colors.tealFill,
                       shape: BoxShape.circle,
                     ),
                     child: Text(

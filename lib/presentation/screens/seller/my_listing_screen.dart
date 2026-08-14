@@ -214,7 +214,10 @@ class _SellerActions extends ConsumerWidget {
               title: 'לסמן כנמכר?',
               body: 'המודעה תוסר מרשימת הרכבים הפעילים. אפשר לפרסם רכב חדש לאחר מכן.',
               confirmLabel: 'כן, נמכר',
-              confirmColor: context.colors.teal,
+              // The FILL token. `teal` is the identity green and carries white
+              // at only 3.96:1 — under the floor for a button label, which is
+              // the whole reason the two are separate tokens.
+              confirmColor: context.colors.tealFill,
             );
             if (ok && context.mounted) {
               await _apply(context, ref, CarStatus.sold, 'מזל טוב! המודעה סומנה כנמכרה');
