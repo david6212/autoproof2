@@ -44,13 +44,13 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color teal;
 
   /// The brand green **as a fill under white text** — filled buttons, the app
-  /// bar. Measurably darker than [teal], because white on `#558B6E` is only
-  /// 3.96:1 and the floor for a button label is 4.5. This is 5.07.
+  /// bar, map pins. Deeper than [teal], because white on `#558B6E` is only
+  /// 3.96:1 and the floor for a button label is 4.5. This is **6.47**.
   ///
   /// It is a separate token rather than a darker [teal] because the two do
   /// different jobs: [teal] identifies the product (the emblem, the check in
   /// the wordmark, icons, borders) and must not drift, while this one only has
-  /// to carry white legibly. Same hue and saturation, 6% less lightness.
+  /// to carry white legibly.
   final Color tealFill;
 
   final Color tealDark;

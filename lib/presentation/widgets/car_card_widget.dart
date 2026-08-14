@@ -324,7 +324,7 @@ class CarCard extends StatelessWidget {
             // The circle carries the state, the check never changes colour.
             // Unsaved it is a dark scrim — the button sits on a photograph,
             // and a white disc is invisible on a photo of a white car. Saved,
-            // it fills with the brand green. White reads on both (5.07:1 on
+            // it fills with the brand green. White reads on both (6.47:1 on
             // the fill), so the tick stays legible either way and the only
             // thing that moves is the disc behind it.
             child: AnimatedContainer(

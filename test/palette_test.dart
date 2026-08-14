@@ -87,6 +87,24 @@ void main() {
           reason: 'the fill is the darker one');
     });
 
+    test('the fill green clears the floor with real headroom', () {
+      // The fill was #4A785F, which cleared 4.5 at 5.07 — passing, but only
+      // just, so any future nudge toward the identity green would have failed
+      // silently at 4.4. #1E6B45 (from the Claude Design handoff) measures
+      // 6.47, which leaves room to adjust the colour without re-breaking the
+      // one thing the token exists to guarantee.
+      double ratio(Color a, Color b) {
+        final (x, y) = (a.computeLuminance(), b.computeLuminance());
+        final (hi, lo) = x > y ? (x, y) : (y, x);
+        return (hi + 0.05) / (lo + 0.05);
+      }
+
+      for (final p in [light, dark]) {
+        expect(ratio(p.onBrand, p.tealFill), greaterThan(6.0),
+            reason: 'white on the fill green');
+      }
+    });
+
     test('even the quietest ink clears 3:1 on its surface', () {
       double ratio(Color a, Color b) {
         final (x, y) = (a.computeLuminance(), b.computeLuminance());

@@ -8,13 +8,22 @@ class AppColors {
   // Primary — matched to the splash screen palette (sage green #558B6E).
   static const teal = Color(0xFF558B6E);
 
-  /// The same green, 6% darker in lightness, for use **under white text**.
+  /// The deep brand green, for use **under white text** — filled buttons, the
+  /// app bar, map pins, the saved disc.
   ///
-  /// White on [teal] measures 3.96:1 — below the 4.5 floor for a button label
-  /// at 15–16px bold. This measures 5.07:1. Hue (147.8°) and saturation are
-  /// identical, so it reads as the same green; only buttons and app bars use
-  /// it. The emblem and the wordmark's check stay on [teal].
-  static const tealFill = Color(0xFF4A785F);
+  /// White on [teal] measures only 3.96:1, below the 4.5 floor for a button
+  /// label at 15–16px bold. This measures **6.47:1**.
+  ///
+  /// It was `#4A785F` — [teal] at 6% less lightness, which cleared the floor at
+  /// 5.07:1 but read as a slightly muddy version of the same colour. This value
+  /// came from the Claude Design handoff (2026-08-13): same hue family
+  /// (150.4° against teal's 147.8° — indistinguishable), but far more saturated
+  /// and darker, so it reads as a richer green rather than a duller one.
+  ///
+  /// The emblem and the wordmark's check stay on [teal]. That separation is the
+  /// point: [teal] identifies the product and must not drift, this one only has
+  /// to carry white legibly.
+  static const tealFill = Color(0xFF1E6B45);
   static const tealDark = Color(0xFF3C614C);
   static const tealLight = Color(0xFFE7EFEA);
   static const tealText = Color(0xFF294539);

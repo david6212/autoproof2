@@ -29,7 +29,7 @@ class AppBarAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 5.07:1 the other way round is what makes `tealFill` the fill token in
+    // 6.47:1 the other way round is what makes `tealFill` the fill token in
     // the first place — white is the ink it was chosen to carry.
     final style = TextButton.styleFrom(
       foregroundColor: context.colors.onBrand,
