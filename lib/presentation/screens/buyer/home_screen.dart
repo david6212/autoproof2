@@ -11,6 +11,7 @@ import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../widgets/app_card.dart';
 import '../../widgets/car_card_widget.dart';
 import '../../widgets/fact_chip.dart';
 import '../../widgets/login_required_sheet.dart';
@@ -115,17 +116,61 @@ class _Header extends StatelessWidget {
               const SizedBox(width: AppSpace.sm),
               const BrandWordmark(fontSize: 18),
               const Spacer(),
-              IconButton(
-                icon: Icon(Icons.info_outline, color: context.colors.textMuted),
+              _HeaderButton(
+                icon: Icons.info_outline,
                 tooltip: 'אודות BonnetCheck',
-                onPressed: () => context.push('/about'),
+                onTap: () => context.push('/about'),
               ),
+              const SizedBox(width: AppSpace.sm),
               const _NotificationBell(),
             ],
           ),
-          const SizedBox(height: AppSpace.sm),
-          const _SearchField(),
+          const SizedBox(height: AppSpace.md),
+          const _SearchCard(),
         ],
+      ),
+    );
+  }
+}
+
+/// A utility action in the header: a white rounded square on the tint, rather
+/// than a bare glyph. On a tinted band a plain icon reads as decoration; a
+/// surface behind it says it can be pressed.
+class _HeaderButton extends StatelessWidget {
+  const _HeaderButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  static const size = 38.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        label: tooltip,
+        excludeSemantics: true,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: context.colors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: context.colors.cardBorder),
+            ),
+            child: Icon(icon, size: 19, color: context.colors.textMuted),
+          ),
+        ),
       ),
     );
   }
@@ -142,17 +187,20 @@ class _NotificationBell extends ConsumerWidget {
 
     return Stack(
       alignment: Alignment.center,
+      clipBehavior: Clip.none,
       children: [
-        IconButton(
-          icon:
-              Icon(Icons.notifications_none, color: context.colors.textMuted),
+        _HeaderButton(
+          icon: Icons.notifications_none,
           tooltip: 'התראות',
-          onPressed: () => context.push('/notifications'),
+          onTap: () => context.push('/notifications'),
         ),
         if (count > 0)
+          // Pinned to the button's own corner. It used to sit inside an
+          // IconButton's 48px touch area, which is bigger than the visible
+          // square — so the dot floated away from the bell it belongs to.
           Positioned(
-            top: 6,
-            right: 6,
+            top: -4,
+            right: -4,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
               constraints: const BoxConstraints(minWidth: 16),
@@ -171,6 +219,153 @@ class _NotificationBell extends ConsumerWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// The white panel on the tinted header: what the screen is for, the live
+/// search field, and shortcuts into the three filters people actually reach
+/// for.
+///
+/// **The reference design's version is a form** — area, price, years and a
+/// "חיפוש" button that produces results. This one keeps the app's live
+/// filtering: the list below is already the answer and updates as you type, so
+/// a submit button would be a control that does nothing.
+///
+/// The reference also carries a "רק רכבים עם נתונים רשמיים" toggle. That is
+/// dropped rather than drawn: every listing here is created from a plate
+/// lookup, so the switch would be a no-op — and worse, offering it implies
+/// some listings have no official data behind them.
+class _SearchCard extends ConsumerWidget {
+  const _SearchCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final f = ref.watch(carFiltersProvider);
+
+    void openFilters() => showSearchFilterSheet(
+          context,
+          ref.read(activeCarsProvider).valueOrNull ?? const [],
+        );
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpace.md + 2),
+      elevated: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('חיפוש רכב', style: AppText.subtitle),
+              const SizedBox(width: AppSpace.xs + 2),
+              Icon(Icons.auto_awesome, size: 14, color: context.colors.teal),
+            ],
+          ),
+          const SizedBox(height: AppSpace.xxs),
+          Text('מצאו את הרכב הבא שלכם, ללא הפתעות',
+              style: context.text.micro),
+          const SizedBox(height: AppSpace.md),
+          const _SearchField(),
+          const SizedBox(height: AppSpace.sm + 2),
+          // One row, three shortcuts. The reference stacks them over two rows
+          // plus a toggle; on a browse-first screen that pushes the cars —
+          // which are the reason anyone opened the app — off the fold.
+          Row(
+            children: [
+              Expanded(
+                child: _QuickFilter(
+                  icon: Icons.place_outlined,
+                  label: f.area ?? 'אזור',
+                  on: f.area != null,
+                  onTap: openFilters,
+                ),
+              ),
+              const SizedBox(width: AppSpace.sm - 2),
+              Expanded(
+                child: _QuickFilter(
+                  icon: Icons.payments_outlined,
+                  label: f.maxPrice < CarFilters.priceCap
+                      ? 'עד ${(f.maxPrice / 1000).round()} אלף'
+                      : 'מחיר',
+                  on: f.maxPrice < CarFilters.priceCap,
+                  onTap: openFilters,
+                ),
+              ),
+              const SizedBox(width: AppSpace.sm - 2),
+              Expanded(
+                child: _QuickFilter(
+                  icon: Icons.event_outlined,
+                  label: f.minYear > CarFilters.yearFloor
+                      ? 'מ-${f.minYear}'
+                      : 'שנה',
+                  on: f.minYear > CarFilters.yearFloor,
+                  onTap: openFilters,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One shortcut into the filter sheet, showing its current value when set.
+class _QuickFilter extends StatelessWidget {
+  const _QuickFilter({
+    required this.icon,
+    required this.label,
+    required this.on,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+
+  /// Whether this filter is actually narrowing anything. A set filter has to
+  /// look different from an empty one, or the row reads as three buttons that
+  /// never respond.
+  final bool on;
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm),
+        decoration: BoxDecoration(
+          color: on ? context.colors.tealLight : context.colors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(
+            color: on ? context.colors.tealLight : context.colors.cardBorder,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon,
+                size: 14,
+                color: on ? context.colors.tealText : context.colors.teal),
+            const SizedBox(width: AppSpace.xs + 1),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: on ? FontWeight.bold : FontWeight.normal,
+                  color:
+                      on ? context.colors.tealText : context.colors.textMuted,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
