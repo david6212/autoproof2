@@ -102,7 +102,10 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      color: context.colors.background,
+      // A faint wash, now that the app bar is no longer a green band. It gives
+      // the top of Home an edge without shouting, and the search pill sitting
+      // on it reads as a control rather than dissolving into the page.
+      color: context.colors.headerTint,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -4,17 +4,20 @@ import '../../core/theme/app_palette.dart';
 
 /// A text action in the [AppBar], with the one colour that works there.
 ///
-/// A plain `TextButton` in an app bar is very nearly invisible in this app, and
-/// nothing about the code looks wrong. `AppBarTheme.foregroundColor` sets the
-/// title and the icon theme, but a button brings its own `ButtonStyle`, whose
-/// Material default foreground is `colorScheme.primary` — the brand green. The
-/// app bar's background is `tealFill`, the same green 6% darker, so the label
-/// lands at about **1.2:1** on it. It renders, it is tappable, and it cannot
-/// be read.
+/// A plain `TextButton` in an app bar takes its own `ButtonStyle` default —
+/// `colorScheme.primary`, the brand green — and `AppBarTheme.foregroundColor`
+/// does not reach it. On the old green bar that landed at about **1.2:1**:
+/// rendered, tappable, unreadable. The bar is now the page colour, which makes
+/// it survivable rather than fixed — the same default measures **3.77:1** on
+/// it, still under the 4.5 floor for a label.
 ///
-/// Fixing it in `textButtonTheme` would be worse: the same override would put
-/// white ink on every dialog and page-level text button, which sit on white.
-/// The colour is a property of *where the button is*, so it lives here.
+/// So this uses `tealText2`, the token for green ink on a light surface:
+/// **6.42:1** light, **8.99:1** dark. It reads as the brand without being the
+/// identity green, which is reserved for the mark.
+///
+/// Fixing it in `textButtonTheme` would still be wrong — that override would
+/// reach every dialog and page-level text button too, and what ink a button
+/// needs is a property of *where it sits*.
 class AppBarAction extends StatelessWidget {
   const AppBarAction({
     super.key,
@@ -29,10 +32,8 @@ class AppBarAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 6.47:1 the other way round is what makes `tealFill` the fill token in
-    // the first place — white is the ink it was chosen to carry.
     final style = TextButton.styleFrom(
-      foregroundColor: context.colors.onBrand,
+      foregroundColor: context.colors.tealText2,
       minimumSize: const Size(48, 48),
     );
 

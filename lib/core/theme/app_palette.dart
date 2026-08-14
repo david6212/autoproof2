@@ -19,6 +19,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.tealFill,
     required this.tealDark,
     required this.tealLight,
+    required this.headerTint,
     required this.tealText,
     required this.tealText2,
     required this.background,
@@ -55,6 +56,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
 
   final Color tealDark;
   final Color tealLight;
+
+  /// The pale wash behind the top of a screen — the home header, an icon well.
+  /// Distinct from [tealLight], which tints a component; this tints a REGION,
+  /// and is deliberately fainter so a chip sitting on it still reads as a chip.
+  final Color headerTint;
   final Color tealText;
   final Color tealText2;
   final Color background;
@@ -85,6 +91,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     tealFill: AppColors.tealFill,
     tealDark: AppColors.tealDark,
     tealLight: AppColors.tealLight,
+    headerTint: AppColors.headerTint,
     tealText: AppColors.tealText,
     tealText2: AppColors.tealText2,
     background: AppColors.background,
@@ -120,6 +127,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     tealDark: Color(0xFF2C4A39),
     // Was a pale wash behind icons and banners; now a deep one.
     tealLight: Color(0xFF1F2B25),
+    // Barely a tint at all in the dark: a green wash over near-black turns
+    // muddy long before it reads as brand colour.
+    headerTint: Color(0xFF151C18),
     // These are the text ON tealLight, so they invert with it.
     tealText: Color(0xFFA8CDB8),
     tealText2: Color(0xFF93BCA5),
@@ -153,6 +163,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? tealFill,
     Color? tealDark,
     Color? tealLight,
+    Color? headerTint,
     Color? tealText,
     Color? tealText2,
     Color? background,
@@ -179,6 +190,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       tealFill: tealFill ?? this.tealFill,
       tealDark: tealDark ?? this.tealDark,
       tealLight: tealLight ?? this.tealLight,
+      headerTint: headerTint ?? this.headerTint,
       tealText: tealText ?? this.tealText,
       tealText2: tealText2 ?? this.tealText2,
       background: background ?? this.background,
@@ -211,6 +223,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       tealFill: c(tealFill, other.tealFill),
       tealDark: c(tealDark, other.tealDark),
       tealLight: c(tealLight, other.tealLight),
+      headerTint: c(headerTint, other.headerTint),
       tealText: c(tealText, other.tealText),
       tealText2: c(tealText2, other.tealText2),
       background: c(background, other.background),

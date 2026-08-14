@@ -26,6 +26,10 @@ class AppColors {
   static const tealFill = Color(0xFF1E6B45);
   static const tealDark = Color(0xFF3C614C);
   static const tealLight = Color(0xFFE7EFEA);
+  /// A region wash — the home header. Fainter than [tealLight], which tints a
+  /// component rather than an area.
+  static const headerTint = Color(0xFFEAF3ED);
+
   static const tealText = Color(0xFF294539);
   static const tealText2 = Color(0xFF40634F);
 

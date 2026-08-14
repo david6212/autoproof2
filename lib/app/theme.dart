@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 import 'package:google_fonts/google_fonts.dart';
 
 import '../core/theme/app_dimens.dart';
@@ -36,11 +37,27 @@ class AppTheme {
         bodyColor: p.textPrimary,
         displayColor: p.textPrimary,
       ),
+      // The app bar is no longer a green band. It was the loudest thing on
+      // every screen and it competed with the content; on the page colour with
+      // a hairline under it, the screen's own material is what you see first.
       appBarTheme: AppBarTheme(
-        backgroundColor: p.tealFill,
-        foregroundColor: p.onBrand,
+        backgroundColor: p.background,
+        foregroundColor: p.textPrimary,
         elevation: 0,
+        // Material 3 tints the bar when content scrolls beneath it. That would
+        // put the colour shift straight back, halfway down every scroll.
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
+        // What separates the bar from the page now that they share a colour.
+        shape: Border(bottom: BorderSide(color: p.cardBorder)),
+        // Icons in the OS status bar have to invert with the bar underneath
+        // them, or they vanish. Flutter infers this from the background, but
+        // inferring it is exactly what stops being true the next time somebody
+        // overrides a single screen's bar.
+        systemOverlayStyle: brightness == Brightness.light
+            ? SystemUiOverlayStyle.dark
+            : SystemUiOverlayStyle.light,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
