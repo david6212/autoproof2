@@ -19,12 +19,14 @@ class NavTab {
   final Widget Function(bool selected, Color fg, Color bg)? iconBuilder;
 }
 
-/// The app's bottom navigation: a floating rounded bar, with the selected
-/// tab sitting inside a filled pill that carries its label.
+/// The app's bottom navigation: a flat bar on the page's own surface, with a
+/// hairline above it and every destination named.
 ///
-/// Replaces Material's edge-to-edge `NavigationBar`. Only the selected tab
-/// shows its label — five Hebrew labels side by side do not fit a narrow
-/// phone, and the pill is what tells you where you are.
+/// It used to be a floating pill where **only the selected tab showed its
+/// label**, because five Hebrew labels laid out beside their icons do not fit a
+/// narrow phone. Stacking each label under its icon at 10.5px removes that
+/// constraint — five labels fit a 320px screen with room to spare — so every
+/// destination can say what it is instead of three of five being a bare glyph.
 ///
 /// Shared by the buyer and seller shells so the two can't drift apart.
 class AppNavBar extends StatelessWidget {
@@ -41,35 +43,29 @@ class AppNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        decoration: BoxDecoration(
-          color: context.colors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(color: context.colors.cardBorder),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
-              blurRadius: 18,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            for (var i = 0; i < tabs.length; i++)
-              Flexible(
-                child: _NavItem(
-                  tab: tabs[i],
-                  selected: i == currentIndex,
-                  onTap: () => onSelected(i),
+    return Container(
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        border: Border(top: BorderSide(color: context.colors.cardBorder)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.only(top: AppSpace.sm + 1),
+          child: Row(
+            children: [
+              for (var i = 0; i < tabs.length; i++)
+                // Equal shares, so the bar does not shuffle sideways when the
+                // selected tab changes and its label changes width.
+                Expanded(
+                  child: _NavItem(
+                    tab: tabs[i],
+                    selected: i == currentIndex,
+                    onTap: () => onSelected(i),
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -87,10 +83,24 @@ class _NavItem extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
+  /// Label size. Small, because five of them share a phone's width — but not
+  /// so small that it stops being text a person reads.
+  static const _labelSize = 10.5;
+
   @override
   Widget build(BuildContext context) {
-    final fg = selected ? context.colors.onBrand : context.colors.textSubtle;
-    final bg = selected ? context.colors.teal : context.colors.surface;
+    // `tealText2`, NOT `tealFill`. The reference design names its deep green
+    // for the active tab, and reaching for our equivalent fill token measured
+    // **2.6:1 on the dark surface** — the selected tab was nearly invisible in
+    // dark mode. The fill green is a colour to put white ON; a label is ink,
+    // and green ink on a surface is what `tealText2` exists for: 6.74:1 light,
+    // 7.97:1 dark.
+    //
+    // Inactive is `textMuted` (6.14 / 7.12). The reference used its lightest
+    // grey there, about 2.5 — fine as a mood, not as a label a person has to
+    // read to know where they are.
+    final fg =
+        selected ? context.colors.tealText2 : context.colors.textMuted;
 
     return Semantics(
       selected: selected,
@@ -98,42 +108,31 @@ class _NavItem extends StatelessWidget {
       label: tab.label,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-          padding: EdgeInsets.symmetric(
-            horizontal: selected ? 14 : 12,
-            vertical: 10,
-          ),
-          decoration: BoxDecoration(
-            color: selected ? bg : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-          ),
-          child: Row(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              tab.iconBuilder?.call(selected, fg, bg) ??
+              tab.iconBuilder?.call(selected, fg, context.colors.surface) ??
                   Icon(selected ? tab.activeIcon : tab.icon,
                       size: 22, color: fg),
-              // The label belongs to the pill, so it appears and disappears
-              // with it rather than being permanently squeezed in.
-              if (selected) ...[
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    tab.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.fade,
-                    softWrap: false,
-                    style: TextStyle(
-                      color: fg,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+              const SizedBox(height: AppSpace.xs - 1),
+              Text(
+                tab.label,
+                maxLines: 1,
+                overflow: TextOverflow.fade,
+                softWrap: false,
+                style: TextStyle(
+                  color: fg,
+                  fontSize: _labelSize,
+                  // Weight carries the state as well as colour does. The fuel
+                  // tab deliberately uses the SAME glyph in both states (its
+                  // outlined codepoint caused an invisible-icon bug), so it has
+                  // no filled/outlined cue — without this, colour alone would
+                  // be the only signal on that one tab.
+                  fontWeight: selected ? FontWeight.bold : FontWeight.w500,
                 ),
-              ],
+              ),
             ],
           ),
         ),

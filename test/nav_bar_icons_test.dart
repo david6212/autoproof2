@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bonnetcheck/app/theme.dart';
+import 'package:bonnetcheck/core/theme/app_palette.dart';
 import 'package:bonnetcheck/presentation/widgets/app_nav_bar.dart';
 import 'package:bonnetcheck/presentation/widgets/buyer_shell.dart';
 import 'package:bonnetcheck/presentation/widgets/saved_check_icon.dart';
@@ -67,13 +68,71 @@ void main() {
     expect(fuel.icon.codePoint, fuel.activeIcon.codePoint);
   });
 
-  testWidgets('only the selected tab shows a label', (t) async {
-    // Five Hebrew words side by side do not fit a phone; the filled pill is
-    // what says where you are.
+  testWidgets('every tab is named, not just the selected one', (t) async {
+    // It used to be only the selected one: five Hebrew words laid out BESIDE
+    // their icons do not fit a phone. Stacked under them at 10.5px they do,
+    // so three of five destinations no longer have to be a bare glyph.
     await t.pumpWidget(_bar(selected: 2));
     for (final tab in BuyerShell.tabs) {
-      expect(find.text(tab.label),
-          tab.path == '/fuel' ? findsOneWidget : findsNothing);
+      expect(find.text(tab.label), findsOneWidget, reason: tab.label);
     }
+  });
+
+  testWidgets('five labels fit a small phone without overflowing', (t) async {
+    // 320px is the narrowest the app supports, and Hebrew labels are wider
+    // than the reference design's English ones.
+    await t.pumpWidget(MediaQuery(
+      data: const MediaQueryData(size: Size(320, 640)),
+      child: _bar(selected: 0),
+    ));
+    expect(t.takeException(), isNull);
+
+    for (final tab in BuyerShell.tabs) {
+      expect(find.text(tab.label), findsOneWidget, reason: tab.label);
+    }
+  });
+
+  testWidgets('the state is carried by more than colour', (t) async {
+    // The fuel tab uses the SAME glyph selected or not, so a filled/outlined
+    // cue does not exist there. Weight has to do that job on every tab, or a
+    // colour-blind user cannot tell which one they are on.
+    await t.pumpWidget(_bar(selected: 2));
+
+    final fuel = t.widget<Text>(find.text('דלק'));
+    final home = t.widget<Text>(find.text('בית'));
+    expect(fuel.style?.fontWeight, FontWeight.bold);
+    expect(home.style?.fontWeight, isNot(FontWeight.bold));
+    expect(fuel.style?.color, isNot(home.style?.color));
+  });
+
+  testWidgets('both label inks are readable on the bar, in both themes',
+      (t) async {
+    // This caught a real one. The reference design names its deep green for the
+    // active tab, and our equivalent FILL token measures 2.6:1 on the dark
+    // surface — the selected tab was nearly invisible in dark mode. A label is
+    // ink, not a fill, so it takes the green-ink token.
+    //
+    // The reference also used its lightest grey for inactive tabs (~2.5:1). A
+    // label you cannot read is not a smaller label, it is a missing one.
+    double ratio(Color a, Color b) {
+      final (x, y) = (a.computeLuminance(), b.computeLuminance());
+      final (hi, lo) = x > y ? (x, y) : (y, x);
+      return (hi + 0.05) / (lo + 0.05);
+    }
+
+    for (final p in [AppPalette.light, AppPalette.dark]) {
+      expect(ratio(p.tealText2, p.surface), greaterThan(4.5),
+          reason: 'selected label');
+      expect(ratio(p.textMuted, p.surface), greaterThan(4.5),
+          reason: 'unselected label');
+    }
+
+    // The trap itself, pinned. `tealFill` is fine on a white card (6.47) —
+    // which is exactly why reaching for it looks right until someone opens the
+    // app in dark mode. It is a colour to put white ON, and it fails as ink on
+    // the one surface a light-mode developer never sees.
+    expect(ratio(AppPalette.dark.tealFill, AppPalette.dark.surface),
+        lessThan(3.0),
+        reason: 'the fill green is not a label colour on a dark surface');
   });
 }
