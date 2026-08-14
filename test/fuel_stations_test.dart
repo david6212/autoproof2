@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bonnetcheck/data/models/fuel_station.dart';
+import 'package:bonnetcheck/presentation/screens/buyer/fuel_stations_screen.dart';
 import 'package:bonnetcheck/presentation/widgets/map_cluster.dart';
 
 /// Fixtures copied verbatim from a live data.gov.il response, including the
@@ -28,6 +29,44 @@ Map<String, dynamic> row({
     };
 
 void main() {
+  /// The screen used to be map OR list behind a toggle. It is now map above
+  /// list, always both — you can see where the stations are and read them at
+  /// the same time. That split only works if the map takes a share of the
+  /// screen that stays sensible at both extremes.
+  group('map header height', () {
+    test('takes about a third of a phone', () {
+      // 844 is the iPhone 14/15 frame the designs were authored at.
+      expect(FuelStationsScreen.mapHeightFor(844), closeTo(287, 1));
+      // Still leaves the majority of the screen to the stations themselves.
+      expect(FuelStationsScreen.mapHeightFor(844), lessThan(844 / 2));
+    });
+
+    test('a short window keeps a legible map rather than a green stripe', () {
+      // A third of 400 is 136px — too small to place a pin in.
+      expect(FuelStationsScreen.mapHeightFor(400),
+          FuelStationsScreen.minMapHeight);
+    });
+
+    test('a tall window does not become a wall of map', () {
+      expect(FuelStationsScreen.mapHeightFor(1400),
+          FuelStationsScreen.maxMapHeight);
+    });
+
+    test('expanded gives the map the whole viewport', () {
+      expect(FuelStationsScreen.mapHeightFor(844, expanded: true), 844);
+      expect(FuelStationsScreen.mapHeightFor(400, expanded: true), 400);
+    });
+
+    test('the list always has room in the split layout', () {
+      // Every viewport the app supports must leave something for the sheet,
+      // or the split is a map with a sliver of list under it.
+      for (final h in [400.0, 600.0, 844.0, 1000.0, 1400.0]) {
+        final map = FuelStationsScreen.mapHeightFor(h);
+        expect(h - map, greaterThan(200), reason: 'viewport $h');
+      }
+    });
+  });
+
   group('parsing', () {
     test('reads a real row, with longitude and latitude the right way round',
         () {

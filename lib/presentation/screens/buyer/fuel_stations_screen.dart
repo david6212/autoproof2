@@ -11,6 +11,7 @@ import '../../../data/models/fuel_report.dart';
 import '../../../data/models/fuel_station.dart';
 import '../../providers/fuel_report_provider.dart';
 import '../../providers/gov_api_provider.dart';
+import '../../widgets/app_bar_action.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/fuel_report_sheet.dart';
 import '../../widgets/map_cluster.dart';
@@ -32,13 +33,34 @@ const _distance = Distance();
 class FuelStationsScreen extends ConsumerStatefulWidget {
   const FuelStationsScreen({super.key});
 
+  /// How tall the map header is for a given viewport.
+  ///
+  /// A third of the screen: enough to read how the stations are spread around
+  /// you, little enough that the stations themselves are still the page. The
+  /// clamp is what makes it work on both ends — a third of a tall tablet is a
+  /// wall of map, and a third of a short landscape window is a green stripe
+  /// with no legible pins in it.
+  ///
+  /// Pulled out of `build` so the rule can be checked without a live map: the
+  /// tile layer needs the network, which a widget test does not have.
+  static double mapHeightFor(double viewport, {bool expanded = false}) =>
+      expanded ? viewport : (viewport * 0.34).clamp(minMapHeight, maxMapHeight);
+
+  static const minMapHeight = 180.0;
+  static const maxMapHeight = 300.0;
+
   @override
   ConsumerState<FuelStationsScreen> createState() => _FuelStationsScreenState();
 }
 
 class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
   final _mapController = MapController();
-  bool _mapMode = true;
+
+  /// The map is always on screen now, as a header above the list — you can see
+  /// where the stations are and read them at the same time, instead of choosing
+  /// one view or the other. This only grows it to fill the screen.
+  bool _mapExpanded = false;
+
   bool _movedToUser = false;
   double _zoom = 8;
   FuelStation? _selected;
@@ -99,7 +121,7 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
 
     ref.listen(userLocationProvider, (_, next) {
       final loc = next.valueOrNull;
-      if (loc != null && !_movedToUser && _mapMode) {
+      if (loc != null && !_movedToUser) {
         _movedToUser = true;
         _mapController.move(loc, 12);
       }
@@ -109,13 +131,10 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
       appBar: AppBar(
         title: const Text('תחנות דלק'),
         actions: [
-          IconButton(
-            tooltip: _mapMode ? 'תצוגת רשימה' : 'תצוגת מפה',
-            icon: Icon(_mapMode ? Icons.list : Icons.map_outlined),
-            onPressed: () => setState(() {
-              _mapMode = !_mapMode;
-              _selected = null;
-            }),
+          AppBarAction(
+            label: _mapExpanded ? 'הרשימה' : 'מפה מלאה',
+            icon: _mapExpanded ? Icons.list : Icons.open_in_full,
+            onPressed: () => setState(() => _mapExpanded = !_mapExpanded),
           ),
         ],
       ),
@@ -127,31 +146,30 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
         ),
         data: (all) {
           final list = _filter(all);
-          return Column(
-            children: [
-              const _ReferencePriceCard(),
-              _Filters(
-                companies: _topCompanies(all),
-                selected: _companies,
-                query: _query,
-                onQuery: (v) => setState(() => _query = v),
-                onToggle: (c) => setState(() {
-                  _companies.contains(c)
-                      ? _companies.remove(c)
-                      : _companies.add(c);
-                }),
-              ),
-              Expanded(
-                child: list.isEmpty
-                    ? const _Message(
-                        icon: Icons.search_off,
-                        text: 'לא נמצאו תחנות שמתאימות לחיפוש.',
-                      )
-                    : _mapMode
-                        ? _map(list, me)
-                        : _list(list, me),
-              ),
-            ],
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final mapHeight = FuelStationsScreen.mapHeightFor(
+                constraints.maxHeight,
+                expanded: _mapExpanded,
+              );
+
+              return Column(
+                children: [
+                  SizedBox(height: mapHeight, child: _map(list, me)),
+                  if (!_mapExpanded)
+                    Expanded(
+                      child: _Sheet(
+                        child: list.isEmpty
+                            ? const _Message(
+                                icon: Icons.search_off,
+                                text: 'לא נמצאו תחנות שמתאימות לחיפוש.',
+                              )
+                            : _list(list, me, all),
+                      ),
+                    ),
+                ],
+              );
+            },
           );
         },
       ),
@@ -219,7 +237,10 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
             ),
           ],
         ),
-        if (_selected != null)
+        // Only while the map fills the screen. In the split layout the tapped
+        // station is pinned to the top of the list instead — a card floating
+        // over a third-height map would cover the very pins it came from.
+        if (_selected != null && _mapExpanded)
           Positioned(
             left: AppSpace.md,
             right: AppSpace.md,
@@ -230,7 +251,7 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
     );
   }
 
-  Widget _list(List<FuelStation> list, LatLng? me) {
+  Widget _list(List<FuelStation> list, LatLng? me, List<FuelStation> all) {
     final medians = ref.watch(fuelMediansProvider).valueOrNull ?? const {};
     final sorted = [...list];
 
@@ -266,6 +287,32 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const _ReferencePriceCard(),
+                const SizedBox(height: AppSpace.md),
+                _Filters(
+                  companies: _topCompanies(all),
+                  selected: _companies,
+                  query: _query,
+                  onQuery: (v) => setState(() => _query = v),
+                  onToggle: (c) => setState(() {
+                    _companies.contains(c)
+                        ? _companies.remove(c)
+                        : _companies.add(c);
+                  }),
+                ),
+                // The station tapped on the map, held at the top of the list
+                // until it is dismissed — so a tap always has a visible answer
+                // without covering the map.
+                if (_selected != null) ...[
+                  const SizedBox(height: AppSpace.sm),
+                  _StationCard(
+                    station: _selected!,
+                    me: me,
+                    elevated: true,
+                    onDismiss: () => setState(() => _selected = null),
+                  ),
+                  const SizedBox(height: AppSpace.md),
+                ],
                 Row(
                   children: [
                     _SortChip(
@@ -300,6 +347,47 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
         }
         return _StationCard(station: sorted[i - 1], me: me);
       },
+    );
+  }
+}
+
+/// The panel the station list sits in, rising over the foot of the map.
+///
+/// The overlap is what makes the two read as one screen rather than as a map
+/// with a list stuck underneath it: the sheet's rounded top edge cuts across
+/// the map, so the map clearly continues behind it.
+class _Sheet extends StatelessWidget {
+  const _Sheet({required this.child});
+
+  final Widget child;
+
+  static const _overlap = 16.0;
+  static const _radius = 22.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.translate(
+      offset: const Offset(0, -_overlap),
+      child: Container(
+        // The height the overlap steals back, so the list still reaches the
+        // bottom of the screen instead of stopping 16px short.
+        padding: const EdgeInsets.only(bottom: _overlap),
+        decoration: BoxDecoration(
+          color: context.colors.background,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(_radius),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.10),
+              blurRadius: 24,
+              offset: const Offset(0, -8),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: child,
+      ),
     );
   }
 }
@@ -370,9 +458,10 @@ class _Filters extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        // No horizontal padding of its own: this now sits inside the list,
+        // which already insets its content. Two paddings made a 32px gutter.
         Padding(
-          padding: const EdgeInsets.fromLTRB(
-              AppSpace.lg, AppSpace.md, AppSpace.lg, 0),
+          padding: const EdgeInsets.only(top: AppSpace.xs),
           child: TextField(
             onChanged: onQuery,
             decoration: InputDecoration(
@@ -395,8 +484,7 @@ class _Filters extends StatelessWidget {
           height: 46,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpace.lg, vertical: AppSpace.sm),
+            padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
             itemCount: companies.length,
             separatorBuilder: (_, __) => const SizedBox(width: AppSpace.sm),
             itemBuilder: (_, i) {
@@ -440,11 +528,16 @@ class _StationCard extends ConsumerWidget {
     required this.station,
     required this.me,
     this.elevated = false,
+    this.onDismiss,
   });
 
   final FuelStation station;
   final LatLng? me;
   final bool elevated;
+
+  /// Shown as a close button when the card is the answer to a map tap, so the
+  /// pinned card can be cleared without hunting for the map again.
+  final VoidCallback? onDismiss;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -466,6 +559,14 @@ class _StationCard extends ConsumerWidget {
               ),
               if (away != null)
                 Text(fmtDistance(away), style: context.text.captionBold),
+              if (onDismiss != null)
+                IconButton(
+                  iconSize: 18,
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'סגור',
+                  icon: Icon(Icons.close, color: context.colors.textSubtle),
+                  onPressed: onDismiss,
+                ),
             ],
           ),
           const SizedBox(height: 2),
