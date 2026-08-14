@@ -13,6 +13,7 @@ import '../../providers/fuel_report_provider.dart';
 import '../../providers/gov_api_provider.dart';
 import '../../widgets/app_bar_action.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/map_sheet.dart';
 import '../../widgets/fuel_report_sheet.dart';
 import '../../widgets/map_cluster.dart';
 import '../../widgets/skeleton.dart';
@@ -32,22 +33,6 @@ const _distance = Distance();
 /// It is labelled as such rather than dressed up as a pump price.
 class FuelStationsScreen extends ConsumerStatefulWidget {
   const FuelStationsScreen({super.key});
-
-  /// How tall the map header is for a given viewport.
-  ///
-  /// A third of the screen: enough to read how the stations are spread around
-  /// you, little enough that the stations themselves are still the page. The
-  /// clamp is what makes it work on both ends — a third of a tall tablet is a
-  /// wall of map, and a third of a short landscape window is a green stripe
-  /// with no legible pins in it.
-  ///
-  /// Pulled out of `build` so the rule can be checked without a live map: the
-  /// tile layer needs the network, which a widget test does not have.
-  static double mapHeightFor(double viewport, {bool expanded = false}) =>
-      expanded ? viewport : (viewport * 0.34).clamp(minMapHeight, maxMapHeight);
-
-  static const minMapHeight = 180.0;
-  static const maxMapHeight = 300.0;
 
   @override
   ConsumerState<FuelStationsScreen> createState() => _FuelStationsScreenState();
@@ -148,7 +133,7 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
           final list = _filter(all);
           return LayoutBuilder(
             builder: (context, constraints) {
-              final mapHeight = FuelStationsScreen.mapHeightFor(
+              final mapHeight = mapHeaderHeight(
                 constraints.maxHeight,
                 expanded: _mapExpanded,
               );
@@ -158,7 +143,7 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
                   SizedBox(height: mapHeight, child: _map(list, me)),
                   if (!_mapExpanded)
                     Expanded(
-                      child: _Sheet(
+                      child: MapSheet(
                         child: list.isEmpty
                             ? const _Message(
                                 icon: Icons.search_off,
@@ -347,47 +332,6 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
         }
         return _StationCard(station: sorted[i - 1], me: me);
       },
-    );
-  }
-}
-
-/// The panel the station list sits in, rising over the foot of the map.
-///
-/// The overlap is what makes the two read as one screen rather than as a map
-/// with a list stuck underneath it: the sheet's rounded top edge cuts across
-/// the map, so the map clearly continues behind it.
-class _Sheet extends StatelessWidget {
-  const _Sheet({required this.child});
-
-  final Widget child;
-
-  static const _overlap = 16.0;
-  static const _radius = 22.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return Transform.translate(
-      offset: const Offset(0, -_overlap),
-      child: Container(
-        // The height the overlap steals back, so the list still reaches the
-        // bottom of the screen instead of stopping 16px short.
-        padding: const EdgeInsets.only(bottom: _overlap),
-        decoration: BoxDecoration(
-          color: context.colors.background,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(_radius),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
-              blurRadius: 24,
-              offset: const Offset(0, -8),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: child,
-      ),
     );
   }
 }

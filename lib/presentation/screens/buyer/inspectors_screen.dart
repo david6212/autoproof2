@@ -11,7 +11,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../data/models/inspection_center.dart';
+import '../../widgets/app_bar_action.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/map_sheet.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/gov_api_provider.dart';
 import '../../../core/theme/app_text.dart';
@@ -59,7 +61,9 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
   final _searchController = TextEditingController();
   final _mapController = MapController();
   String _query = '';
-  bool _mapMode = true;
+  /// The map is always on screen now, as a header above the list. This only
+  /// grows it to fill the screen.
+  bool _mapExpanded = false;
   bool _movedToUser = false;
   InspectionCenter? _selected;
   double _zoom = 7;
@@ -122,7 +126,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
     // Once the user's location arrives, glide the map to it (only in map mode).
     ref.listen(userLocationProvider, (_, next) {
       final loc = next.valueOrNull;
-      if (loc != null && !_movedToUser && _mapMode) {
+      if (loc != null && !_movedToUser) {
         _movedToUser = true;
         _mapController.move(loc, 12);
       }
@@ -132,50 +136,47 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
       appBar: AppBar(
         title: const Text('מכוני בדיקת רכב'),
         actions: [
-          IconButton(
-            tooltip: _mapMode ? 'רשימה' : 'מפה',
-            icon: Icon(_mapMode ? Icons.view_list_outlined : Icons.map_outlined),
-            onPressed: () => setState(() => _mapMode = !_mapMode),
+          AppBarAction(
+            label: _mapExpanded ? 'הרשימה' : 'מפה מלאה',
+            icon: _mapExpanded ? Icons.view_list_outlined : Icons.open_in_full,
+            onPressed: () => setState(() => _mapExpanded = !_mapExpanded),
           ),
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            _SearchBar(
-              controller: _searchController,
-              onChanged: (v) => setState(() => _query = v),
-            ),
-            Expanded(
-              child: centersAsync.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
-                error: (_, __) => const _Message(
-                    icon: Icons.cloud_off,
-                    text:
-                        'לא ניתן לטעון את רשימת המכונים כרגע.\nבדקו את החיבור ונסו שוב.'),
-                data: (all) {
-                  final list = _filter(all);
-                  if (list.isEmpty) {
-                    return _Message(
-                      icon: Icons.search_off,
-                      text: _query.trim().isEmpty
-                          ? 'לא נמצאו מכונים.'
-                          : 'לא נמצאו מכונים לחיפוש "${_query.trim()}".',
-                      actionLabel: _query.trim().isEmpty ? null : 'הצג הכל',
-                      onAction: () {
-                        _searchController.clear();
-                        setState(() => _query = '');
-                      },
-                    );
-                  }
-                  return _mapMode
-                      ? _buildMap(list, me)
-                      : _buildList(list, me);
-                },
-              ),
-            ),
-          ],
+        child: centersAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => const _Message(
+              icon: Icons.cloud_off,
+              text:
+                  'לא ניתן לטעון את רשימת המכונים כרגע.\nבדקו את החיבור ונסו שוב.'),
+          data: (all) {
+            final list = _filter(all);
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final mapHeight = mapHeaderHeight(
+                  constraints.maxHeight,
+                  expanded: _mapExpanded,
+                );
+
+                return Column(
+                  children: [
+                    // The map keeps every centre, even while a search narrows
+                    // the list — otherwise typing a city name empties the map
+                    // and there is nothing left to orient by.
+                    SizedBox(
+                      height: mapHeight,
+                      child: _buildMap(list.isEmpty ? all : list, me),
+                    ),
+                    if (!_mapExpanded)
+                      Expanded(
+                        child: MapSheet(child: _buildList(list, me)),
+                      ),
+                  ],
+                );
+              },
+            );
+          },
         ),
       ),
     );
@@ -327,7 +328,10 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             right: 12,
             child: Center(child: _LocationHint()),
           ),
-        if (_selected != null)
+        // Only while the map fills the screen. In the split layout the tapped
+        // centre is pinned to the top of the list instead — a card floating
+        // over a third-height map covers the very pins it came from.
+        if (_selected != null && _mapExpanded)
           Positioned(
             left: 12,
             right: 12,
@@ -352,21 +356,62 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
         return da.compareTo(db);
       });
     }
+
+    // The search moved in here with the list, so it is inside the sheet rather
+    // than stacked above the map — the map is the header now.
+    final header = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SearchBar(
+          controller: _searchController,
+          onChanged: (v) => setState(() => _query = v),
+        ),
+        if (_selected != null) ...[
+          const SizedBox(height: 8),
+          _CenterCard(
+            center: _selected!,
+            distance: _distanceTo(_selected!, me),
+            elevated: true,
+            onDismiss: () => setState(() => _selected = null),
+          ),
+        ],
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10, top: 8),
+          child: Text(
+            '${sorted.length} מכונים מורשים · מקור: משרד התחבורה'
+            '${me != null ? ' · ממוינים לפי קרבה אליך' : ''}',
+            style: TextStyle(fontSize: 12.5, color: context.colors.textSubtle),
+          ),
+        ),
+      ],
+    );
+
+    if (sorted.isEmpty) {
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+        children: [
+          header,
+          const SizedBox(height: 24),
+          _Message(
+            icon: Icons.search_off,
+            text: _query.trim().isEmpty
+                ? 'לא נמצאו מכונים.'
+                : 'לא נמצאו מכונים לחיפוש "${_query.trim()}".',
+            actionLabel: _query.trim().isEmpty ? null : 'הצג הכל',
+            onAction: () {
+              _searchController.clear();
+              setState(() => _query = '');
+            },
+          ),
+        ],
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
       itemCount: sorted.length + 1,
       itemBuilder: (context, i) {
-        if (i == 0) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10, top: 2),
-            child: Text(
-              '${sorted.length} מכונים מורשים · מקור: משרד התחבורה'
-              '${me != null ? ' · ממוינים לפי קרבה אליך' : ''}',
-              style:
-                  TextStyle(fontSize: 12.5, color: context.colors.textSubtle),
-            ),
-          );
-        }
+        if (i == 0) return header;
         final c = sorted[i - 1];
         return _CenterCard(center: c, distance: _distanceTo(c, me));
       },
@@ -560,11 +605,16 @@ class _CenterCard extends StatelessWidget {
     required this.center,
     this.distance,
     this.elevated = false,
+    this.onDismiss,
   });
 
   final InspectionCenter center;
   final double? distance;
   final bool elevated;
+
+  /// Shown as a close button when the card is the answer to a map tap, so the
+  /// pinned card can be cleared without hunting for the map again.
+  final VoidCallback? onDismiss;
 
   Future<void> _launch(BuildContext context, Uri uri) async {
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -637,6 +687,14 @@ class _CenterCard extends StatelessWidget {
                           fontSize: 11.5,
                           fontWeight: FontWeight.bold,
                           color: context.colors.tealText)),
+                ),
+              if (onDismiss != null)
+                IconButton(
+                  iconSize: 18,
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'סגור',
+                  icon: Icon(Icons.close, color: context.colors.textSubtle),
+                  onPressed: onDismiss,
                 ),
             ],
           ),
