@@ -12,6 +12,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../widgets/car_card_widget.dart';
+import '../../widgets/fact_chip.dart';
 import '../../widgets/login_required_sheet.dart';
 import '../../widgets/brand_logo.dart';
 import '../../widgets/search_filter_sheet.dart';
@@ -369,12 +370,14 @@ class _CarList extends StatelessWidget {
   Widget build(BuildContext context) {
     return CarListView(
       cars: cars,
-      header: Text(
-        '${cars.length} רכבים בקרבתך',
-        style: TextStyle(
-          color: context.colors.textMuted,
-          fontWeight: FontWeight.w600,
-        ),
+      // A section heading rather than a grey count line: the list is the
+      // subject of the screen, and a heading says so. The count moves to the
+      // end of the row, where it reads as a fact about the section instead of
+      // as the section's name.
+      header: SectionHeader(
+        title: 'רכבים בקרבתך',
+        actionLabel: '${cars.length} תוצאות',
+        onAction: null,
       ),
       cardBuilder: (car) => Consumer(builder: (context, ref, _) {
         return CarCard(

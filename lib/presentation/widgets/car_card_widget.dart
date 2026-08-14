@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 // NumberFormat is wanted here.
 import 'package:intl/intl.dart' hide TextDirection;
 
+import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_palette.dart';
 import '../../data/models/car_model.dart';
 import '../../core/theme/app_text.dart';
 import 'app_card.dart';
+import 'fact_chip.dart';
 import 'responsive_frame.dart';
 import 'seller_type_badge.dart';
 import 'saved_check_icon.dart';
@@ -141,10 +143,11 @@ class CarCard extends StatelessWidget {
       return painter.height;
     }
 
+    // Title and price share one row, so the row costs one line, not two.
     final text = line(AppText.title) +
-        4 + // gap under the title
-        line(AppText.title) + // the price, same step as the title
-        4 + // gap above the subtitle
+        AppSpace.sm + // gap under the title row
+        FactChip.heightFor(context) +
+        AppSpace.sm + // gap under the chip row
         line(_subtitleStyle);
     // 24 = the 12px padding above and below the text block.
     // 2  = AppCard's 1px border, top and bottom. (This is what the original
@@ -154,9 +157,8 @@ class CarCard extends StatelessWidget {
 
   /// Shared so [heightFor] measures the very style the card renders.
   ///
-  /// 11.5 is the scale's `micro` step. This line is four facts in a row and it
-  /// is the least important thing on the card — it should be readable when
-  /// looked at, not competing when not.
+  /// 11.5 is the scale's `micro` step. The footer line is the least important
+  /// thing on the card — readable when looked at, not competing when not.
   static const _subtitleStyle = TextStyle(fontSize: 11.5);
 
   static final _priceFmt = NumberFormat('#,###', 'en');
@@ -182,36 +184,50 @@ class CarCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    car.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.title,
+                  // Title and price on one row. The title takes the slack and
+                  // ellipsises; the price is laid out at its natural width and
+                  // can never be squeezed by a long model name.
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${car.title} ${car.year}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppText.title,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.sm),
+                      // Pinned LTR: "₪132,000" is a neutral symbol followed by
+                      // digits, and in an RTL paragraph bidi is free to resolve
+                      // that either way. Pinning it means the shekel sign
+                      // cannot wander to the other end of the number.
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          '₪${_priceFmt.format(car.price)}',
+                          style: AppText.title,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  // Its own line, so a long title no longer has to be cut to
-                  // make room for it. Colour carries the emphasis, not size.
-                  //
-                  // Pinned LTR: "₪132,000" is a neutral symbol followed by
-                  // digits, and in an RTL paragraph bidi is free to resolve
-                  // that either way. Pinning it means the shekel sign cannot
-                  // wander to the other end of the number on some devices.
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Text(
-                      '₪${_priceFmt.format(car.price)}',
-                      style: AppText.title.copyWith(color: context.colors.tealText2),
-                    ),
+                  const SizedBox(height: AppSpace.sm),
+                  // One chip row, always exactly one line — [heightFor] budgets
+                  // for one, so a wrap would overflow a grid cell. Each chip is
+                  // Flexible, so a narrow card shrinks them instead.
+                  Row(
+                    children: [
+                      for (final fact in carFacts(car)) ...[
+                        Flexible(child: FactChip(fact)),
+                        const SizedBox(width: AppSpace.xs + 2),
+                      ],
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  // One line, always. [heightFor] budgets for exactly one, so
-                  // a wrap here would overflow the grid cell — and this line
-                  // wraps easily at a large text scale or on a narrow phone.
-                  // `textMuted`, not `textSubtle`. The design file uses the
-                  // lighter one, but this line is four facts a buyer actually
-                  // reads, and subtle measures 4.23:1 on white — below the
-                  // 4.5 floor for text this size. `palette_test` pins subtle
-                  // at only 3.0 precisely because it is for incidental print.
+                  const SizedBox(height: AppSpace.sm),
+                  // `textMuted`, not `textSubtle`: subtle measures 4.23:1 on
+                  // white, below the 4.5 floor for text this size.
+                  // `palette_test` pins subtle at only 3.0 precisely because it
+                  // is for incidental print.
                   Text(
                     _subtitle(),
                     maxLines: 1,
@@ -228,10 +244,9 @@ class CarCard extends StatelessWidget {
     );
   }
 
-  String _subtitle() {
-    final km = _priceFmt.format(car.km);
-    return '$km ק"מ · יד ${car.hand} · ${car.area} · ${car.year}';
-  }
+  /// What the chips do not already say: where the car is and how many owners
+  /// it has had. Km and year moved up into the chips and the title.
+  String _subtitle() => '${car.area} · יד ${car.hand}';
 
   Widget _photo(BuildContext context) {
     return Stack(
@@ -267,6 +282,17 @@ class CarCard extends StatelessWidget {
           bottom: 10,
           start: 10,
           child: SellerTypeBadge(type: car.sellerType),
+        ),
+        // Says where the listing's facts came from, on the listing itself
+        // rather than only on the car page. Every listing is built from a
+        // plate lookup, so this is true of all of them.
+        PositionedDirectional(
+          top: 10,
+          end: 10,
+          child: FactChip(
+            'נתונים רשמיים',
+            tone: (context.colors.surface, context.colors.tealText),
+          ),
         ),
         if (selected != null)
           PositionedDirectional(

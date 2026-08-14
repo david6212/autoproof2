@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:bonnetcheck/app/theme.dart';
 import 'package:bonnetcheck/core/theme/app_palette.dart';
 import 'package:bonnetcheck/data/models/car_model.dart';
+import 'package:bonnetcheck/data/models/model_spec.dart';
 import 'package:bonnetcheck/presentation/widgets/car_card_widget.dart';
+import 'package:bonnetcheck/presentation/widgets/fact_chip.dart';
 
 /// The card's height is not laid out — it is *computed* by
 /// [CarCard.heightFor], because the grid on a wide window has to size a cell
@@ -16,7 +18,13 @@ import 'package:bonnetcheck/presentation/widgets/car_card_widget.dart';
 /// leave the formula behind: an under-estimate overflows the cell, and Flutter
 /// reports that as a render error rather than a wrong-looking card.
 void main() {
-  CarModel car({String title = 'מאזדה CX-5', int reviews = 0}) => CarModel(
+  CarModel car({
+    String title = 'מאזדה CX-5',
+    int reviews = 0,
+    String ownership = '',
+    ModelSpec? spec,
+  }) =>
+      CarModel(
         id: 'c1',
         plate: '88888888',
         make: title,
@@ -32,6 +40,8 @@ void main() {
         reasonForSelling: '',
         createdAt: DateTime(2026, 1, 1),
         reviewCount: reviews,
+        ownership: ownership,
+        spec: spec,
       );
 
   Widget host(CarModel c, {double textScale = 1.0, double width = 390}) {
@@ -104,6 +114,57 @@ void main() {
           reason: 'the meta line must not use textSubtle');
     }
     expect(ratio(style.color!, AppPalette.light.surface), greaterThan(4.5));
+  });
+
+  testWidgets('the facts are chips, one row, and the row never wraps',
+      (t) async {
+    // The old design ran four facts together in one sentence separated by
+    // dots. Each fact now has its own edge — but the height formula budgets
+    // for exactly ONE chip row, so a wrap here overflows a grid cell.
+    await t.pumpWidget(host(
+      car(
+        ownership: 'פרטי',
+        spec: const ModelSpec(seats: 5, automatic: true),
+      ),
+      width: 320,
+    ));
+    expect(pendingError(t), isNull);
+
+    // The fact chips, excluding the provenance chip that sits on the photo.
+    final facts = t
+        .widgetList<FactChip>(find.byType(FactChip))
+        .where((w) => w.label != 'נתונים רשמיים')
+        .toList();
+    expect(facts.length, greaterThanOrEqualTo(2));
+
+    final tops = facts.map((w) => t.getRect(find.byWidget(w)).top).toList();
+    for (final top in tops) {
+      expect(top, closeTo(tops.first, 0.5),
+          reason: 'the chip row wrapped: tops $tops');
+    }
+  });
+
+  testWidgets('the price survives a long title on the shared row', (t) async {
+    // Title and price share a row again. The title takes the slack, so a long
+    // model name must ellipsise rather than push the price off the card.
+    await t.pumpWidget(host(
+        car(title: 'מאזדה CX-5 סקייאקטיב פרימיום פלוס ארבע על ארבע'),
+        width: 320));
+    expect(pendingError(t), isNull);
+    expect(find.text('₪132,000'), findsOneWidget);
+
+    final price = t.getRect(find.text('₪132,000'));
+    expect(price.left, greaterThanOrEqualTo(0));
+    expect(price.width, greaterThan(0));
+  });
+
+  testWidgets('ownership is not worded like the seller badge', (t) async {
+    // "בעלים פרטי" is the SELLER-type badge. The ownership chip is about how
+    // the vehicle is registered — a leasing car can be sold by its private
+    // driver, and one phrase for both would flatten that distinction.
+    await t.pumpWidget(host(car(ownership: 'פרטי')));
+    expect(find.text('בעלות פרטית'), findsOneWidget);
+    expect(find.text('בעלים פרטי'), findsOneWidget); // the badge, once only
   });
 
   testWidgets('the seller badge and the review chip do not share a corner',
