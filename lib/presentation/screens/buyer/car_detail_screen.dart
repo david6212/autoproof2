@@ -21,8 +21,11 @@ import '../../widgets/plate_history_card.dart';
 import '../../widgets/report_listing_sheet.dart';
 import '../../widgets/seller_encounter_card.dart';
 import '../../widgets/seller_type_badge.dart';
+import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text.dart';
+import '../../widgets/fact_chip.dart';
 import '../../widgets/saved_check_icon.dart';
+import '../../widgets/spec_tile.dart';
 
 class CarDetailScreen extends ConsumerWidget {
   const CarDetailScreen({super.key, required this.carId});
@@ -230,61 +233,62 @@ class _OfficialSpecs extends StatelessWidget {
   const _OfficialSpecs({required this.car});
   final CarModel car;
 
+  /// Engine, as one readable line: the fuel and the capacity together
+  /// (`בנזין 1998 סמ"ק`). Electric models have no capacity at all, so they
+  /// simply read `חשמלי` rather than claiming a missing number.
+  String? _engine() {
+    final cc = car.spec?.engineCc;
+    if (car.fuel.isEmpty && cc == null) return null;
+    if (cc == null) return car.fuel;
+    return '${car.fuel} $cc סמ"ק'.trim();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final chips = <(IconData, String)>[
-      if (car.fuel.isNotEmpty) (Icons.local_gas_station, car.fuel),
-      if (car.color.isNotEmpty) (Icons.palette_outlined, car.color),
-      if (car.ownership.isNotEmpty) (Icons.badge_outlined, car.ownership),
+    final spec = car.spec;
+    final engine = _engine();
+
+    final tiles = <SpecTile>[
+      if (engine != null)
+        SpecTile(
+            icon: Icons.local_gas_station_outlined,
+            label: 'סוג מנוע',
+            value: engine),
+      if (spec?.seats != null)
+        SpecTile(
+            icon: Icons.event_seat_outlined,
+            label: 'מקומות ישיבה',
+            value: '${spec!.seats} מושבים'),
+      if (spec != null)
+        SpecTile(
+            icon: Icons.settings_outlined,
+            label: 'תיבת הילוכים',
+            value: spec.automatic ? 'אוטומטית' : 'ידנית'),
+      if (spec?.drivetrain.isNotEmpty ?? false)
+        SpecTile(
+            icon: Icons.route_outlined, label: 'הנעה', value: spec!.drivetrain),
+      if (car.color.isNotEmpty)
+        SpecTile(
+            icon: Icons.palette_outlined, label: 'צבע', value: car.color),
+      if (car.ownership.isNotEmpty)
+        SpecTile(
+            icon: Icons.badge_outlined, label: 'בעלות', value: car.ownership),
     ];
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: context.colors.tealLight,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.verified_user, size: 16, color: context.colors.teal),
-              const SizedBox(width: 6),
-              Text('מפרט רשמי · משרד התחבורה',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: context.colors.tealText)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final (icon, label) in chips)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: context.colors.surface,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(icon, size: 15, color: context.colors.teal),
-                      const SizedBox(width: 5),
-                      Text(label,
-                          style: TextStyle(
-                              fontSize: 13, color: context.colors.textPrimary)),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
+
+    if (tiles.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionHeader(title: 'מפרט הרכב'),
+        const SizedBox(height: AppSpace.sm - 2),
+        // The provenance stays attached to the specs. It used to be carried by
+        // the green wash the tiles replaced, and dropping it would leave
+        // official figures looking like something the seller typed in.
+        const DataSourceBadge(source: DataSource.official),
+        const SizedBox(height: AppSpace.md),
+        SpecTileGrid(tiles: tiles),
+      ],
     );
   }
 }
@@ -506,17 +510,15 @@ class _HistoryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: context.colors.tealText2,
-        side: BorderSide(color: context.colors.teal),
-        minimumSize: const Size.fromHeight(48),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-      icon: const Icon(Icons.assignment_outlined),
-      label: const Text('היסטוריית רכב רשמית'),
-      onPressed: () => context.push('/car/$plate/history'),
+    // A record row rather than an outlined button: it goes to a page of
+    // official records, and it now sits among tiles and rows that all lead
+    // somewhere. A second full-width button here competed with the one in the
+    // action bar, which is the screen's actual primary action.
+    return RecordRow(
+      icon: Icons.assignment_outlined,
+      label: 'היסטוריית רכב רשמית',
+      value: 'ק"מ בטסט, טסט, בעלויות וריקולים',
+      onTap: () => context.push('/car/$plate/history'),
     );
   }
 }
