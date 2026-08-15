@@ -61,9 +61,16 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
   final _searchController = TextEditingController();
   final _mapController = MapController();
   String _query = '';
-  /// The map is always on screen now, as a header above the list. This only
-  /// grows it to fill the screen.
-  bool _mapExpanded = false;
+
+  /// Drives the draggable sheet, so the app-bar action moves it to a stop
+  /// rather than being a second, competing mechanism.
+  final _sheetController = DraggableScrollableController();
+
+  /// How much of the body the sheet currently covers. Only the foot controls
+  /// listen, so a drag does not rebuild the map.
+  final _sheetExtent =
+      ValueNotifier<double>(kSheetInitial);
+
   bool _movedToUser = false;
   InspectionCenter? _selected;
   double _zoom = 7;
@@ -82,7 +89,27 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _sheetController.dispose();
+    _sheetExtent.dispose();
     super.dispose();
+  }
+
+  void _moveSheet(double size) {
+    if (!_sheetController.isAttached) return;
+    _sheetController.animateTo(
+      size,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOut,
+    );
+  }
+
+  /// Whether anything on the map is still a grouped bubble rather than a pin —
+  /// which is when the "tap a town or zoom in" hint earns its place.
+  bool _anyClustered(List<InspectionCenter> centers) {
+    if (_zoom < kStreetZoom) return true;
+    final withCoords = centers.where((c) => c.hasCoords).toList();
+    return MapCluster.at<InspectionCenter>(_zoom, withCoords)
+        .any((c) => !c.isSingle);
   }
 
   List<InspectionCenter> _filter(List<InspectionCenter> all) {
@@ -137,9 +164,9 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
         title: const Text('מכוני בדיקת רכב'),
         actions: [
           AppBarAction(
-            label: _mapExpanded ? 'הרשימה' : 'מפה מלאה',
-            icon: _mapExpanded ? Icons.view_list_outlined : Icons.open_in_full,
-            onPressed: () => setState(() => _mapExpanded = !_mapExpanded),
+            label: 'מפה מלאה',
+            icon: Icons.open_in_full,
+            onPressed: () => _moveSheet(kSheetMin),
           ),
         ],
       ),
@@ -151,28 +178,52 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
               text:
                   'לא ניתן לטעון את רשימת המכונים כרגע.\nבדקו את החיבור ונסו שוב.'),
           data: (all) {
+            // The map keeps every centre, even while a search narrows the
+            // list — otherwise typing a city name empties the map and there is
+            // nothing left to orient by.
             final list = _filter(all);
+            final onMap = list.isEmpty ? all : list;
+            final clustered = _anyClustered(onMap);
+
             return LayoutBuilder(
               builder: (context, constraints) {
-                final mapHeight = mapHeaderHeight(
-                  constraints.maxHeight,
-                  expanded: _mapExpanded,
-                );
+                final height = constraints.maxHeight;
 
-                return Column(
-                  children: [
-                    // The map keeps every centre, even while a search narrows
-                    // the list — otherwise typing a city name empties the map
-                    // and there is nothing left to orient by.
-                    SizedBox(
-                      height: mapHeight,
-                      child: _buildMap(list.isEmpty ? all : list, me),
-                    ),
-                    if (!_mapExpanded)
-                      Expanded(
-                        child: MapSheet(child: _buildList(list, me)),
+                return NotificationListener<DraggableScrollableNotification>(
+                  // Tracked through a ValueNotifier rather than setState: this
+                  // fires every frame of a drag, and rebuilding the map at
+                  // 60fps to move two buttons would make the drag stutter.
+                  onNotification: (n) {
+                    _sheetExtent.value = n.extent;
+                    return false;
+                  },
+                  child: Stack(
+                    children: [
+                      Positioned.fill(child: _buildMap(onMap, me)),
+                      Positioned.fill(
+                        child: ValueListenableBuilder<double>(
+                          valueListenable: _sheetExtent,
+                          builder: (context, extent, child) => Padding(
+                            padding:
+                                EdgeInsets.only(bottom: height * extent),
+                            child: child,
+                          ),
+                          child: _mapFootControls(onMap, me, clustered),
+                        ),
                       ),
-                  ],
+                      DraggableScrollableSheet(
+                        controller: _sheetController,
+                        initialChildSize: kSheetInitial,
+                        minChildSize: kSheetMin,
+                        maxChildSize: kSheetMax,
+                        snap: true,
+                        snapSizes: kSheetStops,
+                        builder: (context, scrollController) => MapSheet(
+                          child: _buildList(list, me, scrollController),
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
             );
@@ -192,7 +243,16 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
         p.latitude != pts.first.latitude || p.longitude != pts.first.longitude);
     if (!spread) {
       _mapController.move(cluster.point, 15);
-      if (cluster.isSingle) setState(() => _selected = cluster.single);
+      if (cluster.isSingle) {
+        setState(() => _selected = cluster.single);
+        // The tapped centre is pinned to the TOP of the list, so a tap with
+        // the sheet pulled down would have no visible answer. Only raise it if
+        // it is below that already.
+        if (_sheetController.isAttached &&
+            _sheetController.size < kSheetInitial) {
+          _moveSheet(kSheetInitial);
+        }
+      }
       return;
     }
     _mapController.fitCamera(CameraFit.coordinates(
@@ -200,6 +260,62 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
       padding: const EdgeInsets.all(70),
       maxZoom: 16,
     ));
+  }
+
+  /// The controls that live at the FOOT of the map: the two location buttons,
+  /// the zoom hint, and the OpenStreetMap credit.
+  ///
+  /// They are lifted clear of the sheet rather than pinned to the bottom of the
+  /// screen. Under a sheet that covers most of the body they would simply be
+  /// gone — and the credit is a condition of using OSM's tiles, so "mostly
+  /// visible" is not good enough for it.
+  Widget _mapFootControls(
+    List<InspectionCenter> list,
+    LatLng? me,
+    bool anyClustered,
+  ) {
+    return Stack(
+      children: [
+        if (anyClustered)
+          const Positioned(
+            bottom: 16,
+            left: 0,
+            right: 0,
+            child: Center(child: _ZoomHint()),
+          ),
+        Positioned(
+          bottom: 2,
+          left: 4,
+          child: Text('© OpenStreetMap',
+              style: TextStyle(fontSize: 9.5, color: context.colors.textSubtle)),
+        ),
+        if (me != null)
+          PositionedDirectional(
+            end: 12,
+            bottom: 12,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FloatingActionButton.small(
+                  heroTag: 'nearest',
+                  backgroundColor: context.colors.tealFill,
+                  foregroundColor: context.colors.onBrand,
+                  onPressed: () => _goToNearest(list, me),
+                  child: const Icon(Icons.near_me),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton.small(
+                  heroTag: 'me',
+                  backgroundColor: context.colors.surface,
+                  foregroundColor: context.colors.tealText2,
+                  onPressed: () => _mapController.move(me, 13),
+                  child: const Icon(Icons.my_location),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _buildMap(List<InspectionCenter> list, LatLng? me) {
@@ -213,7 +329,6 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
     // Zoomed in: individual street pins. Nothing overlaps at any zoom.
     final cityMode = _zoom < kStreetZoom;
     final clusters = MapCluster.at<InspectionCenter>(_zoom, withCoords);
-    final anyClustered = cityMode || clusters.any((c) => !c.isSingle);
 
     return Stack(
       children: [
@@ -283,44 +398,8 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             ),
           ],
         ),
-        if (anyClustered)
-          const Positioned(
-            bottom: 16,
-            left: 0,
-            right: 0,
-            child: Center(child: _ZoomHint()),
-          ),
-        // Attribution (OSM tile usage requires credit).
-        Positioned(
-          bottom: 2,
-          left: 4,
-          child: Text('© OpenStreetMap',
-              style: TextStyle(fontSize: 9.5, color: context.colors.textSubtle)),
-        ),
-        if (me != null)
-          Positioned(
-            right: 12,
-            bottom: 12,
-            child: Column(
-              children: [
-                FloatingActionButton.small(
-                  heroTag: 'nearest',
-                  backgroundColor: context.colors.tealFill,
-                  foregroundColor: context.colors.onBrand,
-                  onPressed: () => _goToNearest(list, me),
-                  child: const Icon(Icons.near_me),
-                ),
-                const SizedBox(height: 8),
-                FloatingActionButton.small(
-                  heroTag: 'me',
-                  backgroundColor: context.colors.surface,
-                  foregroundColor: context.colors.tealText2,
-                  onPressed: () => _mapController.move(me, 13),
-                  child: const Icon(Icons.my_location),
-                ),
-              ],
-            ),
-          ),
+        // Anything anchored to the TOP can stay on the map itself — the sheet
+        // only ever covers the bottom.
         if (me == null)
           const Positioned(
             top: 8,
@@ -328,25 +407,12 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             right: 12,
             child: Center(child: _LocationHint()),
           ),
-        // Only while the map fills the screen. In the split layout the tapped
-        // centre is pinned to the top of the list instead — a card floating
-        // over a third-height map covers the very pins it came from.
-        if (_selected != null && _mapExpanded)
-          Positioned(
-            left: 12,
-            right: 12,
-            bottom: 12,
-            child: _CenterCard(
-              center: _selected!,
-              distance: _distanceTo(_selected!, me),
-              elevated: true,
-            ),
-          ),
       ],
     );
   }
 
-  Widget _buildList(List<InspectionCenter> list, LatLng? me) {
+  Widget _buildList(List<InspectionCenter> list, LatLng? me,
+      ScrollController scrollController) {
     // Sort by distance when we know where the user is.
     final sorted = [...list];
     if (me != null) {
@@ -388,6 +454,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
 
     if (sorted.isEmpty) {
       return ListView(
+        controller: scrollController,
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
         children: [
           header,
@@ -408,6 +475,9 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
     }
 
     return ListView.builder(
+      // The sheet's controller: this is what turns a scroll at the top of the
+      // list into a drag of the whole sheet.
+      controller: scrollController,
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
       itemCount: sorted.length + 1,
       itemBuilder: (context, i) {

@@ -2,56 +2,46 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_palette.dart';
 
-/// The map-above-list layout, shared by the two screens built on a map:
+/// The draggable panel over a map, shared by the two screens built on one:
 /// fuel stations and inspection centres.
 ///
 /// Both used to be map OR list behind a toggle, which made you choose between
-/// seeing where things are and reading what they are. Showing both at once is
-/// the whole point, so the split has to be decided in one place — two screens
-/// that disagree about how much map to show would read as two products.
-
-/// A map header must stay big enough to place a pin in.
-const kMinMapHeight = 180.0;
-
-/// …and small enough that the list is still the page.
-const kMaxMapHeight = 300.0;
-
-/// How tall the map header is for a given viewport.
+/// seeing where things are and reading what they are. Then both became a fixed
+/// split — map on top, list below — which showed you both but decided the
+/// proportion for you. Now the map fills the screen and this slides over it,
+/// so the proportion is the user's.
 ///
-/// A third of the screen, clamped. The clamp is what makes it work at both
-/// ends: a third of a tall tablet is a wall of map, and a third of a short
-/// landscape window is a green stripe with nothing legible in it.
-///
-/// A plain function rather than a layout widget, so the rule can be TESTED —
-/// a tile layer needs the network, and a widget test cannot load a live map.
-double mapHeaderHeight(double viewport, {bool expanded = false}) =>
-    expanded ? viewport : (viewport * 0.34).clamp(kMinMapHeight, kMaxMapHeight);
+/// The stops live here rather than on either screen: two screens that
+/// disagreed about how far a sheet opens would read as two products.
 
-/// The panel the list sits in, rising over the foot of the map.
-///
-/// The overlap is what makes the two read as one screen rather than as a map
-/// with a list stuck underneath it: the sheet's rounded top edge cuts across
-/// the map, so the map clearly continues behind it.
+/// Pulled right down. Still shows the handle and the first row, so there is
+/// always something to grab to bring it back.
+const kSheetMin = 0.22;
+
+/// Where it opens. Above half, because the map orients you but the list is
+/// what you act on.
+const kSheetInitial = 0.62;
+
+/// Pulled right up — deliberately short of the full screen. Some map has to
+/// stay visible, or the screen quietly becomes a list and the user has lost
+/// the thing they opened a map for.
+const kSheetMax = 0.92;
+
+/// The stops a drag snaps to, so a sheet lands somewhere deliberate rather
+/// than wherever a finger stopped.
+const kSheetStops = [kSheetMin, kSheetInitial, kSheetMax];
+
+/// The panel itself: a rounded, shadowed surface with a grab handle.
 class MapSheet extends StatelessWidget {
-  const MapSheet({super.key, required this.child, this.draggable = false});
+  const MapSheet({super.key, required this.child});
 
   final Widget child;
 
-  /// Shows a grab handle and drops the overlap.
-  ///
-  /// A fixed sheet sits *under* the map and lifts over its foot, so it needs
-  /// the negative offset. A draggable one is positioned by the sheet itself and
-  /// must not shift, or every drag would fight a 16px correction — and it needs
-  /// a handle, because a panel that moves has to look like it moves.
-  final bool draggable;
-
-  static const overlap = 16.0;
   static const radius = 22.0;
 
   @override
   Widget build(BuildContext context) {
-    final panel = Container(
-      padding: EdgeInsets.only(bottom: draggable ? 0 : overlap),
+    return Container(
       decoration: BoxDecoration(
         color: context.colors.background,
         borderRadius: const BorderRadius.vertical(
@@ -66,18 +56,9 @@ class MapSheet extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: draggable
-          ? Column(children: [const _Grabber(), Expanded(child: child)])
-          : child,
-    );
-
-    if (draggable) return panel;
-
-    // Gives back the height the overlap took, so the list still reaches the
-    // bottom of the screen instead of stopping 16px short.
-    return Transform.translate(
-      offset: const Offset(0, -overlap),
-      child: panel,
+      child: Column(
+        children: [const _Grabber(), Expanded(child: child)],
+      ),
     );
   }
 }

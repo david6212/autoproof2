@@ -34,22 +34,6 @@ const _distance = Distance();
 class FuelStationsScreen extends ConsumerStatefulWidget {
   const FuelStationsScreen({super.key});
 
-  /// Where the draggable sheet comes to rest, as a fraction of the body.
-  ///
-  /// The map fills the whole body behind the sheet, so these decide how much
-  /// map you can uncover. Public and named so the choice can be tested rather
-  /// than buried as three magic numbers in a build method.
-  ///
-  /// [sheetMin] leaves roughly three quarters of the screen as map — enough to
-  /// read a region — while still showing the sheet's handle and first row, so
-  /// the list never disappears entirely and can always be dragged back.
-  /// [sheetMax] deliberately stops short of the full screen: some map has to
-  /// stay visible, or the screen silently becomes a list and the user has lost
-  /// the thing they came to a map for.
-  static const sheetMin = 0.22;
-  static const sheetInitial = 0.62;
-  static const sheetMax = 0.92;
-
   @override
   ConsumerState<FuelStationsScreen> createState() => _FuelStationsScreenState();
 }
@@ -111,8 +95,8 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
       // just enough to show the card, and only if it is below that already —
       // never yank a sheet the user deliberately opened wide.
       if (_sheetController.isAttached &&
-          _sheetController.size < FuelStationsScreen.sheetInitial) {
-        _moveSheet(FuelStationsScreen.sheetInitial);
+          _sheetController.size < kSheetInitial) {
+        _moveSheet(kSheetInitial);
       }
       return;
     }
@@ -154,7 +138,7 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
           AppBarAction(
             label: 'מפה מלאה',
             icon: Icons.open_in_full,
-            onPressed: () => _moveSheet(FuelStationsScreen.sheetMin),
+            onPressed: () => _moveSheet(kSheetMin),
           ),
         ],
       ),
@@ -173,19 +157,14 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
               Positioned.fill(child: _map(list, me)),
               DraggableScrollableSheet(
                 controller: _sheetController,
-                initialChildSize: FuelStationsScreen.sheetInitial,
-                minChildSize: FuelStationsScreen.sheetMin,
-                maxChildSize: FuelStationsScreen.sheetMax,
+                initialChildSize: kSheetInitial,
+                minChildSize: kSheetMin,
+                maxChildSize: kSheetMax,
                 // Snapping, so a drag lands somewhere deliberate instead of
                 // leaving the sheet at whatever height a finger stopped at.
                 snap: true,
-                snapSizes: const [
-                  FuelStationsScreen.sheetMin,
-                  FuelStationsScreen.sheetInitial,
-                  FuelStationsScreen.sheetMax,
-                ],
+                snapSizes: kSheetStops,
                 builder: (context, scrollController) => MapSheet(
-                  draggable: true,
                   child: list.isEmpty
                       // Still scrollable: a non-scrolling child would leave
                       // the sheet draggable only by its handle.

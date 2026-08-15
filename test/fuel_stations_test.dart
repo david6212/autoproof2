@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bonnetcheck/data/models/fuel_station.dart';
-import 'package:bonnetcheck/presentation/screens/buyer/fuel_stations_screen.dart';
 import 'package:bonnetcheck/presentation/widgets/map_sheet.dart';
 import 'package:bonnetcheck/presentation/widgets/map_cluster.dart';
 
@@ -30,73 +29,41 @@ Map<String, dynamic> row({
     };
 
 void main() {
-  /// The fuel screen's sheet is DRAGGABLE: the map fills the body and the
-  /// panel slides over it, so the user picks how much map they want. These pin
-  /// the stops, because two of them are the whole point — the sheet must never
+  /// Both map screens now use ONE draggable sheet: the map fills the body and
+  /// the panel slides over it, so the user picks how much map they want. These
+  /// pin the stops, and two of them are the whole point — the sheet must never
   /// hide the map completely, and it must never disappear off the bottom.
   group('the draggable sheet stops', () {
-    test('they are ordered, and the initial one is between the two', () {
-      expect(FuelStationsScreen.sheetMin,
-          lessThan(FuelStationsScreen.sheetInitial));
-      expect(FuelStationsScreen.sheetInitial,
-          lessThan(FuelStationsScreen.sheetMax));
+    test('they are ordered, and the opening stop sits between the two', () {
+      expect(kSheetMin, lessThan(kSheetInitial));
+      expect(kSheetInitial, lessThan(kSheetMax));
     });
 
     test('some map always stays visible', () {
-      // At full extension the sheet must stop short of the screen. Otherwise
-      // the map screen quietly turns into a list and the user has lost the one
-      // thing they opened a map for.
-      expect(FuelStationsScreen.sheetMax, lessThan(1.0));
-      expect(1 - FuelStationsScreen.sheetMax, greaterThan(0.05),
+      // At full extension the sheet must stop short of the screen, or the map
+      // screen quietly turns into a list and the user has lost the one thing
+      // they opened a map for.
+      expect(kSheetMax, lessThan(1.0));
+      expect(1 - kSheetMax, greaterThan(0.05),
           reason: 'a sliver of map is not a map');
     });
 
     test('the sheet never vanishes', () {
       // Pulled all the way down it still has to show its handle and a row, or
       // there is nothing left to grab to bring it back.
-      expect(FuelStationsScreen.sheetMin, greaterThan(0.15));
+      expect(kSheetMin, greaterThan(0.15));
     });
 
-    test('the opening position favours the stations', () {
+    test('the opening position favours the list', () {
       // The map orients you; the list is what you act on. Opening below half
       // would make the screen feel like a map with a caption.
-      expect(FuelStationsScreen.sheetInitial, greaterThan(0.5));
-    });
-  });
-
-  /// Still used by the inspection-centre screen, which keeps the fixed
-  /// map-above-list split rather than a draggable sheet.
-  group('map header height — the fixed split, used by inspection centres', () {
-    test('takes about a third of a phone', () {
-      // 844 is the iPhone 14/15 frame the designs were authored at.
-      expect(mapHeaderHeight(844), closeTo(287, 1));
-      // Still leaves the majority of the screen to the stations themselves.
-      expect(mapHeaderHeight(844), lessThan(844 / 2));
+      expect(kSheetInitial, greaterThan(0.5));
     });
 
-    test('a short window keeps a legible map rather than a green stripe', () {
-      // A third of 400 is 136px — too small to place a pin in.
-      expect(mapHeaderHeight(400),
-          kMinMapHeight);
-    });
-
-    test('a tall window does not become a wall of map', () {
-      expect(mapHeaderHeight(1400),
-          kMaxMapHeight);
-    });
-
-    test('expanded gives the map the whole viewport', () {
-      expect(mapHeaderHeight(844, expanded: true), 844);
-      expect(mapHeaderHeight(400, expanded: true), 400);
-    });
-
-    test('the list always has room in the split layout', () {
-      // Every viewport the app supports must leave something for the sheet,
-      // or the split is a map with a sliver of list under it.
-      for (final h in [400.0, 600.0, 844.0, 1000.0, 1400.0]) {
-        final map = mapHeaderHeight(h);
-        expect(h - map, greaterThan(200), reason: 'viewport $h');
-      }
+    test('the snap stops are exactly the three, in order', () {
+      // A snap target that is not a defined stop would let a drag settle
+      // somewhere no one designed.
+      expect(kSheetStops, [kSheetMin, kSheetInitial, kSheetMax]);
     });
   });
 
