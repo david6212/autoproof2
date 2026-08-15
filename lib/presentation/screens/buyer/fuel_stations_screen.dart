@@ -34,6 +34,22 @@ const _distance = Distance();
 class FuelStationsScreen extends ConsumerStatefulWidget {
   const FuelStationsScreen({super.key});
 
+  /// Where the draggable sheet comes to rest, as a fraction of the body.
+  ///
+  /// The map fills the whole body behind the sheet, so these decide how much
+  /// map you can uncover. Public and named so the choice can be tested rather
+  /// than buried as three magic numbers in a build method.
+  ///
+  /// [sheetMin] leaves roughly three quarters of the screen as map — enough to
+  /// read a region — while still showing the sheet's handle and first row, so
+  /// the list never disappears entirely and can always be dragged back.
+  /// [sheetMax] deliberately stops short of the full screen: some map has to
+  /// stay visible, or the screen silently becomes a list and the user has lost
+  /// the thing they came to a map for.
+  static const sheetMin = 0.22;
+  static const sheetInitial = 0.62;
+  static const sheetMax = 0.92;
+
   @override
   ConsumerState<FuelStationsScreen> createState() => _FuelStationsScreenState();
 }
@@ -41,10 +57,9 @@ class FuelStationsScreen extends ConsumerStatefulWidget {
 class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
   final _mapController = MapController();
 
-  /// The map is always on screen now, as a header above the list — you can see
-  /// where the stations are and read them at the same time, instead of choosing
-  /// one view or the other. This only grows it to fill the screen.
-  bool _mapExpanded = false;
+  /// Drives the draggable sheet, so the app-bar action can move it to a stop
+  /// rather than being a second, competing mechanism.
+  final _sheetController = DraggableScrollableController();
 
   bool _movedToUser = false;
   double _zoom = 8;
@@ -60,7 +75,19 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
   @override
   void dispose() {
     _mapController.dispose();
+    _sheetController.dispose();
     super.dispose();
+  }
+
+  /// Sends the sheet to a stop. Used by the app-bar action, so keyboard and
+  /// screen-reader users get the same reach as a drag.
+  void _moveSheet(double size) {
+    if (!_sheetController.isAttached) return;
+    _sheetController.animateTo(
+      size,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOut,
+    );
   }
 
   List<FuelStation> _filter(List<FuelStation> all) {
@@ -79,6 +106,14 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
     if (cluster.isSingle) {
       setState(() => _selected = cluster.single);
       _mapController.move(cluster.point, 15);
+      // The tapped station is pinned to the TOP of the list, so if the sheet
+      // is pulled right down the tap would have no visible answer. Raise it
+      // just enough to show the card, and only if it is below that already —
+      // never yank a sheet the user deliberately opened wide.
+      if (_sheetController.isAttached &&
+          _sheetController.size < FuelStationsScreen.sheetInitial) {
+        _moveSheet(FuelStationsScreen.sheetInitial);
+      }
       return;
     }
     final pts = cluster.points;
@@ -117,9 +152,9 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
         title: const Text('תחנות דלק'),
         actions: [
           AppBarAction(
-            label: _mapExpanded ? 'הרשימה' : 'מפה מלאה',
-            icon: _mapExpanded ? Icons.list : Icons.open_in_full,
-            onPressed: () => setState(() => _mapExpanded = !_mapExpanded),
+            label: 'מפה מלאה',
+            icon: Icons.open_in_full,
+            onPressed: () => _moveSheet(FuelStationsScreen.sheetMin),
           ),
         ],
       ),
@@ -131,30 +166,43 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
         ),
         data: (all) {
           final list = _filter(all);
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final mapHeight = mapHeaderHeight(
-                constraints.maxHeight,
-                expanded: _mapExpanded,
-              );
-
-              return Column(
-                children: [
-                  SizedBox(height: mapHeight, child: _map(list, me)),
-                  if (!_mapExpanded)
-                    Expanded(
-                      child: MapSheet(
-                        child: list.isEmpty
-                            ? const _Message(
-                                icon: Icons.search_off,
-                                text: 'לא נמצאו תחנות שמתאימות לחיפוש.',
-                              )
-                            : _list(list, me, all),
-                      ),
-                    ),
+          return Stack(
+            children: [
+              // The map fills the body rather than taking a fixed slice, so
+              // whatever the sheet uncovers is real map underneath.
+              Positioned.fill(child: _map(list, me)),
+              DraggableScrollableSheet(
+                controller: _sheetController,
+                initialChildSize: FuelStationsScreen.sheetInitial,
+                minChildSize: FuelStationsScreen.sheetMin,
+                maxChildSize: FuelStationsScreen.sheetMax,
+                // Snapping, so a drag lands somewhere deliberate instead of
+                // leaving the sheet at whatever height a finger stopped at.
+                snap: true,
+                snapSizes: const [
+                  FuelStationsScreen.sheetMin,
+                  FuelStationsScreen.sheetInitial,
+                  FuelStationsScreen.sheetMax,
                 ],
-              );
-            },
+                builder: (context, scrollController) => MapSheet(
+                  draggable: true,
+                  child: list.isEmpty
+                      // Still scrollable: a non-scrolling child would leave
+                      // the sheet draggable only by its handle.
+                      ? ListView(
+                          controller: scrollController,
+                          children: const [
+                            SizedBox(height: AppSpace.xxl),
+                            _Message(
+                              icon: Icons.search_off,
+                              text: 'לא נמצאו תחנות שמתאימות לחיפוש.',
+                            ),
+                          ],
+                        )
+                      : _list(list, me, all, scrollController),
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -222,21 +270,16 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
             ),
           ],
         ),
-        // Only while the map fills the screen. In the split layout the tapped
-        // station is pinned to the top of the list instead — a card floating
-        // over a third-height map would cover the very pins it came from.
-        if (_selected != null && _mapExpanded)
-          Positioned(
-            left: AppSpace.md,
-            right: AppSpace.md,
-            bottom: AppSpace.md,
-            child: _StationCard(station: _selected!, me: me, elevated: true),
-          ),
       ],
     );
   }
 
-  Widget _list(List<FuelStation> list, LatLng? me, List<FuelStation> all) {
+  Widget _list(
+    List<FuelStation> list,
+    LatLng? me,
+    List<FuelStation> all,
+    ScrollController scrollController,
+  ) {
     final medians = ref.watch(fuelMediansProvider).valueOrNull ?? const {};
     final sorted = [...list];
 
@@ -261,6 +304,9 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
     final reported = medians.keys.where((k) => list.any((s) => s.id == k)).length;
 
     return ListView.separated(
+      // The sheet's controller, not one of ours — this is what links a scroll
+      // at the top of the list into a drag of the whole sheet.
+      controller: scrollController,
       padding: const EdgeInsets.fromLTRB(
           AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.xl),
       itemCount: sorted.length + 1,

@@ -33,36 +33,76 @@ double mapHeaderHeight(double viewport, {bool expanded = false}) =>
 /// with a list stuck underneath it: the sheet's rounded top edge cuts across
 /// the map, so the map clearly continues behind it.
 class MapSheet extends StatelessWidget {
-  const MapSheet({super.key, required this.child});
+  const MapSheet({super.key, required this.child, this.draggable = false});
 
   final Widget child;
+
+  /// Shows a grab handle and drops the overlap.
+  ///
+  /// A fixed sheet sits *under* the map and lifts over its foot, so it needs
+  /// the negative offset. A draggable one is positioned by the sheet itself and
+  /// must not shift, or every drag would fight a 16px correction — and it needs
+  /// a handle, because a panel that moves has to look like it moves.
+  final bool draggable;
 
   static const overlap = 16.0;
   static const radius = 22.0;
 
   @override
   Widget build(BuildContext context) {
+    final panel = Container(
+      padding: EdgeInsets.only(bottom: draggable ? 0 : overlap),
+      decoration: BoxDecoration(
+        color: context.colors.background,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(radius),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 24,
+            offset: const Offset(0, -8),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: draggable
+          ? Column(children: [const _Grabber(), Expanded(child: child)])
+          : child,
+    );
+
+    if (draggable) return panel;
+
+    // Gives back the height the overlap took, so the list still reaches the
+    // bottom of the screen instead of stopping 16px short.
     return Transform.translate(
       offset: const Offset(0, -overlap),
-      child: Container(
-        // Gives back the height the overlap took, so the list still reaches
-        // the bottom of the screen instead of stopping 16px short.
-        padding: const EdgeInsets.only(bottom: overlap),
-        decoration: BoxDecoration(
-          color: context.colors.background,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(radius),
+      child: panel,
+    );
+  }
+}
+
+/// The bar that says "this panel moves".
+class _Grabber extends StatelessWidget {
+  const _Grabber();
+
+  /// Height of the whole grab area, not just the visible bar — the bar itself
+  /// is 4px, which is nothing to aim at.
+  static const height = 22.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height,
+      child: Center(
+        child: Container(
+          width: 42,
+          height: 4,
+          decoration: BoxDecoration(
+            color: context.colors.cardBorder,
+            borderRadius: BorderRadius.circular(2),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
-              blurRadius: 24,
-              offset: const Offset(0, -8),
-            ),
-          ],
         ),
-        clipBehavior: Clip.antiAlias,
-        child: child,
       ),
     );
   }

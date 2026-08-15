@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bonnetcheck/data/models/fuel_station.dart';
+import 'package:bonnetcheck/presentation/screens/buyer/fuel_stations_screen.dart';
 import 'package:bonnetcheck/presentation/widgets/map_sheet.dart';
 import 'package:bonnetcheck/presentation/widgets/map_cluster.dart';
 
@@ -29,11 +30,43 @@ Map<String, dynamic> row({
     };
 
 void main() {
-  /// The screen used to be map OR list behind a toggle. It is now map above
-  /// list, always both — you can see where the stations are and read them at
-  /// the same time. That split only works if the map takes a share of the
-  /// screen that stays sensible at both extremes.
-  group('map header height — shared by the fuel and inspection-centre maps', () {
+  /// The fuel screen's sheet is DRAGGABLE: the map fills the body and the
+  /// panel slides over it, so the user picks how much map they want. These pin
+  /// the stops, because two of them are the whole point — the sheet must never
+  /// hide the map completely, and it must never disappear off the bottom.
+  group('the draggable sheet stops', () {
+    test('they are ordered, and the initial one is between the two', () {
+      expect(FuelStationsScreen.sheetMin,
+          lessThan(FuelStationsScreen.sheetInitial));
+      expect(FuelStationsScreen.sheetInitial,
+          lessThan(FuelStationsScreen.sheetMax));
+    });
+
+    test('some map always stays visible', () {
+      // At full extension the sheet must stop short of the screen. Otherwise
+      // the map screen quietly turns into a list and the user has lost the one
+      // thing they opened a map for.
+      expect(FuelStationsScreen.sheetMax, lessThan(1.0));
+      expect(1 - FuelStationsScreen.sheetMax, greaterThan(0.05),
+          reason: 'a sliver of map is not a map');
+    });
+
+    test('the sheet never vanishes', () {
+      // Pulled all the way down it still has to show its handle and a row, or
+      // there is nothing left to grab to bring it back.
+      expect(FuelStationsScreen.sheetMin, greaterThan(0.15));
+    });
+
+    test('the opening position favours the stations', () {
+      // The map orients you; the list is what you act on. Opening below half
+      // would make the screen feel like a map with a caption.
+      expect(FuelStationsScreen.sheetInitial, greaterThan(0.5));
+    });
+  });
+
+  /// Still used by the inspection-centre screen, which keeps the fixed
+  /// map-above-list split rather than a draggable sheet.
+  group('map header height — the fixed split, used by inspection centres', () {
     test('takes about a third of a phone', () {
       // 844 is the iPhone 14/15 frame the designs were authored at.
       expect(mapHeaderHeight(844), closeTo(287, 1));
