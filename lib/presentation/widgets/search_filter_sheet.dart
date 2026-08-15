@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+// `intl` exports its own TextDirection, which shadows Flutter's and turns any
+// use of the real one into "the getter 'ltr' isn't defined". Only NumberFormat
+// is wanted here.
+import 'package:intl/intl.dart' hide TextDirection;
 
+import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/constants/car_catalog.dart';
 import '../../data/models/car_model.dart';
@@ -45,13 +50,100 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
 
   late CarFilters _draft;
 
-  static const _colorCats = ['לבן', 'שחור', 'אפור', 'כחול', 'אדום'];
+  /// Must stay in the same order as `_ColorDots._colors`, which draws them.
+  static const _colorCats = [
+    'לבן',
+    'שחור',
+    'כסף',
+    'אפור',
+    'כחול',
+    'אדום',
+    'ירוק',
+    'חום',
+    'צהוב',
+  ];
 
+
+  /// The typed side of the three ranges. Held here rather than rebuilt each
+  /// frame, or the caret would jump to the start on every keystroke.
+  late final TextEditingController _priceCtl;
+  late final TextEditingController _yearCtl;
+  late final TextEditingController _kmCtl;
 
   @override
   void initState() {
     super.initState();
     _draft = ref.read(carFiltersProvider);
+
+    // An empty field means "no limit", so a range still at its cap opens
+    // blank rather than showing a number the buyer never chose.
+    _priceCtl = TextEditingController(
+        text: _draft.maxPrice >= CarFilters.priceCap
+            ? ''
+            : _draft.maxPrice.round().toString());
+    _yearCtl = TextEditingController(
+        text: _draft.minYear <= CarFilters.yearFloor
+            ? ''
+            : _draft.minYear.toString());
+    _kmCtl = TextEditingController(
+        text: _draft.maxKm >= CarFilters.kmCap ? '' : _draft.maxKm.toString());
+
+    _priceCtl.addListener(() => _typed(
+          _priceCtl,
+          cap: CarFilters.priceCap,
+          apply: (v) => _draft = _draft.copyWith(maxPrice: v),
+        ));
+    _yearCtl.addListener(() => _typed(
+          _yearCtl,
+          cap: CarFilters.yearFloor.toDouble(),
+          // A year is a FLOOR, not a ceiling, and a half-typed "20" is not a
+          // year — so it is only applied once it looks like one.
+          valid: (v) => v >= 1900 && v <= DateTime.now().year + 1,
+          apply: (v) => _draft = _draft.copyWith(minYear: v.round()),
+        ));
+    _kmCtl.addListener(() => _typed(
+          _kmCtl,
+          cap: CarFilters.kmCap.toDouble(),
+          apply: (v) => _draft = _draft.copyWith(maxKm: v.round()),
+        ));
+  }
+
+  /// Applies what was typed. Empty resets the range to its cap — "no limit" is
+  /// an answer, not an error — and anything unparseable is simply ignored
+  /// until it becomes a number.
+  void _typed(
+    TextEditingController c, {
+    required double cap,
+    required void Function(double) apply,
+    bool Function(double)? valid,
+  }) {
+    final raw = c.text.trim();
+    if (raw.isEmpty) {
+      setState(() => apply(cap));
+      return;
+    }
+    final v = double.tryParse(raw);
+    if (v == null || (valid != null && !valid(v))) return;
+    setState(() => apply(v));
+  }
+
+  /// Writes a slider's value back into its field, so dragging and typing never
+  /// disagree about what the filter currently is.
+  void _syncField(TextEditingController c, num value, num cap, bool atCap) {
+    final text = atCap ? '' : value.round().toString();
+    if (c.text == text) return;
+    c.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+
+  @override
+  void dispose() {
+    _priceCtl.dispose();
+    _yearCtl.dispose();
+    _kmCtl.dispose();
+    super.dispose();
   }
 
   // ---- functional setters ----
@@ -270,7 +362,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
               ),
               const SizedBox(height: 18),
 
-              // Buy range sliders (functional).
+              // Each range can be dragged OR typed; the two stay in sync.
               _slider(
                 title: 'מחיר עד',
                 value: _draft.maxPrice,
@@ -280,8 +372,14 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 display: _draft.maxPrice >= CarFilters.priceCap
                     ? 'ללא הגבלה'
                     : '₪${_fmt.format(_draft.maxPrice)}',
-                onChanged: (v) =>
-                    setState(() => _draft = _draft.copyWith(maxPrice: v)),
+                controller: _priceCtl,
+                suffix: '₪',
+                anyLabel: 'ללא הגבלה',
+                onChanged: (v) {
+                  setState(() => _draft = _draft.copyWith(maxPrice: v));
+                  _syncField(_priceCtl, v, CarFilters.priceCap,
+                      v >= CarFilters.priceCap);
+                },
               ),
               _slider(
                 title: 'שנת ייצור מ-',
@@ -290,8 +388,15 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 max: 2025,
                 divisions: 2025 - CarFilters.yearFloor,
                 display: '${_draft.minYear}',
-                onChanged: (v) => setState(
-                    () => _draft = _draft.copyWith(minYear: v.round())),
+                controller: _yearCtl,
+                suffix: '',
+                anyLabel: 'כל שנה',
+                onChanged: (v) {
+                  setState(
+                      () => _draft = _draft.copyWith(minYear: v.round()));
+                  _syncField(_yearCtl, v, CarFilters.yearFloor,
+                      v <= CarFilters.yearFloor);
+                },
               ),
               _slider(
                 title: 'קילומטראז\' עד',
@@ -302,8 +407,14 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 display: _draft.maxKm >= CarFilters.kmCap
                     ? 'ללא הגבלה'
                     : '${_fmt.format(_draft.maxKm)} ק"מ',
-                onChanged: (v) =>
-                    setState(() => _draft = _draft.copyWith(maxKm: v.round())),
+                controller: _kmCtl,
+                suffix: 'ק"מ',
+                anyLabel: 'ללא הגבלה',
+                onChanged: (v) {
+                  setState(() => _draft = _draft.copyWith(maxKm: v.round()));
+                  _syncField(_kmCtl, v, CarFilters.kmCap.toDouble(),
+                      v >= CarFilters.kmCap);
+                },
               ),
               const SizedBox(height: 8),
 
@@ -358,6 +469,9 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     required int divisions,
     required String display,
     required ValueChanged<double> onChanged,
+    required TextEditingController controller,
+    required String suffix,
+    required String anyLabel,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -367,9 +481,47 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
           Row(
             children: [
               Expanded(child: _SectionLabel(title)),
-              Text(display,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: context.colors.teal)),
+              // Typed, not only dragged. A slider is quick for "roughly", but
+              // someone with a budget of exactly 85,000 cannot hit it on a
+              // 40-step track — and that is the number they actually have.
+              // The two stay in sync: typing moves the slider, dragging
+              // rewrites the field.
+              SizedBox(
+                width: 108,
+                child: TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  textDirection: TextDirection.ltr,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(7),
+                  ],
+                  style: const TextStyle(
+                      fontSize: 13.5, fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    // Empty means no limit, which is a real answer — so it
+                    // gets words rather than being left looking unfinished.
+                    hintText: anyLabel,
+                    hintStyle: context.text.micro,
+                    suffixText: suffix,
+                    suffixStyle: context.text.micro,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 8),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                      borderSide:
+                          BorderSide(color: context.colors.cardBorder),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                      borderSide:
+                          BorderSide(color: context.colors.cardBorder),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
           Slider(
@@ -519,31 +671,61 @@ class _ColorDots extends StatelessWidget {
   final int selected;
   final void Function(int) onSelect;
 
+  /// Swatches, in the same order as the labels in `_colorCats`. Silver and
+  /// grey are separate: both are everywhere on Israeli roads, and someone who
+  /// wants silver does not mean grey.
   static const _colors = [
-    Color(0xFFFFFFFF),
-    Color(0xFF111111),
-    Color(0xFFA0AEC0),
-    Color(0xFF2B6CB0),
-    Color(0xFFC53030),
+    Color(0xFFFFFFFF), // לבן
+    Color(0xFF111111), // שחור
+    Color(0xFFC8CDD2), // כסף
+    Color(0xFF6B7280), // אפור
+    Color(0xFF2B6CB0), // כחול
+    Color(0xFFC53030), // אדום
+    Color(0xFF2F7A4D), // ירוק
+    Color(0xFF8A6134), // חום
+    Color(0xFFD9A520), // צהוב
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    // Wrap, not Row: nine 30px dots do not fit one line on a phone, and a Row
+    // would silently overflow rather than move to a second line.
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
       children: [
         for (var i = 0; i < _colors.length; i++)
-          GestureDetector(
-            onTap: () => onSelect(i),
-            child: Container(
-              margin: const EdgeInsets.only(left: 10),
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: _colors[i],
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: selected == i ? context.colors.teal : context.colors.cardBorder,
-                  width: selected == i ? 2.5 : 1.5,
+          Semantics(
+            selected: selected == i,
+            button: true,
+            label: _colorNames[i],
+            child: Tooltip(
+              message: _colorNames[i],
+              child: GestureDetector(
+                onTap: () => onSelect(i),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: _colors[i],
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: selected == i
+                          ? context.colors.teal
+                          : context.colors.cardBorder,
+                      width: selected == i ? 3 : 1.5,
+                    ),
+                  ),
+                  // The ring alone carries selection on a dot, and on the
+                  // white swatch a green ring on white is easy to miss — the
+                  // tick makes the state readable on every colour.
+                  child: selected == i
+                      ? Icon(Icons.check,
+                          size: 16,
+                          color: _isDark(_colors[i])
+                              ? Colors.white
+                              : const Color(0xFF111111))
+                      : null,
                 ),
               ),
             ),
@@ -551,5 +733,19 @@ class _ColorDots extends StatelessWidget {
       ],
     );
   }
+
+  static bool _isDark(Color c) => c.computeLuminance() < 0.5;
+
+  static const _colorNames = [
+    'לבן',
+    'שחור',
+    'כסף',
+    'אפור',
+    'כחול',
+    'אדום',
+    'ירוק',
+    'חום',
+    'צהוב',
+  ];
 }
 

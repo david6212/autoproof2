@@ -85,15 +85,31 @@ class CarModel {
   }
 
   /// Normalised colour bucket for the colour-dot filter.
+  ///
+  /// The registry writes colours as free text with a finish attached — "כסף
+  /// מטלי", "לבן פנינה", "אפור עכבר" — so these match on the word, not the
+  /// whole string. Order matters: the more specific word has to be tested
+  /// before the more general one.
+  ///
+  /// Silver is its own bucket rather than a shade of grey. It is one of the
+  /// most common colours on Israeli roads, and a buyer who wants silver does
+  /// not mean grey.
   String get colorCategory {
     final c = color;
     if (c.contains('לבן') || c.contains('שנהב')) return 'לבן';
     if (c.contains('שחור')) return 'שחור';
-    if (c.contains('כסף') || c.contains('אפור') || c.contains('אלומיני')) {
-      return 'אפור';
+    if (c.contains('כסף') || c.contains('אלומיני')) return 'כסף';
+    if (c.contains('אפור') || c.contains('גרפיט')) return 'אפור';
+    if (c.contains('כחול') || c.contains('תכלת')) return 'כחול';
+    if (c.contains('אדום') || c.contains('בורדו') || c.contains('יין')) {
+      return 'אדום';
     }
-    if (c.contains('כחול')) return 'כחול';
-    if (c.contains('אדום')) return 'אדום';
+    if (c.contains('ירוק') || c.contains('זית')) return 'ירוק';
+    if (c.contains('חום') || c.contains('בז') || c.contains('שמפניה') ||
+        c.contains('זהב')) {
+      return 'חום';
+    }
+    if (c.contains('צהוב') || c.contains('כתום')) return 'צהוב';
     return 'אחר';
   }
 

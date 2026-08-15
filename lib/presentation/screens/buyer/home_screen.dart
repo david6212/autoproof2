@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_palette.dart';
@@ -241,7 +242,7 @@ class _SearchCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final f = ref.watch(carFiltersProvider);
+    final active = _activeFilters(ref.watch(carFiltersProvider));
 
     void openFilters() => showSearchFilterSheet(
           context,
@@ -266,67 +267,66 @@ class _SearchCard extends ConsumerWidget {
               style: context.text.micro),
           const SizedBox(height: AppSpace.md),
           const _SearchField(),
-          const SizedBox(height: AppSpace.sm + 2),
-          // One row, three shortcuts. The reference stacks them over two rows
-          // plus a toggle; on a browse-first screen that pushes the cars —
-          // which are the reason anyone opened the app — off the fold.
-          Row(
-            children: [
-              Expanded(
-                child: _QuickFilter(
-                  icon: Icons.place_outlined,
-                  label: f.area ?? 'אזור',
-                  on: f.area != null,
-                  onTap: openFilters,
-                ),
-              ),
-              const SizedBox(width: AppSpace.sm - 2),
-              Expanded(
-                child: _QuickFilter(
-                  icon: Icons.payments_outlined,
-                  label: f.maxPrice < CarFilters.priceCap
-                      ? 'עד ${(f.maxPrice / 1000).round()} אלף'
-                      : 'מחיר',
-                  on: f.maxPrice < CarFilters.priceCap,
-                  onTap: openFilters,
-                ),
-              ),
-              const SizedBox(width: AppSpace.sm - 2),
-              Expanded(
-                child: _QuickFilter(
-                  icon: Icons.event_outlined,
-                  label: f.minYear > CarFilters.yearFloor
-                      ? 'מ-${f.minYear}'
-                      : 'שנה',
-                  on: f.minYear > CarFilters.yearFloor,
-                  onTap: openFilters,
-                ),
-              ),
-            ],
-          ),
+          // The row is a SUMMARY of an active search, not a set of controls —
+          // so it only exists once there is something to summarise. Three
+          // empty buttons that all opened the same sheet were three ways of
+          // saying "no filters", above a list that was already showing
+          // everything.
+          if (active.isNotEmpty) ...[
+            const SizedBox(height: AppSpace.sm + 2),
+            Wrap(
+              spacing: AppSpace.sm - 2,
+              runSpacing: AppSpace.sm - 2,
+              children: [
+                for (final chip in active)
+                  _ActiveFilter(
+                    icon: chip.$1,
+                    label: chip.$2,
+                    onTap: openFilters,
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
   }
+
+  /// What the buyer has actually narrowed by, in reading order. Empty until
+  /// they narrow something.
+  List<(IconData, String)> _activeFilters(CarFilters f) {
+    final fmt = NumberFormat('#,###', 'en');
+    return [
+      if (f.area != null) (Icons.place_outlined, f.area!),
+      if (f.make != null) (Icons.directions_car_outlined, f.model ?? f.make!),
+      if (f.maxPrice < CarFilters.priceCap)
+        (Icons.payments_outlined, 'עד ₪${fmt.format(f.maxPrice.round())}'),
+      if (f.minYear > CarFilters.yearFloor)
+        (Icons.event_outlined, 'משנת ${f.minYear}'),
+      if (f.maxKm < CarFilters.kmCap)
+        (Icons.speed_outlined, 'עד ${fmt.format(f.maxKm)} ק"מ'),
+      if (f.fuel != null) (Icons.local_gas_station_outlined, f.fuel!),
+      if (f.colorCat != null) (Icons.palette_outlined, f.colorCat!),
+      if (f.maxHand != null) (Icons.people_outline, 'עד יד ${f.maxHand}'),
+      if (f.ownership != null) (Icons.badge_outlined, f.ownership!),
+      if (f.drivetrain != null) (Icons.route_outlined, f.drivetrain!),
+      if (f.minSeats != null) (Icons.event_seat_outlined, '${f.minSeats}+ מושבים'),
+      if (f.engineRange != null) (Icons.settings_outlined, '${f.engineRange} סמ"ק'),
+    ];
+  }
 }
 
-/// One shortcut into the filter sheet, showing its current value when set.
-class _QuickFilter extends StatelessWidget {
-  const _QuickFilter({
+/// One thing the buyer has narrowed by. Tapping any of them reopens the sheet
+/// that set them.
+class _ActiveFilter extends StatelessWidget {
+  const _ActiveFilter({
     required this.icon,
     required this.label,
-    required this.on,
     required this.onTap,
   });
 
   final IconData icon;
   final String label;
-
-  /// Whether this filter is actually narrowing anything. A set filter has to
-  /// look different from an empty one, or the row reads as three buttons that
-  /// never respond.
-  final bool on;
-
   final VoidCallback onTap;
 
   @override
@@ -335,32 +335,23 @@ class _QuickFilter extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.sm),
       child: Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.sm + 2, vertical: AppSpace.sm - 1),
         decoration: BoxDecoration(
-          color: on ? context.colors.tealLight : context.colors.surface,
+          color: context.colors.tealLight,
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(
-            color: on ? context.colors.tealLight : context.colors.cardBorder,
-          ),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                size: 14,
-                color: on ? context.colors.tealText : context.colors.teal),
+            Icon(icon, size: 14, color: context.colors.tealText),
             const SizedBox(width: AppSpace.xs + 1),
-            Expanded(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: on ? FontWeight.bold : FontWeight.normal,
-                  color:
-                      on ? context.colors.tealText : context.colors.textMuted,
-                ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.bold,
+                color: context.colors.tealText,
               ),
             ),
           ],

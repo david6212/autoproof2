@@ -72,51 +72,82 @@ void main() {
     expect(find.text('מצאו את הרכב הבא שלכם, ללא הפתעות'), findsOneWidget);
   });
 
-  testWidgets('three filter shortcuts, on one row', (t) async {
+  testWidgets('nothing filtered, nothing to summarise', (t) async {
+    // The row is a summary of an active search, not a set of controls. Three
+    // empty buttons that all opened the same sheet were three ways of saying
+    // "no filters", above a list already showing everything.
     await t.pumpWidget(host());
     await t.pump();
 
+    expect(find.text('חיפוש רכב'), findsOneWidget, reason: 'card is there');
     for (final label in ['אזור', 'מחיר', 'שנה']) {
-      expect(find.text(label), findsOneWidget, reason: label);
-    }
-    final tops = ['אזור', 'מחיר', 'שנה']
-        .map((l) => t.getRect(find.text(l)).top)
-        .toList();
-    for (final top in tops) {
-      expect(top, closeTo(tops.first, 0.5), reason: 'shortcuts wrapped: $tops');
+      expect(find.text(label), findsNothing, reason: label);
     }
   });
 
-  testWidgets('a shortcut shows the filter it is holding', (t) async {
-    // An empty shortcut says what it filters; a set one says what it is set
-    // to. Otherwise the row reads as three buttons that never respond.
+  testWidgets('each active filter appears, saying what it is set to',
+      (t) async {
     await t.pumpWidget(host(
-      filters: const CarFilters(area: 'חיפה', maxPrice: 150000, minYear: 2018),
+      filters: const CarFilters(
+        area: 'חיפה',
+        maxPrice: 150000,
+        minYear: 2018,
+        maxKm: 90000,
+        colorCat: 'כסף',
+      ),
     ));
     await t.pump();
 
     expect(find.text('חיפה'), findsOneWidget);
-    expect(find.text('עד 150 אלף'), findsOneWidget);
-    expect(find.text('מ-2018'), findsOneWidget);
-    // …and the generic labels are gone, so nothing is stated twice.
-    expect(find.text('אזור'), findsNothing);
+    expect(find.text('עד ₪150,000'), findsOneWidget);
+    expect(find.text('משנת 2018'), findsOneWidget);
+    expect(find.text('עד 90,000 ק"מ'), findsOneWidget);
+    expect(find.text('כסף'), findsOneWidget);
+  });
+
+  testWidgets('the summary wraps rather than overflowing', (t) async {
+    // Every filter at once on the narrowest phone. A Row would silently run
+    // off the edge; this has to move to another line.
+    await t.pumpWidget(host(
+      size: const Size(320, 800),
+      filters: const CarFilters(
+        area: 'ראשון לציון',
+        make: 'מאזדה',
+        model: 'CX-5',
+        maxPrice: 150000,
+        minYear: 2018,
+        maxKm: 90000,
+        fuel: 'היברידי',
+        colorCat: 'כסף',
+        maxHand: 2,
+        ownership: 'פרטית',
+        drivetrain: '4X4',
+        minSeats: 5,
+        engineRange: '1600-2000',
+      ),
+    ));
+    await t.pump();
+    expect(t.takeException(), isNull);
   });
 
   testWidgets('the header leaves the cars most of the screen', (t) async {
     // The reference design's home is a search FORM, which is fine when the
     // results are a page away. This one is browse-first: if the header takes
     // half the screen the listings stop being the subject.
-    await t.pumpWidget(host());
+    //
+    // Measured with filters ACTIVE, which is the tallest the header ever gets.
+    await t.pumpWidget(host(
+      filters: const CarFilters(area: 'חיפה', maxPrice: 150000),
+    ));
     await t.pump();
 
-    final header = t.getRect(find.text('חיפוש רכב'));
-    final card = t.getRect(find.byType(HomeScreen));
-    expect(header.top, lessThan(200), reason: 'search card is near the top');
+    final screen = t.getRect(find.byType(HomeScreen));
+    expect(t.getRect(find.text('חיפוש רכב')).top, lessThan(200),
+        reason: 'the search card is near the top');
 
-    // Whatever the header ends up costing, over half the viewport is left.
-    final shortcutBottom = t.getRect(find.text('אזור')).bottom;
-    expect(shortcutBottom, lessThan(card.height * 0.5),
-        reason: 'header ends at $shortcutBottom of ${card.height}');
+    final headerBottom = t.getRect(find.text('חיפה')).bottom;
+    expect(headerBottom, lessThan(screen.height * 0.5),
+        reason: 'header ends at $headerBottom of ${screen.height}');
   });
 
   testWidgets('it survives the largest text scale', (t) async {
