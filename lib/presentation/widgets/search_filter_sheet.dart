@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// `intl` exports its own TextDirection, which shadows Flutter's and turns any
-// use of the real one into "the getter 'ltr' isn't defined". Only NumberFormat
-// is wanted here.
-import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_palette.dart';
@@ -46,8 +42,6 @@ class _FilterSheet extends ConsumerStatefulWidget {
 }
 
 class _FilterSheetState extends ConsumerState<_FilterSheet> {
-  static final _fmt = NumberFormat('#,###', 'en');
-
   late CarFilters _draft;
 
   /// Must stay in the same order as `_ColorDots._colors`, which draws them.
@@ -64,62 +58,78 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   ];
 
 
-  /// The typed side of the three ranges. Held here rather than rebuilt each
-  /// frame, or the caret would jump to the start on every keystroke.
-  late final TextEditingController _priceCtl;
-  late final TextEditingController _yearCtl;
-  late final TextEditingController _kmCtl;
+  /// Both ends of each range. Held rather than rebuilt every frame, or the
+  /// caret would jump back to the start on each keystroke.
+  late final TextEditingController _priceMinCtl;
+  late final TextEditingController _priceMaxCtl;
+  late final TextEditingController _yearMinCtl;
+  late final TextEditingController _yearMaxCtl;
+  late final TextEditingController _kmMinCtl;
+  late final TextEditingController _kmMaxCtl;
+
+  /// An empty field means "no bound on this side" — a real answer, so a range
+  /// nobody has touched opens blank instead of showing numbers the buyer never
+  /// chose.
+  String _shown(num value, num sentinel) =>
+      value == sentinel ? '' : value.round().toString();
 
   @override
   void initState() {
     super.initState();
     _draft = ref.read(carFiltersProvider);
 
-    // An empty field means "no limit", so a range still at its cap opens
-    // blank rather than showing a number the buyer never chose.
-    _priceCtl = TextEditingController(
-        text: _draft.maxPrice >= CarFilters.priceCap
-            ? ''
-            : _draft.maxPrice.round().toString());
-    _yearCtl = TextEditingController(
-        text: _draft.minYear <= CarFilters.yearFloor
-            ? ''
-            : _draft.minYear.toString());
-    _kmCtl = TextEditingController(
-        text: _draft.maxKm >= CarFilters.kmCap ? '' : _draft.maxKm.toString());
+    _priceMinCtl = TextEditingController(
+        text: _shown(_draft.minPrice, CarFilters.priceFloor));
+    _priceMaxCtl = TextEditingController(
+        text: _shown(_draft.maxPrice, CarFilters.priceCap));
+    _yearMinCtl = TextEditingController(
+        text: _shown(_draft.minYear, CarFilters.yearFloor));
+    _yearMaxCtl = TextEditingController(
+        text: _shown(_draft.maxYear, CarFilters.yearCap));
+    _kmMinCtl =
+        TextEditingController(text: _shown(_draft.minKm, CarFilters.kmFloor));
+    _kmMaxCtl =
+        TextEditingController(text: _shown(_draft.maxKm, CarFilters.kmCap));
 
-    _priceCtl.addListener(() => _typed(
-          _priceCtl,
-          cap: CarFilters.priceCap,
-          apply: (v) => _draft = _draft.copyWith(maxPrice: v),
-        ));
-    _yearCtl.addListener(() => _typed(
-          _yearCtl,
-          cap: CarFilters.yearFloor.toDouble(),
-          // A year is a FLOOR, not a ceiling, and a half-typed "20" is not a
-          // year — so it is only applied once it looks like one.
-          valid: (v) => v >= 1900 && v <= DateTime.now().year + 1,
-          apply: (v) => _draft = _draft.copyWith(minYear: v.round()),
-        ));
-    _kmCtl.addListener(() => _typed(
-          _kmCtl,
-          cap: CarFilters.kmCap.toDouble(),
-          apply: (v) => _draft = _draft.copyWith(maxKm: v.round()),
-        ));
+    _priceMinCtl.addListener(() => _typed(_priceMinCtl,
+        empty: CarFilters.priceFloor,
+        apply: (v) => _draft = _draft.copyWith(minPrice: v)));
+    _priceMaxCtl.addListener(() => _typed(_priceMaxCtl,
+        empty: CarFilters.priceCap,
+        apply: (v) => _draft = _draft.copyWith(maxPrice: v)));
+
+    // A half-typed "20" is not a year. Applying it would empty the list
+    // mid-keystroke and look like the filter is broken.
+    _yearMinCtl.addListener(() => _typed(_yearMinCtl,
+        empty: CarFilters.yearFloor.toDouble(),
+        valid: _looksLikeYear,
+        apply: (v) => _draft = _draft.copyWith(minYear: v.round())));
+    _yearMaxCtl.addListener(() => _typed(_yearMaxCtl,
+        empty: CarFilters.yearCap.toDouble(),
+        valid: _looksLikeYear,
+        apply: (v) => _draft = _draft.copyWith(maxYear: v.round())));
+
+    _kmMinCtl.addListener(() => _typed(_kmMinCtl,
+        empty: CarFilters.kmFloor.toDouble(),
+        apply: (v) => _draft = _draft.copyWith(minKm: v.round())));
+    _kmMaxCtl.addListener(() => _typed(_kmMaxCtl,
+        empty: CarFilters.kmCap.toDouble(),
+        apply: (v) => _draft = _draft.copyWith(maxKm: v.round())));
   }
 
-  /// Applies what was typed. Empty resets the range to its cap — "no limit" is
-  /// an answer, not an error — and anything unparseable is simply ignored
-  /// until it becomes a number.
+  static bool _looksLikeYear(double v) => v >= 1900 && v <= CarFilters.yearCap;
+
+  /// Applies what was typed. Empty restores the "no bound" sentinel; anything
+  /// not yet a usable number is ignored until it becomes one.
   void _typed(
     TextEditingController c, {
-    required double cap,
+    required double empty,
     required void Function(double) apply,
     bool Function(double)? valid,
   }) {
     final raw = c.text.trim();
     if (raw.isEmpty) {
-      setState(() => apply(cap));
+      setState(() => apply(empty));
       return;
     }
     final v = double.tryParse(raw);
@@ -127,22 +137,18 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     setState(() => apply(v));
   }
 
-  /// Writes a slider's value back into its field, so dragging and typing never
-  /// disagree about what the filter currently is.
-  void _syncField(TextEditingController c, num value, num cap, bool atCap) {
-    final text = atCap ? '' : value.round().toString();
-    if (c.text == text) return;
-    c.value = TextEditingValue(
-      text: text,
-      selection: TextSelection.collapsed(offset: text.length),
-    );
-  }
-
   @override
   void dispose() {
-    _priceCtl.dispose();
-    _yearCtl.dispose();
-    _kmCtl.dispose();
+    for (final c in [
+      _priceMinCtl,
+      _priceMaxCtl,
+      _yearMinCtl,
+      _yearMaxCtl,
+      _kmMinCtl,
+      _kmMaxCtl,
+    ]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -172,9 +178,12 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     if (f.colorCat != null && c.colorCategory != f.colorCat) return false;
     if (f.ownership == 'פרטית' && !c.isPrivateOwnership) return false;
     if (f.ownership == 'ליסינג/חברה' && c.isPrivateOwnership) return false;
-    if (c.price > f.maxPrice) return false;
-    if (c.year < f.minYear) return false;
-    if (c.km > f.maxKm) return false;
+    // Both ends, matching `filteredCarsProvider`. This drives the live count
+    // on the apply button, so if it disagreed with the real filter the button
+    // would promise a number of results the list then would not show.
+    if (c.price < f.minPrice || c.price > f.maxPrice) return false;
+    if (c.year < f.minYear || c.year > f.maxYear) return false;
+    if (c.km < f.minKm || c.km > f.maxKm) return false;
     if (f.area != null && c.area != f.area) return false;
     if (query.isNotEmpty) {
       final hay = '${c.make} ${c.model} ${c.area} ${c.plate}'.toLowerCase();
@@ -184,9 +193,20 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   }
 
   void _clearAll() {
-    setState(() {
-      _draft = const CarFilters();
-    });
+    setState(() => _draft = const CarFilters());
+    // The fields hold their own text, so resetting the draft alone would clear
+    // the filter while still showing the numbers it was cleared from — and the
+    // listeners would then type them straight back in.
+    for (final c in [
+      _priceMinCtl,
+      _priceMaxCtl,
+      _yearMinCtl,
+      _yearMaxCtl,
+      _kmMinCtl,
+      _kmMaxCtl,
+    ]) {
+      c.clear();
+    }
   }
 
   @override
@@ -362,59 +382,32 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
               ),
               const SizedBox(height: 18),
 
-              // Each range can be dragged OR typed; the two stay in sync.
-              _slider(
-                title: 'מחיר עד',
-                value: _draft.maxPrice,
-                min: 30000,
-                max: CarFilters.priceCap,
-                divisions: 47,
-                display: _draft.maxPrice >= CarFilters.priceCap
-                    ? 'ללא הגבלה'
-                    : '₪${_fmt.format(_draft.maxPrice)}',
-                controller: _priceCtl,
+              // Typed at BOTH ends. A slider only ever set a ceiling, and a
+              // buyer thinks in ranges — "between 2018 and 2022", not
+              // "anything after 2018" — and knows their exact number.
+              _range(
+                title: 'מחיר',
+                from: _priceMinCtl,
+                to: _priceMaxCtl,
+                fromHint: 'מ-',
+                toHint: 'עד',
                 suffix: '₪',
-                anyLabel: 'ללא הגבלה',
-                onChanged: (v) {
-                  setState(() => _draft = _draft.copyWith(maxPrice: v));
-                  _syncField(_priceCtl, v, CarFilters.priceCap,
-                      v >= CarFilters.priceCap);
-                },
               ),
-              _slider(
-                title: 'שנת ייצור מ-',
-                value: _draft.minYear.toDouble(),
-                min: CarFilters.yearFloor.toDouble(),
-                max: 2025,
-                divisions: 2025 - CarFilters.yearFloor,
-                display: '${_draft.minYear}',
-                controller: _yearCtl,
+              _range(
+                title: 'שנת ייצור',
+                from: _yearMinCtl,
+                to: _yearMaxCtl,
+                fromHint: 'משנת',
+                toHint: 'עד שנת',
                 suffix: '',
-                anyLabel: 'כל שנה',
-                onChanged: (v) {
-                  setState(
-                      () => _draft = _draft.copyWith(minYear: v.round()));
-                  _syncField(_yearCtl, v, CarFilters.yearFloor,
-                      v <= CarFilters.yearFloor);
-                },
               ),
-              _slider(
-                title: 'קילומטראז\' עד',
-                value: _draft.maxKm.toDouble(),
-                min: 0,
-                max: CarFilters.kmCap.toDouble(),
-                divisions: 40,
-                display: _draft.maxKm >= CarFilters.kmCap
-                    ? 'ללא הגבלה'
-                    : '${_fmt.format(_draft.maxKm)} ק"מ',
-                controller: _kmCtl,
+              _range(
+                title: 'קילומטראז\'',
+                from: _kmMinCtl,
+                to: _kmMaxCtl,
+                fromHint: 'מ-',
+                toHint: 'עד',
                 suffix: 'ק"מ',
-                anyLabel: 'ללא הגבלה',
-                onChanged: (v) {
-                  setState(() => _draft = _draft.copyWith(maxKm: v.round()));
-                  _syncField(_kmCtl, v, CarFilters.kmCap.toDouble(),
-                      v >= CarFilters.kmCap);
-                },
               ),
               const SizedBox(height: 8),
 
@@ -461,78 +454,83 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     );
   }
 
-  Widget _slider({
+  /// One range, typed at both ends.
+  ///
+  /// The sliders these replace could only ever set a ceiling, and only in the
+  /// steps the track happened to have. Someone whose budget is exactly 85,000
+  /// could not land on it, and nobody could say "between 2018 and 2022" at all.
+  Widget _range({
     required String title,
-    required double value,
-    required double min,
-    required double max,
-    required int divisions,
-    required String display,
-    required ValueChanged<double> onChanged,
-    required TextEditingController controller,
+    required TextEditingController from,
+    required TextEditingController to,
+    required String fromHint,
+    required String toHint,
     required String suffix,
-    required String anyLabel,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _SectionLabel(title),
+          const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: _SectionLabel(title)),
-              // Typed, not only dragged. A slider is quick for "roughly", but
-              // someone with a budget of exactly 85,000 cannot hit it on a
-              // 40-step track — and that is the number they actually have.
-              // The two stay in sync: typing moves the slider, dragging
-              // rewrites the field.
-              SizedBox(
-                width: 108,
-                child: TextField(
-                  controller: controller,
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  textDirection: TextDirection.ltr,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(7),
-                  ],
-                  style: const TextStyle(
-                      fontSize: 13.5, fontWeight: FontWeight.bold),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    // Empty means no limit, which is a real answer — so it
-                    // gets words rather than being left looking unfinished.
-                    hintText: anyLabel,
-                    hintStyle: context.text.micro,
-                    suffixText: suffix,
-                    suffixStyle: context.text.micro,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 8),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.xs),
-                      borderSide:
-                          BorderSide(color: context.colors.cardBorder),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.xs),
-                      borderSide:
-                          BorderSide(color: context.colors.cardBorder),
-                    ),
-                  ),
-                ),
+              Expanded(
+                child: _numberField(from, hint: fromHint, suffix: suffix),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm),
+                child: Text('—', style: context.text.caption),
+              ),
+              Expanded(
+                child: _numberField(to, hint: toHint, suffix: suffix),
               ),
             ],
           ),
-          Slider(
-            value: value.clamp(min, max),
-            min: min,
-            max: max,
-            divisions: divisions,
-            activeColor: context.colors.teal,
-            onChanged: onChanged,
-          ),
         ],
+      ),
+    );
+  }
+
+  Widget _numberField(
+    TextEditingController c, {
+    required String hint,
+    required String suffix,
+  }) {
+    return TextField(
+      controller: c,
+      keyboardType: TextInputType.number,
+      textAlign: TextAlign.center,
+      // Numbers read left to right even inside an RTL sheet.
+      textDirection: TextDirection.ltr,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(7),
+      ],
+      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+      decoration: InputDecoration(
+        isDense: true,
+        // An empty side means "no bound", which is an answer — so it says so
+        // rather than sitting there looking unfinished.
+        hintText: hint,
+        hintStyle: context.text.micro,
+        suffixText: suffix.isEmpty ? null : suffix,
+        suffixStyle: context.text.micro,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(color: context.colors.cardBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(color: context.colors.cardBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(color: context.colors.teal, width: 1.5),
+        ),
       ),
     );
   }

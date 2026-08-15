@@ -296,15 +296,39 @@ class _SearchCard extends ConsumerWidget {
   /// they narrow something.
   List<(IconData, String)> _activeFilters(CarFilters f) {
     final fmt = NumberFormat('#,###', 'en');
+
+    /// Says only what was actually set. A range with one end open reads as
+    /// "from X" or "up to Y" rather than inventing the other end.
+    String? range(
+      num low,
+      num high,
+      num floor,
+      num cap, {
+      required String Function(num) show,
+    }) {
+      final hasLow = low > floor;
+      final hasHigh = high < cap;
+      if (hasLow && hasHigh) return '${show(low)}–${show(high)}';
+      if (hasLow) return 'מ-${show(low)}';
+      if (hasHigh) return 'עד ${show(high)}';
+      return null;
+    }
+
+    final price = range(f.minPrice, f.maxPrice, CarFilters.priceFloor,
+        CarFilters.priceCap,
+        show: (v) => '₪${fmt.format(v.round())}');
+    final year = range(
+        f.minYear, f.maxYear, CarFilters.yearFloor, CarFilters.yearCap,
+        show: (v) => '${v.round()}');
+    final km = range(f.minKm, f.maxKm, CarFilters.kmFloor, CarFilters.kmCap,
+        show: (v) => '${fmt.format(v.round())} ק"מ');
+
     return [
       if (f.area != null) (Icons.place_outlined, f.area!),
       if (f.make != null) (Icons.directions_car_outlined, f.model ?? f.make!),
-      if (f.maxPrice < CarFilters.priceCap)
-        (Icons.payments_outlined, 'עד ₪${fmt.format(f.maxPrice.round())}'),
-      if (f.minYear > CarFilters.yearFloor)
-        (Icons.event_outlined, 'משנת ${f.minYear}'),
-      if (f.maxKm < CarFilters.kmCap)
-        (Icons.speed_outlined, 'עד ${fmt.format(f.maxKm)} ק"מ'),
+      if (price != null) (Icons.payments_outlined, price),
+      if (year != null) (Icons.event_outlined, year),
+      if (km != null) (Icons.speed_outlined, km),
       if (f.fuel != null) (Icons.local_gas_station_outlined, f.fuel!),
       if (f.colorCat != null) (Icons.palette_outlined, f.colorCat!),
       if (f.maxHand != null) (Icons.people_outline, 'עד יד ${f.maxHand}'),

@@ -100,9 +100,35 @@ void main() {
 
     expect(find.text('חיפה'), findsOneWidget);
     expect(find.text('עד ₪150,000'), findsOneWidget);
-    expect(find.text('משנת 2018'), findsOneWidget);
+    expect(find.text('מ-2018'), findsOneWidget);
     expect(find.text('עד 90,000 ק"מ'), findsOneWidget);
     expect(find.text('כסף'), findsOneWidget);
+  });
+
+  testWidgets('a range set at both ends reads as a range', (t) async {
+    // The point of typing both ends: "between 2018 and 2022" is a thing a
+    // buyer means, and a single-ended filter could never say it.
+    await t.pumpWidget(host(
+      filters: const CarFilters(
+        minYear: 2018,
+        maxYear: 2022,
+        minPrice: 60000,
+        maxPrice: 120000,
+      ),
+    ));
+    await t.pump();
+
+    expect(find.text('2018–2022'), findsOneWidget);
+    expect(find.text('₪60,000–₪120,000'), findsOneWidget);
+  });
+
+  testWidgets('one end open says so, instead of inventing the other',
+      (t) async {
+    await t.pumpWidget(host(filters: const CarFilters(minKm: 20000)));
+    await t.pump();
+
+    expect(find.text('מ-20,000 ק"מ'), findsOneWidget);
+    expect(find.textContaining('עד'), findsNothing);
   });
 
   testWidgets('the summary wraps rather than overflowing', (t) async {

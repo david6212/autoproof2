@@ -20,9 +20,22 @@ class CarFilters {
   static const int yearFloor = 2005;
   static const int kmCap = 400000;
 
+  /// The other end of each range. A filter has two bounds because a buyer
+  /// thinks in both — "between 2018 and 2022", not "anything after 2018".
+  /// These are the values that mean "no bound set on this side".
+  static const double priceFloor = 0;
+  static const int kmFloor = 0;
+
+  /// Deliberately far out. It only has to be past any model year the registry
+  /// can return, so that leaving it alone filters nothing.
+  static const int yearCap = 2035;
+
   final Set<String> types; // body-type categories (up to 4)
+  final double minPrice;
   final double maxPrice;
   final int minYear;
+  final int maxYear;
+  final int minKm;
   final int maxKm;
   final String? area;
   final String? make; // manufacturer
@@ -40,8 +53,11 @@ class CarFilters {
 
   const CarFilters({
     this.types = const {},
+    this.minPrice = priceFloor,
     this.maxPrice = priceCap,
     this.minYear = yearFloor,
+    this.maxYear = yearCap,
+    this.minKm = kmFloor,
     this.maxKm = kmCap,
     this.area,
     this.make,
@@ -57,8 +73,11 @@ class CarFilters {
 
   CarFilters copyWith({
     Set<String>? types,
+    double? minPrice,
     double? maxPrice,
     int? minYear,
+    int? maxYear,
+    int? minKm,
     int? maxKm,
     String? area,
     bool clearArea = false,
@@ -83,8 +102,11 @@ class CarFilters {
   }) {
     return CarFilters(
       types: types ?? this.types,
+      minPrice: minPrice ?? this.minPrice,
       maxPrice: maxPrice ?? this.maxPrice,
       minYear: minYear ?? this.minYear,
+      maxYear: maxYear ?? this.maxYear,
+      minKm: minKm ?? this.minKm,
       maxKm: maxKm ?? this.maxKm,
       area: clearArea ? null : (area ?? this.area),
       make: clearMake ? null : (make ?? this.make),
@@ -101,8 +123,11 @@ class CarFilters {
 
   bool get isDefault =>
       types.isEmpty &&
+      minPrice <= priceFloor &&
       maxPrice >= priceCap &&
       minYear <= yearFloor &&
+      maxYear >= yearCap &&
+      minKm <= kmFloor &&
       maxKm >= kmCap &&
       area == null &&
       make == null &&
@@ -118,9 +143,11 @@ class CarFilters {
   /// Number of active (non-default) filter groups, for the badge.
   int get activeCount =>
       (types.isNotEmpty ? 1 : 0) +
-      (maxPrice < priceCap ? 1 : 0) +
-      (minYear > yearFloor ? 1 : 0) +
-      (maxKm < kmCap ? 1 : 0) +
+      // A range counts once however many of its two ends are set — "price"
+      // is one thing the buyer narrowed, not two.
+      ((minPrice > priceFloor || maxPrice < priceCap) ? 1 : 0) +
+      ((minYear > yearFloor || maxYear < yearCap) ? 1 : 0) +
+      ((minKm > kmFloor || maxKm < kmCap) ? 1 : 0) +
       (area != null ? 1 : 0) +
       (make != null ? 1 : 0) +
       (model != null ? 1 : 0) +
@@ -201,9 +228,9 @@ final filteredCarsProvider = Provider<AsyncValue<List<CarModel>>>((ref) {
   return cars.whenData((list) {
     return list.where((c) {
       if (f.types.isNotEmpty && !f.types.contains(carBodyType(c))) return false;
-      if (c.price > f.maxPrice) return false;
-      if (c.year < f.minYear) return false;
-      if (c.km > f.maxKm) return false;
+      if (c.price < f.minPrice || c.price > f.maxPrice) return false;
+      if (c.year < f.minYear || c.year > f.maxYear) return false;
+      if (c.km < f.minKm || c.km > f.maxKm) return false;
       if (f.area != null && c.area != f.area) return false;
       if (f.make != null && c.make != f.make) return false;
       if (f.model != null && c.model != f.model) return false;
