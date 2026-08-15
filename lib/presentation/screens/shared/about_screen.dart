@@ -86,7 +86,7 @@ class _Header extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             AppStrings.tagline,
-            style: TextStyle(color: context.colors.tealText2, fontSize: 15),
+            style: AppText.subtitle.copyWith(color: context.colors.tealText2),
           ),
         ],
       ),
@@ -129,9 +129,7 @@ class _LayerCard extends StatelessWidget {
                 Text(title,
                     style: AppText.subtitle),
                 const SizedBox(height: 4),
-                Text(body,
-                    style: TextStyle(
-                        color: context.colors.textMuted, fontSize: 13)),
+                Text(body, style: context.text.bodySmMuted),
               ],
             ),
           ),

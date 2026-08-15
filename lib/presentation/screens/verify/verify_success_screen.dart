@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../providers/seller_verification_provider.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../widgets/step_progress_widget.dart';
+import '../../../core/theme/app_text.dart';
 import '../../widgets/app_card.dart';
 
 class VerifySuccessScreen extends ConsumerStatefulWidget {
@@ -41,27 +43,31 @@ class _VerifySuccessScreenState extends ConsumerState<VerifySuccessScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const StepProgress(current: 3),
-              const SizedBox(height: 40),
+              const SizedBox(height: AppSpace.xxl),
               Center(
+                // 76, matching the published-listing success screen. The two
+                // are the same moment in two flows and were different sizes.
                 child: Container(
-                  width: 110,
-                  height: 110,
+                  width: 76,
+                  height: 76,
                   decoration: BoxDecoration(
-                    color: context.colors.tealLight,
+                    color: state.error != null
+                        ? context.colors.errorBg
+                        : context.colors.tealLight,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     state.error != null
                         ? Icons.error_outline
                         : Icons.verified_user,
-                    size: 60,
+                    size: 34,
                     color: state.error != null
                         ? context.colors.errorRed
-                        : context.colors.teal,
+                        : context.colors.tealText,
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpace.xl),
 
               if (state.loading) ...[
                 const Center(child: CircularProgressIndicator()),
@@ -88,20 +94,16 @@ class _VerifySuccessScreenState extends ConsumerState<VerifySuccessScreen> {
                       .submit(),
                 ),
               ] else ...[
-                Text(
+                const Text(
                   AppStrings.verifiedSuccess,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: context.colors.textPrimary,
-                  ),
+                  style: AppText.h2,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpace.sm),
                 Text(
                   AppStrings.verifiedAsPrivate,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: context.colors.textMuted),
+                  style: context.text.bodySmMuted,
                 ),
                 if (car != null) ...[
                   const SizedBox(height: 24),

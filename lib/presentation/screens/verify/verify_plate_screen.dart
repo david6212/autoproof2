@@ -3,10 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/gov_data_model.dart';
 import '../../providers/seller_verification_provider.dart';
+import '../../widgets/app_card.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../widgets/step_progress_widget.dart';
 import '../../../core/theme/app_text.dart';
@@ -52,22 +54,19 @@ class _VerifyPlateScreenState extends ConsumerState<VerifyPlateScreen> {
       appBar: AppBar(title: const Text('אימות מוכר')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpace.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const StepProgress(current: 2),
-              const SizedBox(height: 24),
-              const Text(
-                'אימות בעלות',
-                style: AppText.display,
-              ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpace.xl),
+              const Text('אימות בעלות', style: AppText.h3),
+              const SizedBox(height: AppSpace.xs + 2),
               Text(
                 'הזן את מספר הרישוי של הרכב שברשותך',
-                style: TextStyle(color: context.colors.textMuted),
+                style: context.text.bodySmMuted,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpace.lg),
 
               TextField(
                 controller: _plateController,
@@ -157,34 +156,26 @@ class _CarConfirmCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.colors.tealLight,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.colors.teal),
-      ),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpace.lg),
+      color: context.colors.tealLight,
+      borderColor: context.colors.teal,
       child: Row(
         children: [
-          Icon(Icons.check_circle, color: context.colors.teal, size: 28),
-          const SizedBox(width: 12),
+          Icon(Icons.check_circle, color: context.colors.tealText, size: 26),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  car.title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: context.colors.tealText,
-                  ),
-                ),
-                const SizedBox(height: 2),
+                Text(car.title,
+                    style: AppText.title
+                        .copyWith(color: context.colors.tealText)),
+                const SizedBox(height: AppSpace.xxs),
                 Text(
                   '${car.year} · ${car.ownershipType}',
-                  style: TextStyle(
-                      fontSize: 13, color: context.colors.tealText2),
+                  style: AppText.bodySm
+                      .copyWith(color: context.colors.tealText),
                 ),
               ],
             ),
@@ -201,20 +192,23 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A banner, not a card — it is a message about what just happened, so it
+    // keeps the tint and drops the border rather than posing as content.
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.md + 2, vertical: AppSpace.md),
       decoration: BoxDecoration(
         color: context.colors.errorBg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         children: [
           Icon(Icons.error_outline, color: context.colors.errorRed, size: 20),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Text(
               message,
-              style: TextStyle(color: context.colors.errorRed),
+              style: AppText.bodySm.copyWith(color: context.colors.errorRed),
             ),
           ),
         ],

@@ -6,6 +6,8 @@ import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/seller_verification_provider.dart';
+import '../../../core/theme/app_dimens.dart';
+import '../../widgets/app_card.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../widgets/step_progress_widget.dart';
 import '../../../core/theme/app_text.dart';
@@ -33,22 +35,21 @@ class _VerifyRoleScreenState extends ConsumerState<VerifyRoleScreen> {
       appBar: AppBar(title: const Text('אימות מוכר')),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpace.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const StepProgress(current: 1),
-              const SizedBox(height: 28),
-              const Text(
-                'מי אתה?',
-                style: AppText.display,
-              ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpace.xl),
+              // h3, like every other step title in the app. The step bar above
+              // already says where you are.
+              const Text('מי אתה?', style: AppText.h3),
+              const SizedBox(height: AppSpace.xs + 2),
               Text(
                 'הסיווג שתבחר יוצג בבירור במודעה, כדי שהקונה יידע כיצד סיווגת את עצמך.',
-                style: TextStyle(color: context.colors.textMuted),
+                style: context.text.bodySmMuted,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpace.xl),
 
               _RoleOption(
                 selected: _selected == SellerType.private,
@@ -57,7 +58,7 @@ class _VerifyRoleScreenState extends ConsumerState<VerifyRoleScreen> {
                 subtitle: 'אמת את זהותך מול מרשם הרכב',
                 onTap: () => setState(() => _selected = SellerType.private),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.md),
               _RoleOption(
                 selected: _selected == SellerType.agent,
                 icon: Icons.handshake_outlined,
@@ -65,7 +66,7 @@ class _VerifyRoleScreenState extends ConsumerState<VerifyRoleScreen> {
                 subtitle: 'מוכר רכב בשם מישהו אחר',
                 onTap: () => setState(() => _selected = SellerType.agent),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpace.md),
               _RoleOption(
                 selected: _selected == SellerType.dealer,
                 icon: Icons.store_outlined,
@@ -104,44 +105,34 @@ class _RoleOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = selected ? context.colors.teal : context.colors.cardBorder;
-    return InkWell(
+    // AppCard, not a hand-rolled Container. It already carries the surface,
+    // the radius and — since the comparison screen — a border colour and
+    // width, which is exactly what a selected option needs.
+    return AppCard(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: selected ? context.colors.tealLight : context.colors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderColor, width: selected ? 2 : 1),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: context.colors.teal, size: 28),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppText.title,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: context.colors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
+      padding: const EdgeInsets.all(AppSpace.lg),
+      color: selected ? context.colors.tealLight : null,
+      borderColor: selected ? context.colors.teal : null,
+      borderWidth: selected ? 2 : 1,
+      child: Row(
+        children: [
+          Icon(icon, color: context.colors.teal, size: 26),
+          const SizedBox(width: AppSpace.md + 2),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppText.subtitle),
+                const SizedBox(height: AppSpace.xs),
+                Text(subtitle, style: context.text.caption),
+              ],
             ),
-            if (selected)
-              Icon(Icons.check_circle, color: context.colors.teal),
-          ],
-        ),
+          ),
+          // The selection is already carried by the fill and the 2px border;
+          // the tick is the third signal, so it does not rely on colour alone.
+          if (selected)
+            Icon(Icons.check_circle, size: 22, color: context.colors.tealText),
+        ],
       ),
     );
   }

@@ -7,6 +7,9 @@ import '../../../core/theme/app_palette.dart';
 import '../../../data/models/chat_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../../core/theme/app_dimens.dart';
+import '../../../core/theme/app_text.dart';
+import '../../widgets/app_card.dart';
 import '../../widgets/guest_prompt_view.dart';
 import '../../widgets/skeleton.dart';
 
@@ -36,11 +39,14 @@ class ChatListScreen extends ConsumerWidget {
           ),
           data: (chats) {
             if (chats.isEmpty) return const _EmptyChats();
-            return ListView.separated(
+            // Cards with their own margin, not divided list tiles — the rest
+            // of the app puts content on cards over the page colour, and a
+            // full-bleed white list was the last surface that did not.
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
               itemCount: chats.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
-              itemBuilder: (context, i) =>
-                  _ChatTile(chat: chats[i], me: me),
+              itemBuilder: (context, i) => _ChatTile(chat: chats[i], me: me),
             );
           },
         ),
@@ -67,56 +73,69 @@ class _ChatTile extends StatelessWidget {
     final title = isSeller ? 'קונה מתעניין' : 'מוכר';
     final unread = chat.isUnreadFor(me);
 
-    return ListTile(
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: AppSpace.md),
+      padding: const EdgeInsets.all(AppSpace.md),
       onTap: () => context.push('/chat/${chat.id}'),
-      leading: CircleAvatar(
-        radius: 26,
-        backgroundColor: context.colors.tealLight,
-        backgroundImage: chat.carPhoto.isNotEmpty
-            ? CachedNetworkImageProvider(chat.carPhoto)
-            : null,
-        child: chat.carPhoto.isEmpty
-            ? Icon(Icons.directions_car, color: context.colors.teal)
-            : null,
-      ),
-      title: Row(
+      child: Row(
         children: [
-          Flexible(
-            child: Text(title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: context.colors.tealLight,
+            backgroundImage: chat.carPhoto.isNotEmpty
+                ? CachedNetworkImageProvider(chat.carPhoto)
+                : null,
+            child: chat.carPhoto.isEmpty
+                ? Icon(Icons.directions_car, color: context.colors.teal)
+                : null,
           ),
-          const SizedBox(width: 4),
-          Icon(Icons.verified, size: 14, color: context.colors.teal),
-        ],
-      ),
-      subtitle: Text(
-        chat.lastMessage.isEmpty ? chat.carTitle : chat.lastMessage,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: unread ? context.colors.textPrimary : context.colors.textMuted,
-          fontWeight: unread ? FontWeight.w600 : FontWeight.normal,
-        ),
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            _time(chat.lastMessageAt),
-            style: TextStyle(color: context.colors.textSubtle, fontSize: 12.5),
-          ),
-          if (unread) ...[
-            const SizedBox(height: 4),
-            Container(
-              width: 9,
-              height: 9,
-              decoration: BoxDecoration(
-                  color: context.colors.teal, shape: BoxShape.circle),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // The bare `Icons.verified` tick that used to sit here is
+                // gone. Unlabelled, next to a person, it says "this seller is
+                // verified" — which the app explicitly does not claim: the
+                // check compares a PLATE against the registry and never
+                // establishes anyone's identity or ownership. The seller-type
+                // badge on the listing is where classification belongs, with
+                // words attached.
+                Text(title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.subtitle),
+                const SizedBox(height: AppSpace.xxs),
+                Text(
+                  chat.lastMessage.isEmpty ? chat.carTitle : chat.lastMessage,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.bodySm.copyWith(
+                    color: unread
+                        ? context.colors.textPrimary
+                        : context.colors.textMuted,
+                    fontWeight: unread ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
+          const SizedBox(width: AppSpace.sm),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(_time(chat.lastMessageAt), style: context.text.micro),
+              if (unread) ...[
+                const SizedBox(height: AppSpace.xs + 1),
+                Container(
+                  width: 9,
+                  height: 9,
+                  decoration: BoxDecoration(
+                      color: context.colors.teal, shape: BoxShape.circle),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
