@@ -1,3 +1,32 @@
+> # ⚠️ READ THIS FIRST — THIS FILE IS THE ORIGINAL BUILD SPEC, NOT THE CURRENT STATE
+>
+> Everything below describes the app as it was *planned* in July 2026. The app
+> was built, and reality moved. **Several instructions below are now actively
+> wrong and will break things if followed.** Corrections, in order of danger:
+>
+> | This file says | Reality |
+> |---|---|
+> | Firebase project `bonnetcheck-app` | **`autoproof-8d827`.** A project id cannot be renamed. |
+> | Cloud Functions (Node 20) | **None.** We are on the free Spark plan — no Functions, no FCM push, no scheduled jobs. Everything is client-side. |
+> | `AppColors.x` | **`context.colors.x`.** `AppColors` was deleted; a `static const` cannot follow the light/dark theme. |
+> | Firebase Storage "already enabled" | **Not provisioned at all.** `firebase deploy --only storage` fails. Photo, receipt and document upload cannot work until somebody clicks Get Started in the console. |
+> | `flutter build web` then deploy | **Deploys nothing useful.** Hosting serves `build/hosting`, assembled by `tool/build_site.sh`. The app lives at `/app/`, the landing page at `/`. |
+> | Phases 1–18 | All shipped, plus a vehicle passport the spec never had. See `OTOV_SPEC_REVIEW.md`. |
+>
+> **Current state:** 272 tests passing, analyzer clean, live at
+> https://bonnetcheck.web.app (app at `/app/`). The bottom tabs are
+> בית · הרכב שלי · דלק · צ'אטים · פרופיל.
+>
+> **What is still open:** the five legal documents (blocked on the operating
+> entity, a contact email and an address — do not invent them), Firebase
+> Storage, and `applicationId` still being `il.autoproof.autoproof`, which must
+> be sorted before a Play Store launch or Google Sign-In breaks.
+>
+> Keep this file for the design intent and the wording rules, which still hold.
+> Do not follow its setup instructions.
+
+---
+
 # BonnetCheck — Flutter App
 ## Claude Code Build Instructions
 > **Read this entire file before writing a single line of code.**

@@ -1,3 +1,18 @@
+> **STATUS as of 2026-08-16: all of it is built and deployed.** Every phase in
+> §5 shipped, plus the two things this review said the spec got wrong and had
+> to be redesigned — the ownership rule that blocked its own transfer flow, and
+> the vehicle document being publicly readable with the seller's purchase price
+> on it. Suite went 188 → 272. The nav question in §4.5 was answered: שמורים
+> gave up its tab and moved to the Home header.
+>
+> **The one thing still blocked is not code:** Firebase Storage was never
+> provisioned on the project, so receipt and document upload cannot work until
+> somebody enables it in the console.
+>
+> Kept as the record of what was decided and why.
+
+---
+
 # The OtoV spec, read against what BonnetCheck already is
 
 Written 2026-08-13, after David supplied a full build specification titled
