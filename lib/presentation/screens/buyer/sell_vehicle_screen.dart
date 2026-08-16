@@ -11,6 +11,7 @@ import '../../../data/models/ownership_transfer.dart';
 import '../../../data/models/vehicle.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/error_retry.dart';
 import '../../widgets/primary_button_widget.dart';
 
 /// Closing a sale: the seller either hands the passport to a BonnetCheck buyer
@@ -85,7 +86,10 @@ class _SellVehicleScreenState extends ConsumerState<SellVehicleScreen> {
       body: SafeArea(
         child: vehicleAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(child: Text('לא הצלחנו לטעון את הרכב')),
+          error: (_, __) => ErrorRetry(
+            message: 'לא הצלחנו לטעון את הרכב',
+            onRetry: () => ref.invalidate(vehicleProvider(widget.vehicleId)),
+          ),
           data: (vehicle) => vehicle == null
               ? const SizedBox.shrink()
               : _code != null

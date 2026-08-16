@@ -14,6 +14,7 @@ import '../../../data/models/vehicle_reminder.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/add_reminder_sheet.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/error_retry.dart';
 import '../../widgets/document_list.dart';
 import '../../widgets/expense_summary.dart';
 import '../../widgets/primary_button_widget.dart';
@@ -76,7 +77,10 @@ class VehicleDetailScreen extends ConsumerWidget {
         body: SafeArea(
           child: vehicleAsync.when(
             loading: () => const _DetailSkeleton(),
-            error: (_, __) => const _Message('לא הצלחנו לטעון את הרכב'),
+            error: (_, __) => ErrorRetry(
+              message: 'לא הצלחנו לטעון את הרכב',
+              onRetry: () => ref.invalidate(vehicleProvider(vehicleId)),
+            ),
             data: (vehicle) => vehicle == null
                 ? const _Message('הרכב לא נמצא')
                 : TabBarView(
@@ -208,7 +212,11 @@ class _ServicesTab extends ConsumerWidget {
       ),
       body: servicesAsync.when(
         loading: () => const _DetailSkeleton(),
-        error: (_, __) => const _Message('לא הצלחנו לטעון את הטיפולים'),
+        error: (_, __) => ErrorRetry(
+          compact: true,
+          message: 'לא הצלחנו לטעון את הטיפולים',
+          onRetry: () => ref.invalidate(vehicleServicesProvider(vehicle.id)),
+        ),
         data: (records) => records.isEmpty
             ? _EmptyServices(onAdd: () => _add(context))
             : ListView(
@@ -296,7 +304,11 @@ class _ExpensesTab extends ConsumerWidget {
       ),
       body: expensesAsync.when(
         loading: () => const _DetailSkeleton(),
-        error: (_, __) => const _Message('לא הצלחנו לטעון את ההוצאות'),
+        error: (_, __) => ErrorRetry(
+          compact: true,
+          message: 'לא הצלחנו לטעון את ההוצאות',
+          onRetry: () => ref.invalidate(vehicleExpensesProvider(vehicle.id)),
+        ),
         data: (expenses) => ListView(
           padding: const EdgeInsets.fromLTRB(
             AppSpace.lg,
@@ -511,7 +523,12 @@ class _DocumentsTabState extends ConsumerState<_DocumentsTab> {
           : null,
       body: docsAsync.when(
         loading: () => const _DetailSkeleton(),
-        error: (_, __) => const _Message('לא הצלחנו לטעון את המסמכים'),
+        error: (_, __) => ErrorRetry(
+          compact: true,
+          message: 'לא הצלחנו לטעון את המסמכים',
+          onRetry: () =>
+              ref.invalidate(vehicleDocumentsProvider(widget.vehicle.id)),
+        ),
         data: (documents) => ListView(
           padding: const EdgeInsets.fromLTRB(
             AppSpace.lg,

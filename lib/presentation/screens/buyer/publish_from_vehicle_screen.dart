@@ -12,6 +12,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/error_retry.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../widgets/service_timeline.dart';
 
@@ -143,7 +144,10 @@ class _PublishFromVehicleScreenState
       body: SafeArea(
         child: vehicleAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(child: Text('לא הצלחנו לטעון את הרכב')),
+          error: (_, __) => ErrorRetry(
+            message: 'לא הצלחנו לטעון את הרכב',
+            onRetry: () => ref.invalidate(vehicleProvider(widget.vehicleId)),
+          ),
           data: (vehicle) =>
               vehicle == null ? const SizedBox.shrink() : _form(vehicle),
         ),

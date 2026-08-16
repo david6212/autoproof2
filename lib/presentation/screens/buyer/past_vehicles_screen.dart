@@ -7,6 +7,7 @@ import '../../../core/theme/app_text.dart';
 import '../../../data/models/past_vehicle.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/error_retry.dart';
 import '../../widgets/skeleton.dart';
 
 /// Cars the user used to own.
@@ -38,9 +39,9 @@ class PastVehiclesScreen extends ConsumerWidget {
               ],
             ),
           ),
-          error: (_, __) => Center(
-            child: Text('לא הצלחנו לטעון את הרשימה',
-                style: context.text.bodyMuted),
+          error: (_, __) => ErrorRetry(
+            message: 'לא הצלחנו לטעון את הרשימה',
+            onRetry: () => ref.invalidate(pastVehiclesProvider),
           ),
           data: (past) =>
               past.isEmpty ? const _Empty() : _List(vehicles: past),

@@ -10,6 +10,7 @@ import '../../../data/models/vehicle_reminder.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/error_retry.dart';
 import '../../widgets/guest_prompt_view.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../widgets/skeleton.dart';
@@ -61,7 +62,8 @@ class GarageScreen extends ConsumerWidget {
               )
             : vehiclesAsync.when(
                 loading: () => const _GarageSkeleton(),
-                error: (_, __) => _ErrorView(
+                error: (_, __) => ErrorRetry(
+                  message: 'לא הצלחנו לטעון את הרכבים',
                   onRetry: () => ref.invalidate(myVehiclesProvider),
                 ),
                 data: (vehicles) => vehicles.isEmpty
@@ -338,31 +340,6 @@ class _GarageSkeleton extends StatelessWidget {
             Skeleton(width: 90),
             SizedBox(height: AppSpace.lg),
             Skeleton(width: 200),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.onRetry});
-
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpace.xxl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.cloud_off, size: 48, color: context.colors.textSubtle),
-            const SizedBox(height: AppSpace.lg),
-            const Text('לא הצלחנו לטעון את הרכבים', style: AppText.subtitle),
-            const SizedBox(height: AppSpace.lg),
-            OutlinedButton(onPressed: onRetry, child: const Text('נסו שוב')),
           ],
         ),
       ),
