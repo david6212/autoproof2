@@ -192,8 +192,12 @@ service cloud.firestore {
       // Readable by the owner always, and by anyone while the car is listed —
       // a history the buyer cannot read cannot persuade them of anything.
       match /services/{serviceId} {
-        allow read: if vehicleData(vehicleId).ownerId == request.auth.uid
-                    || vehicleData(vehicleId).isListed == true;
+        // The listed check comes first so it short-circuits for a guest:
+        // the marketplace is browsable without an account, and evaluating
+        // `request.auth.uid` with no auth would deny the read instead.
+        allow read: if vehicleData(vehicleId).isListed == true
+                    || (isSignedIn()
+                        && vehicleData(vehicleId).ownerId == request.auth.uid);
         allow create: if isSignedIn()
                       && vehicleData(vehicleId).ownerId == request.auth.uid
                       && request.resource.data.addedByOwnerId == request.auth.uid;
@@ -220,9 +224,10 @@ service cloud.firestore {
       // here reaches a buyer until the owner turns sharing on for that one
       // document, and only while the car is actually listed.
       match /documents/{documentId} {
-        allow read: if vehicleData(vehicleId).ownerId == request.auth.uid
-                    || (resource.data.isSharedWithBuyers == true
-                        && vehicleData(vehicleId).isListed == true);
+        allow read: if (resource.data.isSharedWithBuyers == true
+                        && vehicleData(vehicleId).isListed == true)
+                    || (isSignedIn()
+                        && vehicleData(vehicleId).ownerId == request.auth.uid);
         allow create: if isSignedIn()
                       && vehicleData(vehicleId).ownerId == request.auth.uid
                       && request.resource.data.uploadedByOwnerId == request.auth.uid;

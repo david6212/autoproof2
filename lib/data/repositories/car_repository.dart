@@ -76,6 +76,49 @@ class CarRepository {
     return ref.id;
   }
 
+  /// Publishes a listing straight from a vehicle passport, linking the two in
+  /// one atomic write.
+  ///
+  /// A batch rather than two writes because the halves are only correct
+  /// together: a car pointing at a vehicle that does not know it is listed
+  /// would leave the buyer's service history unreadable (the rules open it on
+  /// the vehicle's `isListed`), and a vehicle marked listed with no car would
+  /// leave a passport that cannot be published again.
+  Future<String> publishFromVehicle({
+    required CarModel car,
+    required String vehicleId,
+  }) async {
+    final carRef = _cars.doc();
+    final vehicleRef = _db.collection('vehicles').doc(vehicleId);
+
+    final batch = _db.batch();
+    batch.set(carRef, car.toFirestore());
+    batch.update(vehicleRef, {
+      'isListed': true,
+      'activeCarId': carRef.id,
+    });
+    await batch.commit();
+    return carRef.id;
+  }
+
+  /// Takes a listing down and releases its passport, so the car can be listed
+  /// again later without the vehicle being stuck as "listed".
+  Future<void> closeListing({
+    required String carId,
+    required CarStatus status,
+    String? vehicleId,
+  }) async {
+    final batch = _db.batch();
+    batch.update(_cars.doc(carId), {'status': status.name});
+    if (vehicleId != null) {
+      batch.update(_db.collection('vehicles').doc(vehicleId), {
+        'isListed': false,
+        'activeCarId': null,
+      });
+    }
+    await batch.commit();
+  }
+
   Future<void> updateStatus(String carId, CarStatus status) {
     return _cars.doc(carId).update({'status': status.name});
   }

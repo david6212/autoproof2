@@ -60,6 +60,22 @@ final vehicleDocumentsProvider =
   (ref, id) => ref.watch(documentRepositoryProvider).watchDocuments(id),
 );
 
+/// The buyer's view of a listed car's documents — only what the owner shared.
+///
+/// A one-shot read rather than a stream: a visitor reading a listing does not
+/// need live updates, and the query is constrained to shared documents because
+/// the rules would refuse anything broader.
+final sharedDocumentsProvider =
+    FutureProvider.family<List<VehicleDocument>, String>((ref, id) async {
+  try {
+    return await ref.watch(documentRepositoryProvider).sharedDocuments(id);
+  } catch (_) {
+    // A car that has been de-listed closes its documents again. That is the
+    // rule working, not an error worth showing anyone.
+    return const [];
+  }
+});
+
 /// Reminders across the whole garage that are due within three weeks, soonest
 /// first. Drives the badge on the tab and the banner at the top of the garage.
 final dueRemindersProvider = Provider<List<(Vehicle, VehicleReminder)>>((ref) {

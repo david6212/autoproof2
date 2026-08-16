@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_dimens.dart';
@@ -42,6 +43,16 @@ class VehicleDetailScreen extends ConsumerWidget {
                 ? vehicleAsync.value!.nickname.trim()
                 : 'הרכב שלי',
           ),
+          actions: [
+            if (vehicleAsync.valueOrNull != null)
+              TextButton(
+                onPressed: () =>
+                    context.push('/vehicle/$vehicleId/publish'),
+                child: Text(
+                  vehicleAsync.value!.isListed ? 'מפורסם' : 'פרסם למכירה',
+                ),
+              ),
+          ],
           bottom: const TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,

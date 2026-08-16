@@ -281,7 +281,21 @@ class CarCard extends StatelessWidget {
         PositionedDirectional(
           bottom: 10,
           start: 10,
-          child: SellerTypeBadge(type: car.sellerType),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SellerTypeBadge(type: car.sellerType),
+              // Sits beside the seller label because the two answer the same
+              // question — who am I dealing with, and what did they keep.
+              if (car.hasDocumentedHistory) ...[
+                const SizedBox(width: AppSpace.xs),
+                FactChip(
+                  'תיק מתועד',
+                  tone: (context.colors.surface, context.colors.tealText),
+                ),
+              ],
+            ],
+          ),
         ),
         // Says where the listing's facts came from, on the listing itself
         // rather than only on the car page. Every listing is built from a

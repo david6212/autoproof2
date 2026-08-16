@@ -26,6 +26,7 @@ import '../../../core/theme/app_text.dart';
 import '../../widgets/fact_chip.dart';
 import '../../widgets/saved_check_icon.dart';
 import '../../widgets/spec_tile.dart';
+import '../../widgets/documented_history_card.dart';
 
 class CarDetailScreen extends ConsumerWidget {
   const CarDetailScreen({super.key, required this.carId});
@@ -136,6 +137,12 @@ class _Content extends ConsumerWidget {
                         currentCarId: car.id,
                         currentKm: car.km,
                       ),
+                      const SizedBox(height: 16),
+                      // The seller's own service log, when this listing came
+                      // from a passport. Renders nothing otherwise — most
+                      // listings do not, and saying so would read as an
+                      // accusation rather than an absence.
+                      DocumentedHistoryCard(car: car),
                       const SizedBox(height: 16),
                       _SellerCard(sellerType: car.sellerType),
                       const SizedBox(height: 16),

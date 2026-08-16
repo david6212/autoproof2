@@ -48,6 +48,18 @@ class CarModel {
   /// existed, or when the model isn't in the dataset.
   final ModelSpec? spec;
 
+  /// The passport this listing was published from, when it was. Null for a
+  /// listing created the ordinary way.
+  final String? vehicleId;
+
+  /// Copied from the vehicle at publish time rather than read live, for two
+  /// reasons: the buyer list would otherwise need a read per card, and the
+  /// badge should describe the car as it was advertised. A seller who logs
+  /// another service does not silently change what an old listing claimed.
+  final bool hasDocumentedHistory;
+  final int serviceCount;
+  final int historySpanMonths;
+
   const CarModel({
     required this.id,
     required this.plate,
@@ -71,6 +83,10 @@ class CarModel {
     this.color = '',
     this.ownership = '',
     this.spec,
+    this.vehicleId,
+    this.hasDocumentedHistory = false,
+    this.serviceCount = 0,
+    this.historySpanMonths = 0,
   });
 
   /// Normalised drivetrain category for filtering.
@@ -155,6 +171,14 @@ class CarModel {
       spec: data['spec'] is Map
           ? ModelSpec.fromMap(Map<String, dynamic>.from(data['spec']))
           : null,
+      vehicleId: data['vehicleId'],
+      hasDocumentedHistory: data['hasDocumentedHistory'] == true,
+      serviceCount: (data['serviceCount'] ?? 0) is int
+          ? (data['serviceCount'] ?? 0)
+          : int.tryParse('${data['serviceCount']}') ?? 0,
+      historySpanMonths: (data['historySpanMonths'] ?? 0) is int
+          ? (data['historySpanMonths'] ?? 0)
+          : int.tryParse('${data['historySpanMonths']}') ?? 0,
     );
   }
 
@@ -180,6 +204,10 @@ class CarModel {
         'color': color,
         'ownership': ownership,
         if (spec != null) 'spec': spec!.toMap(),
+        if (vehicleId != null) 'vehicleId': vehicleId,
+        'hasDocumentedHistory': hasDocumentedHistory,
+        'serviceCount': serviceCount,
+        'historySpanMonths': historySpanMonths,
       };
 
   String get title => '$make $model'.trim();
