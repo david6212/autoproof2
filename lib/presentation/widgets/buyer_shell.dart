@@ -2,14 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'app_nav_bar.dart';
-import 'saved_check_icon.dart';
 
-/// Bottom TabBar shell for buyer screens: בית | שמורים | דלק | צ'אטים | פרופיל
+/// Bottom TabBar shell for buyer screens: בית | הרכב שלי | דלק | צ'אטים | פרופיל
 ///
 /// The third slot used to be the swipe deck ("גילוי"). It showed the same cars
 /// the home list already showed, through the same filter, so it was a second
 /// route to the same place rather than a second thing to do. The fuel map
 /// takes the slot: it is somewhere a driver actually goes.
+///
+/// The second slot used to be שמורים, and gave it up to the garage. Five tabs
+/// is the ceiling on a phone, and the two are not comparable in what they are
+/// for: saved listings matter for the weeks somebody is shopping, the passport
+/// matters for the years they own the car. Saved moved into the profile and is
+/// still reachable in two taps — it keeps the nav bar and lights up the
+/// profile tab, so it reads as living there rather than as a page that lost
+/// its home.
 class BuyerShell extends StatelessWidget {
   const BuyerShell({super.key, required this.child});
 
@@ -17,8 +24,8 @@ class BuyerShell extends StatelessWidget {
 
   static const _tabs = [
     NavTab('/home', Icons.home_outlined, Icons.home, 'בית'),
-    NavTab('/saved', Icons.check_rounded, Icons.check_rounded, 'שמורים',
-        iconBuilder: savedTabIcon),
+    NavTab('/garage', Icons.directions_car_outlined, Icons.directions_car,
+        'הרכב שלי'),
     // Both states use the FILLED glyph, unlike the other tabs. The outlined
     // variant is a separate codepoint used nowhere else, and `flutter build`
     // shrinks the icon font to only the glyphs in use — so a browser holding a
@@ -37,7 +44,18 @@ class BuyerShell extends StatelessWidget {
   /// The destinations themselves, so a test can render the real bar.
   static List<NavTab> get tabs => _tabs;
 
-  int _indexFor(String location) {
+  /// Routes that sit inside the shell without owning a tab. They light up the
+  /// tab they were opened from, so the bar never claims the user is somewhere
+  /// they are not.
+  static const _adoptedBy = {'/saved': '/profile'};
+
+  /// Exposed for tests: which tab a location lights up.
+  static int indexForLocation(String location) {
+    for (final entry in _adoptedBy.entries) {
+      if (location.startsWith(entry.key)) {
+        return _tabs.indexWhere((t) => t.path == entry.value);
+      }
+    }
     final i = _tabs.indexWhere((t) => location.startsWith(t.path));
     return i < 0 ? 0 : i;
   }
@@ -45,7 +63,7 @@ class BuyerShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
-    final current = _indexFor(location);
+    final current = indexForLocation(location);
 
     return Scaffold(
       body: child,

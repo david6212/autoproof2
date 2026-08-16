@@ -25,6 +25,9 @@
   "firestore": {
     "rules": "firestore.rules"
   },
+  "storage": {
+    "rules": "storage.rules"
+  },
   "hosting": [
     {
       "//": "Canonical site - https://bonnetcheck.web.app. Serves the static landing page at / and the Flutter app at /app/, assembled into build/hosting by tool/build_site.sh.",

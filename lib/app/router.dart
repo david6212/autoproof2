@@ -21,6 +21,9 @@ import '../presentation/screens/buyer/vehicle_history_screen.dart';
 import '../presentation/screens/buyer/fuel_stations_screen.dart';
 import '../presentation/screens/buyer/inspectors_screen.dart';
 import '../presentation/screens/buyer/saved_screen.dart';
+import '../presentation/screens/buyer/garage_screen.dart';
+import '../presentation/screens/buyer/add_vehicle_screen.dart';
+import '../presentation/screens/buyer/vehicle_detail_screen.dart';
 import '../presentation/screens/buyer/compare_screen.dart';
 import '../presentation/screens/buyer/notifications_screen.dart';
 // Seller
@@ -95,11 +98,25 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (c, s, child) => BuyerShell(child: child),
         routes: [
           GoRoute(path: '/home', builder: (c, s) => const HomeScreen()),
+          GoRoute(path: '/garage', builder: (c, s) => const GarageScreen()),
+          // Saved gave up its tab to the garage. It stays inside the shell so
+          // it keeps the nav bar; BuyerShell lights up the profile tab for it.
           GoRoute(path: '/saved', builder: (c, s) => const SavedScreen()),
           GoRoute(path: '/fuel', builder: (c, s) => const FuelStationsScreen()),
           GoRoute(path: '/chats', builder: (c, s) => const ChatListScreen()),
           GoRoute(path: '/profile', builder: (c, s) => const ProfileScreen()),
         ],
+      ),
+
+      // Passport screens (no TabBar — pushed, with a back arrow)
+      GoRoute(
+        path: '/garage/add',
+        builder: (c, s) => const AddVehicleScreen(),
+      ),
+      GoRoute(
+        path: '/vehicle/:id',
+        builder: (c, s) =>
+            VehicleDetailScreen(vehicleId: s.pathParameters['id']!),
       ),
 
       // Car screens (no TabBar)

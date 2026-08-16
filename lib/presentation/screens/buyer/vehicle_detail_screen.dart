@@ -1,0 +1,650 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../../../core/theme/app_dimens.dart';
+import '../../../core/theme/app_palette.dart';
+import '../../../core/theme/app_text.dart';
+import '../../../data/models/expense.dart';
+import '../../../data/models/vehicle.dart';
+import '../../../data/models/vehicle_document.dart';
+import '../../../data/models/vehicle_reminder.dart';
+import '../../providers/vehicle_provider.dart';
+import '../../widgets/app_card.dart';
+import '../../widgets/document_list.dart';
+import '../../widgets/expense_summary.dart';
+import '../../widgets/primary_button_widget.dart';
+import '../../widgets/service_timeline.dart';
+import '../../widgets/skeleton.dart';
+import '../../widgets/spec_tile.dart';
+import 'add_expense_screen.dart';
+import 'add_service_screen.dart';
+
+/// The passport itself — one car, everything known about it.
+///
+/// Tabs are added as the features that fill them land. A tab opening onto
+/// "coming soon" is worse than a tab that is not there yet.
+class VehicleDetailScreen extends ConsumerWidget {
+  const VehicleDetailScreen({super.key, required this.vehicleId});
+
+  final String vehicleId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vehicleAsync = ref.watch(vehicleProvider(vehicleId));
+
+    return DefaultTabController(
+      length: 4,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            vehicleAsync.valueOrNull?.nickname.trim().isNotEmpty == true
+                ? vehicleAsync.value!.nickname.trim()
+                : 'הרכב שלי',
+          ),
+          bottom: const TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            tabs: [
+              Tab(text: 'סקירה'),
+              Tab(text: 'טיפולים'),
+              Tab(text: 'הוצאות'),
+              Tab(text: 'מסמכים'),
+            ],
+          ),
+        ),
+        body: SafeArea(
+          child: vehicleAsync.when(
+            loading: () => const _DetailSkeleton(),
+            error: (_, __) => const _Message('לא הצלחנו לטעון את הרכב'),
+            data: (vehicle) => vehicle == null
+                ? const _Message('הרכב לא נמצא')
+                : TabBarView(
+                    children: [
+                      _Overview(vehicle: vehicle),
+                      _ServicesTab(vehicle: vehicle),
+                      _ExpensesTab(vehicle: vehicle),
+                      _DocumentsTab(vehicle: vehicle),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The history, and the one button that can change it.
+class _ServicesTab extends ConsumerWidget {
+  const _ServicesTab({required this.vehicle});
+
+  final Vehicle vehicle;
+
+  Future<void> _add(BuildContext context, {String? corrects}) async {
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => AddServiceScreen(
+          vehicleId: vehicle.id,
+          correctsServiceId: corrects,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final servicesAsync = ref.watch(vehicleServicesProvider(vehicle.id));
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _add(context),
+        icon: const Icon(Icons.add),
+        label: const Text('הוסף טיפול'),
+      ),
+      body: servicesAsync.when(
+        loading: () => const _DetailSkeleton(),
+        error: (_, __) => const _Message('לא הצלחנו לטעון את הטיפולים'),
+        data: (records) => records.isEmpty
+            ? _EmptyServices(onAdd: () => _add(context))
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpace.lg,
+                  AppSpace.lg,
+                  AppSpace.lg,
+                  96, // clears the floating button
+                ),
+                children: [
+                  if (!vehicle.hasDocumentedHistory)
+                    _BadgeProgress(vehicle: vehicle),
+                  ServiceTimeline(
+                    records: records,
+                    onCorrect: (r) => _add(context, corrects: r.id),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+/// The wallet: what the car costs to run, month by month.
+class _ExpensesTab extends ConsumerWidget {
+  const _ExpensesTab({required this.vehicle});
+
+  final Vehicle vehicle;
+
+  Future<void> _open(BuildContext context, {Expense? existing}) async {
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => AddExpenseScreen(
+          vehicleId: vehicle.id,
+          existing: existing,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final expensesAsync = ref.watch(vehicleExpensesProvider(vehicle.id));
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _open(context),
+        icon: const Icon(Icons.add),
+        label: const Text('הוסף הוצאה'),
+      ),
+      body: expensesAsync.when(
+        loading: () => const _DetailSkeleton(),
+        error: (_, __) => const _Message('לא הצלחנו לטעון את ההוצאות'),
+        data: (expenses) => ListView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpace.lg,
+            AppSpace.lg,
+            AppSpace.lg,
+            96,
+          ),
+          children: [
+            ExpenseSummary(expenses: expenses),
+            const SizedBox(height: AppSpace.xl),
+            if (expenses.isEmpty)
+              Text(
+                'רשמו תדלוק, ניקיון או חניה — וכאן תראו כמה הרכב באמת עולה '
+                'לכם בחודש. ההוצאות פרטיות ולא מוצגות לקונים.',
+                style: context.text.bodyMuted,
+              )
+            else
+              for (final month in ExpenseMonth.group(expenses)) ...[
+                _MonthHeader(month: month),
+                for (final e in expenses.where((x) =>
+                    x.date.year == month.year && x.date.month == month.month))
+                  _ExpenseRow(
+                    expense: e,
+                    onEdit: () => _open(context, existing: e),
+                    onDelete: () => ref
+                        .read(expenseActionsProvider)
+                        .remove(vehicle.id, e.id),
+                  ),
+                const SizedBox(height: AppSpace.lg),
+              ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MonthHeader extends StatelessWidget {
+  const _MonthHeader({required this.month});
+
+  final ExpenseMonth month;
+
+  static const _names = [
+    'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
+    'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
+  ];
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: AppSpace.sm),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                '${_names[month.month - 1]} ${month.year}',
+                style: AppText.subtitle,
+              ),
+            ),
+            Text('${_thousands(month.total)} ₪', style: context.text.caption),
+          ],
+        ),
+      );
+}
+
+class _ExpenseRow extends StatelessWidget {
+  const _ExpenseRow({
+    required this.expense,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final Expense expense;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final perLitre = expense.pricePerLitre;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.sm),
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpace.md),
+        onTap: onEdit,
+        child: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: ExpenseSummary.colorFor(expense.type, context),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(expense.displayTitle, style: AppText.bodySm),
+                  Text(
+                    [
+                      '${expense.date.day}/${expense.date.month}',
+                      if (perLitre != null)
+                        '${perLitre.toStringAsFixed(2)} ₪ לליטר',
+                    ].join(' · '),
+                    style: context.text.caption,
+                  ),
+                ],
+              ),
+            ),
+            Text('${_thousands(expense.amount)} ₪', style: AppText.bodySm),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, size: 20),
+              tooltip: 'מחק',
+              onPressed: onDelete,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The filing cabinet.
+class _DocumentsTab extends ConsumerStatefulWidget {
+  const _DocumentsTab({required this.vehicle});
+
+  final Vehicle vehicle;
+
+  @override
+  ConsumerState<_DocumentsTab> createState() => _DocumentsTabState();
+}
+
+class _DocumentsTabState extends ConsumerState<_DocumentsTab> {
+  bool _uploading = false;
+
+  Future<void> _add() async {
+    final picked = await ImagePicker()
+        .pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (picked == null || !mounted) return;
+
+    final type = await showModalBottomSheet<DocumentType>(
+      context: context,
+      builder: (c) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(AppSpace.lg),
+              child: Text('איזה מסמך זה?', style: AppText.subtitle),
+            ),
+            for (final t in DocumentType.values)
+              ListTile(
+                title: Text(t.label),
+                subtitle: t.carriesPersonalData
+                    ? const Text('כולל לרוב פרטים אישיים')
+                    : null,
+                onTap: () => Navigator.of(c).pop(t),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (type == null || !mounted) return;
+
+    setState(() => _uploading = true);
+    final bytes = await picked.readAsBytes();
+    try {
+      await ref.read(documentActionsProvider).upload(
+            vehicleId: widget.vehicle.id,
+            bytes: bytes,
+            fileName: picked.name,
+            type: type,
+            title: type.label,
+          );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('העלאת המסמך נכשלה')),
+        );
+      }
+    }
+    if (mounted) setState(() => _uploading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final docsAsync = ref.watch(vehicleDocumentsProvider(widget.vehicle.id));
+    final actions = ref.read(documentActionsProvider);
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _uploading ? null : _add,
+        icon: _uploading
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.upload_file),
+        label: Text(_uploading ? 'מעלה...' : 'העלה מסמך'),
+      ),
+      body: docsAsync.when(
+        loading: () => const _DetailSkeleton(),
+        error: (_, __) => const _Message('לא הצלחנו לטעון את המסמכים'),
+        data: (documents) => ListView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpace.lg,
+            AppSpace.lg,
+            AppSpace.lg,
+            96,
+          ),
+          children: [
+            Text(
+              'כל מסמך שתעלו נשמר פרטי. תוכלו לבחור, לכל מסמך בנפרד, אם '
+              'להציג אותו לקונים כשהרכב מפורסם למכירה.',
+              style: context.text.bodyMuted,
+            ),
+            const SizedBox(height: AppSpace.lg),
+            if (documents.isEmpty)
+              Text('עוד לא הועלו מסמכים', style: context.text.caption)
+            else
+              DocumentList(
+                documents: documents,
+                onToggleShare: (doc, shared) =>
+                    actions.setShared(widget.vehicle.id, doc.id, shared),
+                onDelete: (doc) => actions.remove(widget.vehicle.id, doc),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// What is still missing before the car earns "תיק מתועד".
+///
+/// Stated as a fact about the records, never as a promise about the car — the
+/// badge says a history exists, not that the history is good.
+class _BadgeProgress extends StatelessWidget {
+  const _BadgeProgress({required this.vehicle});
+
+  final Vehicle vehicle;
+
+  @override
+  Widget build(BuildContext context) {
+    final needRecords = 3 - vehicle.serviceCount;
+    final needMonths = 6 - vehicle.historySpanMonths;
+
+    final parts = <String>[
+      if (needRecords > 0)
+        needRecords == 1 ? 'עוד רשומה אחת' : 'עוד $needRecords רשומות',
+      if (needMonths > 0)
+        needMonths == 1 ? 'עוד חודש' : 'עוד $needMonths חודשים של תיעוד',
+    ];
+    if (parts.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.lg),
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpace.md),
+        child: Row(
+          children: [
+            Icon(Icons.workspace_premium_outlined,
+                size: 20, color: context.colors.teal),
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: Text(
+                'לתג "תיק מתועד" חסרים ${parts.join(' ו')}',
+                style: AppText.bodySm,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyServices extends StatelessWidget {
+  const _EmptyServices({required this.onAdd});
+
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpace.xxl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.build_outlined, size: 48, color: context.colors.teal),
+            const SizedBox(height: AppSpace.lg),
+            const Text('עוד לא תועד כאן טיפול', style: AppText.h3),
+            const SizedBox(height: AppSpace.sm),
+            Text(
+              'כל טיפול שתתעדו נשמר לצמיתות ולא ניתן לשנותו. '
+              'אחרי 3 רשומות לאורך חצי שנה הרכב יקבל תג "תיק מתועד", '
+              'שיוצג לקונים אם תחליטו למכור.',
+              textAlign: TextAlign.center,
+              style: context.text.bodyMuted,
+            ),
+            const SizedBox(height: AppSpace.xl),
+            PrimaryButton(label: 'הוסף טיפול ראשון', onPressed: onAdd),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Overview extends ConsumerWidget {
+  const _Overview({required this.vehicle});
+
+  final Vehicle vehicle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gov = vehicle.govSnapshot ?? const {};
+    final reminders =
+        ref.watch(vehicleRemindersProvider(vehicle.id)).valueOrNull ?? const [];
+
+    final make = '${gov['make'] ?? ''}'.trim();
+    final model = '${gov['model'] ?? ''}'.trim();
+    final year = gov['year'];
+
+    return ListView(
+      padding: const EdgeInsets.all(AppSpace.lg),
+      children: [
+        AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                [make, model].where((s) => s.isNotEmpty).join(' '),
+                style: AppText.h3,
+              ),
+              const SizedBox(height: AppSpace.xs),
+              Text(
+                [
+                  if (year != null) '$year',
+                  _plateDisplay(vehicle.plate),
+                ].join(' · '),
+                style: context.text.caption,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpace.lg),
+        const Text('מפרט רשמי', style: AppText.subtitle),
+        const SizedBox(height: AppSpace.md),
+        Wrap(
+          spacing: AppSpace.sm,
+          runSpacing: AppSpace.sm,
+          children: [
+            _tile(Icons.speed_outlined, 'קילומטראז\'',
+                '${_thousands(vehicle.currentKm)} ק"מ'),
+            if ('${gov['fuelType'] ?? ''}'.isNotEmpty)
+              _tile(Icons.local_gas_station_outlined, 'סוג דלק',
+                  '${gov['fuelType']}'),
+            if ('${gov['color'] ?? ''}'.isNotEmpty)
+              _tile(Icons.palette_outlined, 'צבע', '${gov['color']}'),
+            if ('${gov['trim'] ?? ''}'.isNotEmpty)
+              _tile(Icons.tune, 'רמת גימור', '${gov['trim']}'),
+          ],
+        ),
+        if (reminders.isNotEmpty) ...[
+          const SizedBox(height: AppSpace.xl),
+          const Text('תזכורות', style: AppText.subtitle),
+          const SizedBox(height: AppSpace.md),
+          for (final r in reminders) _ReminderRow(reminder: r),
+        ],
+        const SizedBox(height: AppSpace.xl),
+        Text(
+          'הנתונים נמשכו ממרשם כלי הרכב של משרד התחבורה בעת הוספת הרכב. '
+          'BonnetCheck אינה מאמתת אותם ואינה מעידה על מצב הרכב.',
+          style: context.text.caption,
+        ),
+      ],
+    );
+  }
+
+  Widget _tile(IconData icon, String label, String value) => SizedBox(
+        width: 150,
+        child: SpecTile(icon: icon, label: label, value: value),
+      );
+}
+
+class _ReminderRow extends StatelessWidget {
+  const _ReminderRow({required this.reminder});
+
+  final VehicleReminder reminder;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final days = reminder.daysUntilDue;
+    final subtitle = days == null
+        ? (reminder.dueKm != null ? 'ב-${_thousands(reminder.dueKm!)} ק"מ' : '')
+        : days < 0
+            ? 'עבר התאריך ב-${days.abs()} ימים'
+            : days == 0
+                ? 'היום'
+                : 'בעוד $days ימים';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.sm),
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpace.md),
+        child: Row(
+          children: [
+            Icon(
+              reminder.isOverdue ? Icons.error_outline : Icons.schedule,
+              size: 20,
+              color: reminder.isOverdue ? colors.errorRed : colors.teal,
+            ),
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(reminder.title, style: AppText.bodySm),
+                  if (subtitle.isNotEmpty)
+                    Text(subtitle, style: context.text.caption),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailSkeleton extends StatelessWidget {
+  const _DetailSkeleton();
+
+  @override
+  Widget build(BuildContext context) => const Padding(
+        padding: EdgeInsets.all(AppSpace.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Skeleton(width: 180, height: 20),
+            SizedBox(height: AppSpace.md),
+            Skeleton(width: 120),
+            SizedBox(height: AppSpace.xl),
+            Skeleton(height: 70),
+          ],
+        ),
+      );
+}
+
+class _Message extends StatelessWidget {
+  const _Message(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpace.xxl),
+          child: Text(text, style: context.text.bodyMuted),
+        ),
+      );
+}
+
+String _plateDisplay(String plate) {
+  if (plate.length == 7) {
+    return '${plate.substring(0, 2)}-${plate.substring(2, 5)}-${plate.substring(5)}';
+  }
+  if (plate.length == 8) {
+    return '${plate.substring(0, 3)}-${plate.substring(3, 5)}-${plate.substring(5)}';
+  }
+  return plate;
+}
+
+String _thousands(int n) {
+  final s = n.toString();
+  final buf = StringBuffer();
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
+    buf.write(s[i]);
+  }
+  return buf.toString();
+}

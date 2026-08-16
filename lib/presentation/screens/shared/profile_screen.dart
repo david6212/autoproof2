@@ -144,8 +144,11 @@ class _Content extends StatelessWidget {
         ),
         const SizedBox(height: AppSpace.xl),
         _MenuGroup(rows: [
+          // Not a car glyph any more: the garage tab took that meaning, and
+          // two rows apart showing the same icon for "my listings" and "my
+          // vehicle" would read as the same destination.
           _MenuRow(
-            icon: Icons.directions_car_outlined,
+            icon: Icons.sell_outlined,
             label: 'המודעות שלי',
             onTap: () => context.go('/seller'),
           ),

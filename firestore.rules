@@ -16,6 +16,30 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
     }
 
+    function vehicleData(vehicleId) {
+      return get(/databases/$(database)/documents/vehicles/$(vehicleId)).data;
+    }
+
+    // A buyer taking ownership must name the handover code they were given, in
+    // `claimedVia`. The code is the transfer's document id, so a claim can only
+    // be built by someone who was actually handed it. Repeated get()s of the
+    // same path inside one evaluation are cached, so this costs a single read.
+    function isValidClaim(vehicleId) {
+      return request.resource.data.ownerId == request.auth.uid
+             && resource.data.ownerId != request.auth.uid
+             && request.resource.data.previousOwnerId == resource.data.ownerId
+             && request.resource.data.isListed == false
+             && request.resource.data.claimedVia is string
+             && exists(/databases/$(database)/documents/transfers/$(request.resource.data.claimedVia))
+             && transferData(request.resource.data.claimedVia).status == 'pending'
+             && transferData(request.resource.data.claimedVia).vehicleId == vehicleId
+             && transferData(request.resource.data.claimedVia).expiresAt > request.time;
+    }
+
+    function transferData(claimCode) {
+      return get(/databases/$(database)/documents/transfers/$(claimCode)).data;
+    }
+
     // ---- Users (profile + saved cars) ----
     // A user can only read and write their own profile document.
     match /users/{uid} {
@@ -126,6 +150,116 @@ service cloud.firestore {
     match /plate_history/{plate}/snapshots/{snapshotId} {
       allow read: if true;
       allow create: if isSignedIn();
+    }
+
+    // ---- Vehicle passports (private garage) ----
+    //
+    // A vehicle is NOT a listing. The doc itself is readable only by its
+    // owner, because it carries what the owner paid for the car and who they
+    // bought it from — handing a buyer the seller's purchase price would be
+    // arming one side of a negotiation. What the buyer is entitled to see is
+    // the service history, so it is the `services` subcollection, and only
+    // that, which opens up while the car is listed.
+    match /vehicles/{vehicleId} {
+      allow read: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isSignedIn()
+                    && request.resource.data.ownerId == request.auth.uid
+                    && request.resource.data.serviceCount == 0;
+
+      // Two ways a vehicle may change:
+      //   1. its owner edits it, and ownership stays put;
+      //   2. a buyer claims it with a valid handover code.
+      // `serviceCount` may only hold or rise by one, so nobody can award
+      // themselves a "תיק מתועד" badge without actually writing the records.
+      allow update: if isSignedIn()
+                    && (request.resource.data.serviceCount == resource.data.serviceCount
+                        || request.resource.data.serviceCount == resource.data.serviceCount + 1)
+                    && (
+                      (resource.data.ownerId == request.auth.uid
+                       && request.resource.data.ownerId == resource.data.ownerId)
+                      || isValidClaim(vehicleId)
+                    );
+
+      // Only an empty passport can be deleted. Once one record exists,
+      // "delete and re-add" would be an eraser, and append-only would mean
+      // nothing.
+      allow delete: if isSignedIn()
+                    && resource.data.ownerId == request.auth.uid
+                    && resource.data.serviceCount == 0;
+
+      // ---- Service records: append-only, no exceptions ----
+      // Readable by the owner always, and by anyone while the car is listed —
+      // a history the buyer cannot read cannot persuade them of anything.
+      match /services/{serviceId} {
+        allow read: if vehicleData(vehicleId).ownerId == request.auth.uid
+                    || vehicleData(vehicleId).isListed == true;
+        allow create: if isSignedIn()
+                      && vehicleData(vehicleId).ownerId == request.auth.uid
+                      && request.resource.data.addedByOwnerId == request.auth.uid;
+        allow update: if false; // never. a correction is a new record
+        allow delete: if false; // never
+      }
+
+      match /reminders/{reminderId} {
+        allow read, write: if isSignedIn()
+                           && vehicleData(vehicleId).ownerId == request.auth.uid;
+      }
+
+      // ---- Running costs: private, and editable ----
+      // Fuel, washes, parking. The owner's own budget, never a buyer's
+      // business — so unlike the service history this stays shut even while
+      // the car is listed, and unlike the service history it can be fixed.
+      match /expenses/{expenseId} {
+        allow read, write: if isSignedIn()
+                           && vehicleData(vehicleId).ownerId == request.auth.uid;
+      }
+
+      // ---- Attached documents: private unless the owner shares them ----
+      // A vehicle licence carries an ID number and a home address. Nothing
+      // here reaches a buyer until the owner turns sharing on for that one
+      // document, and only while the car is actually listed.
+      match /documents/{documentId} {
+        allow read: if vehicleData(vehicleId).ownerId == request.auth.uid
+                    || (resource.data.isSharedWithBuyers == true
+                        && vehicleData(vehicleId).isListed == true);
+        allow create: if isSignedIn()
+                      && vehicleData(vehicleId).ownerId == request.auth.uid
+                      && request.resource.data.uploadedByOwnerId == request.auth.uid;
+        allow update, delete: if isSignedIn()
+                              && vehicleData(vehicleId).ownerId == request.auth.uid;
+      }
+    }
+
+    // ---- Ownership handover ----
+    //
+    // The document id IS the six-character claim code, and that is the whole
+    // security model: `get` is allowed, `list` is not, so a signed-in stranger
+    // can neither enumerate pending handovers nor find a code they were not
+    // handed. Storing the code in a field as well would give it away.
+    //
+    // The claim writes only two things — who claimed it, and that it is
+    // claimed. It cannot rewrite which vehicle or whose car it was.
+    match /transfers/{claimCode} {
+      allow get: if isSignedIn();
+      allow list: if false;
+
+      allow create: if isSignedIn()
+                    && request.resource.data.fromUserId == request.auth.uid
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.toUserId == null;
+
+      allow update: if isSignedIn()
+                    && resource.data.status == 'pending'
+                    && resource.data.expiresAt > request.time
+                    && resource.data.fromUserId != request.auth.uid
+                    && request.resource.data.status == 'claimed'
+                    && request.resource.data.toUserId == request.auth.uid
+                    && request.resource.data.fromUserId == resource.data.fromUserId
+                    && request.resource.data.vehicleId == resource.data.vehicleId
+                    && request.resource.data.plate == resource.data.plate;
+
+      allow delete: if false;
     }
 
     // ---- Note reports (flags for admin review; no client reads) ----

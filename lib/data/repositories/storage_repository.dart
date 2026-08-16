@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -24,5 +26,23 @@ class StorageRepository {
       urls.add(await ref.getDownloadURL());
     }
     return urls;
+  }
+
+  /// Uploads a receipt for one service record and returns its URL.
+  ///
+  /// The path starts with the owner's uid because Storage rules cannot read
+  /// Firestore — the only ownership they can check is the one written into the
+  /// path. It must match the `vehicles/{uid}/{vehicleId}/receipts/` rule.
+  Future<String> uploadServiceReceipt({
+    required String uid,
+    required String vehicleId,
+    required String serviceId,
+    required Uint8List bytes,
+    String contentType = 'image/jpeg',
+  }) async {
+    final ext = contentType.contains('pdf') ? 'pdf' : 'jpg';
+    final ref = _storage.ref('vehicles/$uid/$vehicleId/receipts/$serviceId.$ext');
+    await ref.putData(bytes, SettableMetadata(contentType: contentType));
+    return ref.getDownloadURL();
   }
 }

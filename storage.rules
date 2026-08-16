@@ -1,0 +1,62 @@
+rules_version = '2';
+
+// Storage rules cannot read Firestore, so they cannot ask "does this user own
+// that vehicle?". The only thing they can check is the path — which is why
+// every write path below starts with the uploader's uid.
+//
+// Reads lean on a property of Firebase Storage: a download URL carries its own
+// access token, and that token works without auth. That is how a buyer sees a
+// listing photo, and how they see a document the owner chose to share. It also
+// means unsharing a document hides it in the app but does not kill a URL
+// somebody already copied — deleting the file is what revokes it, and
+// DocumentRepository.deleteDocument deletes the file and not just the record.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function withinSizeLimit(mb) {
+      return request.resource.size < mb * 1024 * 1024;
+    }
+
+    // ---- Listing photos ----
+    // Public read: the marketplace is browsable before signing in, so the
+    // photos have to be too.
+    match /cars/{uid}/{listingId}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(uid)
+                   && withinSizeLimit(10)
+                   && request.resource.contentType.matches('image/.*');
+      allow delete: if isOwner(uid);
+    }
+
+    // ---- Vehicle passport documents ----
+    // Images and PDFs only — a passport is not a file host.
+    match /vehicles/{uid}/{vehicleId}/documents/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(uid)
+                   && withinSizeLimit(10)
+                   && (request.resource.contentType.matches('image/.*')
+                       || request.resource.contentType == 'application/pdf');
+      allow delete: if isOwner(uid);
+    }
+
+    // ---- Service receipts ----
+    match /vehicles/{uid}/{vehicleId}/receipts/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(uid)
+                   && withinSizeLimit(10)
+                   && (request.resource.contentType.matches('image/.*')
+                       || request.resource.contentType == 'application/pdf');
+      allow delete: if isOwner(uid);
+    }
+
+    // Anything not named above is refused. Without this a default-open bucket
+    // is a free file host for anyone with an account.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
