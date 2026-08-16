@@ -32,12 +32,18 @@ class GarageScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('הרכב שלי'),
         actions: [
-          if (!isGuest && (vehiclesAsync.valueOrNull?.isNotEmpty ?? false))
+          if (!isGuest && (vehiclesAsync.valueOrNull?.isNotEmpty ?? false)) ...[
+            IconButton(
+              icon: const Icon(Icons.key_outlined),
+              tooltip: 'קניתי רכב דרך BonnetCheck',
+              onPressed: () => context.push('/garage/claim'),
+            ),
             IconButton(
               icon: const Icon(Icons.add),
               tooltip: 'הוסף רכב',
               onPressed: () => context.push('/garage/add'),
             ),
+          ],
         ],
       ),
       body: SafeArea(
@@ -266,6 +272,11 @@ class _EmptyGarage extends StatelessWidget {
             PrimaryButton(
               label: 'הוסף רכב',
               onPressed: () => context.push('/garage/add'),
+            ),
+            const SizedBox(height: AppSpace.sm),
+            TextButton(
+              onPressed: () => context.push('/garage/claim'),
+              child: const Text('קניתי רכב דרך BonnetCheck'),
             ),
           ],
         ),

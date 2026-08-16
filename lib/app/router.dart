@@ -25,6 +25,8 @@ import '../presentation/screens/buyer/garage_screen.dart';
 import '../presentation/screens/buyer/add_vehicle_screen.dart';
 import '../presentation/screens/buyer/vehicle_detail_screen.dart';
 import '../presentation/screens/buyer/publish_from_vehicle_screen.dart';
+import '../presentation/screens/buyer/sell_vehicle_screen.dart';
+import '../presentation/screens/buyer/claim_vehicle_screen.dart';
 import '../presentation/screens/buyer/compare_screen.dart';
 import '../presentation/screens/buyer/notifications_screen.dart';
 // Seller
@@ -123,6 +125,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/vehicle/:id/publish',
         builder: (c, s) =>
             PublishFromVehicleScreen(vehicleId: s.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/vehicle/:id/sell',
+        builder: (c, s) =>
+            SellVehicleScreen(vehicleId: s.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/garage/claim',
+        builder: (c, s) => const ClaimVehicleScreen(),
       ),
 
       // Car screens (no TabBar)

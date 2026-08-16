@@ -36,6 +36,14 @@ class OwnershipTransfer {
   /// handover states plainly what is being passed on.
   final int servicesCarried;
 
+  /// The car's name, copied here at creation.
+  ///
+  /// It has to live on this document because the buyer cannot read the vehicle
+  /// itself — a passport is readable only by its owner, and until the code is
+  /// claimed that is still the seller. Without this the buyer would be
+  /// confirming a handover of something the screen could not name.
+  final String vehicleTitle;
+
   const OwnershipTransfer({
     required this.id,
     required this.plate,
@@ -48,6 +56,7 @@ class OwnershipTransfer {
     this.claimedAt,
     required this.expiresAt,
     this.servicesCarried = 0,
+    this.vehicleTitle = '',
   });
 
   String get claimCode => id;
@@ -91,6 +100,7 @@ class OwnershipTransfer {
       servicesCarried: (data['servicesCarried'] ?? 0) is int
           ? (data['servicesCarried'] ?? 0)
           : int.tryParse('${data['servicesCarried']}') ?? 0,
+      vehicleTitle: data['vehicleTitle'] ?? '',
     );
   }
 
@@ -105,5 +115,6 @@ class OwnershipTransfer {
         'claimedAt': claimedAt,
         'expiresAt': expiresAt,
         'servicesCarried': servicesCarried,
+        'vehicleTitle': vehicleTitle,
       };
 }

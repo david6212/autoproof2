@@ -2,8 +2,10 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/models/car_model.dart' show CarStatus;
 import '../../data/models/expense.dart';
 import '../../data/models/gov_data_model.dart';
+import '../../data/models/ownership_transfer.dart';
 import '../../data/models/service_record.dart';
 import '../../data/models/vehicle.dart';
 import '../../data/models/vehicle_document.dart';
@@ -11,9 +13,11 @@ import '../../data/models/vehicle_reminder.dart';
 import '../../data/repositories/document_repository.dart';
 import '../../data/repositories/expense_repository.dart';
 import '../../data/repositories/service_repository.dart';
+import '../../data/repositories/transfer_repository.dart';
 import '../../data/repositories/vehicle_repository.dart';
 import '../../data/sources/remote/gov_api_service.dart' show GovApiException;
 import 'auth_provider.dart';
+import 'cars_provider.dart' show carRepositoryProvider;
 import 'create_listing_provider.dart' show storageRepositoryProvider;
 import 'gov_api_provider.dart';
 
@@ -384,3 +388,44 @@ class DocumentActions {
 }
 
 final documentActionsProvider = Provider<DocumentActions>(DocumentActions.new);
+
+final transferRepositoryProvider =
+    Provider<TransferRepository>((ref) => TransferRepository());
+
+/// Minting a handover code, and spending one.
+class TransferActions {
+  TransferActions(this._ref);
+
+  final Ref _ref;
+
+  Future<String> createFor(Vehicle vehicle, {String vehicleTitle = ''}) {
+    return _ref.read(transferRepositoryProvider).createTransfer(
+          vehicle: vehicle,
+          carId: vehicle.activeCarId,
+          vehicleTitle: vehicleTitle,
+        );
+  }
+
+  /// Closes a listing without handing the passport to anyone — the car was
+  /// sold outside the app, or the seller changed their mind.
+  Future<void> closeWithoutTransfer(Vehicle vehicle, CarStatus status) {
+    return _ref.read(carRepositoryProvider).closeListing(
+          carId: vehicle.activeCarId!,
+          status: status,
+          vehicleId: vehicle.id,
+        );
+  }
+
+  Future<OwnershipTransfer?> lookup(String code) =>
+      _ref.read(transferRepositoryProvider).findByCode(code);
+
+  Future<void> claim(OwnershipTransfer transfer) async {
+    final uid = _ref.read(authStateProvider).valueOrNull?.uid;
+    if (uid == null) throw StateError('צריך להתחבר כדי לתבוע רכב');
+    await _ref
+        .read(transferRepositoryProvider)
+        .claim(transfer: transfer, buyerUid: uid);
+  }
+}
+
+final transferActionsProvider = Provider<TransferActions>(TransferActions.new);

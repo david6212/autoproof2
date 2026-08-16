@@ -44,12 +44,17 @@ class VehicleDetailScreen extends ConsumerWidget {
                 : 'הרכב שלי',
           ),
           actions: [
+            // Listed cars get "sold" instead of "publish" — the next thing an
+            // owner does to a car that is already on the market is close it.
             if (vehicleAsync.valueOrNull != null)
               TextButton(
-                onPressed: () =>
-                    context.push('/vehicle/$vehicleId/publish'),
+                onPressed: () => context.push(
+                  vehicleAsync.value!.isListed
+                      ? '/vehicle/$vehicleId/sell'
+                      : '/vehicle/$vehicleId/publish',
+                ),
                 child: Text(
-                  vehicleAsync.value!.isListed ? 'מפורסם' : 'פרסם למכירה',
+                  vehicleAsync.value!.isListed ? 'סמן כנמכר' : 'פרסם למכירה',
                 ),
               ),
           ],
