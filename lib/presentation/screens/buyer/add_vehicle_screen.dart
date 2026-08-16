@@ -133,39 +133,30 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
             const SizedBox(height: AppSpace.xs),
             Text('${car.year} · ${car.plate}', style: context.text.caption),
             const SizedBox(height: AppSpace.lg),
-            Wrap(
-              spacing: AppSpace.sm,
-              runSpacing: AppSpace.sm,
-              children: [
-                if (car.fuelType.isNotEmpty)
-                  SizedBox(
-                    width: 150,
-                    child: SpecTile(
-                      icon: Icons.local_gas_station_outlined,
-                      label: 'סוג דלק',
-                      value: car.fuelType,
-                    ),
-                  ),
-                if (car.color.isNotEmpty)
-                  SizedBox(
-                    width: 150,
-                    child: SpecTile(
-                      icon: Icons.palette_outlined,
-                      label: 'צבע',
-                      value: car.color,
-                    ),
-                  ),
-                if (car.licenseExpiry != null)
-                  SizedBox(
-                    width: 150,
-                    child: SpecTile(
-                      icon: Icons.event_available_outlined,
-                      label: 'תוקף טסט',
-                      value: car.licenseExpiryDisplay,
-                    ),
-                  ),
-              ],
-            ),
+            // SpecTileGrid, not a Wrap of fixed-width boxes: it pairs the
+            // tiles, keeps a row's heights equal, and refuses to stretch a
+            // lone tile to full width. A hard-coded 150 also overflows once
+            // the reader turns the system font up.
+            SpecTileGrid(tiles: [
+              if (car.fuelType.isNotEmpty)
+                SpecTile(
+                  icon: Icons.local_gas_station_outlined,
+                  label: 'סוג דלק',
+                  value: car.fuelType,
+                ),
+              if (car.color.isNotEmpty)
+                SpecTile(
+                  icon: Icons.palette_outlined,
+                  label: 'צבע',
+                  value: car.color,
+                ),
+              if (car.licenseExpiry != null)
+                SpecTile(
+                  icon: Icons.event_available_outlined,
+                  label: 'תוקף טסט',
+                  value: car.licenseExpiryDisplay,
+                ),
+            ]),
           ],
         ),
       ),

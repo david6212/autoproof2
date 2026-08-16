@@ -537,21 +537,21 @@ class _Overview extends ConsumerWidget {
         const SizedBox(height: AppSpace.lg),
         const Text('מפרט רשמי', style: AppText.subtitle),
         const SizedBox(height: AppSpace.md),
-        Wrap(
-          spacing: AppSpace.sm,
-          runSpacing: AppSpace.sm,
-          children: [
-            _tile(Icons.speed_outlined, 'קילומטראז\'',
-                '${_thousands(vehicle.currentKm)} ק"מ'),
-            if ('${gov['fuelType'] ?? ''}'.isNotEmpty)
-              _tile(Icons.local_gas_station_outlined, 'סוג דלק',
-                  '${gov['fuelType']}'),
-            if ('${gov['color'] ?? ''}'.isNotEmpty)
-              _tile(Icons.palette_outlined, 'צבע', '${gov['color']}'),
-            if ('${gov['trim'] ?? ''}'.isNotEmpty)
-              _tile(Icons.tune, 'רמת גימור', '${gov['trim']}'),
-          ],
-        ),
+        // SpecTileGrid, not a Wrap of fixed-width boxes: it pairs the
+        // tiles, keeps each row's heights equal, and refuses to stretch a
+        // lone tile to full width. A hard-coded width also overflows once
+        // the reader turns the system font up.
+        SpecTileGrid(tiles: [
+          _tile(Icons.speed_outlined, 'קילומטראז\'',
+              '${_thousands(vehicle.currentKm)} ק"מ'),
+          if ('${gov['fuelType'] ?? ''}'.isNotEmpty)
+            _tile(Icons.local_gas_station_outlined, 'סוג דלק',
+                '${gov['fuelType']}'),
+          if ('${gov['color'] ?? ''}'.isNotEmpty)
+            _tile(Icons.palette_outlined, 'צבע', '${gov['color']}'),
+          if ('${gov['trim'] ?? ''}'.isNotEmpty)
+            _tile(Icons.tune, 'רמת גימור', '${gov['trim']}'),
+        ]),
         if (vehicle.openRecallCount > 0) ...[
           const SizedBox(height: AppSpace.lg),
           _RecallBanner(count: vehicle.openRecallCount),
@@ -594,10 +594,8 @@ class _Overview extends ConsumerWidget {
     );
   }
 
-  Widget _tile(IconData icon, String label, String value) => SizedBox(
-        width: 150,
-        child: SpecTile(icon: icon, label: label, value: value),
-      );
+  SpecTile _tile(IconData icon, String label, String value) =>
+      SpecTile(icon: icon, label: label, value: value);
 }
 
 /// An open service recall from the government dataset.
