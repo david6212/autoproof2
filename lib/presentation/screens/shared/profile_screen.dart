@@ -13,6 +13,7 @@ import '../../widgets/guest_prompt_view.dart';
 import '../../../core/theme/app_text.dart';
 import '../../widgets/saved_check_icon.dart';
 import '../../widgets/error_retry.dart';
+import '../../widgets/support_contact.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -176,6 +177,15 @@ class _Content extends StatelessWidget {
             label: 'אודות BonnetCheck',
             onTap: () => context.push('/about'),
           ),
+          // Hidden until a support address exists — the same gate the legal
+          // documents use. An app must never offer a way to reach somebody
+          // who cannot be reached.
+          if (SupportContact.isAvailable)
+            _MenuRow(
+              icon: Icons.support_agent_outlined,
+              label: 'צור קשר',
+              onTap: () => SupportRow.contact(context),
+            ),
           _MenuRow(
             icon: Icons.gavel_outlined,
             label: 'תנאי שימוש ופרטיות',

@@ -26,4 +26,13 @@ class AppConfig {
   /// The one sentence shown wherever a file could have been attached.
   static const uploadsUnavailable =
       'צירוף קבצים אינו זמין כרגע. שאר הפרטים נשמרים כרגיל.';
+
+  /// The released version, quoted in support enquiries.
+  ///
+  /// A duplicate of `version:` in pubspec.yaml, because reading the real one
+  /// needs `package_info_plus` and a whole plugin is a steep price for one
+  /// string. `app_version_test` reads pubspec and fails if the two drift — a
+  /// version number that lies is worse than none, since it sends support
+  /// looking at the wrong build.
+  static const appVersion = '0.5.0+5';
 }
