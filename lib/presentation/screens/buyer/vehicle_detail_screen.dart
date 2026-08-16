@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/constants/app_config.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_text.dart';
@@ -369,17 +370,19 @@ class _DocumentsTabState extends ConsumerState<_DocumentsTab> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _uploading ? null : _add,
-        icon: _uploading
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.upload_file),
-        label: Text(_uploading ? 'מעלה...' : 'העלה מסמך'),
-      ),
+      floatingActionButton: AppConfig.storageEnabled
+          ? FloatingActionButton.extended(
+              onPressed: _uploading ? null : _add,
+              icon: _uploading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.upload_file),
+              label: Text(_uploading ? 'מעלה...' : 'העלה מסמך'),
+            )
+          : null,
       body: docsAsync.when(
         loading: () => const _DetailSkeleton(),
         error: (_, __) => const _Message('לא הצלחנו לטעון את המסמכים'),
@@ -392,8 +395,12 @@ class _DocumentsTabState extends ConsumerState<_DocumentsTab> {
           ),
           children: [
             Text(
-              'כל מסמך שתעלו נשמר פרטי. תוכלו לבחור, לכל מסמך בנפרד, אם '
-              'להציג אותו לקונים כשהרכב מפורסם למכירה.',
+              AppConfig.storageEnabled
+                  ? 'כל מסמך שתעלו נשמר פרטי. תוכלו לבחור, לכל מסמך בנפרד, '
+                      'אם להציג אותו לקונים כשהרכב מפורסם למכירה.'
+                  : 'העלאת מסמכים עדיין לא זמינה. כשהיא תיפתח, כל מסמך '
+                      'יישמר פרטי ותוכלו לבחור לכל אחד בנפרד אם להציג אותו '
+                      'לקונים.',
               style: context.text.bodyMuted,
             ),
             const SizedBox(height: AppSpace.lg),

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/constants/app_config.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../data/models/gov_data_model.dart';
 import '../../providers/create_listing_provider.dart';
@@ -97,7 +98,14 @@ class _StepPhotos extends ConsumerWidget {
                 const Text('הוסף תמונות של הרכב', style: AppText.h3),
                 const SizedBox(height: 4),
                 Text(
-                  'עד 12 תמונות. הראשונה תשמש כתמונת השער.',
+                  AppConfig.storageEnabled
+                      ? 'עד 12 תמונות. הראשונה תשמש כתמונת השער.'
+                      // Said here rather than discovered after publishing. The
+                      // upload has been failing silently since before the
+                      // passport work: the listing went up photoless and
+                      // nobody was told why.
+                      : 'העלאת תמונות אינה זמינה כרגע. אפשר לפרסם את המודעה '
+                          'ולהוסיף תמונות כשהיא תיפתח.',
                   style: TextStyle(color: context.colors.textMuted),
                 ),
                 const SizedBox(height: 16),
