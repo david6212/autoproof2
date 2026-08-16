@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/car_model.dart';
 import '../models/ownership_transfer.dart';
+import '../models/past_vehicle.dart';
 import '../models/vehicle.dart';
 
 /// Handing a vehicle passport to its next owner.
@@ -62,9 +63,43 @@ class TransferRepository {
         'status': CarStatus.sold.name,
       });
     }
+
+    // The seller's own keepsake, written now because it cannot be recovered
+    // later: once the buyer claims the code, the passport stops being readable
+    // to the person who kept it.
+    batch.set(
+      _db
+          .collection('users')
+          .doc(vehicle.ownerId)
+          .collection('past_vehicles')
+          .doc(vehicle.id),
+      PastVehicle(
+        id: vehicle.id,
+        plate: vehicle.plate,
+        title: vehicleTitle,
+        servicesLogged: vehicle.serviceCount,
+        ownedFrom: vehicle.purchaseDate ?? vehicle.createdAt,
+        soldAt: now,
+      ).toFirestore(),
+    );
+
     await batch.commit();
     return code;
   }
+
+  /// Cars this user has handed on, newest first.
+  Stream<List<PastVehicle>> watchPastVehicles(String uid) => _db
+      .collection('users')
+      .doc(uid)
+      .collection('past_vehicles')
+      .snapshots()
+      .map((snap) {
+        final list = [
+          for (final d in snap.docs) PastVehicle.fromFirestore(d.data(), d.id),
+        ];
+        list.sort((a, b) => b.soldAt.compareTo(a.soldAt));
+        return list;
+      });
 
   /// A code no pending transfer is already using.
   ///

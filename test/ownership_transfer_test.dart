@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bonnetcheck/data/models/ownership_transfer.dart';
+import 'package:bonnetcheck/data/models/past_vehicle.dart';
 
 /// The handover is two writes by two people with no server between them, so
 /// the rules that make it safe live in three places: the document id being the
@@ -85,6 +86,38 @@ void main() {
 
     test('a car with no records says so honestly', () {
       expect(transfer(services: 0).servicesCarried, 0);
+    });
+  });
+
+  group('what the seller keeps', () {
+    // The obvious build cannot work: a passport is readable only by its
+    // current owner, and `transfers` cannot be listed at all. So the record is
+    // written at sale time to the seller's own private subcollection.
+    PastVehicle past({DateTime? from, int services = 3}) => PastVehicle(
+          id: 'v1',
+          plate: '20837803',
+          title: 'סקודה אוקטביה',
+          servicesLogged: services,
+          ownedFrom: from,
+          soldAt: DateTime(2026, 8, 1),
+        );
+
+    test('counts the months they had it', () {
+      expect(past(from: DateTime(2024, 8, 1)).ownedMonths, 730 ~/ 30);
+    });
+
+    test('says nothing rather than guessing when the start is unknown', () {
+      // A vehicle added without a purchase date has no honest answer here.
+      expect(past().ownedMonths, isNull);
+    });
+
+    test('records what was logged, frozen at handover', () {
+      final record = past(services: 5);
+      expect(record.servicesLogged, 5);
+      expect(record.toFirestore()['servicesLogged'], 5);
+      // No live link back to the vehicle: it is a keepsake, not a window into
+      // what the new owner does next.
+      expect(record.toFirestore().containsKey('ownerId'), isFalse);
     });
   });
 

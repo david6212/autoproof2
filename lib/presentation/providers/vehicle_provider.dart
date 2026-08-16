@@ -6,6 +6,7 @@ import '../../data/models/car_model.dart' show CarStatus;
 import '../../data/models/expense.dart';
 import '../../data/models/gov_data_model.dart';
 import '../../data/models/ownership_transfer.dart';
+import '../../data/models/past_vehicle.dart';
 import '../../data/models/service_record.dart';
 import '../../data/models/vehicle.dart';
 import '../../data/models/vehicle_document.dart';
@@ -457,3 +458,10 @@ class TransferActions {
 }
 
 final transferActionsProvider = Provider<TransferActions>(TransferActions.new);
+
+/// Cars this user has handed on. Empty for a guest.
+final pastVehiclesProvider = StreamProvider<List<PastVehicle>>((ref) {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid;
+  if (uid == null) return Stream.value(const []);
+  return ref.watch(transferRepositoryProvider).watchPastVehicles(uid);
+});

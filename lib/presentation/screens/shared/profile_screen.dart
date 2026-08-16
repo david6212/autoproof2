@@ -159,6 +159,11 @@ class _Content extends StatelessWidget {
             label: 'רכבים שמורים',
             onTap: () => context.push('/saved'),
           ),
+          _MenuRow(
+            icon: Icons.history,
+            label: 'רכבים שהיו בבעלותי',
+            onTap: () => context.push('/profile/past-vehicles'),
+          ),
           if (!verified)
             _MenuRow(
               icon: Icons.verified_user_outlined,

@@ -49,6 +49,14 @@ service cloud.firestore {
       match /saved/{carId} {
         allow read, write: if isSignedIn() && request.auth.uid == uid;
       }
+
+      // Cars this user has handed on. Written at sale time and kept here
+      // because it cannot be reconstructed afterwards: a passport is readable
+      // only by its current owner, and `transfers` cannot be listed at all
+      // (the document ids are the handover codes).
+      match /past_vehicles/{vehicleId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
     }
 
     // ---- Cars (public marketplace listings) ----
