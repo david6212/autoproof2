@@ -42,7 +42,14 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
     FocusScope.of(context).unfocus();
     setState(() => _searching = true);
     await ref.read(addVehicleControllerProvider.notifier).lookup(_plate.text);
-    if (mounted) setState(() => _searching = false);
+
+    // Return, do not merely skip the setState. Everything below touches a
+    // TextEditingController and an auto-disposed provider, both of which are
+    // gone once this screen is. Leaving the government lookup and walking back
+    // is a normal thing to do — and the API call is slowest exactly when
+    // somebody gives up on it, so this is the likely path, not the exotic one.
+    if (!mounted) return;
+    setState(() => _searching = false);
 
     // The registry's last-test reading is the best starting odometer we have,
     // and it saves the owner walking out to the car to read the dash.

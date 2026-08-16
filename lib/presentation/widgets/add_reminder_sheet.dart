@@ -63,7 +63,7 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
       firstDate: now.subtract(const Duration(days: 365)),
       lastDate: now.add(const Duration(days: 365 * 10)),
     );
-    if (picked != null) setState(() => _date = picked);
+    if (picked != null && mounted) setState(() => _date = picked);
   }
 
   Future<void> _save() async {

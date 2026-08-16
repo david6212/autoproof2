@@ -66,7 +66,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
       firstDate: DateTime(1990),
       lastDate: DateTime.now(),
     );
-    if (picked != null) setState(() => _date = picked);
+    if (picked != null && mounted) setState(() => _date = picked);
   }
 
   Future<void> _save() async {

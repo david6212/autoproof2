@@ -463,6 +463,14 @@ class _DocumentsTabState extends ConsumerState<_DocumentsTab> {
 
     setState(() => _uploading = true);
     final bytes = await picked.readAsBytes();
+
+    // Reading a phone photo off disk is not instant, and `ref` throws once the
+    // widget is gone. The try/catch below would swallow that into "העלאת
+    // המסמך נכשלה" and then not even show it — an upload that silently did
+    // not happen, which is the exact thing this screen was just fixed to stop
+    // doing.
+    if (!mounted) return;
+
     try {
       await ref.read(documentActionsProvider).upload(
             vehicleId: widget.vehicle.id,
