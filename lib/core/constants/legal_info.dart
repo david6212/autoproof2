@@ -13,11 +13,11 @@ class LegalInfo {
 
   /// The full name of the person or company operating BonnetCheck, exactly as it
   /// should appear in "מופעל על ידי ___".
-  static const operatorName = '';
+  static const operatorName = 'David Malede';
 
   /// Address for enquiries, data-deletion requests, content removal and
   /// complaints. Must be a mailbox that is actually monitored.
-  static const contactEmail = '';
+  static const contactEmail = 'support@bonnetcheck.com';
 
   /// Optional. A private individual is under no obligation to publish a home
   /// address — the Privacy Protection Law requires it in the *registration*
