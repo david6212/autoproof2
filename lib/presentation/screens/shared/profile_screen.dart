@@ -12,6 +12,7 @@ import '../../widgets/app_card.dart';
 import '../../widgets/guest_prompt_view.dart';
 import '../../../core/theme/app_text.dart';
 import '../../widgets/saved_check_icon.dart';
+import '../../widgets/error_retry.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -39,9 +40,9 @@ class ProfileScreen extends ConsumerWidget {
       body: SafeArea(
         child: userAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => Center(
-            child: Text('שגיאה בטעינת הפרופיל',
-                style: TextStyle(color: context.colors.textMuted)),
+          error: (_, __) => ErrorRetry(
+            message: 'לא הצלחנו לטעון את הפרופיל',
+            onRetry: () => ref.invalidate(currentUserModelProvider),
           ),
           data: (user) => _Content(user: user, ref: ref),
         ),

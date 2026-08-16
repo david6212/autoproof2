@@ -28,6 +28,7 @@ import '../../widgets/saved_check_icon.dart';
 import '../../widgets/spec_tile.dart';
 import '../../widgets/documented_history_card.dart';
 import '../../widgets/market_price_band.dart';
+import '../../widgets/error_retry.dart';
 
 class CarDetailScreen extends ConsumerWidget {
   const CarDetailScreen({super.key, required this.carId});
@@ -41,7 +42,12 @@ class CarDetailScreen extends ConsumerWidget {
     return Scaffold(
       body: carAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => _error(context),
+        // A failed load is not a missing car. Saying "not found" for a lost
+        // second of signal tells the reader the listing is gone.
+        error: (_, __) => ErrorRetry(
+          message: 'לא הצלחנו לטעון את המודעה',
+          onRetry: () => ref.invalidate(carByIdProvider(carId)),
+        ),
         data: (car) {
           if (car == null) return _error(context);
           return _Content(car: car);

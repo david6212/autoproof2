@@ -8,6 +8,7 @@ import '../../../data/models/chat_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../widgets/chat_bubble_widget.dart';
+import '../../widgets/error_retry.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key, required this.chatId});
@@ -93,6 +94,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         title: chatAsync.when(
           data: (chat) => _Header(chat: chat, me: me),
           loading: () => const Text(AppStrings.appName),
+          // Deliberately no retry: this is only the app-bar title, and the
+          // message list below carries the real failure and the real button.
+          // Two retries for one failed load would be one too many.
           error: (_, __) => const Text(AppStrings.appName),
         ),
       ),
@@ -104,9 +108,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: messagesAsync.when(
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
-                error: (_, __) => Center(
-                  child: Text(AppStrings.errorGeneric,
-                      style: TextStyle(color: context.colors.textMuted)),
+                error: (_, __) => ErrorRetry(
+                  message: 'לא הצלחנו לטעון את ההודעות',
+                  onRetry: () =>
+                      ref.invalidate(messagesProvider(widget.chatId)),
                 ),
                 data: (messages) {
                   if (messages.isEmpty) return const _EmptyChat();

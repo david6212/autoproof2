@@ -12,6 +12,7 @@ import '../../../core/theme/app_text.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/guest_prompt_view.dart';
 import '../../widgets/skeleton.dart';
+import '../../widgets/error_retry.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
@@ -37,9 +38,9 @@ class ChatListScreen extends ConsumerWidget {
               )
             : chatsAsync.when(
           loading: () => const ChatListSkeleton(),
-          error: (_, __) => Center(
-            child: Text('שגיאה בטעינת הצ\'אטים',
-                style: TextStyle(color: context.colors.textMuted)),
+          error: (_, __) => ErrorRetry(
+            message: 'לא הצלחנו לטעון את השיחות',
+            onRetry: () => ref.invalidate(userChatsProvider),
           ),
           data: (chats) {
             if (chats.isEmpty) return const _EmptyChats();

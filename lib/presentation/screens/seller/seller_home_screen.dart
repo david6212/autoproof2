@@ -11,6 +11,7 @@ import '../../providers/cars_provider.dart';
 import '../../../core/theme/app_text.dart';
 import '../../widgets/app_card.dart';
 import '../../../core/theme/app_dimens.dart';
+import '../../widgets/error_retry.dart';
 
 class SellerHomeScreen extends ConsumerWidget {
   const SellerHomeScreen({super.key});
@@ -33,7 +34,14 @@ class SellerHomeScreen extends ConsumerWidget {
             listingAsync.when(
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const SizedBox.shrink(),
+              // Rendering nothing here made a failed load look like "you
+              // have no listing" — the one reading a seller must not be given
+              // by accident.
+              error: (_, __) => ErrorRetry(
+                compact: true,
+                message: 'לא הצלחנו לטעון את המודעה שלך',
+                onRetry: () => ref.invalidate(activeCarsProvider),
+              ),
               data: (car) => car == null
                   ? _NoListing()
                   : _ActiveListingCard(car: car),

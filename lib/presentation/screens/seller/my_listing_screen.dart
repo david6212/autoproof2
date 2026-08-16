@@ -12,6 +12,7 @@ import '../../widgets/app_card.dart';
 import '../../widgets/share_listing_button.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../widgets/saved_check_icon.dart';
+import '../../widgets/error_retry.dart';
 
 class MyListingScreen extends ConsumerWidget {
   const MyListingScreen({super.key});
@@ -25,9 +26,9 @@ class MyListingScreen extends ConsumerWidget {
       body: SafeArea(
         child: listingAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => Center(
-            child: Text('שגיאה בטעינה',
-                style: TextStyle(color: context.colors.textMuted)),
+          error: (_, __) => ErrorRetry(
+            message: 'לא הצלחנו לטעון את המודעה',
+            onRetry: () => ref.invalidate(activeCarsProvider),
           ),
           data: (car) => car == null ? const _Empty() : _Content(car: car),
         ),

@@ -14,6 +14,7 @@ import '../../widgets/car_card_widget.dart';
 import '../../widgets/guest_prompt_view.dart';
 import '../../widgets/saved_check_icon.dart';
 import '../../widgets/skeleton.dart';
+import '../../widgets/error_retry.dart';
 
 class SavedScreen extends ConsumerWidget {
   const SavedScreen({super.key});
@@ -64,9 +65,9 @@ class SavedScreen extends ConsumerWidget {
             : savedAsync.when(
                 loading: () =>
                     const CarListSkeleton(padding: EdgeInsets.all(16)),
-                error: (_, __) => Center(
-                  child: Text('שגיאה בטעינת השמורים',
-                      style: TextStyle(color: context.colors.textMuted)),
+                error: (_, __) => ErrorRetry(
+                  message: 'לא הצלחנו לטעון את השמורים',
+                  onRetry: () => ref.invalidate(savedCarsProvider),
                 ),
                 data: (cars) {
                   if (cars.isEmpty) return const _EmptySaved();

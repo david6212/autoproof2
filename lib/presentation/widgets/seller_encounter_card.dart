@@ -58,8 +58,10 @@ class SellerEncounterCard extends ConsumerWidget {
               width: 20,
               child: CircularProgressIndicator(strokeWidth: 2)),
         ),
-        error: (_, __) =>
-            Text('לא ניתן לטעון דיווחים כרגע.', style: context.text.bodySmMuted),
+        error: (_, __) => _InlineRetry(
+          message: 'לא ניתן לטעון דיווחים כרגע.',
+          onRetry: () => ref.invalidate(encounterTallyProvider(car.id)),
+        ),
         data: (tally) => _body(context, ref, tally),
       ),
     );
@@ -393,4 +395,29 @@ class _NotEnoughInfo extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A one-line failure with a retry beside it, for a section nested inside a
+/// card. The full [ErrorRetry] block is right for a whole screen and far too
+/// heavy for a footnote.
+class _InlineRetry extends StatelessWidget {
+  const _InlineRetry({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Flexible(child: Text(message, style: context.text.bodySmMuted)),
+          TextButton(
+            onPressed: onRetry,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: const Size(0, 32),
+            ),
+            child: const Text('נסו שוב'),
+          ),
+        ],
+      );
 }
