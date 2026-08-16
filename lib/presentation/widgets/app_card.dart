@@ -22,6 +22,7 @@ class AppCard extends StatelessWidget {
     this.borderWidth = 1,
     this.elevated = false,
     this.onTap,
+    this.onLongPress,
     this.clipBehavior = Clip.none,
   });
 
@@ -45,6 +46,10 @@ class AppCard extends StatelessWidget {
 
   final bool elevated;
   final VoidCallback? onTap;
+
+  /// A press-and-hold action on the whole card — the chat list uses it to
+  /// offer removing a conversation, the way a phone's own lists do.
+  final VoidCallback? onLongPress;
 
   /// Set to [Clip.antiAlias] when children paint to the card's edge (a tinted
   /// header row, an image) so they follow the rounded corners.
@@ -79,10 +84,11 @@ class AppCard extends StatelessWidget {
 
     return Container(
       margin: margin,
-      child: onTap == null
+      child: onTap == null && onLongPress == null
           ? decorated
           : InkWell(
               onTap: onTap,
+              onLongPress: onLongPress,
               borderRadius: BorderRadius.circular(radius),
               child: decorated,
             ),

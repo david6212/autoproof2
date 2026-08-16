@@ -95,8 +95,41 @@ class ChatRepository {
     }
   }
 
+  /// Hides a chat from one person's list. **Not a delete.**
+  ///
+  /// The other participant keeps their copy: a conversation is a record of
+  /// something two people did, and removing your own clutter is not grounds
+  /// for reaching into someone else's history. A later message un-hides it,
+  /// which is what people expect — hiding tidies a finished conversation, it
+  /// does not block anyone.
+  Future<void> hideChat({required String chatId, required String uid}) {
+    return _chats.doc(chatId).update({'hiddenAt.$uid': DateTime.now()});
+  }
+
+  /// Puts a hidden chat back in [uid]'s list.
+  Future<void> unhideChat({required String chatId, required String uid}) {
+    return _chats.doc(chatId).update({'hiddenAt.$uid': FieldValue.delete()});
+  }
+
+  /// Records that [uid]'s device has pulled this chat down — the second tick.
+  ///
+  /// Written from the chat LIST rather than the chat screen, because delivery
+  /// happens before anyone opens anything. Best-effort and skipped when it
+  /// would change nothing, so an idle list does not write on every snapshot.
+  Future<void> markDelivered({
+    required String chatId,
+    required String uid,
+  }) async {
+    try {
+      await _chats.doc(chatId).update({'deliveredAt.$uid': DateTime.now()});
+    } catch (_) {
+      // Offline, or a chat this user can no longer reach. A missing second
+      // tick is not worth surfacing to anybody.
+    }
+  }
+
   /// Chats the user participates in, most recent first (sorted client-side to
-  /// avoid a composite index).
+  /// avoid a composite index), with the ones they hid left out.
   Stream<List<ChatModel>> streamUserChats(String uid) {
     return _chats
         .where('participants', arrayContains: uid)
@@ -104,6 +137,7 @@ class ChatRepository {
         .map((s) {
       final chats = s.docs
           .map((d) => ChatModel.fromFirestore(d.data(), d.id))
+          .where((c) => !c.isHiddenFor(uid))
           .toList();
       chats.sort((a, b) {
         final at = a.lastMessageAt ?? a.createdAt;

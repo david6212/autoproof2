@@ -45,6 +45,41 @@ final markChatReadProvider = Provider<Future<void> Function(String)>((ref) {
 });
 
 /// The chat document for a given chatId.
+/// Hides a chat from my own list, and puts it back.
+final hideChatProvider =
+    Provider<Future<void> Function(String chatId, {bool hide})>((ref) {
+  return (chatId, {hide = true}) async {
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (uid == null) return;
+    final repo = ref.read(chatRepositoryProvider);
+    if (hide) {
+      await repo.hideChat(chatId: chatId, uid: uid);
+    } else {
+      await repo.unhideChat(chatId: chatId, uid: uid);
+    }
+  };
+});
+
+/// Marks every chat with something newer than my last pickup as delivered.
+///
+/// Runs off the chat list, because a message reaches a device before anyone
+/// opens it. Writes only for chats that actually moved on, so an idle list
+/// sitting open costs nothing.
+final markDeliveredProvider = Provider<void>((ref) {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid;
+  if (uid == null) return;
+  final chats = ref.watch(userChatsProvider).valueOrNull ?? const <ChatModel>[];
+  final repo = ref.read(chatRepositoryProvider);
+
+  for (final c in chats) {
+    final at = c.lastMessageAt;
+    if (at == null || c.lastSenderId == uid) continue;
+    final got = c.deliveredAt[uid];
+    if (got != null && !got.isBefore(at)) continue;
+    repo.markDelivered(chatId: c.id, uid: uid);
+  }
+});
+
 final chatProvider =
     FutureProvider.family<ChatModel?, String>((ref, chatId) async {
   return ref.watch(chatRepositoryProvider).getChat(chatId);

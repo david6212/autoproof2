@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_palette.dart';
+import '../../data/models/message_model.dart';
+import 'message_ticks.dart';
 
 /// A single chat message bubble. Buyer/own messages are teal on the right;
 /// the other party's are grey on the left.
@@ -10,11 +12,16 @@ class ChatBubble extends StatelessWidget {
     required this.text,
     required this.isMine,
     required this.time,
+    this.status,
   });
 
   final String text;
   final bool isMine;
   final String time;
+
+  /// Only set on your own messages. Null on the other person's — a tick there
+  /// would be reporting back something you did yourself.
+  final MessageStatus? status;
 
   @override
   Widget build(BuildContext context) {
@@ -46,14 +53,23 @@ class ChatBubble extends StatelessWidget {
           children: [
             Text(text, style: TextStyle(color: fg, fontSize: 15)),
             const SizedBox(height: 2),
-            Text(
-              time,
-              style: TextStyle(
-                color: isMine
-                    ? context.colors.tealLight
-                    : context.colors.textSubtle,
-                fontSize: 9.5,
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  time,
+                  style: TextStyle(
+                    color: isMine
+                        ? context.colors.tealLight
+                        : context.colors.textSubtle,
+                    fontSize: 9.5,
+                  ),
+                ),
+                if (isMine && status != null) ...[
+                  const SizedBox(width: 4),
+                  MessageTicks(status: status!),
+                ],
+              ],
             ),
           ],
         ),

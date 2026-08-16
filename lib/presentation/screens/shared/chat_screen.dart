@@ -76,6 +76,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final chatAsync = ref.watch(chatProvider(widget.chatId));
     final messagesAsync = ref.watch(messagesProvider(widget.chatId));
     final me = ref.watch(authStateProvider).valueOrNull?.uid ?? '';
+    final chat = chatAsync.valueOrNull;
 
     return Scaffold(
       appBar: AppBar(
@@ -116,10 +117,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     itemCount: messages.length,
                     itemBuilder: (context, i) {
                       final m = messages[i];
+                      final mine = m.senderId == me;
                       return ChatBubble(
                         text: m.text,
-                        isMine: m.senderId == me,
+                        isMine: mine,
                         time: _time(m.createdAt),
+                        // Computed from the chat's own lastRead/deliveredAt
+                        // stamps rather than stored per message: the same two
+                        // fields already answer it for every message at once,
+                        // so a conversation costs no extra reads and no extra
+                        // writes to show its ticks.
+                        status: mine && chat != null
+                            ? chat.statusOf(
+                                m.createdAt,
+                                chat.otherParticipant(me),
+                              )
+                            : null,
                       );
                     },
                   );

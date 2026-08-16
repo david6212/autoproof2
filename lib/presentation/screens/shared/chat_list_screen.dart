@@ -21,6 +21,10 @@ class ChatListScreen extends ConsumerWidget {
     final me = ref.watch(authStateProvider).valueOrNull?.uid ?? '';
     final isGuest = me.isEmpty;
     final chatsAsync = ref.watch(userChatsProvider);
+    // The second tick. Watched but never read: opening this list is the moment
+    // a message has demonstrably reached this device, which is the only
+    // definition of "delivered" available without push notifications.
+    ref.watch(markDeliveredProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('צ\'אטים')),
@@ -46,7 +50,11 @@ class ChatListScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(
                   AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
               itemCount: chats.length,
-              itemBuilder: (context, i) => _ChatTile(chat: chats[i], me: me),
+              itemBuilder: (context, i) => _ChatTile(
+                chat: chats[i],
+                me: me,
+                onHide: () => _confirmHide(context, ref, chats[i], me),
+              ),
             );
           },
         ),
@@ -55,10 +63,74 @@ class ChatListScreen extends ConsumerWidget {
   }
 }
 
+/// Long-press to remove a finished conversation from your own list.
+///
+/// It asks first, and it says plainly that the other side keeps their copy —
+/// people reach for this expecting a delete, and finding out afterwards that
+/// the seller can still see everything would be a nasty surprise. It also says
+/// a new message brings it back, so nobody uses this expecting to be left
+/// alone.
+Future<void> _confirmHide(
+  BuildContext context,
+  WidgetRef ref,
+  ChatModel chat,
+  String me,
+) async {
+  final ok = await showModalBottomSheet<bool>(
+    context: context,
+    builder: (c) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: AppSpace.md),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+            child: Text(
+              'להסיר את השיחה מהרשימה שלכם? היא תישאר אצל הצד השני, ואם '
+              'תגיע הודעה חדשה היא תחזור.',
+              textAlign: TextAlign.center,
+              style: Theme.of(c).textTheme.bodyMedium,
+            ),
+          ),
+          const SizedBox(height: AppSpace.md),
+          ListTile(
+            leading: const Icon(Icons.delete_outline),
+            title: const Text('הסר מהרשימה'),
+            onTap: () => Navigator.of(c).pop(true),
+          ),
+          ListTile(
+            leading: const Icon(Icons.close),
+            title: const Text('ביטול'),
+            onTap: () => Navigator.of(c).pop(false),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (ok != true) return;
+
+  await ref.read(hideChatProvider)(chat.id);
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(
+      content: const Text('השיחה הוסרה מהרשימה'),
+      action: SnackBarAction(
+        label: 'ביטול',
+        onPressed: () => ref.read(hideChatProvider)(chat.id, hide: false),
+      ),
+    ));
+}
+
 class _ChatTile extends StatelessWidget {
-  const _ChatTile({required this.chat, required this.me});
+  const _ChatTile({
+    required this.chat,
+    required this.me,
+    required this.onHide,
+  });
   final ChatModel chat;
   final String me;
+  final VoidCallback onHide;
 
   String _time(DateTime? d) {
     if (d == null) return '';
@@ -77,6 +149,7 @@ class _ChatTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSpace.md),
       padding: const EdgeInsets.all(AppSpace.md),
       onTap: () => context.push('/chat/${chat.id}'),
+      onLongPress: onHide,
       child: Row(
         children: [
           CircleAvatar(
