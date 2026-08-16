@@ -13,10 +13,9 @@ import 'app_nav_bar.dart';
 /// The second slot used to be שמורים, and gave it up to the garage. Five tabs
 /// is the ceiling on a phone, and the two are not comparable in what they are
 /// for: saved listings matter for the weeks somebody is shopping, the passport
-/// matters for the years they own the car. Saved moved into the profile and is
-/// still reachable in two taps — it keeps the nav bar and lights up the
-/// profile tab, so it reads as living there rather than as a page that lost
-/// its home.
+/// matters for the years they own the car. Saved is now a pushed screen,
+/// reached from the mark in the Home header and from the profile menu — one
+/// tap from where a buyer actually is, and it brings the comparison with it.
 class BuyerShell extends StatelessWidget {
   const BuyerShell({super.key, required this.child});
 
@@ -44,18 +43,8 @@ class BuyerShell extends StatelessWidget {
   /// The destinations themselves, so a test can render the real bar.
   static List<NavTab> get tabs => _tabs;
 
-  /// Routes that sit inside the shell without owning a tab. They light up the
-  /// tab they were opened from, so the bar never claims the user is somewhere
-  /// they are not.
-  static const _adoptedBy = {'/saved': '/profile'};
-
   /// Exposed for tests: which tab a location lights up.
   static int indexForLocation(String location) {
-    for (final entry in _adoptedBy.entries) {
-      if (location.startsWith(entry.key)) {
-        return _tabs.indexWhere((t) => t.path == entry.value);
-      }
-    }
     final i = _tabs.indexWhere((t) => location.startsWith(t.path));
     return i < 0 ? 0 : i;
   }

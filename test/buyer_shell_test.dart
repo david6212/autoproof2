@@ -13,19 +13,14 @@ void main() {
         ['/home', '/garage', '/fuel', '/chats', '/profile']);
   });
 
-  test('saved has no tab any more, but is still inside the shell', () {
-    // It gave the second slot to the garage. Five tabs is the ceiling on a
-    // phone, and the two are not comparable: saved matters for the weeks
-    // somebody is shopping, the passport for the years they own the car.
+  test('saved has no tab any more', () {
+    // It gave the second slot to the garage and became a pushed screen,
+    // reached from the mark in the Home header and from the profile menu.
     expect(BuyerShell.tabPaths, isNot(contains('/saved')));
-    expect(BuyerShell.indexForLocation('/saved'),
-        BuyerShell.tabPaths.indexOf('/profile'));
   });
 
-  test('a tabless route still lights the tab it lives under', () {
-    // Falling through to index 0 would have the bar claim the user is on Home
-    // while they are reading their saved list.
-    expect(BuyerShell.indexForLocation('/saved'), isNot(0));
+  test('the garage sits in the second slot', () {
+    expect(BuyerShell.tabPaths.indexOf('/garage'), 1);
   });
 
   test('the swipe deck is really gone', () {

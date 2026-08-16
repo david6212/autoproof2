@@ -18,6 +18,7 @@ import '../../widgets/fact_chip.dart';
 import '../../widgets/login_required_sheet.dart';
 import '../../widgets/brand_logo.dart';
 import '../../widgets/search_filter_sheet.dart';
+import '../../widgets/saved_check_icon.dart';
 import '../../widgets/skeleton.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -117,6 +118,17 @@ class _Header extends StatelessWidget {
               const SizedBox(width: AppSpace.sm),
               const BrandWordmark(fontSize: 18),
               const Spacer(),
+              // Saved gave up its bottom tab to the garage. It earns a place
+              // here instead: it is the one thing a buyer returns to mid-search,
+              // and the comparison lives inside it — so burying saved buried
+              // the comparison with it, two screens deep and unguessable.
+              _HeaderButton(
+                icon: Icons.check_rounded,
+                iconWidget: SavedCheckIcon(size: 19, color: context.colors.textMuted),
+                tooltip: 'רכבים שמורים',
+                onTap: () => context.push('/saved'),
+              ),
+              const SizedBox(width: AppSpace.sm),
               _HeaderButton(
                 icon: Icons.info_outline,
                 tooltip: 'אודות BonnetCheck',
@@ -142,9 +154,15 @@ class _HeaderButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onTap,
+    this.iconWidget,
   });
 
   final IconData icon;
+
+  /// Drawn instead of [icon] when the mark is not a Material glyph — the saved
+  /// mark is the brand check, painted in code.
+  final Widget? iconWidget;
+
   final String tooltip;
   final VoidCallback onTap;
 
@@ -169,7 +187,8 @@ class _HeaderButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.sm),
               border: Border.all(color: context.colors.cardBorder),
             ),
-            child: Icon(icon, size: 19, color: context.colors.textMuted),
+            child: iconWidget ??
+                Icon(icon, size: 19, color: context.colors.textMuted),
           ),
         ),
       ),

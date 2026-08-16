@@ -102,14 +102,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/home', builder: (c, s) => const HomeScreen()),
           GoRoute(path: '/garage', builder: (c, s) => const GarageScreen()),
-          // Saved gave up its tab to the garage. It stays inside the shell so
-          // it keeps the nav bar; BuyerShell lights up the profile tab for it.
-          GoRoute(path: '/saved', builder: (c, s) => const SavedScreen()),
           GoRoute(path: '/fuel', builder: (c, s) => const FuelStationsScreen()),
           GoRoute(path: '/chats', builder: (c, s) => const ChatListScreen()),
           GoRoute(path: '/profile', builder: (c, s) => const ProfileScreen()),
         ],
       ),
+
+      // Saved gave up its tab to the garage and is now reached from two
+      // places — the Home header and the profile menu. So it is pushed rather
+      // than living in the shell: a back arrow returns to whichever one you
+      // came from, where a fixed highlighted tab would be wrong half the time.
+      GoRoute(path: '/saved', builder: (c, s) => const SavedScreen()),
 
       // Passport screens (no TabBar — pushed, with a back arrow)
       GoRoute(

@@ -157,7 +157,7 @@ class _Content extends StatelessWidget {
             iconWidget:
                 SavedCheckIcon(size: 18, color: context.colors.textMuted),
             label: 'רכבים שמורים',
-            onTap: () => context.go('/saved'),
+            onTap: () => context.push('/saved'),
           ),
           if (!verified)
             _MenuRow(
