@@ -65,7 +65,12 @@ final hideChatProvider =
 /// Runs off the chat list, because a message reaches a device before anyone
 /// opens it. Writes only for chats that actually moved on, so an idle list
 /// sitting open costs nothing.
-final markDeliveredProvider = Provider<void>((ref) {
+///
+/// A FutureProvider rather than a plain Provider: this does asynchronous work
+/// with a side effect, and a plain Provider is meant to compute a value. Same
+/// shape as `recallWatchProvider`, which does the equivalent job for open
+/// service recalls.
+final markDeliveredProvider = FutureProvider<void>((ref) async {
   final uid = ref.watch(authStateProvider).valueOrNull?.uid;
   if (uid == null) return;
   final chats = ref.watch(userChatsProvider).valueOrNull ?? const <ChatModel>[];
@@ -75,8 +80,11 @@ final markDeliveredProvider = Provider<void>((ref) {
     final at = c.lastMessageAt;
     if (at == null || c.lastSenderId == uid) continue;
     final got = c.deliveredAt[uid];
+    // Already marked at or after the newest message — nothing changed, so
+    // nothing is written. This is what stops the write from re-triggering the
+    // stream that triggered it.
     if (got != null && !got.isBefore(at)) continue;
-    repo.markDelivered(chatId: c.id, uid: uid);
+    await repo.markDelivered(chatId: c.id, uid: uid);
   }
 });
 
