@@ -606,9 +606,11 @@ class _CarList extends StatelessWidget {
               showLoginRequired(context, action: 'לשמור רכבים');
               return;
             }
-            ref
-                .read(toggleSavedProvider)
-                .call(car.id, !savedIds.contains(car.id));
+            ref.read(toggleSavedProvider).call(
+                  car.id,
+                  !savedIds.contains(car.id),
+                  price: car.price,
+                );
           },
           onTap: () => context.push('/car/${car.id}'),
         );

@@ -54,6 +54,13 @@ class Vehicle {
   /// to once a day — the dataset does not change faster than that.
   final DateTime? lastRecallCheckAt;
 
+  /// How many open service recalls the last check found.
+  ///
+  /// Stored rather than fetched on every open, because the throttle would
+  /// otherwise mean "skip the check and show nothing", which reads to the
+  /// owner as "no recalls" — the one wrong answer this field can give.
+  final int openRecallCount;
+
   final DateTime createdAt;
 
   const Vehicle({
@@ -76,6 +83,7 @@ class Vehicle {
     this.firstServiceAt,
     this.lastServiceAt,
     this.lastRecallCheckAt,
+    this.openRecallCount = 0,
     required this.createdAt,
   });
 
@@ -138,6 +146,9 @@ class Vehicle {
       firstServiceAt: (data['firstServiceAt'] as dynamic)?.toDate(),
       lastServiceAt: (data['lastServiceAt'] as dynamic)?.toDate(),
       lastRecallCheckAt: (data['lastRecallCheckAt'] as dynamic)?.toDate(),
+      openRecallCount: (data['openRecallCount'] ?? 0) is int
+          ? (data['openRecallCount'] ?? 0)
+          : int.tryParse('${data['openRecallCount']}') ?? 0,
       createdAt: (data['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
     );
   }
@@ -161,6 +172,7 @@ class Vehicle {
         'firstServiceAt': firstServiceAt,
         'lastServiceAt': lastServiceAt,
         'lastRecallCheckAt': lastRecallCheckAt,
+        'openRecallCount': openRecallCount,
         'createdAt': createdAt,
       };
 }

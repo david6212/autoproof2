@@ -108,8 +108,16 @@ class VehicleRepository {
     await _vehicles.doc(vehicleId).update({'currentKm': km});
   }
 
-  Future<void> markRecallChecked(String vehicleId) =>
-      _vehicles.doc(vehicleId).update({'lastRecallCheckAt': DateTime.now()});
+  /// Stores the result of an open-recall check, with the time it was made.
+  ///
+  /// Both together: the timestamp alone would let a throttled check mean
+  /// "showed nothing", which an owner reads as "no recalls" — the one wrong
+  /// answer this can give.
+  Future<void> markRecallChecked(String vehicleId, int openCount) =>
+      _vehicles.doc(vehicleId).update({
+        'lastRecallCheckAt': DateTime.now(),
+        'openRecallCount': openCount,
+      });
 
   /// Removes a passport — **only while it holds no history.**
   ///

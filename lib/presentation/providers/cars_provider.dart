@@ -5,6 +5,7 @@ import '../../data/models/car_note_model.dart';
 import '../../data/models/plate_snapshot_model.dart';
 import '../../data/models/seller_encounter.dart';
 import '../../data/repositories/car_repository.dart';
+import '../../data/repositories/price_watch_repository.dart';
 import 'auth_provider.dart';
 
 final carRepositoryProvider = Provider<CarRepository>((ref) {
@@ -308,14 +309,44 @@ final updateListingStatusProvider =
   };
 });
 
+final priceWatchRepositoryProvider =
+    Provider<PriceWatchRepository>((ref) => PriceWatchRepository());
+
 /// Toggles saved state for a car. No-op if not signed in.
+///
+/// Saving also records what the car costs right now, so the saved list can say
+/// later that the price came down. Unsaving forgets it, so re-saving next year
+/// compares against next year's price rather than this one.
 final toggleSavedProvider =
-    Provider<Future<void> Function(String carId, bool save)>((ref) {
-  return (carId, save) async {
+    Provider<Future<void> Function(String carId, bool save, {double? price})>(
+        (ref) {
+  return (carId, save, {price}) async {
     final user = ref.read(authStateProvider).valueOrNull;
     if (user == null) return;
     await ref.read(carRepositoryProvider).toggleSaved(user.uid, carId, save);
+
+    // Best-effort: the local price note must never cost someone the save.
+    try {
+      final watch = ref.read(priceWatchRepositoryProvider);
+      if (save && price != null) {
+        await watch.remember(carId, price);
+      } else if (!save) {
+        await watch.forget(carId);
+      }
+    } catch (_) {}
   };
+});
+
+/// How much each saved listing has come down since it was saved.
+///
+/// Empty for anything that has not dropped. Rises are not reported: a seller
+/// raising their price is not something a buyer can act on.
+final priceDropsProvider = FutureProvider<Map<String, double>>((ref) async {
+  final saved = ref.watch(savedCarsProvider).valueOrNull ?? const <CarModel>[];
+  if (saved.isEmpty) return const {};
+  return ref
+      .read(priceWatchRepositoryProvider)
+      .dropsFor({for (final c in saved) c.id: c.price});
 });
 
 // ---- Plate history (cross-listing memory) ----

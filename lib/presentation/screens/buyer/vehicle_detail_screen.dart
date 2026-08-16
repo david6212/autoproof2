@@ -11,6 +11,7 @@ import '../../../data/models/vehicle.dart';
 import '../../../data/models/vehicle_document.dart';
 import '../../../data/models/vehicle_reminder.dart';
 import '../../providers/vehicle_provider.dart';
+import '../../widgets/add_reminder_sheet.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/document_list.dart';
 import '../../widgets/expense_summary.dart';
@@ -544,12 +545,38 @@ class _Overview extends ConsumerWidget {
               _tile(Icons.tune, 'רמת גימור', '${gov['trim']}'),
           ],
         ),
-        if (reminders.isNotEmpty) ...[
-          const SizedBox(height: AppSpace.xl),
-          const Text('תזכורות', style: AppText.subtitle),
-          const SizedBox(height: AppSpace.md),
-          for (final r in reminders) _ReminderRow(reminder: r),
+        if (vehicle.openRecallCount > 0) ...[
+          const SizedBox(height: AppSpace.lg),
+          _RecallBanner(count: vehicle.openRecallCount),
         ],
+        const SizedBox(height: AppSpace.xl),
+        Row(
+          children: [
+            const Expanded(child: Text('תזכורות', style: AppText.subtitle)),
+            TextButton.icon(
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('הוסף'),
+              onPressed: () => AddReminderSheet.show(context, vehicle.id),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpace.sm),
+        if (reminders.isEmpty)
+          Text(
+            'אין תזכורות. תוקף הטסט נוסף אוטומטית כשמוסיפים רכב.',
+            style: context.text.caption,
+          )
+        else
+          for (final r in reminders)
+            _ReminderRow(
+              reminder: r,
+              onToggle: (done) => ref
+                  .read(vehicleRepositoryProvider)
+                  .setReminderDone(vehicle.id, r.id, done),
+              onDelete: () => ref
+                  .read(vehicleRepositoryProvider)
+                  .deleteReminder(vehicle.id, r.id),
+            ),
         const SizedBox(height: AppSpace.xl),
         Text(
           'הנתונים נמשכו ממרשם כלי הרכב של משרד התחבורה בעת הוספת הרכב. '
@@ -566,10 +593,65 @@ class _Overview extends ConsumerWidget {
       );
 }
 
+/// An open service recall from the government dataset.
+///
+/// The wording is a fact plus what to do about it, never a verdict on the car:
+/// an open recall is a repair the manufacturer owes, not evidence the car is
+/// unsafe today.
+class _RecallBanner extends StatelessWidget {
+  const _RecallBanner({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      padding: const EdgeInsets.all(AppSpace.md),
+      decoration: BoxDecoration(
+        color: colors.errorBg,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.campaign_outlined, size: 20, color: colors.errorRed),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  count == 1
+                      ? 'קריאת שירות פתוחה'
+                      : '$count קריאות שירות פתוחות',
+                  style: AppText.bodySm.copyWith(
+                    color: colors.errorRed,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'התיקון מבוצע ללא תשלום בסוכנות מורשית.',
+                  style: AppText.bodySm.copyWith(color: colors.errorRed),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ReminderRow extends StatelessWidget {
-  const _ReminderRow({required this.reminder});
+  const _ReminderRow({
+    required this.reminder,
+    this.onToggle,
+    this.onDelete,
+  });
 
   final VehicleReminder reminder;
+  final void Function(bool done)? onToggle;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -599,12 +681,38 @@ class _ReminderRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(reminder.title, style: AppText.bodySm),
+                  Text(
+                    reminder.title,
+                    style: AppText.bodySm.copyWith(
+                      decoration: reminder.isDone
+                          ? TextDecoration.lineThrough
+                          : null,
+                      color: reminder.isDone ? colors.textMuted : null,
+                    ),
+                  ),
                   if (subtitle.isNotEmpty)
                     Text(subtitle, style: context.text.caption),
                 ],
               ),
             ),
+            if (onToggle != null)
+              IconButton(
+                icon: Icon(
+                  reminder.isDone
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
+                  size: 20,
+                  color: reminder.isDone ? colors.teal : colors.textSubtle,
+                ),
+                tooltip: reminder.isDone ? 'החזר לפתוח' : 'סמן כבוצע',
+                onPressed: () => onToggle!(!reminder.isDone),
+              ),
+            if (onDelete != null)
+              IconButton(
+                icon: const Icon(Icons.delete_outline, size: 20),
+                tooltip: 'מחק',
+                onPressed: onDelete,
+              ),
           ],
         ),
       ),

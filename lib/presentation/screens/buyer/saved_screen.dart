@@ -24,6 +24,9 @@ class SavedScreen extends ConsumerWidget {
     final savedAsync = ref.watch(savedCarsProvider);
     final savedIds = ref.watch(savedIdsProvider).valueOrNull ?? const {};
     final comparing = ref.watch(compareModeProvider);
+    // How much each saved listing has come down since it was saved. Local to
+    // this device — noticing a change while the app is shut needs a server.
+    final drops = ref.watch(priceDropsProvider).valueOrNull ?? const {};
     final picked = ref.watch(compareSelectionProvider);
 
     // Only offer the comparison once there is something to compare.
@@ -80,6 +83,7 @@ class SavedScreen extends ConsumerWidget {
                     cardBuilder: (car) => CarCard(
                       car: car,
                       saved: savedIds.contains(car.id),
+                      priceDrop: drops[car.id],
                       selected: comparing
                           ? picked.any((c) => c.id == car.id)
                           : null,

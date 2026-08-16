@@ -28,6 +28,11 @@ class GarageScreen extends ConsumerWidget {
     final isGuest = ref.watch(authStateProvider).valueOrNull == null;
     final vehiclesAsync = ref.watch(myVehiclesProvider);
 
+    // No server watches for new recalls while the app is shut, so the check
+    // happens here, on open. Watched but never read: it writes what it finds
+    // onto the vehicle, and the cards re-render from that.
+    ref.watch(recallWatchProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('הרכב שלי'),
@@ -135,6 +140,17 @@ class _VehicleCard extends ConsumerWidget {
                 ),
             ],
           ),
+          if (vehicle.openRecallCount > 0) ...[
+            const SizedBox(height: AppSpace.md),
+            _Strip(
+              icon: Icons.campaign_outlined,
+              text: vehicle.openRecallCount == 1
+                  ? 'קריאת שירות פתוחה — התיקון ללא תשלום'
+                  : '${vehicle.openRecallCount} קריאות שירות פתוחות',
+              foreground: context.colors.errorRed,
+              background: context.colors.errorBg,
+            ),
+          ],
           if (next != null) ...[
             const SizedBox(height: AppSpace.md),
             _ReminderStrip(reminder: next),
@@ -163,34 +179,53 @@ class _ReminderStrip extends StatelessWidget {
     final overdue = reminder.isOverdue;
     final days = reminder.daysUntilDue ?? 0;
 
-    final text = overdue
-        ? '${reminder.title} — עבר התאריך ב-${days.abs()} ימים'
-        : days == 0
-            ? '${reminder.title} — היום'
-            : '${reminder.title} בעוד $days ימים';
+    return _Strip(
+      icon: overdue ? Icons.error_outline : Icons.schedule,
+      text: overdue
+          ? '${reminder.title} — עבר התאריך ב-${days.abs()} ימים'
+          : days == 0
+              ? '${reminder.title} — היום'
+              : '${reminder.title} בעוד $days ימים',
+      foreground: overdue ? colors.errorRed : colors.warnText,
+      background: overdue ? colors.errorBg : colors.warnBg,
+    );
+  }
+}
 
+/// One line of tinted status on a vehicle card.
+class _Strip extends StatelessWidget {
+  const _Strip({
+    required this.icon,
+    required this.text,
+    required this.foreground,
+    required this.background,
+  });
+
+  final IconData icon;
+  final String text;
+  final Color foreground;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpace.md,
         vertical: AppSpace.sm,
       ),
       decoration: BoxDecoration(
-        color: overdue ? colors.errorBg : colors.warnBg,
+        color: background,
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         children: [
-          Icon(
-            overdue ? Icons.error_outline : Icons.schedule,
-            size: 18,
-            color: overdue ? colors.errorRed : colors.warnText,
-          ),
+          Icon(icon, size: 18, color: foreground),
           const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Text(
               text,
               style: AppText.bodySm.copyWith(
-                color: overdue ? colors.errorRed : colors.warnText,
+                color: foreground,
                 fontWeight: FontWeight.bold,
               ),
             ),

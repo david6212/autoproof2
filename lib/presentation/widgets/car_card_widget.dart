@@ -101,12 +101,20 @@ class CarCard extends StatelessWidget {
     this.saved = false,
     this.onToggleSave,
     this.selected,
+    this.priceDrop,
   });
 
   final CarModel car;
   final VoidCallback onTap;
   final bool saved;
   final VoidCallback? onToggleSave;
+
+  /// Shekels the asking price has fallen since this card's listing was saved.
+  ///
+  /// Drawn over the photo rather than in the text block on purpose:
+  /// [heightFor] budgets the text lines exactly, and an extra row there would
+  /// overflow a grid cell on a wide window.
+  final double? priceDrop;
 
   /// Non-null puts the card in selection mode (comparison picking): the save
   /// button gives way to a tick circle and the border marks the choice. The
@@ -308,6 +316,15 @@ class CarCard extends StatelessWidget {
             tone: (context.colors.surface, context.colors.tealText),
           ),
         ),
+        if (priceDrop != null && priceDrop! > 0)
+          PositionedDirectional(
+            bottom: 10,
+            end: 10,
+            child: FactChip(
+              'ירד ב-₪${_priceFmt.format(priceDrop)}',
+              tone: (context.colors.tealFill, context.colors.onBrand),
+            ),
+          ),
         if (selected != null)
           PositionedDirectional(
             top: 10,

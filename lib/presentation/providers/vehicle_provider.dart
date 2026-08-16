@@ -80,6 +80,34 @@ final sharedDocumentsProvider =
   }
 });
 
+/// Checks the government recall dataset for every car in the garage that has
+/// not been checked today, and stores what it found.
+///
+/// This is the Spark-plan substitute for the spec's nightly Cloud Function.
+/// There is no server to notice a new recall while the app is shut, so the
+/// check happens when the owner opens their garage. That is later than a push
+/// notification would be, and it is honest — the app never implies it is
+/// watching in the background.
+///
+/// Failures are swallowed on purpose. A recall check that cannot reach the API
+/// must not take down the garage, and the last known count stays on screen.
+final recallWatchProvider = FutureProvider<void>((ref) async {
+  final vehicles = ref.watch(myVehiclesProvider).valueOrNull ?? const [];
+  final repo = ref.read(vehicleRepositoryProvider);
+  final gov = ref.read(govApiRepositoryProvider);
+
+  for (final v in vehicles) {
+    if (!v.needsRecallCheck) continue;
+    try {
+      final data = await gov.lookupPlate(v.plate);
+      await repo.markRecallChecked(v.id, data.recalls.length);
+    } catch (_) {
+      // Leave both fields alone, so the next open tries again rather than
+      // recording a zero that was never measured.
+    }
+  }
+});
+
 /// Reminders across the whole garage that are due within three weeks, soonest
 /// first. Drives the badge on the tab and the banner at the top of the garage.
 final dueRemindersProvider = Provider<List<(Vehicle, VehicleReminder)>>((ref) {
