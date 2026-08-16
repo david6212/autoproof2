@@ -96,26 +96,6 @@ class Expense {
         'createdAt': createdAt,
       };
 
-  Expense copyWith({
-    ExpenseType? type,
-    String? title,
-    DateTime? date,
-    int? amount,
-    double? litres,
-    int? km,
-    String? notes,
-  }) =>
-      Expense(
-        id: id,
-        type: type ?? this.type,
-        title: title ?? this.title,
-        date: date ?? this.date,
-        amount: amount ?? this.amount,
-        litres: litres ?? this.litres,
-        km: km ?? this.km,
-        notes: notes ?? this.notes,
-        createdAt: createdAt,
-      );
 }
 
 /// A month's spending, grouped for the expenses tab.

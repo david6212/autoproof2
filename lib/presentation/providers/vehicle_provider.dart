@@ -109,22 +109,6 @@ final recallWatchProvider = FutureProvider<void>((ref) async {
   }
 });
 
-/// Reminders across the whole garage that are due within three weeks, soonest
-/// first. Drives the badge on the tab and the banner at the top of the garage.
-final dueRemindersProvider = Provider<List<(Vehicle, VehicleReminder)>>((ref) {
-  final vehicles = ref.watch(myVehiclesProvider).valueOrNull ?? const [];
-  final due = <(Vehicle, VehicleReminder)>[];
-  for (final v in vehicles) {
-    final reminders = ref.watch(vehicleRemindersProvider(v.id)).valueOrNull;
-    for (final r in reminders ?? const <VehicleReminder>[]) {
-      if (r.isDueSoon) due.add((v, r));
-    }
-  }
-  due.sort((a, b) =>
-      (a.$2.daysUntilDue ?? 9999).compareTo(b.$2.daysUntilDue ?? 9999));
-  return due;
-});
-
 /// What the add-vehicle screen is doing right now.
 enum AddVehicleStep { enterPlate, confirm, saving, done }
 

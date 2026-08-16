@@ -4,7 +4,6 @@ import 'package:bonnetcheck/data/models/ownership_transfer.dart';
 import 'package:bonnetcheck/data/models/service_record.dart';
 import 'package:bonnetcheck/data/models/vehicle.dart';
 import 'package:bonnetcheck/data/models/vehicle_reminder.dart';
-import 'package:bonnetcheck/data/repositories/service_repository.dart';
 import 'package:bonnetcheck/data/repositories/vehicle_repository.dart';
 
 Vehicle _vehicle({
@@ -102,23 +101,6 @@ void main() {
 
     test('a record pointing at another one is', () {
       expect(_record(corrects: 'earlier').isCorrection, isTrue);
-    });
-
-    // The odometer denominator for cost-per-km has to ignore corrections —
-    // a correction exists because a reading was wrong, so it is not evidence
-    // of where the car started.
-    test('the earliest reading skips corrections', () {
-      final records = [
-        _record(km: 90000),
-        _record(km: 60000),
-        _record(km: 10, corrects: 's9'), // a typo being fixed
-      ];
-      expect(ServiceRepository.firstKmOf(records), 60000);
-    });
-
-    test('a history of nothing but corrections has no starting reading', () {
-      expect(ServiceRepository.firstKmOf([_record(km: 5, corrects: 'x')]),
-          isNull);
     });
   });
 

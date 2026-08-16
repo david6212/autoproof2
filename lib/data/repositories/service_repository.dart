@@ -12,8 +12,10 @@ import '../models/service_record.dart';
 /// and its existence would suggest the history is editable when the entire
 /// value of the feature is that it is not.
 ///
-/// A mistake is corrected by [addCorrection], which writes a NEW record
-/// pointing at the wrong one. Both stay visible.
+/// A mistake is corrected by adding a NEW record whose `correctsServiceId`
+/// points at the wrong one — [addService] handles that like any other write.
+/// Both records stay visible, so a reader sees that something was corrected
+/// rather than finding a history that quietly changed.
 class ServiceRepository {
   ServiceRepository({FirebaseFirestore? firestore})
       : _db = firestore ?? FirebaseFirestore.instance;
@@ -104,26 +106,6 @@ class ServiceRepository {
     batch.update(_vehicle(vehicleId), vehicleUpdate);
 
     await batch.commit();
-  }
-
-  /// Records a correction to an earlier entry. Writes a new record; the
-  /// original is untouched and stays in the timeline.
-  Future<void> addCorrection(
-    String vehicleId,
-    String targetServiceId,
-    ServiceRecord correction,
-  ) {
-    if (correction.correctsServiceId != targetServiceId) {
-      throw ArgumentError('רשומת התיקון חייבת להצביע על הרשומה שהיא מתקנת');
-    }
-    return addService(vehicleId, correction);
-  }
-
-  /// The earliest reading in the history — the denominator for cost per km.
-  static int? firstKmOf(List<ServiceRecord> records) {
-    final real = [for (final r in records) if (!r.isCorrection) r];
-    if (real.isEmpty) return null;
-    return real.map((r) => r.km).reduce(math.min);
   }
 
   static DateTime _laterOf(dynamic existing, DateTime candidate) {

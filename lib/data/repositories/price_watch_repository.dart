@@ -40,22 +40,6 @@ class PriceWatchRepository {
     await prefs.remove(_key(carId));
   }
 
-  Future<double?> priceWhenSaved(String carId) async {
-    final prefs = await _prefs;
-    return prefs.getDouble(_key(carId));
-  }
-
-  /// How much the price fell since it was saved, or null if it did not fall.
-  ///
-  /// Rises are not reported. A seller raising their price is not news the
-  /// buyer can act on, and a two-way indicator would make the list noisy.
-  Future<double?> dropFor(String carId, double currentPrice) async {
-    final before = await priceWhenSaved(carId);
-    if (before == null) return null;
-    final drop = before - currentPrice;
-    return drop > 0 ? drop : null;
-  }
-
   /// Drops for a whole list, in one pass — the saved screen renders at once.
   Future<Map<String, double>> dropsFor(Map<String, double> currentPrices) async {
     final prefs = await _prefs;

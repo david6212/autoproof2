@@ -59,6 +59,8 @@ class VehicleDetailScreen extends ConsumerWidget {
                   vehicleAsync.value!.isListed ? 'סמן כנמכר' : 'פרסם למכירה',
                 ),
               ),
+            if (vehicleAsync.valueOrNull != null)
+              _VehicleMenu(vehicle: vehicleAsync.value!),
           ],
           bottom: const TabBar(
             isScrollable: true,
@@ -88,6 +90,90 @@ class VehicleDetailScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Removing a car from the garage.
+///
+/// Only possible while it holds no service records, which is the same rule the
+/// security rules enforce. Rather than hiding the action once records exist,
+/// it explains why: "delete and re-add" would otherwise be an eraser, and the
+/// moment someone reaches for it is exactly the moment worth saying so.
+class _VehicleMenu extends ConsumerWidget {
+  const _VehicleMenu({required this.vehicle});
+
+  final Vehicle vehicle;
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    if (vehicle.serviceCount > 0) {
+      await showDialog<void>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: const Text('לא ניתן להסיר את הרכב'),
+          content: Text(
+            'לרכב יש ${vehicle.serviceCount} רשומות טיפול, ורשומות טיפול לא '
+            'נמחקות לעולם. אם אפשר היה להסיר רכב ולהוסיף אותו מחדש, זו הייתה '
+            'דרך למחוק היסטוריה — וכל התיק היה מאבד את ערכו.\n\n'
+            'אם מכרתם את הרכב, השתמשו ב"סמן כנמכר".',
+            style: AppText.body,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(c).pop(),
+              child: const Text('הבנתי'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('להסיר את הרכב?'),
+        content: const Text(
+          'הרכב יוסר מהרשימה שלכם. אין בו רשומות טיפול, אז לא הולך לאיבוד '
+          'תיעוד.',
+          style: AppText.body,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(c).pop(false),
+            child: const Text('ביטול'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(c).pop(true),
+            child: const Text('הסר'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    try {
+      await ref.read(vehicleRepositoryProvider).deleteEmptyVehicle(vehicle.id);
+      if (context.mounted) context.go('/garage');
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('לא הצלחנו להסיר את הרכב')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return PopupMenuButton<String>(
+      tooltip: 'עוד',
+      onSelected: (value) {
+        if (value == 'delete') _delete(context, ref);
+      },
+      itemBuilder: (_) => const [
+        PopupMenuItem(value: 'delete', child: Text('הסר רכב')),
+      ],
     );
   }
 }
@@ -163,6 +249,40 @@ class _ExpensesTab extends ConsumerWidget {
     );
   }
 
+  /// Deleting an expense is instant and cannot be undone, and the bin sits a
+  /// thumb's width from the row you tap to edit. Documents already ask before
+  /// deleting; this asks too, rather than being the one place a mis-tap costs
+  /// you data.
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    Expense expense,
+  ) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('למחוק את ההוצאה?'),
+        content: Text(
+          '${expense.displayTitle} · ${expense.amount} ₪',
+          style: AppText.body,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(c).pop(false),
+            child: const Text('ביטול'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(c).pop(true),
+            child: const Text('מחק'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await ref.read(expenseActionsProvider).remove(vehicle.id, expense.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final expensesAsync = ref.watch(vehicleExpensesProvider(vehicle.id));
@@ -201,9 +321,7 @@ class _ExpensesTab extends ConsumerWidget {
                   _ExpenseRow(
                     expense: e,
                     onEdit: () => _open(context, existing: e),
-                    onDelete: () => ref
-                        .read(expenseActionsProvider)
-                        .remove(vehicle.id, e.id),
+                    onDelete: () => _confirmDelete(context, ref, e),
                   ),
                 const SizedBox(height: AppSpace.lg),
               ],

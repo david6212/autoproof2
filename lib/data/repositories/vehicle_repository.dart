@@ -100,14 +100,6 @@ class VehicleRepository {
   Future<void> updateNickname(String vehicleId, String nickname) =>
       _vehicles.doc(vehicleId).update({'nickname': nickname.trim()});
 
-  /// Records the odometer without a service — the owner just read the dash.
-  /// Never moves backwards.
-  Future<void> updateCurrentKm(String vehicleId, int km) async {
-    final v = await getVehicle(vehicleId);
-    if (v == null || km <= v.currentKm) return;
-    await _vehicles.doc(vehicleId).update({'currentKm': km});
-  }
-
   /// Stores the result of an open-recall check, with the time it was made.
   ///
   /// Both together: the timestamp alone would let a throttled check mean
