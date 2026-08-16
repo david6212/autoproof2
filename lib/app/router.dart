@@ -45,6 +45,27 @@ import '../presentation/screens/shared/legal_screen.dart';
 import '../presentation/widgets/buyer_shell.dart';
 import '../presentation/widgets/seller_shell.dart';
 
+/// Routes that cannot work at all without an account.
+///
+/// A passport is private by security rule, so a signed-out visitor who follows
+/// a link to one does not get a login prompt — they get a Firestore permission
+/// error dressed as "we couldn't load this", with a retry button that can
+/// never succeed. Better to say what is actually needed.
+///
+/// `/garage` itself is deliberately NOT here: it is a bottom tab, and a tab
+/// that bounces you to a login screen is hostile. That screen shows a guest
+/// prompt explaining what a passport is, which is the invitation. It is the
+/// actions underneath it that need the account.
+bool needsAccount(String location) {
+  const gated = [
+    '/garage/add',
+    '/garage/claim',
+    '/vehicle/',
+    '/profile/past-vehicles',
+  ];
+  return gated.any(location.startsWith);
+}
+
 /// Back navigation that survives being opened from a link.
 ///
 /// A shared listing URL opens straight onto `/car/:id`, so there is nothing
@@ -77,6 +98,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           return '/verify/phone';
         }
       }
+      // RULE 2 — the passport needs an account, because it is private by
+      // security rule rather than by convention.
+      if (needsAccount(state.matchedLocation)) {
+        final auth = ref.read(authStateProvider);
+        // Only redirect once auth has actually resolved. During the first
+        // frames of a cold start the value is still loading, and treating that
+        // as "signed out" would throw a signed-in user back to the login
+        // screen every time they opened the app on a link.
+        if (auth.hasValue && auth.value == null) return '/login';
+      }
+
       return null;
     },
     routes: [
