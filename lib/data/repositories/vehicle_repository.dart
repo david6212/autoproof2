@@ -97,6 +97,18 @@ class VehicleRepository {
     return ref.id;
   }
 
+  /// Points a passport at a listing that already exists.
+  ///
+  /// The publish-from-passport flow does this in its own batch. This is the
+  /// other direction: somebody published the ordinary way and now wants to
+  /// document what they have done to the car, so the passport is created
+  /// afterwards and attached to the listing already on the market.
+  Future<void> attachToListing(String vehicleId, String carId) =>
+      _vehicles.doc(vehicleId).update({
+        'isListed': true,
+        'activeCarId': carId,
+      });
+
   Future<void> updateNickname(String vehicleId, String nickname) =>
       _vehicles.doc(vehicleId).update({'nickname': nickname.trim()});
 

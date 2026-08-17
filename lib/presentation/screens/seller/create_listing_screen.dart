@@ -8,7 +8,9 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../data/models/gov_data_model.dart';
+import '../../providers/cars_provider.dart';
 import '../../providers/create_listing_provider.dart';
+import '../../providers/vehicle_provider.dart';
 import '../../providers/seller_verification_provider.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../widgets/app_card.dart';
@@ -29,6 +31,16 @@ class CreateListingScreen extends ConsumerWidget {
         onDone: () {
           ref.read(createListingControllerProvider.notifier).reset();
           context.go('/seller/listing');
+        },
+        onDocument: () async {
+          final repo = ref.read(carRepositoryProvider);
+          final published = await repo.getCarById(state.publishedId!);
+          if (published == null) return;
+          final vehicleId =
+              await ref.read(documentListingProvider)(published);
+          if (vehicleId == null || !context.mounted) return;
+          ref.read(createListingControllerProvider.notifier).reset();
+          context.go('/vehicle/$vehicleId');
         },
       );
     }
@@ -591,9 +603,23 @@ class _StepReview extends ConsumerWidget {
 
 // ---------------- Success ----------------
 
-class _PublishedScreen extends StatelessWidget {
-  const _PublishedScreen({required this.onDone});
+class _PublishedScreen extends StatefulWidget {
+  const _PublishedScreen({required this.onDone, required this.onDocument});
   final VoidCallback onDone;
+  final Future<void> Function() onDocument;
+
+  @override
+  State<_PublishedScreen> createState() => _PublishedScreenState();
+}
+
+class _PublishedScreenState extends State<_PublishedScreen> {
+  bool _working = false;
+
+  Future<void> _document() async {
+    setState(() => _working = true);
+    await widget.onDocument();
+    if (mounted) setState(() => _working = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -635,9 +661,31 @@ class _PublishedScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 32),
+              // Offered here rather than buried in the passport, because this
+              // is the moment a seller is thinking about what makes their car
+              // worth the asking price — and a documented history is the one
+              // thing on the listing they can still add to.
               SizedBox(
                 width: double.infinity,
-                child: PrimaryButton(label: 'למודעה שלי', onPressed: onDone),
+                child: PrimaryButton(
+                  label: 'תעדו את הטיפולים שעשיתם',
+                  loading: _working,
+                  onPressed: _document,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'קונים רואים רכב מתועד אחרת. אפשר גם מאוחר יותר.',
+                textAlign: TextAlign.center,
+                style: context.text.caption,
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: _working ? null : widget.onDone,
+                  child: const Text('למודעה שלי'),
+                ),
               ),
             ],
           ),

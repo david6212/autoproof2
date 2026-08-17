@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/models/car_model.dart' show CarStatus;
+import '../../data/models/car_model.dart' show CarModel, CarStatus;
 import '../../data/models/expense.dart';
 import '../../data/models/gov_data_model.dart';
 import '../../data/models/ownership_transfer.dart';
@@ -401,6 +401,47 @@ class DocumentActions {
 }
 
 final documentActionsProvider = Provider<DocumentActions>(DocumentActions.new);
+
+/// Gives an already-published listing somewhere to record its service history.
+///
+/// The passport was built for people who add a car and live with it for years.
+/// This is the other kind of seller: they published the ordinary way, and only
+/// then realised they can show what they have done to the car. Rather than a
+/// second, weaker mechanism for them — a free-text "what I did" box, which is
+/// what the description field already is and carries no weight — they get the
+/// real one, retroactively.
+///
+/// Returns the passport id, or null when the listing is not theirs to document.
+final documentListingProvider =
+    Provider<Future<String?> Function(CarModel car)>((ref) {
+  return (car) async {
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (uid == null || car.sellerId != uid) return null;
+
+    final repo = ref.read(vehicleRepositoryProvider);
+
+    // One passport per car per owner. Somebody who publishes, removes the
+    // listing and publishes again must land back on the same history rather
+    // than starting a second one.
+    final existing = await repo.findMyVehicleByPlate(uid, car.plate);
+    final vehicleId = existing?.id ??
+        await repo.createVehicle(
+          ownerId: uid,
+          plate: car.plate,
+          currentKm: car.km,
+          govSnapshot: {
+            'make': car.make,
+            'model': car.model,
+            'year': car.year,
+            'color': car.color,
+            'fuelType': car.fuel,
+          },
+        );
+
+    await repo.attachToListing(vehicleId, car.id);
+    return vehicleId;
+  };
+});
 
 final transferRepositoryProvider =
     Provider<TransferRepository>((ref) => TransferRepository());

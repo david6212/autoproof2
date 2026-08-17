@@ -13,6 +13,7 @@ import '../../widgets/share_listing_button.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../widgets/saved_check_icon.dart';
 import '../../widgets/error_retry.dart';
+import '../../providers/vehicle_provider.dart';
 
 class MyListingScreen extends ConsumerWidget {
   const MyListingScreen({super.key});
@@ -37,7 +38,7 @@ class MyListingScreen extends ConsumerWidget {
   }
 }
 
-class _Content extends StatelessWidget {
+class _Content extends ConsumerWidget {
   const _Content({required this.car});
   final CarModel car;
 
@@ -47,7 +48,7 @@ class _Content extends StatelessWidget {
       DateTime.now().difference(car.createdAt).inDays;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -142,6 +143,11 @@ class _Content extends StatelessWidget {
           label: const Text('הצ\'אטים שלי'),
           onPressed: () => context.go('/chats'),
         ),
+        const SizedBox(height: 10),
+        // The seller's own way in to the history. Reachable from the listing
+        // rather than only from the garage, because somebody who published the
+        // ordinary way has no reason to look in the garage at all.
+        _DocumentServicesButton(car: car),
         const SizedBox(height: 24),
         _SellerActions(carId: car.id),
       ],
@@ -306,6 +312,79 @@ class _Empty extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+/// Opens — creating it first if need be — the passport behind this listing.
+///
+/// A seller who published the ordinary way has no passport, so the first tap
+/// makes one for this plate and attaches it. The second tap onward just opens
+/// it. Either way they land on the services tab of a real, append-only
+/// history rather than a free-text box that would carry no weight with a buyer.
+class _DocumentServicesButton extends ConsumerStatefulWidget {
+  const _DocumentServicesButton({required this.car});
+
+  final CarModel car;
+
+  @override
+  ConsumerState<_DocumentServicesButton> createState() =>
+      _DocumentServicesButtonState();
+}
+
+class _DocumentServicesButtonState
+    extends ConsumerState<_DocumentServicesButton> {
+  bool _working = false;
+
+  Future<void> _open() async {
+    setState(() => _working = true);
+    final vehicleId = await ref.read(documentListingProvider)(widget.car);
+    if (!mounted) return;
+    setState(() => _working = false);
+    if (vehicleId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('לא הצלחנו לפתוח את תיק הרכב')),
+      );
+      return;
+    }
+    context.push('/vehicle/$vehicleId');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final documented = widget.car.serviceCount > 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: context.colors.tealText2,
+            side: BorderSide(color: context.colors.teal),
+            minimumSize: const Size.fromHeight(48),
+          ),
+          icon: _working
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.build_outlined),
+          label: Text(documented
+              ? 'תיק הטיפולים (${widget.car.serviceCount})'
+              : 'תעדו את הטיפולים שעשיתם'),
+          onPressed: _working ? null : _open,
+        ),
+        if (!documented) ...[
+          const SizedBox(height: 6),
+          Text(
+            'מודעה עם היסטוריית טיפולים מתועדת אומרת לקונה משהו שהתיאור לא '
+            'יכול לומר.',
+            style: context.text.caption,
+          ),
+        ],
+      ],
     );
   }
 }

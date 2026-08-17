@@ -105,6 +105,28 @@ class ServiceRepository {
     };
     batch.update(_vehicle(vehicleId), vehicleUpdate);
 
+    // A listing that is on the market right now must show the history as it
+    // stands, so its denormalised copy moves with the record.
+    //
+    // This looks like it contradicts the rule that badge fields are frozen at
+    // publish time, and it does not: freezing protects listings the passport
+    // is no longer attached to, so logging a service years later cannot change
+    // what an old advert claimed. While `activeCarId` points here, the advert
+    // and the history are the same car being sold today.
+    final activeCarId = data['activeCarId'];
+    if (data['isListed'] == true && activeCarId is String) {
+      final count = serviceCount + 1;
+      final first = (data['firstServiceAt'] as dynamic)?.toDate() ?? record.date;
+      final last = _laterOf(data['lastServiceAt'], record.date);
+      batch.update(_db.collection('cars').doc(activeCarId), {
+        'vehicleId': vehicleId,
+        'serviceCount': count,
+        'historySpanMonths': last.difference(first as DateTime).inDays ~/ 30,
+        'hasDocumentedHistory':
+            count >= 3 && last.difference(first).inDays ~/ 30 >= 6,
+      });
+    }
+
     await batch.commit();
   }
 
