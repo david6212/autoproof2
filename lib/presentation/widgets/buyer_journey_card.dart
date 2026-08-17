@@ -22,12 +22,47 @@ class _ReportLink {
 const _balcarReport =
     _ReportLink(label: 'דוח בלקר', url: 'https://balcar.co.il');
 
+/// An official government service, kept in a separate type from [_ReportLink]
+/// on purpose.
+///
+/// [_ReportLink] is documented as ready to become an affiliate link once a
+/// partnership is signed. A Ministry of Transport service must never end up in
+/// that slot: the whole argument of this app is that official data and
+/// commercial claims are different things, and a gov.il link sitting in the
+/// affiliate list would blur exactly the line it exists to draw. Different
+/// type, different colour, and it says gov.il on it.
+class _OfficialLink {
+  const _OfficialLink({
+    required this.label,
+    required this.url,
+    required this.note,
+  });
+
+  final String label;
+  final String url;
+
+  /// What the reader needs to know before tapping — the things that decide
+  /// whether they can finish it today.
+  final String note;
+}
+
+/// Since 2023 the transfer can be completed online by both sides instead of at
+/// the post office. Verified to resolve before shipping; the service page is
+/// the one that explains the process and links on to MyGov.
+const _ownershipTransfer = _OfficialLink(
+  label: 'העברת בעלות אונליין',
+  url: 'https://www.gov.il/he/service/ownership-vehicles-transfer',
+  note: 'שני הצדדים מאשרים בזיהוי ממשלתי, והמוכר משלם את האגרה. '
+      'אפשר גם בדואר.',
+);
+
 /// A single step in the buyer's guided journey.
 class _JourneyStep {
   const _JourneyStep({
     required this.title,
     required this.subtitle,
     this.reports = const [],
+    this.official = const [],
     this.automation,
     this.findInspection = false,
   });
@@ -37,6 +72,10 @@ class _JourneyStep {
 
   /// Tappable partner reports surfaced at this step (opens externally).
   final List<_ReportLink> reports;
+
+  /// Official government services for this step. Rendered apart from
+  /// [reports], and never mixed with them.
+  final List<_OfficialLink> official;
 
   /// Optional automation note shown when an automated action fires at this step.
   final String? automation;
@@ -73,7 +112,8 @@ class BuyerJourneyCard extends ConsumerWidget {
     ),
     _JourneyStep(
       title: 'סגירת הקנייה',
-      subtitle: 'קניתם את הרכב 🎉',
+      subtitle: 'תשלום, העברת בעלות ומסירת הרכב',
+      official: [_ownershipTransfer],
       automation: 'הודעת סגירת ביטוח דרך השותף שלנו',
     ),
   ];
@@ -262,6 +302,10 @@ class _StepRow extends StatelessWidget {
                     const SizedBox(height: 8),
                     _ReportButton(report: report),
                   ],
+                  for (final link in step.official) ...[
+                    const SizedBox(height: 8),
+                    _OfficialButton(link: link),
+                  ],
                   if (step.automation != null) ...[
                     const SizedBox(height: 8),
                     Container(
@@ -354,6 +398,90 @@ class _ReportButton extends StatelessWidget {
                       color: context.colors.tealText)),
             ),
             Icon(Icons.open_in_new, size: 15, color: context.colors.teal),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+/// A tappable card that opens an official government service.
+///
+/// Looks different from [_ReportButton] on purpose — a surface rather than a
+/// tinted chip, and it names gov.il — so that "this is the state's own service"
+/// and "this is a company we may one day earn from" never read alike.
+class _OfficialButton extends StatelessWidget {
+  const _OfficialButton({required this.link});
+
+  final _OfficialLink link;
+
+  Future<void> _open(BuildContext context) async {
+    final ok = await launchUrl(
+      Uri.parse(link.url),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('לא ניתן לפתוח את הקישור')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return InkWell(
+      onTap: () => _open(context),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: colors.cardBorder),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.account_balance_outlined, size: 17, color: colors.teal),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          link.label,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'gov.il',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colors.textSubtle,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    link.note,
+                    style: TextStyle(fontSize: 11.5, color: colors.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.open_in_new, size: 14, color: colors.textSubtle),
           ],
         ),
       ),
