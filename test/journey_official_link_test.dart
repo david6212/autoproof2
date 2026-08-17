@@ -55,8 +55,10 @@ void main() {
     await tester.pump();
 
     // The source is named on the card. A reader deciding whether to trust a
-    // link should not have to tap it to find out whose it is.
-    expect(find.text('gov.il'), findsOneWidget);
+    // link should not have to tap it to find out whose it is. The exact count
+    // is pinned by the regulator-comparison test below; here the point is only
+    // that an official link never appears unlabelled.
+    expect(find.text('gov.il'), findsWidgets);
   });
 
   testWidgets('it says what is needed before tapping', (tester) async {
@@ -66,6 +68,55 @@ void main() {
     await tester.pump();
     expect(find.textContaining('זיהוי ממשלתי'), findsOneWidget);
     expect(find.textContaining('אפשר גם בדואר'), findsOneWidget);
+  });
+
+  testWidgets('the app no longer claims an insurance partner it does not have',
+      (tester) async {
+    // The closing step used to promise a reminder "דרך השותף שלנו". There was
+    // no partner. An app whose whole argument is that official facts and
+    // commercial claims are different things cannot invent a commercial
+    // relationship for itself.
+    await tester.pumpWidget(host(const BuyerJourneyCard(carId: 'c1')));
+    await tester.pump();
+    expect(find.textContaining('השותף שלנו'), findsNothing);
+    expect(find.textContaining('בשיתוף'), findsNothing);
+  });
+
+  testWidgets('it says plainly what the reader has to do about insurance',
+      (tester) async {
+    await tester.pumpWidget(host(const BuyerJourneyCard(carId: 'c1')));
+    await tester.pump();
+    // The fact that decides it: the seller's cover does not travel with the
+    // car, and driving without compulsory insurance is illegal.
+    expect(find.textContaining('ביטוח חובה'), findsWidgets);
+    expect(find.textContaining('לא עובר'), findsOneWidget);
+  });
+
+  testWidgets('the insurer list disclaims itself', (tester) async {
+    // Five names with no explanation read as five companies we chose — which
+    // is the impression the removed line gave, only worse for being implicit.
+    await tester.pumpWidget(host(const BuyerJourneyCard(carId: 'c1')));
+    await tester.pump();
+    expect(find.textContaining('אינה המלצה'), findsOneWidget);
+    expect(find.textContaining('איננו מקבלים תמורה'), findsOneWidget);
+  });
+
+  testWidgets('the insurers are listed alphabetically, so order says nothing',
+      (tester) async {
+    await tester.pumpWidget(host(const BuyerJourneyCard(carId: 'c1')));
+    await tester.pump();
+    for (final name in ['איילון', 'הפניקס', 'הראל', 'כלל', 'מגדל']) {
+      expect(find.text(name), findsOneWidget, reason: 'missing $name');
+    }
+  });
+
+  testWidgets('the regulator comparison is offered before any company',
+      (tester) async {
+    // It covers every insurer, so pointing there recommends nobody.
+    await tester.pumpWidget(host(const BuyerJourneyCard(carId: 'c1')));
+    await tester.pump();
+    expect(find.text('השוואת מחירי ביטוח חובה'), findsOneWidget);
+    expect(find.text('gov.il'), findsNWidgets(2));
   });
 
   testWidgets('the whole card still fits a narrow phone', (tester) async {

@@ -49,11 +49,31 @@ class _OfficialLink {
 /// Since 2023 the transfer can be completed online by both sides instead of at
 /// the post office. Verified to resolve before shipping; the service page is
 /// the one that explains the process and links on to MyGov.
+/// Alphabetical, so the order carries no opinion. Every URL was checked to
+/// resolve before shipping.
+const _insurers = <_ReportLink>[
+  _ReportLink(label: 'איילון', url: 'https://www.ayalon-ins.co.il'),
+  _ReportLink(label: 'הפניקס', url: 'https://www.fnx.co.il'),
+  _ReportLink(label: 'הראל', url: 'https://www.harel-group.co.il'),
+  _ReportLink(label: 'כלל', url: 'https://www.clalbit.co.il'),
+  _ReportLink(label: 'מגדל', url: 'https://www.migdal.co.il'),
+];
+
 const _ownershipTransfer = _OfficialLink(
   label: 'העברת בעלות אונליין',
   url: 'https://www.gov.il/he/service/ownership-vehicles-transfer',
   note: 'שני הצדדים מאשרים בזיהוי ממשלתי, והמוכר משלם את האגרה. '
       'אפשר גם בדואר.',
+);
+
+/// The regulator's own comparison of compulsory-insurance rates across every
+/// insurer. Chosen over naming a company because it IS every company: the
+/// state publishes the tariffs, so pointing here recommends nobody.
+const _insuranceCompare = _OfficialLink(
+  label: 'השוואת מחירי ביטוח חובה',
+  url: 'https://car.cma.gov.il/',
+  note: 'המחשבון של רשות שוק ההון משווה את התעריפים של כל החברות. '
+      'הפרשים של מאות שקלים הם דבר רגיל.',
 );
 
 /// A single step in the buyer's guided journey.
@@ -63,7 +83,8 @@ class _JourneyStep {
     required this.subtitle,
     this.reports = const [],
     this.official = const [],
-    this.automation,
+    this.reminder,
+    this.insurers = const [],
     this.findInspection = false,
   });
 
@@ -77,8 +98,15 @@ class _JourneyStep {
   /// [reports], and never mixed with them.
   final List<_OfficialLink> official;
 
-  /// Optional automation note shown when an automated action fires at this step.
-  final String? automation;
+  /// A plain reminder shown at this step. Says what the reader has to do; it
+  /// never implies the app arranged anything on their behalf.
+  final String? reminder;
+
+  /// Insurers offered as a starting point. Deliberately several, alphabetical,
+  /// and captioned as neither complete nor a recommendation — one name here
+  /// would read as the deal we do not have, and a ranked list would read as a
+  /// preference we have no basis for.
+  final List<_ReportLink> insurers;
 
   /// When true, shows an in-app link to the licensed inspection-center directory.
   final bool findInspection;
@@ -113,8 +141,14 @@ class BuyerJourneyCard extends ConsumerWidget {
     _JourneyStep(
       title: 'סגירת הקנייה',
       subtitle: 'תשלום, העברת בעלות ומסירת הרכב',
-      official: [_ownershipTransfer],
-      automation: 'הודעת סגירת ביטוח דרך השותף שלנו',
+      official: [_ownershipTransfer, _insuranceCompare],
+      // There is no insurance partner. This line used to say the reminder
+      // arrived "דרך השותף שלנו", which was simply untrue — an app whose whole
+      // argument is that official facts and commercial claims are different
+      // things cannot invent a commercial relationship for itself.
+      reminder: 'אסור לנסוע בלי ביטוח חובה בתוקף, והביטוח של המוכר לא עובר '
+          'אליכם עם הרכב. סגרו ביטוח לפני שאתם לוקחים את המפתחות.',
+      insurers: _insurers,
     ),
   ];
 
@@ -306,30 +340,38 @@ class _StepRow extends StatelessWidget {
                     const SizedBox(height: 8),
                     _OfficialButton(link: link),
                   ],
-                  if (step.automation != null) ...[
+                  if (step.reminder != null) ...[
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 7),
                       decoration: BoxDecoration(
-                        color: context.colors.tealLight,
+                        color: context.colors.warnBg,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.bolt,
-                              size: 15, color: context.colors.teal),
+                          // A warning glyph, not the lightning bolt: nothing
+                          // here happens automatically, and the bolt promised
+                          // that it did.
+                          Icon(Icons.gpp_maybe_outlined,
+                              size: 15, color: context.colors.warnText),
                           const SizedBox(width: 6),
                           Expanded(
-                            child: Text(step.automation!,
+                            child: Text(step.reminder!,
                                 style: TextStyle(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
-                                    color: context.colors.tealText)),
+                                    color: context.colors.warnText)),
                           ),
                         ],
                       ),
                     ),
+                  ],
+                  if (step.insurers.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _InsurerOptions(insurers: step.insurers),
                   ],
                   if (actionLabel != null && onAction != null) ...[
                     const SizedBox(height: 10),
@@ -485,6 +527,77 @@ class _OfficialButton extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+
+/// A row of insurers to start from, and a caption saying what it is not.
+///
+/// The caption is the point. A list of five companies with no explanation
+/// reads as five companies we chose, and the line this replaced already told
+/// readers we had an insurance partner when we had none. So it says outright
+/// that the list is partial, that it is not a recommendation, and that no
+/// money changes hands.
+class _InsurerOptions extends StatelessWidget {
+  const _InsurerOptions({required this.insurers});
+
+  final List<_ReportLink> insurers;
+
+  Future<void> _open(BuildContext context, String url) async {
+    final ok = await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('לא ניתן לפתוח את הקישור')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'לביטוח מקיף או צד ג׳, אפשר להתחיל מכאן:',
+          style: TextStyle(fontSize: 12, color: colors.textMuted),
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final insurer in insurers)
+              InkWell(
+                onTap: () => _open(context, insurer.url),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: colors.cardBorder),
+                  ),
+                  child: Text(
+                    insurer.label,
+                    style: TextStyle(fontSize: 12, color: colors.textPrimary),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'רשימה חלקית ולפי סדר א־ב. אינה המלצה, ואיננו מקבלים תמורה מאף חברה.',
+          style: TextStyle(fontSize: 11, color: colors.textSubtle),
+        ),
+      ],
     );
   }
 }
