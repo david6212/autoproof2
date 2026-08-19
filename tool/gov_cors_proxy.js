@@ -14,7 +14,8 @@
  * Deploy (David's account; free tier covers 100k requests/day):
  *   1. Cloudflare dashboard → Workers & Pages → Create → paste this file.
  *   2. Note the workers.dev URL, or bind a route on bonnetcheck.com.
- *   3. Point `ApiConstants.baseUrl` at it and redeploy the web build.
+ *   3. Put the workers.dev origin in `ApiConstants.govProxyHost` and redeploy
+ *      the web build. Web only — the phone keeps calling the registry direct.
  *
  * Deliberately narrow. It forwards nothing but datastore_search GETs to one
  * host, and reflects only our own origins back — an open relay on a
@@ -27,16 +28,28 @@ const ALLOWED_ORIGINS = [
   'https://bonnetcheck.web.app',
   'https://autoproof-8d827.web.app',
   'https://otov.web.app',
-  'http://localhost:8080', // flutter run -d chrome
+  'https://bonnetcheck.com',
+  'https://www.bonnetcheck.com',
 ];
+
+// `flutter run -d chrome` picks a fresh random port every launch, so the dev
+// origin cannot be listed. Loopback only, any port: a page served from the
+// developer's own machine is not somebody else's site borrowing the proxy.
+const DEV_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
+
+function allowed(origin) {
+  return ALLOWED_ORIGINS.includes(origin) || DEV_ORIGIN.test(origin);
+}
 
 function corsHeaders(origin) {
   const headers = {
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Max-Age': '86400',
+    // Without this a cache could hand one origin's allow-header to another,
+    // which reads as a random CORS failure that no amount of redeploying fixes.
     Vary: 'Origin',
   };
-  if (ALLOWED_ORIGINS.includes(origin)) {
+  if (allowed(origin)) {
     headers['Access-Control-Allow-Origin'] = origin;
   }
   return headers;
@@ -55,6 +68,16 @@ export default {
     }
     if (!ALLOWED_PATHS.includes(url.pathname)) {
       return new Response('Not found', { status: 404 });
+    }
+    // Refuse before spending an upstream request. An unlisted origin gets no
+    // allow-header anyway, so answering it would only burn the free tier.
+    //
+    // A request with NO Origin at all is let through: that is curl, or the
+    // Worker URL typed into a tab, i.e. exactly how somebody checks the thing
+    // is alive. It is not a hole worth closing either, since anything that can
+    // omit the header can equally well forge one.
+    if (origin && !allowed(origin)) {
+      return new Response('Forbidden', { status: 403 });
     }
 
     const upstream = new URL(UPSTREAM + url.pathname + url.search);

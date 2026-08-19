@@ -1,9 +1,47 @@
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
+
 /// data.gov.il — Israeli Ministry of Transport public vehicle registry.
 class ApiConstants {
   ApiConstants._();
 
-  static const govApiBase =
-      'https://data.gov.il/api/3/action/datastore_search';
+  /// The registry's own host. Every platform but the browser talks to it.
+  static const govDirectHost = 'https://data.gov.il';
+
+  /// Our CORS shim, or empty while none is deployed.
+  ///
+  /// On 18/08/2026 data.gov.il stopped sending `Access-Control-Allow-Origin`,
+  /// which means a browser refuses the response before the app can read it —
+  /// every government fact on bonnetcheck.web.app went blank in one day.
+  /// Nothing in Dart can work around that: the browser enforces it from the
+  /// server's headers, and the server is not ours.
+  ///
+  /// Fill this with the Worker's origin (no path) once `tool/gov_cors_proxy.js`
+  /// is deployed — e.g. `https://gov-cors.<subdomain>.workers.dev`.
+  static const govProxyHost = '';
+
+  static const _govPath = '/api/3/action/datastore_search';
+
+  /// Where the app actually sends a registry query.
+  ///
+  /// The proxy is used **only** on the web, and only once it exists. Two
+  /// reasons to keep the phone on the direct route: CORS is a browser rule, so
+  /// the APK never needed the shim; and routing the phone through it too would
+  /// hand a Worker outage the power to take down the one build that is
+  /// currently working, while doubling the traffic on a free tier.
+  ///
+  /// While [govProxyHost] is empty the web build calls the registry directly
+  /// and fails in the open — the honest state, and better than a placeholder
+  /// URL whose 404s would look like the registry answering.
+  static String get govApiBase =>
+      endpointFor(isWeb: kIsWeb, proxyHost: govProxyHost);
+
+  /// [govApiBase]'s rule, with its two inputs made arguments so a test can ask
+  /// about a platform it is not running on.
+  @visibleForTesting
+  static String endpointFor({required bool isWeb, required String proxyHost}) =>
+      (isWeb && proxyHost.isNotEmpty)
+          ? '$proxyHost$_govPath'
+          : '$govDirectHost$_govPath';
 
   static const vehicleResourceId = '053cea08-09bc-40ec-8f7a-156f0677aff3';
 
