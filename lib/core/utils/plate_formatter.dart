@@ -22,4 +22,18 @@ class PlateFormatter {
     // Unknown length — return as-is.
     return d;
   }
+
+  /// The same plate with every digit replaced by an asterisk.
+  ///
+  /// Sellers routinely tape over the plate before photographing a car, and an
+  /// app that prints the number underneath the photo has taken that decision
+  /// away from them. The registry data stays — that is what the listing is
+  /// for — but the number that identifies the car and its owner to any
+  /// stranger does not.
+  ///
+  /// The dash grouping is kept so it still reads as a plate rather than as a
+  /// row of stars, and so the layout does not jump when an owner sees their
+  /// own number in full.
+  static String masked(String raw) =>
+      withDashes(raw).replaceAll(RegExp(r'\d'), '*');
 }

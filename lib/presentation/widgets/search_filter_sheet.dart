@@ -186,7 +186,8 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
     if (c.km < f.minKm || c.km > f.maxKm) return false;
     if (f.area != null && c.area != f.area) return false;
     if (query.isNotEmpty) {
-      final hay = '${c.make} ${c.model} ${c.area} ${c.plate}'.toLowerCase();
+      // Not searchable by plate — see the note in cars_provider.dart.
+      final hay = '${c.make} ${c.model} ${c.area}'.toLowerCase();
       if (!hay.contains(query.toLowerCase())) return false;
     }
     return true;

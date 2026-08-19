@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_palette.dart';
+import '../../../core/theme/app_text.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/plate_formatter.dart';
 import '../../providers/analytics_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/cars_provider.dart';
 import '../../providers/gov_api_provider.dart';
 import '../../widgets/gov_data_card_widget.dart';
-import '../../widgets/primary_button_widget.dart';
 
+/// The official registry record behind one listing.
+///
+/// This screen used to ask the reader to type a plate, and arrived with the
+/// listing's plate already filled in — which meant a listing handed its plate
+/// to every visitor who tapped through, and put it in the address bar on the
+/// way. Sellers tape over the plate before photographing a car; an app that
+/// prints the number on the next screen has overruled them.
+///
+/// So it now takes the car's id, reads the plate without showing it, and
+/// displays exactly what it always displayed: the ministry's record. The only
+/// reader who sees the number itself is the person who owns the listing.
 class VehicleHistoryScreen extends ConsumerStatefulWidget {
   const VehicleHistoryScreen({super.key, required this.carId});
 
-  /// The plate to pre-fill. In Phase 3 this may be typed by the user; later
-  /// it is auto-filled from the current car.
+  /// The listing's document id — not its plate.
   final String carId;
 
   @override
@@ -23,81 +34,72 @@ class VehicleHistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _VehicleHistoryScreenState extends ConsumerState<VehicleHistoryScreen> {
-  late final TextEditingController _plateController;
+  /// The plate already looked up, so a rebuild does not re-query the registry.
+  String? _searched;
 
-  @override
-  void initState() {
-    super.initState();
-    // Pre-fill only if the incoming id is plate-like (digits).
-    final prefill = PlateFormatter.digitsOnly(widget.carId);
-    _plateController = TextEditingController(text: prefill);
-  }
-
-  @override
-  void dispose() {
-    _plateController.dispose();
-    super.dispose();
-  }
-
-  void _search() {
-    FocusScope.of(context).unfocus();
-    final plate = _plateController.text.trim();
+  void _lookup(String plate) {
+    if (_searched == plate) return;
+    _searched = plate;
     ref.read(analyticsHelperProvider).vehicleLookup();
     ref.read(govLookupControllerProvider.notifier).search(plate);
   }
 
   @override
   Widget build(BuildContext context) {
+    final car = ref.watch(carByIdProvider(widget.carId));
     final result = ref.watch(govLookupControllerProvider);
+    final uid = ref.watch(authStateProvider).valueOrNull?.uid;
+
+    final plate = car.valueOrNull?.plate ?? '';
+    if (plate.isNotEmpty) {
+      // Fired from build because the plate only arrives with the car, and
+      // waiting for a second frame would show an empty screen first.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _lookup(plate));
+    }
+
+    // The seller looking at their own listing already knows the number, and
+    // hiding it from them would read as the app not trusting them with it.
+    final isOwner = uid != null && car.valueOrNull?.sellerId == uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('היסטוריית רכב')),
+      appBar: AppBar(title: const Text('הרשומה הרשמית')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextField(
-                controller: _plateController,
-                keyboardType: TextInputType.number,
-                textDirection: TextDirection.ltr,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 3,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(8),
-                ],
-                decoration: const InputDecoration(
-                  labelText: 'מספר רישוי',
-                  hintText: '12345678',
-                  hintTextDirection: TextDirection.ltr,
-                ),
-              ),
-              const SizedBox(height: 16),
-              PrimaryButton(
-                label: 'בדוק',
-                loading: result.isLoading,
-                onPressed: _search,
-              ),
+              if (plate.isNotEmpty) _PlateLine(plate: plate, full: isOwner),
               const SizedBox(height: 20),
-              result.when(
-                data: (data) => data == null
-                    ? const _Hint()
-                    : GovDataCard(data: data),
-                loading: () => const Padding(
+              if (car.hasError)
+                _ErrorBox(
+                  message: 'לא הצלחנו לטעון את המודעה.',
+                  onRetry: () => ref.invalidate(carByIdProvider(widget.carId)),
+                )
+              else if (car.isLoading || (plate.isNotEmpty && result.isLoading))
+                const Padding(
                   padding: EdgeInsets.only(top: 40),
                   child: Center(child: CircularProgressIndicator()),
+                )
+              else if (car.valueOrNull == null)
+                const _Gone()
+              else
+                result.when(
+                  data: (data) => data == null
+                      ? const _NotInRegistry()
+                      : GovDataCard(data: data, showPlate: isOwner),
+                  loading: () => const Padding(
+                    padding: EdgeInsets.only(top: 40),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (err, _) => _ErrorBox(
+                    message: err.toString(),
+                    onRetry: () {
+                      _searched = null;
+                      _lookup(plate);
+                    },
+                  ),
                 ),
-                error: (err, _) => _ErrorBox(
-                  message: err.toString(),
-                  onRetry: _search,
-                ),
-              ),
             ],
           ),
         ),
@@ -106,8 +108,71 @@ class _VehicleHistoryScreenState extends ConsumerState<VehicleHistoryScreen> {
   }
 }
 
-class _Hint extends StatelessWidget {
-  const _Hint();
+/// The plate, starred out unless the reader owns the listing.
+///
+/// Shown rather than omitted because the reader should know the app holds the
+/// number and looked the car up with it — that is the whole basis of what is
+/// below. Hiding the fact as well as the digits would leave the record looking
+/// like it belongs to no particular car.
+class _PlateLine extends StatelessWidget {
+  const _PlateLine({required this.plate, required this.full});
+
+  final String plate;
+  final bool full;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          full
+              ? PlateFormatter.withDashes(plate)
+              : PlateFormatter.masked(plate),
+          textDirection: TextDirection.ltr,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 3,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          full
+              ? 'קונים רואים כוכביות במקום המספר'
+              : 'מספר הרישוי מוסתר. הנתונים למטה נשלפו ממנו',
+          textAlign: TextAlign.center,
+          style: context.text.bodySmMuted,
+        ),
+      ],
+    );
+  }
+}
+
+/// The registry answered, and has no such vehicle.
+class _NotInRegistry extends StatelessWidget {
+  const _NotInRegistry();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 48),
+      child: Column(
+        children: [
+          Icon(Icons.help_outline, size: 56, color: context.colors.textSubtle),
+          const SizedBox(height: 12),
+          Text(
+            'הרכב הזה לא נמצא במרשם הפעיל',
+            style: TextStyle(color: context.colors.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The listing itself is gone — removed or sold while the link was open.
+class _Gone extends StatelessWidget {
+  const _Gone();
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +184,7 @@ class _Hint extends StatelessWidget {
               size: 56, color: context.colors.textSubtle),
           const SizedBox(height: 12),
           Text(
-            'הזן מספר רישוי לקבלת נתונים רשמיים',
+            'המודעה הזו כבר לא קיימת',
             style: TextStyle(color: context.colors.textMuted),
           ),
         ],

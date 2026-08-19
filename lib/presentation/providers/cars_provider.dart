@@ -12,7 +12,7 @@ final carRepositoryProvider = Provider<CarRepository>((ref) {
   return CarRepository();
 });
 
-/// Free-text search query on the home screen (make / model / area / plate).
+/// Free-text search query on the home screen (make / model / area).
 final carSearchProvider = StateProvider<String>((ref) => '');
 
 /// Rich buyer filters (body types + price/year/km/area) from the filter sheet.
@@ -259,8 +259,11 @@ final filteredCarsProvider = Provider<AsyncValue<List<CarModel>>>((ref) {
       }
 
       if (query.isNotEmpty) {
+        // The plate is not searchable. Leaving it in would have made the
+        // masking cosmetic: type a number, and the one listing it belongs
+        // to falls out of a public search.
         final haystack =
-            '${c.make} ${c.model} ${c.area} ${c.plate}'.toLowerCase();
+            '${c.make} ${c.model} ${c.area}'.toLowerCase();
         if (!haystack.contains(query)) return false;
       }
       return true;

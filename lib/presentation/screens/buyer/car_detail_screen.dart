@@ -231,7 +231,7 @@ class _ContentState extends ConsumerState<_Content> {
             // Every one of these keeps a summary while closed, so nobody has
             // to open a section to discover they did not want it.
             const SizedBox(height: 24),
-            _HistoryButton(plate: car.plate),
+            _HistoryButton(carId: car.id),
             const SizedBox(height: 14),
             BuyerJourneyCard(carId: car.id, collapsible: true),
             const SizedBox(height: 14),
@@ -598,8 +598,12 @@ class _SellerCard extends StatelessWidget {
 }
 
 class _HistoryButton extends StatelessWidget {
-  const _HistoryButton({required this.plate});
-  final String plate;
+  const _HistoryButton({required this.carId});
+
+  /// The listing id. It used to be the plate, which put the number in the
+  /// address bar of every buyer who tapped through — and in any link they
+  /// then shared.
+  final String carId;
 
   @override
   Widget build(BuildContext context) {
@@ -611,7 +615,7 @@ class _HistoryButton extends StatelessWidget {
       icon: Icons.assignment_outlined,
       label: 'היסטוריית רכב רשמית',
       value: 'ק"מ בטסט, טסט, בעלויות וריקולים',
-      onTap: () => context.push('/car/$plate/history'),
+      onTap: () => context.push('/car/$carId/history'),
     );
   }
 }
