@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 
 import '../../../core/constants/api_constants.dart';
 
@@ -46,14 +48,44 @@ class GovApiService {
 
   final Dio _dio;
 
+  /// The plate column, per dataset. Spelled as the ministry spells it, which
+  /// is three different ways across five datasets — including one with a
+  /// space in the column name — and an exact filter has to match exactly.
+  static const plateFieldDefault = 'mispar_rechev';
+  static const plateFieldRecalls = 'MISPAR_RECHEV';
+  static const plateFieldDisability = 'MISPAR RECHEV';
+
+  /// The query that finds one plate in a dataset, or null if [plateDigits] is
+  /// not a number.
+  ///
+  /// Every call below used to pass `q=<plate>` — CKAN's free-text search. On
+  /// 19/08/2026 that stopped matching plates: `q=6984370` returns zero records
+  /// from the very dataset that returns that car by exact filter. The app
+  /// answered every lookup with "המספר לא נמצא. בדוק את מספר הרישוי." —
+  /// the one thing that was not true, about a car the registry holds.
+  ///
+  /// An exact filter is the better query regardless. Free text matched the
+  /// digits wherever they appeared in a row, which is exactly why each caller
+  /// still had to re-check the plate column by hand afterwards.
+  @visibleForTesting
+  static String? plateFilter(String field, String plateDigits) {
+    final n = int.tryParse(plateDigits);
+    return n == null ? null : jsonEncode({field: n});
+  }
+
   /// Returns the raw record map for a plate, or throws GovApiException.
   Future<Map<String, dynamic>> fetchByPlate(String plateDigits) async {
     try {
+      final filter = plateFilter(plateFieldDefault, plateDigits);
+      if (filter == null) {
+        throw GovApiException('מספר רישוי לא תקין.',
+            kind: GovApiErrorKind.badInput);
+      }
       final res = await _dio.get(
         ApiConstants.govApiBase,
         queryParameters: {
           'resource_id': ApiConstants.vehicleResourceId,
-          'q': plateDigits,
+          'filters': filter,
           'limit': 1,
         },
       );
@@ -223,7 +255,7 @@ class GovApiService {
     try {
       final res = await _dio.get(ApiConstants.govApiBase, queryParameters: {
         'resource_id': ApiConstants.vehicleHistoryResourceId,
-        'q': plateDigits,
+        'filters': plateFilter(plateFieldDefault, plateDigits),
         'limit': 5,
       });
       final records =
@@ -245,7 +277,7 @@ class GovApiService {
     try {
       final res = await _dio.get(ApiConstants.govApiBase, queryParameters: {
         'resource_id': ApiConstants.openRecallResourceId,
-        'q': plateDigits,
+        'filters': plateFilter(plateFieldRecalls, plateDigits),
         'limit': 20,
       });
       final records =
@@ -265,7 +297,7 @@ class GovApiService {
     try {
       final res = await _dio.get(ApiConstants.govApiBase, queryParameters: {
         'resource_id': ApiConstants.offRoadResourceId,
-        'q': plateDigits,
+        'filters': plateFilter(plateFieldDefault, plateDigits),
         'limit': 5,
       });
       final records =
@@ -286,7 +318,7 @@ class GovApiService {
     try {
       final res = await _dio.get(ApiConstants.govApiBase, queryParameters: {
         'resource_id': ApiConstants.disabilityTagResourceId,
-        'q': plateDigits,
+        'filters': plateFilter(plateFieldDisability, plateDigits),
         'limit': 5,
       });
       final records =
