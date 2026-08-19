@@ -9,6 +9,7 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/analytics_provider.dart';
+import '../../providers/alert_prefs_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/chat_provider.dart';
@@ -203,7 +204,9 @@ class _NotificationBell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final count = ref.watch(unreadCountProvider);
+    final count = ref.watch(alertEnabledProvider(AlertKind.chatReplies))
+        ? ref.watch(unreadCountProvider)
+        : 0;
 
     return Stack(
       alignment: Alignment.center,

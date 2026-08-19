@@ -6,6 +6,7 @@ import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/utils/car_compare.dart';
+import '../../providers/alert_prefs_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/compare_provider.dart';
@@ -27,7 +28,9 @@ class SavedScreen extends ConsumerWidget {
     final comparing = ref.watch(compareModeProvider);
     // How much each saved listing has come down since it was saved. Local to
     // this device — noticing a change while the app is shut needs a server.
-    final drops = ref.watch(priceDropsProvider).valueOrNull ?? const {};
+    final drops = ref.watch(alertEnabledProvider(AlertKind.priceDrops))
+        ? ref.watch(priceDropsProvider).valueOrNull ?? const {}
+        : const <String, double>{};
     final picked = ref.watch(compareSelectionProvider);
 
     // Only offer the comparison once there is something to compare.

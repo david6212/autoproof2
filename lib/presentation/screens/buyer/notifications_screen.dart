@@ -8,8 +8,10 @@ import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../data/models/chat_model.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/alert_prefs_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/common/collapsible_section.dart';
 import '../../widgets/guest_prompt_view.dart';
 
 /// Unread messages, and nothing else.
@@ -39,14 +41,19 @@ class NotificationsScreen extends ConsumerWidget {
                 title: 'ההתראות שלך',
                 body: 'התחבר כדי לקבל עדכון כשמוכר משיב לך.',
               )
-            : unread.isEmpty
-                ? const _NoNotifications()
-                : ListView.builder(
-                    padding: const EdgeInsets.all(AppSpace.md),
-                    itemCount: unread.length,
-                    itemBuilder: (context, i) =>
-                        _MessageTile(chat: unread[i]),
-                  ),
+            : ListView(
+                padding: const EdgeInsets.all(AppSpace.md),
+                children: [
+                  const _AlertSettings(),
+                  const SizedBox(height: AppSpace.md),
+                  if (!ref.watch(alertEnabledProvider(AlertKind.chatReplies)))
+                    const _AlertsOff()
+                  else if (unread.isEmpty)
+                    const _NoNotifications()
+                  else
+                    for (final chat in unread) _MessageTile(chat: chat),
+                ],
+              ),
       ),
     );
   }
@@ -145,6 +152,86 @@ class _NoNotifications extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+/// A switch per alert, and what each one costs to turn off.
+///
+/// Folded away by default: it is settings on a screen that exists to show
+/// news. Open, it is deliberately plain — four rows, no persuasion, and the
+/// consequence spelled out under each label. A toggle whose effect is hidden
+/// is not a choice, and nudging someone to leave alerts on would be the same
+/// manipulation this list was drawn up to avoid.
+class _AlertSettings extends ConsumerWidget {
+  const _AlertSettings();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final on = ref.watch(alertPrefsProvider);
+
+    return CollapsibleSection(
+      icon: Icons.tune,
+      title: 'מה נציג לכם',
+      summary: '${on.length} מתוך ${AlertKind.values.length} סוגי התראות פעילים',
+      persistKey: 'alert_settings',
+      child: Column(
+        children: [
+          for (final kind in AlertKind.values) ...[
+            if (kind != AlertKind.values.first)
+              Divider(height: AppSpace.lg, color: context.colors.cardBorder),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(kind.label, style: AppText.bodySm),
+                      const SizedBox(height: AppSpace.xxs),
+                      Text(kind.cost, style: context.text.micro),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpace.sm),
+                Switch(
+                  value: on.contains(kind),
+                  onChanged: (v) =>
+                      ref.read(alertPrefsProvider.notifier).set(kind, v),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown instead of the feed when the reader has switched replies off.
+///
+/// Says which switch is doing it, so an empty screen is never a mystery.
+class _AlertsOff extends StatelessWidget {
+  const _AlertsOff();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpace.xxl),
+      child: Column(
+        children: [
+          Icon(Icons.notifications_off_outlined,
+              size: 44, color: context.colors.textSubtle),
+          const SizedBox(height: AppSpace.md),
+          const Text('תשובות מהמוכר כבויות', style: AppText.h3),
+          const SizedBox(height: AppSpace.sm),
+          Text(
+            'ההודעות עצמן ממתינות לכם בלשונית הצ׳אטים.',
+            textAlign: TextAlign.center,
+            style: context.text.bodyMuted,
+          ),
+        ],
       ),
     );
   }
