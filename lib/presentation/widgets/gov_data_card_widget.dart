@@ -13,17 +13,10 @@ import 'app_card.dart';
 /// official-source banner → dark header → license-validity strip →
 /// 2×2 stat grid → VIN → usage-type banner → safety → disclaimer.
 class GovDataCard extends StatelessWidget {
-  const GovDataCard({super.key, required this.data, this.showPlate = false});
+  const GovDataCard({super.key, required this.data});
 
   final GovData data;
 
-  /// Whether the plate is printed in full.
-  ///
-  /// Hidden by default, and deliberately so: this card is the one place that
-  /// prints the number, and a new caller that forgets to think about it
-  /// should leak nothing. Only a screen that knows its reader owns the car
-  /// passes true.
-  final bool showPlate;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +25,7 @@ class GovDataCard extends StatelessWidget {
       children: [
         const _SourceBanner(),
         const SizedBox(height: 12),
-        _Header(data: data, showPlate: showPlate),
+        _Header(data: data),
         const SizedBox(height: 12),
         _ValidityStrip(expiry: data.licenseExpiry),
         // Critical: vehicle scrapped / finally cancelled.
@@ -235,9 +228,8 @@ class _SourceBanner extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.data, required this.showPlate});
+  const _Header({required this.data});
 
-  final bool showPlate;
   final GovData data;
 
   @override
@@ -269,11 +261,7 @@ class _Header extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _Chip(
-                text: showPlate
-                    ? PlateFormatter.withDashes(data.plate)
-                    : PlateFormatter.masked(data.plate),
-              ),
+              _Chip(text: PlateFormatter.masked(data.plate)),
               _Chip(text: data.fuelType),
               if (data.trim.isNotEmpty) _Chip(text: data.trim),
             ],

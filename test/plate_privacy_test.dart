@@ -62,18 +62,20 @@ void main() {
       expect(find.text('**-***-***'), findsOneWidget);
     });
 
-    testWidgets('shows it to the one reader who owns the car', (tester) async {
+    testWidgets('has no way to print the digits at all', (tester) async {
+      // The card used to take a `showPlate` flag. It is gone: one widget
+      // decides how a plate is drawn, and the owner's reveal is a deliberate
+      // tap on the screen above rather than a boolean threaded through a
+      // card that four screens could pass wrongly.
       await tester.pumpWidget(MaterialApp(
         theme: AppTheme.light,
         home: Scaffold(
-          body: SingleChildScrollView(
-            child: GovDataCard(data: car(), showPlate: true),
-          ),
+          body: SingleChildScrollView(child: GovDataCard(data: car())),
         ),
       ));
       await tester.pump();
 
-      expect(find.text('46-592-550'), findsOneWidget);
+      expect(find.text('46-592-550'), findsNothing);
     });
   });
 
@@ -110,6 +112,45 @@ void main() {
         for (var i = 0; i < lines.length; i++) {
           if (lines[i].contains(r'${c.plate}')) {
             offenders.add('$path:${i + 1}');
+          }
+        }
+      }
+      expect(offenders, isEmpty);
+    });
+  });
+
+  group('one widget draws every plate', () {
+    test('nothing else is allowed to print the digits', () {
+      // `PlateFormatter.withDashes` is the unmasked form. Two screens had
+      // each grown a private copy of it, and the copies disagreed about how a
+      // seven-digit plate is grouped — which is what happens to a rule that
+      // lives in more than one place.
+      final offenders = <String>[];
+      for (final entity in Directory('lib').listSync(recursive: true)) {
+        if (entity is! File || !entity.path.endsWith('.dart')) continue;
+        final name = entity.uri.pathSegments.last;
+        if (name == 'plate_text.dart' || name == 'plate_formatter.dart') {
+          continue;
+        }
+        final lines = entity.readAsLinesSync();
+        for (var i = 0; i < lines.length; i++) {
+          if (lines[i].contains('PlateFormatter.withDashes(')) {
+            offenders.add('${entity.path}:${i + 1}');
+          }
+        }
+      }
+      expect(offenders, isEmpty, reason: 'draw plates with PlateText');
+    });
+
+    test('no screen drops a raw plate into a line of text', () {
+      final offenders = <String>[];
+      for (final entity in Directory('lib').listSync(recursive: true)) {
+        if (entity is! File || !entity.path.endsWith('.dart')) continue;
+        final lines = entity.readAsLinesSync();
+        for (var i = 0; i < lines.length; i++) {
+          final line = lines[i];
+          if (line.contains('Text(') && RegExp(r'\$\{?\w+\.plate').hasMatch(line)) {
+            offenders.add('${entity.path}:${i + 1}');
           }
         }
       }

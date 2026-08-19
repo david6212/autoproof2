@@ -170,7 +170,7 @@ class _GuestGarageIntroState extends ConsumerState<GuestGarageIntro> {
           children: [
             Text('${car.make} $name'.trim(), style: AppText.title),
             const SizedBox(height: AppSpace.xs),
-            Text('${car.year} · ${car.plate}', style: context.text.caption),
+            Text('${car.year} · ${car.color}', style: context.text.caption),
             const SizedBox(height: AppSpace.lg),
             SpecTileGrid(tiles: [
               if (car.fuelType.isNotEmpty)

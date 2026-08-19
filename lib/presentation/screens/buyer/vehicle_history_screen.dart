@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/constants/app_strings.dart';
-import '../../../core/utils/plate_formatter.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/gov_api_provider.dart';
 import '../../widgets/gov_data_card_widget.dart';
+import '../../widgets/plate_text.dart';
 
 /// The official registry record behind one listing.
 ///
@@ -87,7 +87,7 @@ class _VehicleHistoryScreenState extends ConsumerState<VehicleHistoryScreen> {
                 result.when(
                   data: (data) => data == null
                       ? const _NotInRegistry()
-                      : GovDataCard(data: data, showPlate: isOwner),
+                      : GovDataCard(data: data),
                   loading: () => const Padding(
                     padding: EdgeInsets.only(top: 40),
                     child: Center(child: CircularProgressIndicator()),
@@ -124,11 +124,9 @@ class _PlateLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(
-          full
-              ? PlateFormatter.withDashes(plate)
-              : PlateFormatter.masked(plate),
-          textDirection: TextDirection.ltr,
+        PlateText(
+          plate,
+          revealable: full,
           style: const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -138,7 +136,7 @@ class _PlateLine extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           full
-              ? 'קונים רואים כוכביות במקום המספר'
+              ? 'המודעה שלך. קונים רואים כוכביות — הקישו כדי לראות את המספר'
               : 'מספר הרישוי מוסתר. הנתונים למטה נשלפו ממנו',
           textAlign: TextAlign.center,
           style: context.text.bodySmMuted,

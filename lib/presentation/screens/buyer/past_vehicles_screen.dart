@@ -7,6 +7,7 @@ import '../../../core/theme/app_text.dart';
 import '../../../data/models/past_vehicle.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/plate_text.dart';
 import '../../widgets/error_retry.dart';
 import '../../widgets/skeleton.dart';
 
@@ -90,11 +91,11 @@ class _PastCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            vehicle.title.isEmpty ? 'רכב ${vehicle.plate}' : vehicle.title,
+            vehicle.title.isEmpty ? 'רכב' : vehicle.title,
             style: AppText.title,
           ),
           const SizedBox(height: AppSpace.xs),
-          Text(vehicle.plate, style: context.text.caption),
+          PlateText(vehicle.plate),
           const SizedBox(height: AppSpace.md),
           _Row(
             icon: Icons.build_outlined,

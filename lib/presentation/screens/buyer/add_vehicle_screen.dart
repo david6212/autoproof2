@@ -138,7 +138,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
           children: [
             Text('${car.make} $name'.trim(), style: AppText.title),
             const SizedBox(height: AppSpace.xs),
-            Text('${car.year} · ${car.plate}', style: context.text.caption),
+            Text('${car.year} · ${car.color}', style: context.text.caption),
             const SizedBox(height: AppSpace.lg),
             // SpecTileGrid, not a Wrap of fixed-width boxes: it pairs the
             // tiles, keeps a row's heights equal, and refuses to stretch a

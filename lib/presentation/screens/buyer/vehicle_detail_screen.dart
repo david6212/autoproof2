@@ -14,6 +14,7 @@ import '../../../data/models/vehicle_reminder.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/add_reminder_sheet.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/plate_text.dart';
 import '../../widgets/documented_progress_meter.dart';
 import '../../widgets/error_retry.dart';
 import '../../widgets/document_list.dart';
@@ -626,12 +627,18 @@ class _Overview extends ConsumerWidget {
                 style: AppText.h3,
               ),
               const SizedBox(height: AppSpace.xs),
-              Text(
-                [
-                  if (year != null) '$year',
-                  _plateDisplay(vehicle.plate),
-                ].join(' · '),
-                style: context.text.caption,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (year != null) ...[
+                    Text('$year', style: context.text.caption),
+                    Text(' · ', style: context.text.caption),
+                  ],
+                  // Revealable here and nowhere else: it is the owner's own
+                  // car, and they need the number for an insurer or a
+                  // transfer. It returns to stars when the screen closes.
+                  PlateText(vehicle.plate, revealable: true),
+                ],
               ),
             ],
           ),
@@ -860,15 +867,6 @@ class _Message extends StatelessWidget {
       );
 }
 
-String _plateDisplay(String plate) {
-  if (plate.length == 7) {
-    return '${plate.substring(0, 2)}-${plate.substring(2, 5)}-${plate.substring(5)}';
-  }
-  if (plate.length == 8) {
-    return '${plate.substring(0, 3)}-${plate.substring(3, 5)}-${plate.substring(5)}';
-  }
-  return plate;
-}
 
 String _thousands(int n) {
   final s = n.toString();

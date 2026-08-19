@@ -12,6 +12,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/vehicle_draft_provider.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/plate_text.dart';
 import '../../widgets/documented_progress_meter.dart';
 import '../../widgets/error_retry.dart';
 import '../../widgets/guest_garage_intro.dart';
@@ -122,7 +123,7 @@ class _VehicleCard extends ConsumerWidget {
         .where((v) => v != null && '$v'.trim().isNotEmpty)
         .join(' ');
     final title = vehicle.titleWith(
-      modelName.isNotEmpty ? modelName : 'רכב ${vehicle.plate}',
+      modelName.isNotEmpty ? modelName : 'הרכב שלי',
     );
 
     final reminders = ref.watch(vehicleRemindersProvider(vehicle.id));
@@ -145,10 +146,7 @@ class _VehicleCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSpace.xs),
-          Text(
-            _plateDisplay(vehicle.plate),
-            style: context.text.caption,
-          ),
+          PlateText(vehicle.plate),
           const SizedBox(height: AppSpace.md),
           Row(
             children: [
@@ -385,16 +383,6 @@ class _GarageSkeleton extends StatelessWidget {
   }
 }
 
-/// Israeli plates read 12-345-67 or 123-45-678 depending on length.
-String _plateDisplay(String plate) {
-  if (plate.length == 7) {
-    return '${plate.substring(0, 2)}-${plate.substring(2, 5)}-${plate.substring(5)}';
-  }
-  if (plate.length == 8) {
-    return '${plate.substring(0, 3)}-${plate.substring(3, 5)}-${plate.substring(5)}';
-  }
-  return plate;
-}
 
 String _thousands(int n) {
   final s = n.toString();

@@ -9,6 +9,7 @@ import '../../../core/theme/app_text.dart';
 import '../../../data/models/ownership_transfer.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/plate_text.dart';
 import '../../widgets/primary_button_widget.dart';
 
 /// The buyer's end of the handover: type the code, inherit the history.
@@ -145,12 +146,12 @@ class _ClaimVehicleScreenState extends ConsumerState<ClaimVehicleScreen> {
             children: [
               Text(
                 transfer.vehicleTitle.isEmpty
-                    ? 'רכב ${transfer.plate}'
+                    ? 'רכב'
                     : transfer.vehicleTitle,
                 style: AppText.title,
               ),
               const SizedBox(height: AppSpace.xs),
-              Text(transfer.plate, style: context.text.caption),
+              PlateText(transfer.plate),
               const SizedBox(height: AppSpace.lg),
               Row(
                 children: [
