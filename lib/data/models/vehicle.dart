@@ -1,3 +1,56 @@
+import 'dart:math' as math;
+
+/// How far a vehicle is from earning "תיק מתועד", as counts rather than a
+/// verdict.
+///
+/// The badge itself is binary, and for a long time that was all the owner
+/// could see: nothing at all until the day it appeared. Someone two records
+/// and one month away looked exactly like someone who had never logged
+/// anything, which is the worst place to hide progress — it is precisely the
+/// owner who has started and could be persuaded to continue.
+///
+/// Every number here is counted from real records. Nothing is rounded up and
+/// no step is granted for free: the badge's whole worth to a buyer is that it
+/// cannot be performed, and a progress meter that flatters would be the first
+/// crack in that.
+class DocumentedProgress {
+  const DocumentedProgress({required this.records, required this.months});
+
+  /// Service records logged so far.
+  final int records;
+
+  /// Whole months between the first and last record.
+  final int months;
+
+  int get recordsNeeded =>
+      math.max(0, Vehicle.documentedMinRecords - records);
+
+  int get monthsNeeded => math.max(0, Vehicle.documentedMinMonths - months);
+
+  /// Whether the badge is earned. Both halves are required.
+  bool get earned => recordsNeeded == 0 && monthsNeeded == 0;
+
+  /// Whether the owner has logged anything at all.
+  ///
+  /// Separates "not started" from "under way": someone with no records needs
+  /// an invitation, someone with two needs to know how close they are.
+  bool get started => records > 0;
+
+  /// How far along, 0..1 — the *lesser* of the two halves.
+  ///
+  /// Taking the minimum rather than an average is what makes the bar honest:
+  /// six records in one week is not half a documented history, it is a full
+  /// count with no span, and the badge is still far away.
+  double get fraction {
+    if (Vehicle.documentedMinRecords == 0 || Vehicle.documentedMinMonths == 0) {
+      return 1;
+    }
+    final byRecords = records / Vehicle.documentedMinRecords;
+    final byMonths = months / Vehicle.documentedMinMonths;
+    return math.min(byRecords, byMonths).clamp(0.0, 1.0);
+  }
+}
+
 /// How a vehicle entered the owner's garage.
 enum AcquiredVia {
   manual, // the owner added a car they already had
@@ -101,7 +154,19 @@ class Vehicle {
   /// nothing about how the car was kept; three spread over half a year say
   /// someone has been logging it as they go. The badge is a statement about
   /// the existence of records, never about the condition of the car.
-  bool get hasDocumentedHistory => serviceCount >= 3 && historySpanMonths >= 6;
+  ///
+  /// Named constants rather than literals because the UI shows the owner how
+  /// far off they are, and the two had drifted apart once already — the
+  /// progress line hard-coded its own 3 and 6 next to this rule.
+  static const documentedMinRecords = 3;
+  static const documentedMinMonths = 6;
+
+  DocumentedProgress get documentedProgress => DocumentedProgress(
+        records: serviceCount,
+        months: historySpanMonths,
+      );
+
+  bool get hasDocumentedHistory => documentedProgress.earned;
 
   /// Whether an open-recall check is due (never checked, or over a day ago).
   bool get needsRecallCheck {

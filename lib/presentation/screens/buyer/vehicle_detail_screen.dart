@@ -14,6 +14,7 @@ import '../../../data/models/vehicle_reminder.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/add_reminder_sheet.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/documented_progress_meter.dart';
 import '../../widgets/error_retry.dart';
 import '../../widgets/document_list.dart';
 import '../../widgets/expense_summary.dart';
@@ -228,7 +229,9 @@ class _ServicesTab extends ConsumerWidget {
                 ),
                 children: [
                   if (!vehicle.hasDocumentedHistory)
-                    _BadgeProgress(vehicle: vehicle),
+                    DocumentedProgressMeter(
+                      progress: vehicle.documentedProgress,
+                    ),
                   ServiceTimeline(
                     records: records,
                     onCorrect: (r) => _add(context, corrects: r.id),
@@ -556,50 +559,6 @@ class _DocumentsTabState extends ConsumerState<_DocumentsTab> {
                     actions.setShared(widget.vehicle.id, doc.id, shared),
                 onDelete: (doc) => actions.remove(widget.vehicle.id, doc),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// What is still missing before the car earns "תיק מתועד".
-///
-/// Stated as a fact about the records, never as a promise about the car — the
-/// badge says a history exists, not that the history is good.
-class _BadgeProgress extends StatelessWidget {
-  const _BadgeProgress({required this.vehicle});
-
-  final Vehicle vehicle;
-
-  @override
-  Widget build(BuildContext context) {
-    final needRecords = 3 - vehicle.serviceCount;
-    final needMonths = 6 - vehicle.historySpanMonths;
-
-    final parts = <String>[
-      if (needRecords > 0)
-        needRecords == 1 ? 'עוד רשומה אחת' : 'עוד $needRecords רשומות',
-      if (needMonths > 0)
-        needMonths == 1 ? 'עוד חודש' : 'עוד $needMonths חודשים של תיעוד',
-    ];
-    if (parts.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpace.lg),
-      child: AppCard(
-        padding: const EdgeInsets.all(AppSpace.md),
-        child: Row(
-          children: [
-            Icon(Icons.workspace_premium_outlined,
-                size: 20, color: context.colors.teal),
-            const SizedBox(width: AppSpace.md),
-            Expanded(
-              child: Text(
-                'לתג "תיק מתועד" חסרים ${parts.join(' ו')}',
-                style: AppText.bodySm,
-              ),
-            ),
           ],
         ),
       ),
