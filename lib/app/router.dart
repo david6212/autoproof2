@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' show User;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -53,9 +54,10 @@ import '../presentation/widgets/seller_shell.dart';
 /// never succeed. Better to say what is actually needed.
 ///
 /// `/garage` itself is deliberately NOT here: it is a bottom tab, and a tab
-/// that bounces you to a login screen is hostile. That screen shows a guest
-/// prompt explaining what a passport is, which is the invitation. It is the
-/// actions underneath it that need the account.
+/// that bounces you to a login screen is hostile. That screen lets a guest
+/// look their own car up in the registry and offers to keep the result,
+/// which is the invitation. It is the actions underneath that need the
+/// account.
 bool needsAccount(String location) {
   const gated = [
     '/garage/add',
@@ -64,6 +66,53 @@ bool needsAccount(String location) {
     '/profile/past-vehicles',
   ];
   return gated.any(location.startsWith);
+}
+
+/// The account decision for one location, separated from the router so that it
+/// can be tested at all.
+///
+/// It could not be before. The router exposed only [needsAccount] — the pure
+/// half — and the tests dutifully covered that, while the half that actually
+/// ran in front of users went unexercised. The suite stayed green for the
+/// entire time the guard was doing nothing on a cold start.
+///
+/// [auth] arrives as the raw async value on purpose. "Still loading" is a
+/// third answer, distinct from signed-out, and collapsing the two is its own
+/// bug: a signed-in user opening the app on a link would be thrown to the
+/// login screen during the first frames, every time.
+String? accountRedirect(String location, AsyncValue<User?> auth) {
+  if (!needsAccount(location)) return null;
+
+  // Undecided. Let the screen build; [AuthRefresh] brings us back here the
+  // moment the answer arrives.
+  if (!auth.hasValue) return null;
+
+  return auth.value == null ? '/login' : null;
+}
+
+/// Tells go_router to re-run its redirect once the auth answer arrives.
+///
+/// Without this the guard is decoration on a cold start. `redirect` runs once
+/// per navigation, and a link opened from outside the app arrives while
+/// `authStateProvider` is still loading — so [accountRedirect] rightly
+/// declines to decide, and then nothing ever asks it again. The visitor is
+/// left on a passport that cannot load, under a retry button that cannot
+/// succeed.
+class AuthRefresh extends ChangeNotifier {
+  AuthRefresh(Ref ref) {
+    _sub = ref.listen<AsyncValue<User?>>(
+      authStateProvider,
+      (_, __) => notifyListeners(),
+    );
+  }
+
+  late final ProviderSubscription<AsyncValue<User?>> _sub;
+
+  @override
+  void dispose() {
+    _sub.close();
+    super.dispose();
+  }
 }
 
 /// Back navigation that survives being opened from a link.
@@ -80,10 +129,14 @@ void popOrHome(BuildContext context) {
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final refresh = AuthRefresh(ref);
+  ref.onDispose(refresh.dispose);
+
   return GoRouter(
     initialLocation: '/splash',
     // Auto-logs a screen_view analytics event for every pushed route.
     observers: [ref.watch(analyticsObserverProvider)],
+    refreshListenable: refresh,
     redirect: (context, state) {
       // RULE 1 — Seller gate: only verified users may create a listing, and
       // only with a phone number on file. Google/Apple sign-in carries no
@@ -100,16 +153,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
       // RULE 2 — the passport needs an account, because it is private by
       // security rule rather than by convention.
-      if (needsAccount(state.matchedLocation)) {
-        final auth = ref.read(authStateProvider);
-        // Only redirect once auth has actually resolved. During the first
-        // frames of a cold start the value is still loading, and treating that
-        // as "signed out" would throw a signed-in user back to the login
-        // screen every time they opened the app on a link.
-        if (auth.hasValue && auth.value == null) return '/login';
-      }
-
-      return null;
+      return accountRedirect(
+        state.matchedLocation,
+        ref.read(authStateProvider),
+      );
     },
     routes: [
       // Auth

@@ -7,11 +7,14 @@ import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../data/models/vehicle.dart';
 import '../../../data/models/vehicle_reminder.dart';
+import '../../providers/alert_prefs_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/vehicle_draft_provider.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/documented_progress_meter.dart';
 import '../../widgets/error_retry.dart';
-import '../../widgets/guest_prompt_view.dart';
+import '../../widgets/guest_garage_intro.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../widgets/skeleton.dart';
 
@@ -21,11 +24,32 @@ import '../../widgets/skeleton.dart';
 /// here helps someone buy a car and then has no reason to be opened again;
 /// this is where a car lives for the years in between, which is the only
 /// reason an owner would still have the app installed when they come to sell.
-class GarageScreen extends ConsumerWidget {
+class GarageScreen extends ConsumerStatefulWidget {
   const GarageScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GarageScreen> createState() => _GarageScreenState();
+}
+
+class _GarageScreenState extends ConsumerState<GarageScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Signing in lands back here, and this is where a passport built while
+    // signed out becomes real. Post-frame rather than inline: it writes to
+    // Firestore and to a provider, neither of which belongs in a build.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _claimDraft());
+  }
+
+  Future<void> _claimDraft() async {
+    if (ref.read(vehicleDraftProvider) == null) return;
+    final id = await ref.read(vehicleDraftProvider.notifier).claim();
+    if (!mounted || id == null) return;
+    context.push('/vehicle/$id');
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isGuest = ref.watch(authStateProvider).valueOrNull == null;
     final vehiclesAsync = ref.watch(myVehiclesProvider);
 
@@ -54,12 +78,7 @@ class GarageScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         child: isGuest
-            ? const GuestPromptView(
-                icon: Icons.directions_car_outlined,
-                title: 'התיק של הרכב שלך',
-                body: 'התחברו כדי לנהל את הרכב שלכם — טיפולים, הוצאות ומסמכים '
-                    'במקום אחד.',
-              )
+            ? const GuestGarageIntro()
             : vehiclesAsync.when(
                 loading: () => const _GarageSkeleton(),
                 error: (_, __) => ErrorRetry(
@@ -107,7 +126,12 @@ class _VehicleCard extends ConsumerWidget {
     );
 
     final reminders = ref.watch(vehicleRemindersProvider(vehicle.id));
-    final next = _nextReminder(reminders.valueOrNull ?? const []);
+    // A switch that changes nothing is worse than no switch: it tells the
+    // reader they are in control when they are not.
+    final next = ref.watch(alertEnabledProvider(AlertKind.reminders))
+        ? _nextReminder(reminders.valueOrNull ?? const [])
+        : null;
+    final showRecalls = ref.watch(alertEnabledProvider(AlertKind.recalls));
 
     return AppCard(
       onTap: () => context.push('/vehicle/${vehicle.id}'),
@@ -142,7 +166,21 @@ class _VehicleCard extends ConsumerWidget {
                 ),
             ],
           ),
-          if (vehicle.openRecallCount > 0) ...[
+          // Sits directly under the stats, so an owner who has started logging
+          // sees how close the badge is without opening the car. This is the
+          // only screen most owners look at between services.
+          // Both halves of the condition, not just the badge: the meter draws
+          // nothing before the first record, and a spacer around a widget that
+          // renders nothing is how the listing page ended up with a hole in it.
+          if (vehicle.documentedProgress.started &&
+              !vehicle.hasDocumentedHistory) ...[
+            const SizedBox(height: AppSpace.md),
+            DocumentedProgressMeter(
+              progress: vehicle.documentedProgress,
+              compact: true,
+            ),
+          ],
+          if (showRecalls && vehicle.openRecallCount > 0) ...[
             const SizedBox(height: AppSpace.md),
             _Strip(
               icon: Icons.campaign_outlined,

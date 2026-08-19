@@ -9,6 +9,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/legal_info.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/vehicle_draft_provider.dart';
 import '../../widgets/brand_logo.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../../core/theme/app_text.dart';
@@ -32,14 +33,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  /// Runs a Google/Apple sign-in action, then routes home on success.
+  /// Where a completed sign-in lands.
+  ///
+  /// Home, unless the visitor built a passport before signing in — then the
+  /// garage, which claims the draft and opens the car. Dropping them on Home
+  /// would lose the thread at the exact moment they were promised the file
+  /// they just built would be kept.
+  String get _destination =>
+      ref.read(vehicleDraftProvider) == null ? '/home' : '/garage';
+
+  /// Runs a Google/Apple sign-in action, then routes on success.
   Future<void> _social(Future<void> Function() action) async {
     setState(() => _socialLoading = true);
     try {
       await action();
       if (!mounted) return;
       ref.read(analyticsHelperProvider).loginCompleted();
-      context.go('/home');
+      context.go(_destination);
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       setState(() => _socialLoading = false);
@@ -83,7 +93,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen<PhoneAuthState>(phoneAuthControllerProvider, (prev, next) {
       if (next.step == PhoneAuthStep.verified) {
         ref.read(analyticsHelperProvider).loginCompleted();
-        context.go('/home');
+        context.go(_destination);
       }
     });
 
