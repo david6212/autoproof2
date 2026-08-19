@@ -46,7 +46,7 @@ class CompareScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_forward),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => popOrHome(context),
         ),
         title: const Text('השוואת רכבים'),

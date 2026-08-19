@@ -76,7 +76,7 @@ class _Header extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: IconButton(
-              icon: Icon(Icons.arrow_forward,
+              icon: Icon(Icons.arrow_back,
                   color: context.colors.textPrimary),
               onPressed: () => popOrHome(context),
             ),

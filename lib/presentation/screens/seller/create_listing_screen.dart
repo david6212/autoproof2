@@ -52,7 +52,7 @@ class CreateListingScreen extends ConsumerWidget {
         title: const Text('פרסום מודעה'),
         leading: state.step > 0
             ? IconButton(
-                icon: const Icon(Icons.arrow_forward),
+                icon: const Icon(Icons.arrow_back),
                 onPressed: () =>
                     ref.read(createListingControllerProvider.notifier).back(),
               )
