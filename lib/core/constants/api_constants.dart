@@ -15,9 +15,14 @@ class ApiConstants {
   /// Nothing in Dart can work around that: the browser enforces it from the
   /// server's headers, and the server is not ours.
   ///
-  /// Fill this with the Worker's origin (no path) once `tool/gov_cors_proxy.js`
-  /// is deployed — e.g. `https://gov-cors.<subdomain>.workers.dev`.
-  static const govProxyHost = '';
+  /// Deployed 19/08/2026 from `tool/gov_cors_proxy.js`, on David's Cloudflare
+  /// account. Origin only, no path — [_govPath] is appended.
+  ///
+  /// The URL is public by necessity: it ships inside the web bundle, because
+  /// the browser is what calls it. What keeps it ours is the Worker's origin
+  /// allowlist plus a path allowlist of exactly one endpoint.
+  static const govProxyHost =
+      'https://sweet-breeze-97b0.davidmalede.workers.dev';
 
   static const _govPath = '/api/3/action/datastore_search';
 
