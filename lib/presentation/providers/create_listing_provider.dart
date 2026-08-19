@@ -19,7 +19,8 @@ class CreateListingState {
   final String area;
   final String reason;
   final String description; // "a few words about the car"
-  final int step; // 0 = photos, 1 = details, 2 = review
+  /// 0 = the car, 1 = price & details, 2 = photos, 3 = publish.
+  final int step;
   final bool publishing;
   final String? error;
   final String? publishedId;
@@ -85,12 +86,26 @@ class CreateListingController extends Notifier<CreateListingState> {
   void setReason(String v) => state = state.copyWith(reason: v);
   void setDescription(String v) => state = state.copyWith(description: v);
 
+  /// The last step's index. Named rather than written as a literal in two
+  /// places, which is how a flow ends up with a step nobody can leave.
+  static const lastStep = 3;
+
   void next() {
-    if (state.step < 2) state = state.copyWith(step: state.step + 1, clearError: true);
+    if (state.step < lastStep) {
+      state = state.copyWith(step: state.step + 1, clearError: true);
+    }
   }
 
   void back() {
     if (state.step > 0) state = state.copyWith(step: state.step - 1, clearError: true);
+  }
+
+  /// Whether step 1 is done: a car came back from the registry, and a
+  /// first-time seller has given the name buyers will see.
+  bool carValid({required bool needsName}) {
+    final v = ref.read(sellerVerificationControllerProvider);
+    if (v.carData == null) return false;
+    return !needsName || v.name.trim().length >= 2;
   }
 
   bool get detailsValid {
@@ -128,6 +143,28 @@ class CreateListingController extends Notifier<CreateListingState> {
     if (price <= 0 || km < 0) {
       state = state.copyWith(error: 'בדוק את המחיר והקילומטראז\'.');
       return;
+    }
+
+    // The two gates that used to stand in front of the whole flow, as a
+    // router redirect, now stand here — at the last possible moment, which is
+    // the only moment where the reason for them is obvious.
+    //
+    // They are not weaker for having moved: both were client-side before and
+    // are client-side now. What changed is that a seller sees their own car
+    // and prices it before being asked to prove anything.
+    final user = ref.read(currentUserModelProvider).valueOrNull;
+    if (user != null && !user.hasPhone) {
+      state = state.copyWith(error: 'צריך לאמת מספר טלפון לפני הפרסום.');
+      return;
+    }
+    if (user != null && !user.verified) {
+      await ref.read(sellerVerificationControllerProvider.notifier).submit();
+      final v = ref.read(sellerVerificationControllerProvider);
+      if (!v.saved) {
+        state = state.copyWith(
+            error: v.error ?? 'שמירת האימות נכשלה. נסה שוב.');
+        return;
+      }
     }
 
     // Fallback uid so the flow is testable before auth is wired on web.

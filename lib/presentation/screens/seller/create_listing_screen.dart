@@ -3,11 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
+// `show`, because intl exports a TextDirection of its own that shadows
+// Flutter's and breaks every TextDirection.ltr in this file.
+import 'package:intl/intl.dart' show NumberFormat;
 
 import '../../../core/constants/app_config.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../../data/models/car_model.dart';
 import '../../../data/models/gov_data_model.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/create_listing_provider.dart';
 import '../../providers/vehicle_provider.dart';
@@ -45,8 +49,6 @@ class CreateListingScreen extends ConsumerWidget {
       );
     }
 
-    if (car == null) return const _NeedVerification();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('פרסום מודעה'),
@@ -63,13 +65,20 @@ class CreateListingScreen extends ConsumerWidget {
           children: [
             Padding(
               padding: const EdgeInsets.all(16),
-              child: StepProgress(current: state.step + 1),
+              child: StepProgress(current: state.step + 1, total: 4),
             ),
             Expanded(
+              // The car is looked up inside step 1 now, so every later step
+              // can count on it. Before, three verification screens ran first
+              // and this screen simply refused to open without them.
               child: switch (state.step) {
-                0 => const _StepPhotos(),
-                1 => _StepDetails(car: car),
-                _ => _StepReview(car: car),
+                0 => const _StepCar(),
+                1 when car != null => _StepDetails(car: car),
+                2 when car != null => const _StepPhotos(),
+                _ when car != null => _StepReview(car: car),
+                // Only reachable if the car was cleared while deeper in the
+                // flow. Sending them back beats an empty screen.
+                _ => const _StepCar(),
               },
             ),
           ],
@@ -79,7 +88,259 @@ class CreateListingScreen extends ConsumerWidget {
   }
 }
 
-// ---------------- Step 1: Photos ----------------
+// ---------------- Step 1: The car ----------------
+
+/// Who is selling, which car, and what buyers will call the seller.
+///
+/// This one screen replaces three: "מי אתה?", "אימות בעלות" and the success
+/// page that only said the first two went well. They were three screens
+/// because they were built as a separate verification flow, and the seam
+/// stayed visible: the seller crossed two progress bars, both counting
+/// "step 1 of 3", to reach a form that had not started yet.
+///
+/// The order inside is not arbitrary. The role comes first because it decides
+/// what the plate check means — a private seller has to be the registered
+/// owner, an agent or a dealer does not — and asking afterwards would mean
+/// running the check against a rule the seller had not chosen yet.
+class _StepCar extends ConsumerStatefulWidget {
+  const _StepCar();
+
+  @override
+  ConsumerState<_StepCar> createState() => _StepCarState();
+}
+
+class _StepCarState extends ConsumerState<_StepCar> {
+  final _plate = TextEditingController();
+  late final TextEditingController _name;
+
+  @override
+  void initState() {
+    super.initState();
+    _name = TextEditingController(
+        text: ref.read(sellerVerificationControllerProvider).name);
+  }
+
+  @override
+  void dispose() {
+    _plate.dispose();
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _verify() {
+    FocusScope.of(context).unfocus();
+    ref
+        .read(sellerVerificationControllerProvider.notifier)
+        .verifyPlate(_plate.text.trim());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final v = ref.watch(sellerVerificationControllerProvider);
+    final user = ref.watch(currentUserModelProvider).valueOrNull;
+    final notifier = ref.read(sellerVerificationControllerProvider.notifier);
+
+    // A returning seller was named once and does not get asked again.
+    final needsName = user == null || !user.verified;
+    final car = v.carData;
+
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text('הרכב שלך', style: AppText.h3),
+                const SizedBox(height: 4),
+                Text(
+                  'נמשוך את הפרטים ממרשם הרכב כדי שלא תצטרך להקליד אותם',
+                  style: context.text.bodySmMuted,
+                ),
+                const SizedBox(height: 16),
+                if (needsName) ...[
+                  Text('אני מוכר בתור', style: context.text.caption),
+                  const SizedBox(height: 8),
+                  _RoleRow(
+                    selected: v.sellerType,
+                    // Locked once the registry answered: the check that just
+                    // passed was run against this answer.
+                    enabled: car == null,
+                    onChanged: notifier.setSellerType,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                TextField(
+                  controller: _plate,
+                  keyboardType: TextInputType.number,
+                  textDirection: TextDirection.ltr,
+                  textAlign: TextAlign.center,
+                  enabled: car == null,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 3,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(8),
+                  ],
+                  onChanged: (_) => setState(() {}),
+                  decoration: const InputDecoration(
+                    labelText: 'מספר רישוי',
+                    hintText: '12345678',
+                    hintTextDirection: TextDirection.ltr,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'מספר הרישוי לא מוצג לקונים — הם רואים כוכביות',
+                  style: context.text.bodySmMuted,
+                ),
+                if (v.error != null) ...[
+                  const SizedBox(height: 12),
+                  _InlineError(message: v.error!),
+                ],
+                if (car != null) ...[
+                  const SizedBox(height: 16),
+                  _ReadOnlyCarCard(car: car),
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: TextButton(
+                      onPressed: () {
+                        _plate.clear();
+                        notifier.reset();
+                      },
+                      child: const Text('זה לא הרכב שלי'),
+                    ),
+                  ),
+                ],
+                if (needsName) ...[
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _name,
+                    textCapitalization: TextCapitalization.words,
+                    onChanged: (val) {
+                      notifier.setName(val);
+                      setState(() {});
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'השם שיוצג לקונים',
+                      hintText: 'למשל: דוד',
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+        _BottomBar(
+          label: car == null ? 'בדוק במרשם' : 'המשך',
+          loading: v.loading,
+          onPressed: car == null
+              ? (_plate.text.trim().length >= 5 ? _verify : null)
+              : (ref
+                      .read(createListingControllerProvider.notifier)
+                      .carValid(needsName: needsName)
+                  ? () =>
+                      ref.read(createListingControllerProvider.notifier).next()
+                  : null),
+        ),
+      ],
+    );
+  }
+}
+
+/// The three sellers this app knows about, as one row.
+///
+/// Three full-width cards down a screen of their own was the old shape, and it
+/// read as a decision with weight. It is one line of context about who is
+/// typing, and it belongs above the plate rather than instead of it.
+class _RoleRow extends StatelessWidget {
+  const _RoleRow({
+    required this.selected,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final SellerType selected;
+  final bool enabled;
+  final ValueChanged<SellerType> onChanged;
+
+  static const _labels = <SellerType, String>{
+    SellerType.private: 'בעלים פרטי',
+    SellerType.agent: 'סוכן',
+    SellerType.dealer: 'סוחר',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (final entry in _labels.entries) ...[
+          Expanded(
+            child: GestureDetector(
+              onTap: enabled ? () => onChanged(entry.key) : null,
+              child: AppCard(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                borderColor: selected == entry.key
+                    ? context.colors.tealFill
+                    : context.colors.cardBorder,
+                borderWidth: selected == entry.key ? 2 : 1,
+                child: Text(
+                  entry.value,
+                  textAlign: TextAlign.center,
+                  style: AppText.bodySm.copyWith(
+                    fontWeight: selected == entry.key
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: enabled ? null : context.colors.textMuted,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (entry.key != SellerType.dealer) const SizedBox(width: 8),
+        ],
+      ],
+    );
+  }
+}
+
+/// A failed check, said in place rather than in a snackbar that leaves.
+class _InlineError extends StatelessWidget {
+  const _InlineError({required this.message});
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: context.colors.errorBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.error_outline, color: context.colors.errorRed, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: AppText.bodySm.copyWith(color: context.colors.errorRed),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------- Step 3: Photos ----------------
 
 class _StepPhotos extends ConsumerWidget {
   const _StepPhotos();
@@ -107,7 +368,15 @@ class _StepPhotos extends ConsumerWidget {
               children: [
                 // h3 across all three steps. The step bar above already says
                 // where you are; the title does not also need to shout.
-                const Text('הוסף תמונות של הרכב', style: AppText.h3),
+                const Text('תמונות של הרכב', style: AppText.h3),
+                const SizedBox(height: 4),
+                // The app stars out the plate everywhere it prints it. A photo
+                // it cannot read defeats that in one tap, and the seller is
+                // the only one who can decide what to do about it.
+                Text(
+                  'אם מספר הרישוי נראה בתמונה — הוא גלוי לכל מי שרואה את המודעה',
+                  style: context.text.bodySmMuted,
+                ),
                 const SizedBox(height: 4),
                 Text(
                   AppConfig.storageEnabled
@@ -243,7 +512,7 @@ class _PhotoThumb extends StatelessWidget {
   }
 }
 
-// ---------------- Step 2: Details ----------------
+// ---------------- Step 2: Price & details ----------------
 
 class _StepDetails extends ConsumerStatefulWidget {
   const _StepDetails({required this.car});
@@ -254,6 +523,8 @@ class _StepDetails extends ConsumerStatefulWidget {
 }
 
 class _StepDetailsState extends ConsumerState<_StepDetails> {
+  static final _kmFmt = NumberFormat('#,###', 'en');
+
   late final TextEditingController _price;
   late final TextEditingController _km;
   late final TextEditingController _reason;
@@ -335,6 +606,20 @@ class _StepDetailsState extends ConsumerState<_StepDetails> {
                     hintText: '45000',
                   ),
                 ),
+                // The official reading is offered as context, and deliberately
+                // NOT filled in. It is the number the app cross-checks the
+                // listing against, so pre-filling it would hand the seller a
+                // value that passes our own check by construction — and it is
+                // stale by design, since the car has been driven since the
+                // test. Shown, so nobody has to look it up; typed, so the
+                // number in the listing is one a person stood behind.
+                if ((car.lastTestKm ?? 0) > 0) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'בטסט האחרון נרשמו ${_kmFmt.format(car.lastTestKm)} ק"מ',
+                    style: context.text.bodySmMuted,
+                  ),
+                ],
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: _area,
@@ -427,7 +712,7 @@ class _ReadOnlyCarCard extends StatelessWidget {
   }
 }
 
-// ---------------- Step 3: Review ----------------
+// ---------------- Step 4: Publish ----------------
 
 class _StepReview extends ConsumerWidget {
   const _StepReview({required this.car});
@@ -439,6 +724,8 @@ class _StepReview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(createListingControllerProvider);
     final notifier = ref.read(createListingControllerProvider.notifier);
+    final user = ref.watch(currentUserModelProvider).valueOrNull;
+    final needsPhone = user != null && !user.hasPhone;
 
     return Column(
       children: [
@@ -521,10 +808,26 @@ class _StepReview extends ConsumerWidget {
             ),
           ),
         ),
+        if (needsPhone)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: Text(
+              'לפני הפרסום נאמת מספר טלפון. הוא לא מוצג במודעה — הוא מה שמונע '
+              'ממודעות אנונימיות להתפרסם.',
+              style: context.text.bodySmMuted,
+            ),
+          ),
         _BottomBar(
-          label: 'פרסם מודעה',
+          // A phone is required to publish and always was. It used to be
+          // demanded before the seller had seen a single screen of their own
+          // listing; here the reason for it is on the screen above.
+          label: needsPhone ? 'אימות טלפון ופרסום' : 'פרסם מודעה',
           loading: s.publishing,
           onPressed: () async {
+            if (needsPhone) {
+              context.push('/verify/phone');
+              return;
+            }
             // A reading below the last official test is usually a typo and
             // occasionally worse. Either way the seller gets to see the two
             // numbers before the listing goes out.
@@ -720,41 +1023,6 @@ class _Stat extends StatelessWidget {
   }
 }
 
-class _NeedVerification extends StatelessWidget {
-  const _NeedVerification();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('פרסום מודעה')),
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.verified_user_outlined,
-                    size: 64, color: context.colors.textSubtle),
-                const SizedBox(height: 12),
-                Text(
-                  'יש להשלים אימות מוכר לפני פרסום מודעה',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: context.colors.textMuted),
-                ),
-                const SizedBox(height: 20),
-                PrimaryButton(
-                  label: 'לאימות מוכר',
-                  onPressed: () => context.go('/verify/role'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 // ---------------- Shared bottom bar ----------------
 

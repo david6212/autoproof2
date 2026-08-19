@@ -11,10 +11,7 @@ import '../presentation/screens/auth/splash_screen.dart';
 import '../presentation/screens/auth/onboarding_screen.dart';
 import '../presentation/screens/auth/login_screen.dart';
 // Verify
-import '../presentation/screens/verify/verify_role_screen.dart';
 import '../presentation/screens/verify/verify_phone_screen.dart';
-import '../presentation/screens/verify/verify_plate_screen.dart';
-import '../presentation/screens/verify/verify_success_screen.dart';
 // Buyer
 import '../presentation/screens/buyer/home_screen.dart';
 import '../presentation/screens/buyer/car_detail_screen.dart';
@@ -138,19 +135,15 @@ final routerProvider = Provider<GoRouter>((ref) {
     observers: [ref.watch(analyticsObserverProvider)],
     refreshListenable: refresh,
     redirect: (context, state) {
-      // RULE 1 — Seller gate: only verified users may create a listing, and
-      // only with a phone number on file. Google/Apple sign-in carries no
-      // number, so without this a throwaway account could publish anonymously.
-      if (state.matchedLocation == '/seller/create') {
-        final user = ref.read(currentUserModelProvider).valueOrNull;
-        // Only block when we positively know the user is NOT eligible.
-        if (user != null && !user.verified) {
-          return '/verify/role';
-        }
-        if (user != null && !user.hasPhone) {
-          return '/verify/phone';
-        }
-      }
+      // RULE 1 — the seller gate moved INTO the flow.
+      //
+      // It used to bounce anyone without a verified account away from
+      // `/seller/create` before they saw anything, which is why the journey
+      // was eight screens: three of them existed only to satisfy this
+      // redirect. Verification now happens in step 1 (the registry check) and
+      // step 4 (the phone), where the seller can see what they are for.
+      // `CreateListingController.publish` refuses without both — the same
+      // client-side strength the redirect had.
       // RULE 2 — the passport needs an account, because it is private by
       // security rule rather than by convention.
       return accountRedirect(
@@ -165,16 +158,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           path: '/onboarding', builder: (c, s) => const OnboardingScreen()),
       GoRoute(path: '/login', builder: (c, s) => const LoginScreen()),
 
-      // Verify
-      GoRoute(
-          path: '/verify/role', builder: (c, s) => const VerifyRoleScreen()),
-      GoRoute(
-          path: '/verify/plate', builder: (c, s) => const VerifyPlateScreen()),
+      // Verify. Only the phone step is still a screen of its own; the role
+      // question and the ownership check live inside the publish flow now.
       GoRoute(
           path: '/verify/phone', builder: (c, s) => const VerifyPhoneScreen()),
-      GoRoute(
-          path: '/verify/success',
-          builder: (c, s) => const VerifySuccessScreen()),
 
       // Buyer shell (with bottom TabBar)
       ShellRoute(

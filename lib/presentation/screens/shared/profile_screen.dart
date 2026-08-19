@@ -166,11 +166,15 @@ class _Content extends StatelessWidget {
             label: 'רכבים שהיו בבעלותי',
             onTap: () => context.push('/profile/past-vehicles'),
           ),
+          // The comparison against the registry is no longer a thing you do
+          // on its own — it is the first step of publishing, where it has a
+          // purpose. This row leads there rather than to a verification flow
+          // that ended in a screen congratulating you for finishing it.
           if (!verified)
             _MenuRow(
               icon: Icons.verified_user_outlined,
-              label: 'השוואה למרשם הרכב',
-              onTap: () => context.push('/verify/role'),
+              label: 'פרסום מודעה והשוואה למרשם',
+              onTap: () => context.push('/seller/create'),
             ),
           _MenuRow(
             icon: Icons.info_outline,
