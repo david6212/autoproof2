@@ -17,9 +17,16 @@ import 'login_required_sheet.dart';
 /// the reliability rating literally in the buyers' hands, and flags when the
 /// crowd disagrees with the listing's declared type.
 class SellerEncounterCard extends ConsumerWidget {
-  const SellerEncounterCard({super.key, required this.car});
+  const SellerEncounterCard({
+    super.key,
+    required this.car,
+    this.showDisagreementBanner = true,
+  });
 
   final CarModel car;
+
+  /// Whether to repeat the declared-versus-reported banner inside this card.
+  final bool showDisagreementBanner;
 
   static const _types = [
     SellerType.private,
@@ -71,7 +78,10 @@ class SellerEncounterCard extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (tally.disagreesWith(car.sellerType))
+        // Suppressed on the listing page, where the findings block above
+        // already states it. Two statements of one disagreement on a single
+        // screen read as two disagreements.
+        if (showDisagreementBanner && tally.disagreesWith(car.sellerType))
           _AttentionBanner(
             declared: car.sellerType,
             reported: tally.majority!,

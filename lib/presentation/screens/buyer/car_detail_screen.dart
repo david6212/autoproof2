@@ -11,11 +11,16 @@ import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../../core/utils/odometer_check.dart';
+import '../../../data/models/gov_data_model.dart';
+import '../../providers/gov_api_provider.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/car/car_active_warnings.dart';
+import '../../widgets/common/collapsible_section.dart';
+import '../../widgets/share_listing_button.dart';
 import '../../widgets/buyer_journey_card.dart';
 import '../../widgets/car_notes_section.dart';
 import '../../widgets/car_photo_gallery.dart';
-import '../../widgets/gov_red_flags_card.dart';
 import '../../widgets/login_required_sheet.dart';
 import '../../widgets/plate_history_card.dart';
 import '../../widgets/report_listing_sheet.dart';
@@ -39,25 +44,27 @@ class CarDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final carAsync = ref.watch(carByIdProvider(carId));
 
-    return Scaffold(
-      body: carAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        // A failed load is not a missing car. Saying "not found" for a lost
-        // second of signal tells the reader the listing is gone.
-        error: (_, __) => ErrorRetry(
+    return carAsync.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      // A failed load is not a missing car. Saying "not found" for a lost
+      // second of signal tells the reader the listing is gone.
+      error: (_, __) => Scaffold(
+        appBar: AppBar(),
+        body: ErrorRetry(
           message: 'לא הצלחנו לטעון את המודעה',
           onRetry: () => ref.invalidate(carByIdProvider(carId)),
         ),
-        data: (car) {
-          if (car == null) return _error(context);
-          return _Content(car: car);
-        },
       ),
+      data: (car) => car == null ? _error(context) : _Content(car: car),
     );
   }
 
   Widget _error(BuildContext context) {
-    return SafeArea(
+    return Scaffold(
+      appBar: AppBar(),
+      body: SafeArea(
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -70,144 +77,192 @@ class CarDetailScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             TextButton(
                 onPressed: () => popOrHome(context), child: const Text('חזרה')),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _Content extends ConsumerWidget {
+class _Content extends ConsumerStatefulWidget {
   const _Content({required this.car});
   final CarModel car;
 
+  @override
+  ConsumerState<_Content> createState() => _ContentState();
+}
+
+class _ContentState extends ConsumerState<_Content> {
   static final _priceFmt = NumberFormat('#,###', 'en');
 
+  final _scroll = ScrollController();
+
+  /// Marks the odometer panel so the finding at the top can send the reader to
+  /// the evidence instead of restating it.
+  final _odometerKey = GlobalKey();
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _scrollToOdometer() {
+    final target = _odometerKey.currentContext;
+    if (target == null) return;
+    Scrollable.ensureVisible(
+      target,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      alignment: 0.1,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final car = widget.car;
     final savedIds = ref.watch(savedIdsProvider).valueOrNull ?? const {};
     final isSaved = savedIds.contains(car.id);
 
-    return Column(
-      children: [
-        Expanded(
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(child: CarPhotoGallery(car: car)),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              car.title,
-                              style: AppText.h1,
-                            ),
-                          ),
-                          Text(
-                            '₪${_priceFmt.format(car.price)}',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: context.colors.tealText2,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _StatsRow(car: car),
-                      const SizedBox(height: 14),
-                      // Official red flags (accident / recall / off-road),
-                      // pulled forward from the full history screen.
-                      GovRedFlagsCard(plate: car.plate),
-                      if (car.fuel.isNotEmpty ||
-                          car.color.isNotEmpty ||
-                          car.ownership.isNotEmpty) ...[
-                        const SizedBox(height: 14),
-                        _OfficialSpecs(car: car),
-                      ],
-                      const SizedBox(height: 14),
-                      _ValueInsights(car: car),
-                      if (car.description.trim().isNotEmpty) ...[
-                        const SizedBox(height: 14),
-                        _SellerAbout(text: car.description.trim()),
-                      ],
-                      const SizedBox(height: 14),
-                      // Cross-listing memory: past listings for this plate +
-                      // odometer-rollback flag (renders nothing if first time).
-                      PlateHistoryCard(
-                        plate: car.plate,
-                        currentCarId: car.id,
-                        currentKm: car.km,
-                      ),
-                      const SizedBox(height: 16),
-                      // Silent until there are 8 comparable listings, which
-                      // with four demo cars means silent today.
-                      MarketPriceBand(car: car),
-                      const SizedBox(height: 16),
-                      // The seller's own service log, when this listing came
-                      // from a passport. Renders nothing otherwise — most
-                      // listings do not, and saying so would read as an
-                      // accusation rather than an absence.
-                      DocumentedHistoryCard(car: car),
-                      const SizedBox(height: 16),
-                      _SellerCard(sellerType: car.sellerType),
-                      const SizedBox(height: 16),
-                      // Crowd trust: buyers report who they actually met.
-                      SellerEncounterCard(car: car),
-                      const SizedBox(height: 12),
-                      _HistoryButton(plate: car.plate),
-                      const SizedBox(height: 16),
-                      // Guided buyer journey — interactive, per-buyer progress.
-                      BuyerJourneyCard(carId: car.id),
-                      const SizedBox(height: 16),
-                      // Crowdsourced visitor notes for this listing.
-                      CarNotesSection(carId: car.id),
-                      if (car.reasonForSelling.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        Text('סיבת המכירה',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: context.colors.textPrimary)),
-                        const SizedBox(height: 6),
-                        Text(car.reasonForSelling,
-                            style: TextStyle(
-                                color: context.colors.textMuted)),
-                      ],
-                      const SizedBox(height: 16),
-                      // Official records and user reports sit side by side on
-                      // this page, so the notice belongs here.
-                      const LiabilityNotice(),
-                      const SizedBox(height: 8),
-                      // The content-removal policy promises a route to report
-                      // a whole listing, not just an individual note. This is
-                      // it, placed with the other fine print.
-                      Center(
-                        child: TextButton.icon(
-                          icon: const Icon(Icons.flag_outlined, size: 18),
-                          label: const Text('דווח על המודעה'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: context.colors.textMuted,
-                          ),
-                          onPressed: () =>
-                              showReportListing(context, ref, carId: car.id),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
+    return Scaffold(
+      // The photo used to be the top of the screen and carried the back arrow
+      // with it. It now sits below the findings, so the navigation moved into
+      // a real app bar — a back arrow half a screen down is not a back arrow.
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'חזרה',
+          onPressed: () => popOrHome(context),
+        ),
+        actions: [ShareListingButton(car: car)],
+      ),
+      bottomNavigationBar: _ActionBar(car: car, isSaved: isSaved),
+      body: SafeArea(
+        child: ListView(
+          controller: _scroll,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          children: [
+            // ---- LEVEL 1 · could stop a purchase --------------------------
+            //
+            // Findings first. Everything on this page was equally weighted
+            // before, which handed the sorting work to a reader who is about
+            // to spend tens of thousands of shekels. Nothing is hidden by
+            // this order; it just stops pretending the tyre width and a
+            // mileage mismatch deserve the same glance.
+            CarActiveWarnings(
+              car: car,
+              onShowOdometerSource: _scrollToOdometer,
+            ),
+            Row(
+              children: [
+                Expanded(child: Text(car.title, style: AppText.h1)),
+                Text(
+                  '₪${_priceFmt.format(car.price)}',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: context.colors.tealText2,
                   ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _StatsRow(car: car),
+            const SizedBox(height: 14),
+            _SellerCard(sellerType: car.sellerType),
+
+            // ---- LEVEL 2 · affects price and decision --------------------
+            //
+            // One card, one weight, one header style, all the way down. What
+            // marks level 1 out is that it looks different, not that it looks
+            // bigger.
+            const SizedBox(height: 24),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              child: CarPhotoGallery(car: car, chrome: false),
+            ),
+            if (car.fuel.isNotEmpty ||
+                car.color.isNotEmpty ||
+                car.ownership.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              _OfficialSpecs(car: car),
+            ],
+            const SizedBox(height: 14),
+            _RegistryUnreachableNote(plate: car.plate),
+            _ChecksPerformedNote(plate: car.plate, currentKm: car.km),
+            _ValueInsights(car: car),
+            const SizedBox(height: 14),
+            // Silent until there are 8 comparable listings, which with four
+            // demo cars means silent today.
+            MarketPriceBand(car: car),
+            // The seller's own service log, when this listing came from a
+            // passport. Renders nothing otherwise — most listings do not, and
+            // saying so would read as an accusation rather than an absence.
+            DocumentedHistoryCard(car: car),
+            // The evidence behind the odometer finding above, which links
+            // here rather than repeating itself.
+            KeyedSubtree(
+              key: _odometerKey,
+              child: PlateHistoryCard(
+                plate: car.plate,
+                currentCarId: car.id,
+                currentKm: car.km,
+                showRollbackBanner: false,
+              ),
+            ),
+            if (car.description.trim().isNotEmpty ||
+                car.reasonForSelling.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              _SellerAbout(
+                text: car.description.trim(),
+                reason: car.reasonForSelling.trim(),
               ),
             ],
-          ),
+            const SizedBox(height: 14),
+            // Crowd trust: buyers report who they actually met.
+            SellerEncounterCard(car: car, showDisagreementBanner: false),
+            const SizedBox(height: 14),
+            // Crowdsourced visitor notes for this listing.
+            CarNotesSection(carId: car.id),
+
+            // ---- LEVEL 3 · background, folded away -----------------------
+            //
+            // Every one of these keeps a summary while closed, so nobody has
+            // to open a section to discover they did not want it.
+            const SizedBox(height: 24),
+            _HistoryButton(plate: car.plate),
+            const SizedBox(height: 14),
+            BuyerJourneyCard(carId: car.id, collapsible: true),
+            const SizedBox(height: 14),
+            CollapsibleSection(
+              icon: Icons.gavel_outlined,
+              title: 'הבהרה משפטית ודיווח',
+              summary: 'מקורות הנתונים, ודיווח על מודעה',
+              persistKey: 'legal',
+              child: Column(
+                children: [
+                  const LiabilityNotice(),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: TextButton.icon(
+                      icon: const Icon(Icons.flag_outlined, size: 18),
+                      label: const Text('דווח על המודעה'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: context.colors.textMuted,
+                      ),
+                      onPressed: () =>
+                          showReportListing(context, ref, carId: car.id),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        _ActionBar(car: car, isSaved: isSaved),
-      ],
+      ),
     );
+
   }
 }
 
@@ -422,9 +477,15 @@ class _ValueInsights extends StatelessWidget {
 }
 
 /// The seller's free-text "a few words about the car".
+/// The seller's own words.
+///
+/// Absorbed the separate "סיבת המכירה" panel, which said the same kind of
+/// thing one card further down and counted as its own section in a page that
+/// had seventeen.
 class _SellerAbout extends StatelessWidget {
-  const _SellerAbout({required this.text});
+  const _SellerAbout({required this.text, this.reason = ''});
   final String text;
+  final String reason;
 
   @override
   Widget build(BuildContext context) {
@@ -445,10 +506,24 @@ class _SellerAbout extends StatelessWidget {
                       color: context.colors.textPrimary)),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(text,
-              style: TextStyle(
-                  fontSize: 13, height: 1.4, color: context.colors.textPrimary)),
+          if (text.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(text,
+                style: TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: context.colors.textPrimary)),
+          ],
+          if (reason.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text('סיבת המכירה',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12.5,
+                    color: context.colors.textPrimary)),
+            const SizedBox(height: 2),
+            Text(reason, style: context.text.caption),
+          ],
         ],
       ),
     );
@@ -654,6 +729,144 @@ class _RoundAction extends StatelessWidget {
         ),
         child: iconWidget ??
             Icon(icon, color: context.colors.textPrimary),
+      ),
+    );
+  }
+}
+
+/// What was checked, when nothing came back.
+///
+/// This replaced a green banner with a verified-shield icon reading "אין דגלים
+/// אדומים רשמיים". The wording there was careful — it spoke about the records,
+/// not the car — but it was the most prominent thing on the page, and what it
+/// looked like was approval. Absence of a record is not a clean bill of
+/// health, and the app cannot afford to be read as saying otherwise.
+///
+/// Deleting it outright was the other option. It loses something real: the
+/// five-dataset check is most of what separates this from a classifieds board,
+/// and a buyer has no way to know it happened. So the fact survives, and
+/// everything that made it look like a verdict is gone — grey micro type, no
+/// icon, no fill, and a closing clause that says what it is not.
+///
+/// Renders nothing until the registry answers, and nothing at all when there
+/// are findings: they are already at the top of the page, and a line about
+/// what was clean underneath them would read as an argument with them.
+class _ChecksPerformedNote extends ConsumerWidget {
+  const _ChecksPerformedNote({required this.plate, required this.currentKm});
+
+  final String plate;
+  final int currentKm;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gov = ref.watch(govDataForPlateProvider(plate)).valueOrNull;
+    if (gov == null) return const SizedBox.shrink();
+
+    final officialKm = OdometerCheck.officialReading(gov.lastTestKm);
+    final anyFinding = gov.offRoad ||
+        gov.structuralChange ||
+        gov.recalls.isNotEmpty ||
+        OdometerCheck.belowOfficial(
+            officialKm: officialKm, currentKm: currentKm);
+    if (anyFinding) return const SizedBox.shrink();
+
+    // Name only the datasets that actually answered. Any endpoint can fail on
+    // its own, and listing a check we never completed would be the exact claim
+    // this line exists to avoid making.
+    final checked = <String>[
+      if (gov.answered(GovDataset.history)) 'שינוי מבנה',
+      if (gov.answered(GovDataset.recalls)) 'קריאת שירות פתוחה',
+      'ירידה מהכביש',
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'נבדקו מאגרי משרד התחבורה. לא נמצאו בהם רישומי '
+            '${_list(checked)}. היעדר רישום אינו אישור לתקינות הרכב.',
+            style: context.text.micro,
+          ),
+          if (gov.missingDatasets.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              'חלק ממאגרי משרד התחבורה לא נענו בבדיקה הזאת, '
+              'ולכן אין לנו מה לומר עליהם.',
+              style: context.text.micro,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// "א, ב ו-ג" — Hebrew list punctuation, so a shrunken list still reads.
+  static String _list(List<String> items) {
+    if (items.length == 1) return items.first;
+    return '${items.take(items.length - 1).join(', ')} ו${items.last}';
+  }
+}
+
+
+/// Says so when the registry could not be reached.
+///
+/// Before this, an outage was invisible: the odometer comparison, the recall
+/// check and the official spec simply were not on the page, and nothing said
+/// why. On an app whose entire argument is "here is what the state records
+/// say", silence is the worst available answer — the reader cannot tell a car
+/// with no history from a lookup that never happened, and neither can they
+/// tell that trying again might work.
+///
+/// Deliberately quiet: one line and a retry, in muted type. It is a report on
+/// our own plumbing, not a finding about the car, and it must not compete with
+/// the ones that are.
+class _RegistryUnreachableNote extends ConsumerWidget {
+  const _RegistryUnreachableNote({required this.plate});
+
+  final String plate;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lookup = ref.watch(govDataForPlateProvider(plate));
+    if (!lookup.hasError) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpace.md),
+        decoration: BoxDecoration(
+          color: context.colors.background,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: context.colors.cardBorder),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.cloud_off_outlined,
+                size: 16, color: context.colors.textSubtle),
+            const SizedBox(width: AppSpace.sm),
+            Expanded(
+              child: Text(
+                'לא הצלחנו להגיע למרשם הרכב, ולכן הנתונים הרשמיים אינם '
+                'מוצגים כאן. זה לא אומר דבר על הרכב עצמו.',
+                style: context.text.micro,
+              ),
+            ),
+            const SizedBox(width: AppSpace.sm),
+            TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 32),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm),
+                foregroundColor: context.colors.tealText2,
+              ),
+              onPressed: () =>
+                  ref.invalidate(govDataForPlateProvider(plate)),
+              child: const Text('נסו שוב', style: TextStyle(fontSize: 12)),
+            ),
+          ],
+        ),
       ),
     );
   }

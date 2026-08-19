@@ -22,7 +22,17 @@ import 'skeleton.dart';
 /// which are deliberately solid `surface` circles: they are app chrome, not
 /// photo chrome, and they read as the same control as everywhere else.
 class CarPhotoGallery extends StatefulWidget {
-  const CarPhotoGallery({super.key, required this.car});
+  const CarPhotoGallery({super.key, required this.car, this.chrome = true});
+
+  /// Whether the gallery draws the page's navigation over the photo — the
+  /// back arrow and the share button.
+  ///
+  /// True by default, because for most of this widget's life the photo WAS
+  /// the top of the screen and had to carry them. The listing page now opens
+  /// on its findings instead, so the photo sits mid-page there and the
+  /// navigation belongs in a real app bar; a back arrow half a screen down is
+  /// not a back arrow.
+  final bool chrome;
 
   final CarModel car;
 
@@ -159,18 +169,22 @@ class _CarPhotoGalleryState extends State<CarPhotoGallery> {
                 padding: const EdgeInsets.all(AppSpace.sm),
                 child: Row(
                   children: [
-                    _RoundAction(
-                      key: CarPhotoGallery.backKey,
-                      icon: Icons.arrow_forward,
-                      tooltip: 'חזרה',
-                      onPressed: () => popOrHome(context),
-                    ),
-                    const SizedBox(width: AppSpace.sm),
-                    _RoundAction.custom(
-                      key: CarPhotoGallery.shareKey,
-                      child: ShareListingButton(car: widget.car),
-                    ),
+                    if (widget.chrome) ...[
+                      _RoundAction(
+                        key: CarPhotoGallery.backKey,
+                        icon: Icons.arrow_back,
+                        tooltip: 'חזרה',
+                        onPressed: () => popOrHome(context),
+                      ),
+                      const SizedBox(width: AppSpace.sm),
+                      _RoundAction.custom(
+                        key: CarPhotoGallery.shareKey,
+                        child: ShareListingButton(car: widget.car),
+                      ),
+                    ],
                     const Spacer(),
+                    // Fullscreen stays either way: it is about the photo, not
+                    // about where the photo sits on the page.
                     if (total > 0) _expandButton(context, total),
                   ],
                 ),

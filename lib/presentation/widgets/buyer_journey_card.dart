@@ -8,6 +8,7 @@ import '../providers/auth_provider.dart';
 import '../providers/cars_provider.dart';
 import '../../core/theme/app_text.dart';
 import 'app_card.dart';
+import 'common/collapsible_section.dart';
 import 'login_required_sheet.dart';
 
 /// External deep-check report the buyer can order from a partner service.
@@ -119,9 +120,23 @@ class _JourneyStep {
 /// stage value is still passed in from the screen; per-buyer progress tracking
 /// comes in a later step.
 class BuyerJourneyCard extends ConsumerWidget {
-  const BuyerJourneyCard({super.key, required this.carId});
+  const BuyerJourneyCard({
+    super.key,
+    required this.carId,
+    this.collapsible = false,
+  });
 
   final String carId;
+
+  /// Folds the journey away behind a one-line summary.
+  ///
+  /// The listing page sets this: the journey is background material next to a
+  /// mileage mismatch, and it was taking a screen and a half. What it must not
+  /// lose in the fold is the fact that the reader already started — a plain
+  /// link would have thrown that away, and the half-finished checklist is the
+  /// main reason anyone opens the listing a second time. So the summary
+  /// carries the live position instead.
+  final bool collapsible;
 
   static const _steps = <_JourneyStep>[
     _JourneyStep(
@@ -135,7 +150,7 @@ class BuyerJourneyCard extends ConsumerWidget {
     ),
     _JourneyStep(
       title: 'בדיקת עומק לפני החלטה',
-      subtitle: 'הרכב תקין — הזמינו דוח עומק',
+      subtitle: 'אם הבדיקה עברה — הזמינו דוח עומק',
       reports: [_balcarReport],
     ),
     _JourneyStep(
@@ -156,7 +171,7 @@ class BuyerJourneyCard extends ConsumerWidget {
   static const _actionLabels = <String>[
     'התחל בבדיקה',
     'סימנתי — בדקתי את הרכב',
-    'הרכב תקין — התקדם',
+    'סימנתי — הבדיקה עברה',
     'קניתי את הרכב 🎉',
   ];
 
@@ -164,6 +179,56 @@ class BuyerJourneyCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentStage = ref.watch(journeyStageProvider(carId)).valueOrNull ?? 1;
     final completed = currentStage >= _steps.length;
+
+    final steps = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < _steps.length; i++)
+          _StepRow(
+            step: _steps[i],
+            index: i,
+            carId: carId,
+            isDone: i < currentStage,
+            isActive: i == currentStage,
+            isLast: i == _steps.length - 1,
+            actionLabel: i == currentStage ? _actionLabels[i] : null,
+            onAction: i == currentStage ? () => _advance(context, ref, i) : null,
+          ),
+        if (completed)
+          Container(
+            margin: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: context.colors.tealLight,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.celebration_outlined,
+                    size: 17, color: context.colors.teal),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('השלמת את מסע הקנייה — בהצלחה עם הרכב החדש!',
+                      style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: context.colors.tealText)),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+
+    if (collapsible) {
+      return CollapsibleSection(
+        icon: Icons.route_outlined,
+        title: 'מסע הקנייה',
+        summary: _summary(currentStage, completed),
+        persistKey: 'journey',
+        child: steps,
+      );
+    }
 
     return AppSectionCard(
       icon: Icons.route_outlined,
@@ -178,47 +243,16 @@ class BuyerJourneyCard extends ConsumerWidget {
               child: const Text('אפס', style: TextStyle(fontSize: 12.5)),
             )
           : null,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (var i = 0; i < _steps.length; i++)
-            _StepRow(
-              step: _steps[i],
-              index: i,
-              carId: carId,
-              isDone: i < currentStage,
-              isActive: i == currentStage,
-              isLast: i == _steps.length - 1,
-              actionLabel: i == currentStage ? _actionLabels[i] : null,
-              onAction:
-                  i == currentStage ? () => _advance(context, ref, i) : null,
-            ),
-          if (completed)
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: context.colors.tealLight,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.celebration_outlined,
-                      size: 17, color: context.colors.teal),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text('השלמת את מסע הקנייה — בהצלחה עם הרכב החדש!',
-                        style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: context.colors.tealText)),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
+      child: steps,
     );
+  }
+
+  /// What the fold says while closed. The number is the reader's own progress,
+  /// counted from what they actually ticked.
+  String _summary(int currentStage, bool completed) {
+    if (completed) return 'הושלם';
+    return 'השלמת $currentStage מתוך ${_steps.length} · '
+        'הבא: ${_steps[currentStage].title}';
   }
 
   void _advance(BuildContext context, WidgetRef ref, int fromIndex) {

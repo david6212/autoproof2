@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/app_palette.dart';
+import '../../core/utils/odometer_check.dart';
 import '../../data/models/plate_snapshot_model.dart';
 import '../providers/cars_provider.dart';
 import '../providers/gov_api_provider.dart';
@@ -19,11 +20,19 @@ class PlateHistoryCard extends ConsumerWidget {
     required this.plate,
     required this.currentCarId,
     required this.currentKm,
+    this.showRollbackBanner = true,
   });
 
   final String plate;
   final String currentCarId;
   final int currentKm;
+
+  /// Whether to repeat the mismatch banner inside this card.
+  ///
+  /// False on the listing page, where the findings block above already states
+  /// it and this card is the evidence you scroll to. True everywhere else, so
+  /// the card still stands on its own.
+  final bool showRollbackBanner;
 
   static final _fmt = NumberFormat('#,###', 'en');
 
@@ -34,12 +43,13 @@ class PlateHistoryCard extends ConsumerWidget {
     final govData = ref.watch(govDataForPlateProvider(plate)).valueOrNull;
 
     final previous = history.where((s) => s.carId != currentCarId).toList();
-    final govKm = (govData?.lastTestKm != null && govData!.lastTestKm! > 0)
-        ? govData.lastTestKm!
-        : null;
-
-    final govRollback = govKm != null && govKm > currentKm;
-    final histRollback = previous.any((s) => s.km > currentKm);
+    // Same rule the findings block at the top of the page reads, so the two
+    // can never disagree about the same two numbers.
+    final govKm = OdometerCheck.officialReading(govData?.lastTestKm);
+    final govRollback =
+        OdometerCheck.belowOfficial(officialKm: govKm, currentKm: currentKm);
+    final histRollback = OdometerCheck.belowPastListings(
+        previous: previous, currentKm: currentKm);
 
     // Nothing to show if there's neither an official reading nor prior listings.
     if (govKm == null && previous.isEmpty) return const SizedBox.shrink();
@@ -51,7 +61,9 @@ class PlateHistoryCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Rollback warning (from official record and/or a past listing).
-          if (govRollback || histRollback) ...[
+          // Suppressed when the page already leads with it — see
+          // [showRollbackBanner].
+          if (showRollbackBanner && (govRollback || histRollback)) ...[
             Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
