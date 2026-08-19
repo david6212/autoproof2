@@ -1,11 +1,36 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 
 import '../../../core/constants/api_constants.dart';
 
 /// Thrown when a plate lookup fails, carrying a Hebrew message for the UI.
+/// Why a registry call failed.
+///
+/// The message alone was not enough to act on. "This plate is not in the
+/// registry" and "we could not reach the registry" read almost the same to a
+/// caller matching on strings, and they call for opposite behaviour: the first
+/// is an answer, the second is the absence of one. An app whose entire claim
+/// is that it shows official records cannot afford to render the second as the
+/// first.
+enum GovApiErrorKind {
+  /// The registry answered, and has no such vehicle.
+  notFound,
+
+  /// We never got an answer — timeout, network, CORS, an error status.
+  unreachable,
+
+  /// The plate we were handed was not usable.
+  badInput,
+}
+
 class GovApiException implements Exception {
-  GovApiException(this.message);
+  GovApiException(this.message, {this.kind = GovApiErrorKind.unreachable});
+
   final String message;
+  final GovApiErrorKind kind;
+
+  bool get isNotFound => kind == GovApiErrorKind.notFound;
+
   @override
   String toString() => message;
 }
@@ -40,7 +65,8 @@ class GovApiService {
 
       final records = (data['result']?['records'] as List?) ?? const [];
       if (records.isEmpty) {
-        throw GovApiException('המספר לא נמצא. בדוק את מספר הרישוי.');
+        throw GovApiException('המספר לא נמצא. בדוק את מספר הרישוי.',
+            kind: GovApiErrorKind.notFound);
       }
 
       return Map<String, dynamic>.from(records.first as Map);
@@ -141,6 +167,47 @@ class GovApiService {
       return records
           .map((r) => Map<String, dynamic>.from(r as Map))
           .toList();
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw GovApiException('הבקשה ארכה מדי. בדוק את החיבור לאינטרנט.');
+      }
+      throw GovApiException('שגיאת רשת. נסה שוב.');
+    }
+  }
+
+  /// Licensed garages for one or more `miktzoa` values, optionally narrowed
+  /// to a town.
+  ///
+  /// Filtered server-side. The registry holds 13,930 rows and the app has no
+  /// business downloading them to find the four in somebody's town — CKAN
+  /// accepts a list of values per field, so one request answers the whole
+  /// question.
+  Future<List<Map<String, dynamic>>> fetchGarages({
+    required List<String> miktzoaValues,
+    String? town,
+    int limit = 200,
+  }) async {
+    if (miktzoaValues.isEmpty) return const [];
+    try {
+      final filters = <String, dynamic>{'miktzoa': miktzoaValues};
+      if (town != null && town.trim().isNotEmpty) {
+        filters['yishuv'] = town.trim();
+      }
+      final res = await _dio.get(
+        ApiConstants.govApiBase,
+        queryParameters: {
+          'resource_id': ApiConstants.garagesResourceId,
+          'filters': jsonEncode(filters),
+          'limit': limit,
+        },
+      );
+      final data = res.data;
+      if (data is! Map || data['success'] != true) {
+        throw GovApiException('שירות הנתונים הממשלתי אינו זמין כרגע.');
+      }
+      final records = (data['result']?['records'] as List?) ?? const [];
+      return records.map((r) => Map<String, dynamic>.from(r as Map)).toList();
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {

@@ -50,8 +50,16 @@ final govDataForPlateProvider =
     FutureProvider.family<GovData?, String>((ref, plate) async {
   try {
     return await ref.read(govApiRepositoryProvider).lookupPlate(plate);
-  } catch (_) {
-    return null;
+  } on GovApiException catch (e) {
+    // A plate the registry has never heard of is an answer: null, and the
+    // panels stay quiet. Anything else is the absence of an answer, and it
+    // surfaces as an error so a screen can say so and offer to try again.
+    //
+    // Swallowing both into null, as this did, is how an entire outage looked
+    // exactly like a car with no records — sections vanishing one by one with
+    // nothing on screen to explain it.
+    if (e.isNotFound) return null;
+    rethrow;
   }
 });
 

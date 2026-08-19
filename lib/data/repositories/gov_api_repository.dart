@@ -3,6 +3,7 @@ import '../../core/utils/plate_formatter.dart';
 import '../models/gov_data_model.dart';
 import '../models/fuel_station.dart';
 import '../models/inspection_center.dart';
+import '../models/licensed_garage.dart';
 import '../models/model_spec.dart';
 import '../sources/remote/gov_api_service.dart';
 
@@ -18,7 +19,8 @@ class GovApiRepository {
   Future<GovData> lookupPlate(String rawPlate) async {
     final digits = PlateFormatter.digitsOnly(rawPlate);
     if (digits.isEmpty) {
-      throw GovApiException('יש להזין מספר רישוי.');
+      throw GovApiException('יש להזין מספר רישוי.',
+          kind: GovApiErrorKind.badInput);
     }
     // Off-road/scrapped vehicles are NOT in the active registry, so if the
     // active lookup fails, fall back to the off-road dataset (same fields).
@@ -33,11 +35,40 @@ class GovApiRepository {
     }
     final base = GovData.fromApi(record);
 
-    // Enrich with the extra datasets.
-    final history = await _service.fetchHistory(digits);
-    final rawRecalls = await _service.fetchRecalls(digits);
-    final disabilityTag = await _service.fetchDisabilityTag(digits);
-    final recalls = rawRecalls
+    // Enrich with the extra datasets — each on its own.
+    //
+    // These are four separate endpoints and any one of them can time out or
+    // rate-limit by itself. Awaited bare, as they were, a single sulking
+    // auxiliary dataset threw out of this method, `govDataForPlateProvider`
+    // caught it and returned null, and the listing page lost EVERY government
+    // fact at once: the odometer comparison, the recall check, the structural
+    // record. One endpoint's bad minute erased the entire reason the app
+    // exists. `fetchModelSpec` had already been given this treatment, with the
+    // note "an enrichment, never a blocker" — it was right, and it applied to
+    // all four.
+    //
+    // What must NOT happen is quietly treating a failure as a clean result.
+    // Each gap is recorded so the UI can stay silent about a check it never
+    // ran, instead of reporting "nothing found".
+    final missing = <GovDataset>{};
+
+    Future<T?> tryFetch<T>(GovDataset which, Future<T> Function() fetch) async {
+      try {
+        return await fetch();
+      } catch (_) {
+        missing.add(which);
+        return null;
+      }
+    }
+
+    final history =
+        await tryFetch(GovDataset.history, () => _service.fetchHistory(digits));
+    final rawRecalls =
+        await tryFetch(GovDataset.recalls, () => _service.fetchRecalls(digits));
+    final disabilityTag = await tryFetch(
+            GovDataset.disabilityTag, () => _service.fetchDisabilityTag(digits)) ??
+        false;
+    final recalls = (rawRecalls ?? const <Map<String, dynamic>>[])
         .map((r) => RecallItem(
               system: (r['SUG_TAKALA'] ?? '').toString(),
               description: (r['TEUR_TAKALA'] ?? '').toString(),
@@ -59,8 +90,34 @@ class GovApiRepository {
           recalls: recalls,
           offRoad: offRoad,
           disabilityTag: disabilityTag,
+          missing: missing,
         )
         .withSpec(specRaw == null ? null : ModelSpec.fromApi(specRaw));
+  }
+
+  /// Licensed garages for a trade, nearest-agnostic and sorted by town.
+  ///
+  /// Returns nothing for a trade the ministry does not license — car washes —
+  /// rather than pretending the registry had no matches. The two are not the
+  /// same and the caller has to be able to tell them apart.
+  Future<List<LicensedGarage>> garagesFor(
+    GarageTrade trade, {
+    String? town,
+  }) async {
+    if (!trade.isLicensed) return const [];
+    final raw = await _service.fetchGarages(
+      miktzoaValues: trade.miktzoaValues,
+      town: town,
+    );
+    final list = raw
+        .map(LicensedGarage.fromApi)
+        .where((g) => g.name.isNotEmpty && g.licenceNumber.isNotEmpty)
+        .toList();
+    list.sort((a, b) {
+      final byTown = a.town.compareTo(b.town);
+      return byTown != 0 ? byTown : a.name.compareTo(b.name);
+    });
+    return list;
   }
 
   /// Licensed pre-purchase inspection centers, cleaned and sorted by city then

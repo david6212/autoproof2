@@ -17,6 +17,18 @@ class RecallItem {
 /// lease/rental flags — those live in separate datasets. Commercial-use is
 /// derived here from `baalut` (ownership type) instead, which this dataset
 /// does provide.
+/// The registry endpoints a plate lookup touches beyond the base record.
+enum GovDataset {
+  /// Test history: official odometer, structural change, colour, originality.
+  history,
+
+  /// Open manufacturer recalls.
+  recalls,
+
+  /// Disabled-parking tag.
+  disabilityTag,
+}
+
 class GovData {
   final String plate; // mispar_rechev
   final String make; // tozeret_nm
@@ -88,7 +100,25 @@ class GovData {
     this.tozeretCd = '',
     this.degemCd = '',
     this.spec,
+    this.missingDatasets = const {},
   });
+
+  /// Enrichment datasets that did not answer for this lookup.
+  ///
+  /// The registry is five separate endpoints, and any one of them can time out
+  /// or rate-limit on its own. Before this existed a single flaky auxiliary
+  /// dataset threw, the provider swallowed it, and every government fact
+  /// vanished from the listing at once — the odometer comparison, the recall
+  /// check, the lot.
+  ///
+  /// Recording the gap rather than papering over it is the whole point. An
+  /// empty recall list means two completely different things depending on
+  /// whether the recall dataset answered, and the app is not allowed to
+  /// present the second one as the first: "no open recalls found" when we
+  /// never reached the recall dataset is a claim about a check we did not run.
+  final Set<GovDataset> missingDatasets;
+
+  bool answered(GovDataset d) => !missingDatasets.contains(d);
 
   /// Returns a copy carrying the per-model build spec.
   GovData withSpec(ModelSpec? s) => _copy(spec: s);
@@ -100,6 +130,7 @@ class GovData {
     required List<RecallItem> recalls,
     Map<String, dynamic>? offRoad,
     bool disabilityTag = false,
+    Set<GovDataset> missing = const {},
   }) {
     int? km;
     bool flag(dynamic v) => v == 1 || v == '1';
@@ -119,6 +150,7 @@ class GovData {
       offRoad: offRoad != null,
       offRoadDate: (offRoad?['bitul_dt'] ?? '').toString().split(' ').first,
       hasDisabilityTag: disabilityTag,
+      missing: missing,
     );
   }
 
@@ -136,6 +168,7 @@ class GovData {
     String? offRoadDate,
     bool? hasDisabilityTag,
     ModelSpec? spec,
+    Set<GovDataset>? missing,
   }) {
     return GovData(
       plate: plate,
@@ -169,6 +202,7 @@ class GovData {
       tozeretCd: tozeretCd,
       degemCd: degemCd,
       spec: spec ?? this.spec,
+      missingDatasets: missing ?? missingDatasets,
     );
   }
 
