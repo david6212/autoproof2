@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 
 import '../models/user_model.dart';
 
@@ -178,18 +178,56 @@ class AuthRepository {
 
   Future<void> signOut() => _auth.signOut();
 
-  String _mapAuthError(FirebaseAuthException e) {
-    switch (e.code) {
+  /// A Firebase auth failure, in Hebrew, and never in a way that blames the
+  /// reader for our own misconfiguration.
+  ///
+  /// The default used to be "האימות נכשל. נסה שוב." for everything. That is
+  /// what David saw when phone verification broke, and it was worse than
+  /// useless: the cause was that the release build's certificate had never
+  /// been registered in Firebase, so no number and no amount of retrying
+  /// could ever have worked. An error that says "try again" about something
+  /// that cannot succeed sends a person in a circle.
+  ///
+  /// So the faults that are OURS say so, and anything unrecognised carries
+  /// its code — a screenshot then names the problem instead of describing it.
+  @visibleForTesting
+  static String messageFor(String code) {
+    switch (code) {
+      // ---- the reader can fix these -----------------------------------
       case 'invalid-phone-number':
         return 'מספר הטלפון שגוי. בדוק ונסה שוב.';
-      case 'too-many-requests':
-        return 'יותר מדי ניסיונות. נסה שוב מאוחר יותר.';
       case 'invalid-verification-code':
         return 'הקוד שגוי. בדוק את הספרות ונסה שוב.';
       case 'session-expired':
+      case 'code-expired':
         return 'הקוד פג תוקף. שלח קוד חדש.';
+      case 'too-many-requests':
+        return 'יותר מדי ניסיונות מהמספר הזה. נסה שוב בעוד כמה דקות.';
+      case 'network-request-failed':
+        return 'אין חיבור לרשת. בדוק את החיבור ונסה שוב.';
+
+      // ---- the number is fine, the account is the problem --------------
+      case 'credential-already-in-use':
+      case 'account-exists-with-different-credential':
+        return 'המספר הזה כבר משויך לחשבון אחר באפליקציה.';
+      case 'provider-already-linked':
+        return 'כבר יש מספר טלפון מאומת בחשבון הזה.';
+
+      // ---- ours, and saying otherwise would be a lie --------------------
+      case 'app-not-authorized':
+      case 'missing-client-identifier':
+      case 'invalid-app-credential':
+        return 'הגרסה הזו של האפליקציה אינה מאושרת לאימות טלפון. זו תקלה '
+            'בהגדרות שלנו ולא במספר שהזנת — נתקן ונעדכן.';
+      case 'operation-not-allowed':
+        return 'אימות טלפון אינו פעיל כרגע בצד שלנו. זו תקלה שלנו.';
+      case 'quota-exceeded':
+        return 'מכסת ההודעות שלנו נגמרה להיום. זו תקלה שלנו, לא במספר שלך.';
+
       default:
-        return 'האימות נכשל. נסה שוב.';
+        return 'האימות נכשל ($code). אם זה חוזר, שלחו לנו צילום מסך.';
     }
   }
+
+  String _mapAuthError(FirebaseAuthException e) => messageFor(e.code);
 }
