@@ -2,6 +2,7 @@
 # Builds everything Firebase Hosting serves, into build/hosting:
 #
 #   /            the static landing page (landing/)
+#   /legal/      the legal documents, rendered from the app's own source
 #   /app/        the Flutter app
 #
 # Firebase serves one directory per site, so the two have to be assembled
@@ -21,6 +22,11 @@ echo "==> Building the app with base href /app/"
 # MSYS_NO_PATHCONV stops Git Bash "helpfully" rewriting the leading slash into
 # a Windows path — without it Flutter receives C:/Program Files/Git/app/.
 MSYS_NO_PATHCONV=1 flutter build web --release --base-href /app/
+
+echo "==> Rendering the legal documents as static pages"
+# Generated from lib/core/constants/legal_docs.dart — the same text the app
+# shows. Run every time, so the published policy cannot lag the one in the app.
+dart run tool/gen_legal.dart
 
 echo "==> Assembling $OUT"
 rm -rf "$OUT"

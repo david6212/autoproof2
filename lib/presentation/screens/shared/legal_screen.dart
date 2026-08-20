@@ -43,7 +43,7 @@ class _Index extends StatelessWidget {
             onTap: () => context.push('/legal/${doc.id}'),
             child: Row(
               children: [
-                Icon(doc.icon, color: context.colors.teal),
+                Icon(_iconFor(doc.id), color: context.colors.teal),
                 const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: Column(
@@ -195,5 +195,29 @@ class _Paragraph extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// The glyph for each document.
+///
+/// It lives here rather than in `LegalDocs` because the documents are text,
+/// and text that carries a Material icon cannot be read by anything but a
+/// Flutter screen. `tool/gen_legal.dart` renders the same documents as static
+/// HTML for the site, and it can only import them because they are now plain
+/// Dart.
+IconData _iconFor(String id) {
+  switch (id) {
+    case LegalDocs.terms:
+      return Icons.gavel_outlined;
+    case LegalDocs.privacy:
+      return Icons.lock_outline;
+    case LegalDocs.cookies:
+      return Icons.cookie_outlined;
+    case LegalDocs.removal:
+      return Icons.playlist_remove_outlined;
+    case LegalDocs.complaints:
+      return Icons.support_agent_outlined;
+    default:
+      return Icons.description_outlined;
   }
 }

@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 import 'legal_info.dart';
 
 /// The app's legal documents, as content rather than screens.
@@ -48,7 +46,6 @@ class LegalDocs {
         id: terms,
         title: 'תנאי שימוש',
         summary: 'מה השירות עושה, מה מותר ומה אסור, ומה גבולות האחריות',
-        icon: Icons.gavel_outlined,
         sections: [
           LegalSection('1. מי אנחנו', [
             'BonnetCheck היא אפליקציה ואתר להצגת מודעות של רכבים יד שנייה בישראל, '
@@ -161,7 +158,6 @@ class LegalDocs {
         id: privacy,
         title: 'מדיניות פרטיות',
         summary: 'איזה מידע נאסף, למה, עם מי הוא משותף ואיך מבקשים מחיקה',
-        icon: Icons.lock_outline,
         sections: [
           LegalSection('1. מי אחראי למידע', [
             'האחראי על המידע שנאסף בשירות הוא ${LegalInfo.operatorLine}.',
@@ -279,7 +275,6 @@ class LegalDocs {
         id: cookies,
         title: 'מדיניות עוגיות',
         summary: 'מה נשמר בדפדפן ובמכשיר, ואיך לשלוט בזה',
-        icon: Icons.cookie_outlined,
         sections: [
           LegalSection('1. על מה חלה מדיניות זו', [
             'המדיניות חלה על גרסת האתר בדפדפן. באפליקציה המותקנת אין עוגיות '
@@ -319,7 +314,6 @@ class LegalDocs {
         id: removal,
         title: 'מדיניות הסרת תוכן',
         summary: 'איך מבקשים להסיר או לתקן מודעה, הערה או מידע אישי',
-        icon: Icons.playlist_remove_outlined,
         sections: [
           LegalSection('1. מה ניתן לבקש להסיר או לתקן', [
             '• מודעה שפורסמה בלי הרשאת בעל הרכב, או שפרטיה שגויים.',
@@ -373,7 +367,6 @@ class LegalDocs {
         id: complaints,
         title: 'נוהל תלונות',
         summary: 'איך מגישים תלונה, מה התהליך, ולאן פונים אם לא נפתר',
-        icon: Icons.support_agent_outlined,
         sections: [
           LegalSection('1. על מה אפשר להתלונן', [
             '• מוכר שהתנהג בחוסר יושר, הציג מצג שווא או התחזה לסיווג שאינו שלו.',
@@ -424,7 +417,6 @@ class LegalDoc {
     required this.id,
     required this.title,
     required this.summary,
-    required this.icon,
     required this.sections,
   });
 
@@ -434,7 +426,6 @@ class LegalDoc {
 
   /// One line shown on the index screen.
   final String summary;
-  final IconData icon;
   final List<LegalSection> sections;
 }
 
