@@ -167,8 +167,17 @@ class CreateListingController extends Notifier<CreateListingState> {
       }
     }
 
-    // Fallback uid so the flow is testable before auth is wired on web.
-    final uid = ref.read(authStateProvider).valueOrNull?.uid ?? 'test-user';
+    // A guest may walk the whole flow — that is the point of it — but a
+    // listing has an owner. This used to fall back to a literal 'test-user'
+    // uid "so the flow is testable before auth is wired", which stopped being
+    // a convenience the moment the flow opened to visitors: it would have
+    // published real cars under an account nobody can sign in to, and so
+    // nobody could ever edit or remove.
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (uid == null) {
+      state = state.copyWith(error: 'צריך חשבון כדי לפרסם מודעה.');
+      return;
+    }
     final carRepo = ref.read(carRepositoryProvider);
 
     state = state.copyWith(publishing: true, clearError: true);

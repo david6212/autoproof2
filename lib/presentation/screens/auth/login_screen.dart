@@ -9,6 +9,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/legal_info.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/seller_verification_provider.dart';
 import '../../providers/vehicle_draft_provider.dart';
 import '../../widgets/brand_logo.dart';
 import '../../widgets/primary_button_widget.dart';
@@ -35,12 +36,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   /// Where a completed sign-in lands.
   ///
-  /// Home, unless the visitor built a passport before signing in — then the
-  /// garage, which claims the draft and opens the car. Dropping them on Home
-  /// would lose the thread at the exact moment they were promised the file
-  /// they just built would be kept.
-  String get _destination =>
-      ref.read(vehicleDraftProvider) == null ? '/home' : '/garage';
+  /// Home, unless the visitor was in the middle of something before we asked
+  /// them to sign in — a listing they were about to publish, or a passport
+  /// they had just built. Dropping either on Home loses the thread at the
+  /// exact moment they were promised their work would be kept.
+  String get _destination {
+    // A listing half-written outranks everything: the visitor was one tap
+    // from publishing and signed in only because we asked them to.
+    if (ref.read(sellerVerificationControllerProvider).carData != null) {
+      return '/seller/create';
+    }
+    return ref.read(vehicleDraftProvider) == null ? '/home' : '/garage';
+  }
 
   /// Runs a Google/Apple sign-in action, then routes on success.
   Future<void> _social(Future<void> Function() action) async {

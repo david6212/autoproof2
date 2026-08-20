@@ -725,6 +725,7 @@ class _StepReview extends ConsumerWidget {
     final s = ref.watch(createListingControllerProvider);
     final notifier = ref.read(createListingControllerProvider.notifier);
     final user = ref.watch(currentUserModelProvider).valueOrNull;
+    final signedIn = ref.watch(authStateProvider).valueOrNull != null;
     final needsPhone = user != null && !user.hasPhone;
 
     return Column(
@@ -808,7 +809,16 @@ class _StepReview extends ConsumerWidget {
             ),
           ),
         ),
-        if (needsPhone)
+        if (!signedIn)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: Text(
+              'המודעה נשמרת על חשבון, כדי שתוכלו לערוך אותה, לקבל הודעות '
+              'ולהסיר אותה כשהרכב נמכר. מה שמילאתם עד כאן נשמר.',
+              style: context.text.bodySmMuted,
+            ),
+          )
+        else if (needsPhone)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
             child: Text(
@@ -821,9 +831,18 @@ class _StepReview extends ConsumerWidget {
           // A phone is required to publish and always was. It used to be
           // demanded before the seller had seen a single screen of their own
           // listing; here the reason for it is on the screen above.
-          label: needsPhone ? 'אימות טלפון ופרסום' : 'פרסם מודעה',
+          label: !signedIn
+              ? 'התחברות ופרסום'
+              : (needsPhone ? 'אימות טלפון ופרסום' : 'פרסם מודעה'),
           loading: s.publishing,
           onPressed: () async {
+            // Both of these are the same idea as the phone gate: ask at the
+            // end, on the screen that shows what the answer buys. Neither
+            // loses the draft — the controller outlives the trip.
+            if (!signedIn) {
+              context.push('/login');
+              return;
+            }
             if (needsPhone) {
               context.push('/verify/phone');
               return;

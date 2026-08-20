@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'app_nav_bar.dart';
-import 'fuel_fab.dart';
 
 /// Bottom TabBar shell for seller screens: בית | המודעה | פרסום | צ'אטים | פרופיל
 class SellerShell extends StatelessWidget {
@@ -41,9 +40,11 @@ class SellerShell extends StatelessWidget {
 
     return Scaffold(
       body: child,
-      // The buyer side gives fuel a tab; this side has no spare slot, so it
-      // keeps the floating shortcut rather than losing the route.
-      floatingActionButton: const FuelFab(),
+      // No floating shortcut here. A fuel-station button hovering over
+      // "פרסם את הרכב שלך" answers a question nobody is asking mid-sale, and a
+      // floating button is the loudest thing on a screen — it should be the
+      // one action that screen is for. Fuel keeps its tab on the buyer side,
+      // one tap away.
       bottomNavigationBar: AppNavBar(
         tabs: _tabs,
         currentIndex: current,

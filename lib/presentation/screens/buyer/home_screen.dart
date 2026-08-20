@@ -13,6 +13,7 @@ import '../../providers/alert_prefs_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../widgets/publish_fab.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/car_card_widget.dart';
 import '../../widgets/fact_chip.dart';
@@ -56,6 +57,7 @@ class HomeScreen extends ConsumerWidget {
     }
 
     return Scaffold(
+      floatingActionButton: const PublishFab(),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
