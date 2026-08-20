@@ -78,7 +78,7 @@ String _page(LegalDoc doc) {
   return _shell(
     title: '${doc.title} — BonnetCheck',
     description: doc.summary,
-    canonical: 'https://bonnetcheck.web.app/legal/${doc.id}',
+    canonical: 'https://bonnetcheck.web.app/legal/${doc.id}/',
     heading: doc.title,
     lead: doc.summary,
     body: body.toString(),
@@ -90,7 +90,7 @@ String _index() {
   final body = StringBuffer('<ul class="docs">');
   for (final doc in LegalDocs.all) {
     body.writeln(
-      '<li><a href="/legal/${doc.id}"><strong>${_esc(doc.title)}</strong>'
+      '<li><a href="/legal/${doc.id}/"><strong>${_esc(doc.title)}</strong>'
       '<span>${_esc(doc.summary)}</span></a></li>',
     );
   }

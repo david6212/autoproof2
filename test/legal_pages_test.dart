@@ -71,7 +71,9 @@ void main() {
       // read a page of text — and a store reviewer or a crawler will not.
       expect(landing.contains('/app/#/legal/'), isFalse);
       for (final id in const ['terms', 'privacy', 'cookies', 'removal']) {
-        expect(landing, contains('href="/legal/$id"'));
+        // With the slash: that is the URL that answers 200. Without it
+        // Firebase 301s to it, and a store form wants the destination.
+        expect(landing, contains('href="/legal/$id/"'));
       }
     });
 
