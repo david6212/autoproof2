@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 // Flutter's and breaks every TextDirection.ltr in this file.
 import 'package:intl/intl.dart' show NumberFormat;
 
+import '../../../app/router.dart' show popOrHome;
 import '../../../core/constants/app_config.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../data/models/car_model.dart';
@@ -49,16 +50,24 @@ class CreateListingScreen extends ConsumerWidget {
       );
     }
 
-    return Scaffold(
+    // One control, two meanings, and the order matters: inside the flow it
+    // steps back, and at the first step it leaves. Before this, step 1 had
+    // whatever Flutter decided to draw — a back arrow when the screen had
+    // been pushed, and nothing at all when it was reached from a tab. A
+    // publish form with no way out is a trap, and the way out of a listing
+    // form is the listings.
+    final onFirstStep = state.step == 0;
+
+    final scaffold = Scaffold(
       appBar: AppBar(
         title: const Text('פרסום מודעה'),
-        leading: state.step > 0
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () =>
-                    ref.read(createListingControllerProvider.notifier).back(),
-              )
-            : null,
+        leading: IconButton(
+          icon: Icon(onFirstStep ? Icons.close : Icons.arrow_back),
+          tooltip: onFirstStep ? 'חזרה לרכבים למכירה' : 'שלב קודם',
+          onPressed: onFirstStep
+              ? () => popOrHome(context)
+              : () => ref.read(createListingControllerProvider.notifier).back(),
+        ),
       ),
       body: SafeArea(
         child: Column(
@@ -84,6 +93,16 @@ class CreateListingScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+
+    return PopScope(
+      // The system back gesture follows the same rule, so it cannot skip past
+      // three filled-in steps in one swipe.
+      canPop: onFirstStep,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) ref.read(createListingControllerProvider.notifier).back();
+      },
+      child: scaffold,
     );
   }
 }

@@ -119,4 +119,26 @@ void main() {
       expect(offenders, isEmpty);
     });
   });
+
+  group('the way out', () {
+    final source =
+        File('lib/presentation/screens/seller/create_listing_screen.dart')
+            .readAsStringSync();
+
+    test('the first step offers an exit, not a dead corner', () {
+      // The leading control used to be null on step 1, which means "whatever
+      // Flutter decides": a back arrow when the screen had been pushed, and
+      // nothing at all when it was reached from a tab. A form with no way out
+      // is a trap, and the way out of a listing form is the listings.
+      expect(source, contains('popOrHome(context)'));
+      expect(source, contains('חזרה לרכבים למכירה'));
+      expect(source.contains('leading: state.step > 0'), isFalse);
+    });
+
+    test('the system back walks the steps instead of leaving the flow', () {
+      // Without this, one swipe from step 4 drops three filled-in steps.
+      expect(source, contains('PopScope'));
+      expect(source, contains('canPop: onFirstStep'));
+    });
+  });
 }
