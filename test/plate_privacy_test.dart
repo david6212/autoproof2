@@ -157,4 +157,23 @@ void main() {
       expect(offenders, isEmpty);
     });
   });
+
+  test('no screen offers a search by plate', () {
+    // The haystack lost the plate; a placeholder still advertising it would
+    // be the app breaking a promise on the reader's first attempt.
+    final offenders = <String>[];
+    for (final entity in Directory('lib').listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      final lines = entity.readAsLinesSync();
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i].contains('hintText') &&
+            (lines[i].contains('מספר רכב') ||
+                lines[i].contains('מספר רישוי') &&
+                    lines[i].contains('חיפוש'))) {
+          offenders.add('${entity.path}:${i + 1}');
+        }
+      }
+    }
+    expect(offenders, isEmpty);
+  });
 }

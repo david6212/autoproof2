@@ -459,7 +459,11 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
               onChanged: _set,
               style: AppText.body,
               decoration: InputDecoration.collapsed(
-                hintText: 'חיפוש לפי יצרן, דגם, אזור או מספר רכב',
+                // Not "או מספר רכב" any more. The plate left the search
+                // haystack when it stopped being shown, and a placeholder
+                // that offers a search nobody can perform is a promise the
+                // app breaks on the first try.
+                hintText: 'חיפוש לפי יצרן, דגם או אזור',
                 hintStyle: AppText.body.copyWith(
                   color: context.colors.textSubtle,
                 ),
