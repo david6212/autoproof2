@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemUiOverlayStyle;
-import 'package:google_fonts/google_fonts.dart';
 
 import '../core/theme/app_dimens.dart';
 import '../core/theme/app_palette.dart';
@@ -18,7 +17,14 @@ class AppTheme {
   static ThemeData get dark => _build(Brightness.dark, AppPalette.dark);
 
   static ThemeData _build(Brightness brightness, AppPalette p) {
-    final base = ThemeData(brightness: brightness, useMaterial3: true);
+    // The family is bundled with the app; naming it on the base theme makes
+    // it the default for every style that does not set one, which is most of
+    // them.
+    final base = ThemeData(
+      brightness: brightness,
+      useMaterial3: true,
+      fontFamily: 'Heebo',
+    );
 
     return base.copyWith(
       // Widgets read their colours from here via `context.colors`.
@@ -33,7 +39,8 @@ class AppTheme {
         // keep their default ink and go unreadable on the dark palette.
         onSurface: p.textPrimary,
       ),
-      textTheme: GoogleFonts.heeboTextTheme(base.textTheme).apply(
+      textTheme: base.textTheme.apply(
+        fontFamily: 'Heebo',
         bodyColor: p.textPrimary,
         displayColor: p.textPrimary,
       ),
@@ -67,7 +74,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: GoogleFonts.heebo(
+          textStyle: const TextStyle(
+            fontFamily: 'Heebo',
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
@@ -85,7 +93,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
-          textStyle: GoogleFonts.heebo(
+          textStyle: const TextStyle(
+            fontFamily: 'Heebo',
             fontSize: 15,
             fontWeight: FontWeight.bold,
           ),
@@ -102,7 +111,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
-          textStyle: GoogleFonts.heebo(
+          textStyle: const TextStyle(
+            fontFamily: 'Heebo',
             fontSize: 15,
             fontWeight: FontWeight.bold,
           ),

@@ -39,7 +39,6 @@ dependencies:
   # Utils
   intl: ^0.19.0
   flutter_secure_storage: ^9.0.0
-  google_fonts: ^6.2.0
   url_launcher: ^6.3.2
   flutter_map: ^8.3.1
   latlong2: ^0.10.1
@@ -54,6 +53,28 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    # Bundled, not fetched. The font-fetching package downloaded these from
+    # Google's servers on first paint, which sent every reader's IP address to
+    # a third party before anything was on screen — the fact pattern of
+    # LG München I,
+    # 3 O 17493/20. The landing site already self-hosted its copies; only the
+    # app leaked. Both families are SIL Open Font License 1.1; the licence
+    # texts ship beside them and are registered in main.dart.
+    - family: Heebo
+      fonts:
+        - asset: assets/fonts/Heebo-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Heebo-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Heebo-Bold.ttf
+          weight: 700
+    - family: Poppins
+      fonts:
+        # Bold only — Poppins is used for one thing, the wordmark.
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
+
   assets:
     # logo_full.png / logo_emblem.png are no longer bundled: the mark is drawn
     # in code by BrandLogo, and logo_full still carried the old "AUTOPROOF"
@@ -61,3 +82,7 @@ flutter:
     - assets/layers/car.png
     - assets/google_g.png
     - assets/data/inspection_centers_geo.json
+    # Read at startup and registered with Flutter's licence page. The OFL
+    # requires the licence to travel with the font.
+    - assets/fonts/OFL-Heebo.txt
+    - assets/fonts/OFL-Poppins.txt

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/app_palette.dart';
 
@@ -152,7 +151,10 @@ class BrandWordmark extends StatelessWidget {
             offset: Offset(-travel, 0),
             child: Text(
               'Bonnet',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
+                // Bundled with the app rather than fetched from Google's
+                // servers at first paint — see the fonts: block in pubspec.
+                fontFamily: 'Poppins',
                 fontSize: fontSize,
                 fontWeight: FontWeight.w700,
                 color: ink,

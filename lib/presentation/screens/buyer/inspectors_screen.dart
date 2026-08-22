@@ -13,6 +13,7 @@ import '../../../core/theme/app_dimens.dart';
 import '../../../data/models/inspection_center.dart';
 import '../../widgets/app_bar_action.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/map_attribution.dart';
 import '../../widgets/map_sheet.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/gov_api_provider.dart';
@@ -352,10 +353,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             },
           ),
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'il.autoproof.autoproof',
-            ),
+            osmTileLayer(),
             MarkerLayer(
               markers: [
                 for (final cluster in clusters)
@@ -396,6 +394,9 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
                   ),
               ],
             ),
+            // Last child, so the credit draws over the tiles rather than
+            // under a marker. Required by the ODbL, not optional.
+            const MapAttribution(),
           ],
         ),
         // Anything anchored to the TOP can stay on the map itself — the sheet

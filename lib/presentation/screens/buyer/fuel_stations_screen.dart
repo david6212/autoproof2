@@ -13,6 +13,7 @@ import '../../providers/fuel_report_provider.dart';
 import '../../providers/gov_api_provider.dart';
 import '../../widgets/app_bar_action.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/map_attribution.dart';
 import '../../widgets/map_sheet.dart';
 import '../../widgets/fuel_report_sheet.dart';
 import '../../widgets/map_cluster.dart';
@@ -225,10 +226,7 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
             },
           ),
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'il.autoproof.autoproof',
-            ),
+            osmTileLayer(),
             MarkerLayer(
               markers: [
                 for (final cluster in clusters)
@@ -247,6 +245,9 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
                   Marker(point: me, width: 22, height: 22, child: const _MeDot()),
               ],
             ),
+            // Last child, so the credit draws over the tiles rather than
+            // under a marker. Required by the ODbL, not optional.
+            const MapAttribution(),
           ],
         ),
       ],
