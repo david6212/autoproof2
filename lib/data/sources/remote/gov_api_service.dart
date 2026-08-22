@@ -313,19 +313,4 @@ class GovApiService {
     }
   }
 
-  /// Best-effort: does the vehicle have a disability parking tag?
-  Future<bool> fetchDisabilityTag(String plateDigits) async {
-    try {
-      final res = await _dio.get(ApiConstants.govApiBase, queryParameters: {
-        'resource_id': ApiConstants.disabilityTagResourceId,
-        'filters': plateFilter(plateFieldDisability, plateDigits),
-        'limit': 5,
-      });
-      final records =
-          (res.data?['result']?['records'] as List?) ?? const [];
-      return records.any((r) => '${(r as Map)['MISPAR RECHEV']}' == plateDigits);
-    } catch (_) {
-      return false;
-    }
-  }
 }

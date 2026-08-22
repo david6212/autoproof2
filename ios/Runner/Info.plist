@@ -4,6 +4,17 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<!-- Purpose strings. iOS raises SIGABRT — a crash, not a refusal — when a
+	     protected API is called without one, so their absence was a guaranteed
+	     rejection under guideline 2.1 as well as 5.1.1(ii). Each names the
+	     actual feature; a generic string is itself a rejection reason.
+	     NSCameraUsageDescription is deliberately NOT here: no code path uses
+	     ImageSource.camera, and declaring it would be the same over-reach the
+	     Android manifest just dropped. -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>כדי לצרף תמונות לרכב שאתם מפרסמים, ולצרף קבלה לרשומת טיפול בתיק הרכב.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>כדי להראות אילו מכוני בדיקה ותחנות דלק קרובים אליכם. המיקום נשאר במכשיר ואינו נשלח לשרת.</string>
 	<key>CFBundleDisplayName</key>
 	<string>BonnetCheck</string>
 	<key>CFBundleExecutable</key>

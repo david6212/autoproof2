@@ -1,6 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Location: show the user's position on the inspection-center map. -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <!-- Location: show the user's position on the inspection-centre and fuel
+         maps. COARSE only, deliberately. The code asks for
+         LocationAccuracy.medium (~100-500m) and the question it answers is
+         "which centre is nearest" — a city-block answer. Play's permissions
+         policy allows only what a current feature needs, and FINE is a
+         stronger claim on somebody's whereabouts than this feature can
+         justify. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
         android:label="BonnetCheck"

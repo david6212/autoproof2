@@ -180,7 +180,6 @@ void main() {
         recalls: const [],
         offRoad: false,
         offRoadDate: '',
-        hasDisabilityTag: false,
         tozeretCd: '',
         degemCd: '',
       ),

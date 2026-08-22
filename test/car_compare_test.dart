@@ -82,7 +82,6 @@ GovData gov({
     recalls: recalls,
     offRoad: offRoad,
     offRoadDate: '',
-    hasDisabilityTag: false,
     tozeretCd: '',
     degemCd: '',
   );

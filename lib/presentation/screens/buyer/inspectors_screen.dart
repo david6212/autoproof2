@@ -445,7 +445,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
         Padding(
           padding: const EdgeInsets.only(bottom: 10, top: 8),
           child: Text(
-            '${sorted.length} מכונים מורשים · מקור: משרד התחבורה'
+            '${sorted.length} מכונים מורשים · מקור: משרד התחבורה (data.gov.il)'
             '${me != null ? ' · ממוינים לפי קרבה אליך' : ''}',
             style: TextStyle(fontSize: 12.5, color: context.colors.textSubtle),
           ),

@@ -1,7 +1,12 @@
 /**
  * Cloudflare Worker — a CORS shim in front of data.gov.il.
  *
- * NOT DEPLOYED. Written on 18/08/2026, when data.gov.il stopped sending
+ * DEPLOYED AND SERVING PRODUCTION TRAFFIC since 19/08/2026, on David's
+ * Cloudflare account; the URL lives in `ApiConstants.govProxyHost`. This
+ * header said "NOT DEPLOYED" for three days after it went live, which is
+ * exactly the kind of comment that gets believed.
+ *
+ * Written on 18/08/2026, when data.gov.il stopped sending
  * `Access-Control-Allow-Origin` on its datastore_search responses. Verified
  * that day: the API still answers 200 to a server, and the browser at
  * bonnetcheck.web.app is blocked outright — "No 'Access-Control-Allow-Origin'

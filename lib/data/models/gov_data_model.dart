@@ -24,9 +24,6 @@ enum GovDataset {
 
   /// Open manufacturer recalls.
   recalls,
-
-  /// Disabled-parking tag.
-  disabilityTag,
 }
 
 class GovData {
@@ -57,10 +54,9 @@ class GovData {
   final String firstRegistration; // rishum_rishon_dt
   // From the open-recall dataset.
   final List<RecallItem> recalls;
-  // From the off-road / disability-tag datasets.
+  // From the off-road dataset.
   final bool offRoad; // vehicle scrapped / finally cancelled
   final String offRoadDate; // bitul_dt
-  final bool hasDisabilityTag;
   // Join keys into the models dataset (manufacturer + model codes).
   final String tozeretCd;
   final String degemCd;
@@ -96,7 +92,6 @@ class GovData {
     this.recalls = const [],
     this.offRoad = false,
     this.offRoadDate = '',
-    this.hasDisabilityTag = false,
     this.tozeretCd = '',
     this.degemCd = '',
     this.spec,
@@ -124,12 +119,11 @@ class GovData {
   GovData withSpec(ModelSpec? s) => _copy(spec: s);
 
   /// Returns a copy with the extra datasets (history, recalls, off-road,
-  /// disability tag) merged in.
+  /// structural change) merged in.
   GovData withExtras({
     required Map<String, dynamic>? history,
     required List<RecallItem> recalls,
     Map<String, dynamic>? offRoad,
-    bool disabilityTag = false,
     Set<GovDataset> missing = const {},
   }) {
     int? km;
@@ -149,7 +143,6 @@ class GovData {
       recalls: recalls,
       offRoad: offRoad != null,
       offRoadDate: (offRoad?['bitul_dt'] ?? '').toString().split(' ').first,
-      hasDisabilityTag: disabilityTag,
       missing: missing,
     );
   }
@@ -166,7 +159,6 @@ class GovData {
     List<RecallItem>? recalls,
     bool? offRoad,
     String? offRoadDate,
-    bool? hasDisabilityTag,
     ModelSpec? spec,
     Set<GovDataset>? missing,
   }) {
@@ -198,7 +190,6 @@ class GovData {
       recalls: recalls ?? this.recalls,
       offRoad: offRoad ?? this.offRoad,
       offRoadDate: offRoadDate ?? this.offRoadDate,
-      hasDisabilityTag: hasDisabilityTag ?? this.hasDisabilityTag,
       tozeretCd: tozeretCd,
       degemCd: degemCd,
       spec: spec ?? this.spec,

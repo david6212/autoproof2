@@ -214,4 +214,26 @@ void main() {
     }
     expect(offenders, isEmpty);
   });
+
+  testWidgets('the VIN is masked too', (tester) async {
+    // A VIN is a stronger and more permanent identifier than a plate — and
+    // the key input to plate cloning. Masking the plate while printing the
+    // chassis number underneath it protects nobody.
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light,
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: GovDataCard(
+            data: car().withExtras(
+              history: const {'misgeret': 'JMZKF6W7A00123456'},
+              recalls: const [],
+            ),
+          ),
+        ),
+      ),
+    ));
+    await tester.pump();
+
+    expect(find.textContaining('JMZKF6W7'), findsNothing);
+  });
 }

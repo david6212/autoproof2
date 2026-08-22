@@ -57,8 +57,10 @@ class ApiConstants {
       '36bf1404-0be4-49d2-82dc-2f1ead4a8b93'; // open (unperformed) recalls
   static const offRoadResourceId =
       '851ecab1-0622-4dbe-a6c7-f950cf82abf9'; // off-road / final cancellation
-  static const disabilityTagResourceId =
-      'c8b9f9c8-4612-4068-934f-d4acd2e3c06e'; // disability parking tag
+  // The disability-tag dataset is deliberately NOT here. A tag is issued to a
+  // PERSON on health grounds; the licence excludes health data from its scope,
+  // and GDPR Art. 9 counts fetching it as processing it. It was being fetched
+  // on every lookup and merely not shown, which is not the same thing.
 
   // Vehicle MODELS ("תוצרים ודגמים של כלי רכב WLTP"). The per-vehicle registry
   // carries no engine capacity, seat count, drivetrain or body type — those

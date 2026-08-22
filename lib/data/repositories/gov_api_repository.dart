@@ -65,9 +65,6 @@ class GovApiRepository {
         await tryFetch(GovDataset.history, () => _service.fetchHistory(digits));
     final rawRecalls =
         await tryFetch(GovDataset.recalls, () => _service.fetchRecalls(digits));
-    final disabilityTag = await tryFetch(
-            GovDataset.disabilityTag, () => _service.fetchDisabilityTag(digits)) ??
-        false;
     final recalls = (rawRecalls ?? const <Map<String, dynamic>>[])
         .map((r) => RecallItem(
               system: (r['SUG_TAKALA'] ?? '').toString(),
@@ -89,7 +86,6 @@ class GovApiRepository {
           history: history,
           recalls: recalls,
           offRoad: offRoad,
-          disabilityTag: disabilityTag,
           missing: missing,
         )
         .withSpec(specRaw == null ? null : ModelSpec.fromApi(specRaw));

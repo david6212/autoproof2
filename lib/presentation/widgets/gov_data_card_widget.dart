@@ -227,6 +227,16 @@ class _SourceBanner extends StatelessWidget {
   }
 }
 
+/// Keeps the shape of a VIN and none of it.
+///
+/// Shown rather than dropped, so the reader can see the registry holds one —
+/// the same reasoning as the masked plate.
+String _maskVin(String vin) {
+  final v = vin.trim();
+  if (v.isEmpty) return '';
+  return '*' * v.length;
+}
+
 class _Header extends StatelessWidget {
   const _Header({required this.data});
 
@@ -438,16 +448,20 @@ class _FullSpecs extends StatelessWidget {
       ('רישום ראשון', data.firstRegistration, false),
       ('שינוי צבע רשום', data.colorChanged ? 'כן' : '', false),
       ('שינוי צמיגים רשום', data.tireChanged ? 'כן' : '', false),
-      // A disability parking tag is issued to a PERSON on health grounds. The
-      // data.gov.il licence does not cover data about a person's health and
-      // forbids uses that harm privacy, so it is deliberately NOT surfaced
-      // against an identifiable plate. See BUSINESS_ROADMAP 9.5.
+      // A disability parking tag is issued to a PERSON on health grounds. It
+      // is not shown here, and since 22/08/2026 it is not fetched either —
+      // choosing not to display health data is not the same as not collecting
+      // it. The dataset id was removed from ApiConstants.
       ('טסט אחרון', data.lastTestDisplay, false),
       ('תוקף רישיון', data.licenseExpiryDisplay, false),
       ('רמת אבזור בטיחותי', data.safetyRating ?? '', false),
       ('צמיג קדמי', data.frontTire, true),
       ('צמיג אחורי', data.rearTire, true),
-      ('מספר שלדה', data.chassis, true),
+      // The VIN is masked for everyone. It is a stronger and more permanent
+      // identifier than the plate — which this app already stars out — and it
+      // is the key input to plate cloning. An owner who needs it has it
+      // printed on their vehicle licence.
+      ('מספר שלדה', _maskVin(data.chassis), true),
     ].where((r) => r.$2.isNotEmpty && r.$2 != '—').toList();
 
     return AppCard(

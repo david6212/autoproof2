@@ -348,7 +348,7 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
                       // and only for the minority of stations anyone reported.
                       ? 'לפי המחיר הזול ביותר שדיווחו נהגים ב-14 הימים האחרונים · '
                           '$reported מתוך ${sorted.length} תחנות עם דיווח'
-                      : '${sorted.length} תחנות · מקור: משרד האנרגיה'
+                      : '${sorted.length} תחנות · מקור: משרד האנרגיה (data.gov.il)'
                           '${me != null ? ' · ממוינות לפי קרבה אליך' : ''}',
                   style: context.text.captionSubtle,
                 ),
