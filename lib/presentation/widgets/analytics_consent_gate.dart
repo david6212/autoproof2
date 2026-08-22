@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/router.dart' show rootNavigatorKey;
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
@@ -29,14 +30,18 @@ class AnalyticsConsentGate extends ConsumerStatefulWidget {
 }
 
 class _AnalyticsConsentGateState extends ConsumerState<AnalyticsConsentGate> {
-  bool _asked = false;
+  /// Whether an attempt is in flight, so two frames cannot open two sheets.
+  bool _asking = false;
+
+  /// Attempts made. Bounded, so a router that never settles cannot turn this
+  /// into a loop that reopens a sheet forever.
+  int _attempts = 0;
 
   @override
   Widget build(BuildContext context) {
     final consent = ref.watch(analyticsConsentProvider).valueOrNull;
 
-    if (!_asked && consent == AnalyticsConsent.unasked) {
-      _asked = true;
+    if (!_asking && consent == AnalyticsConsent.unasked) {
       // After the frame: a route cannot be pushed while one is building, and
       // the splash animation should not be interrupted mid-entrance.
       WidgetsBinding.instance.addPostFrameCallback((_) => _ask());
@@ -46,9 +51,34 @@ class _AnalyticsConsentGateState extends ConsumerState<AnalyticsConsentGate> {
   }
 
   Future<void> _ask() async {
-    if (!mounted) return;
+    if (!mounted || _asking) return;
+    _asking = true;
+    _attempts++;
+
+    // Let the app settle first. A modal is a route, and go_router rebuilds
+    // the whole stack when it navigates — splash → onboarding → home wipes an
+    // imperatively pushed sheet out from under itself. Measured on the live
+    // site: the sheet opened and vanished, so nobody was ever asked.
+    await Future<void>.delayed(const Duration(seconds: 2));
+    if (!mounted) {
+      _asking = false;
+      return;
+    }
+    // The navigator's own context, not this widget's: this gate wraps the
+    // navigator, so its context has no Navigator ancestor and the sheet had
+    // nowhere to open. It failed silently on the live site — the sheet simply
+    // never appeared — which is why this is verified in a browser and not
+    // assumed from the code reading correctly.
+    final navContext = rootNavigatorKey.currentContext;
+    // Read after the delay, so it is current — and checked for mount, which
+    // is also what tells the analyzer this is not a stale context.
+    if (navContext == null || !navContext.mounted) {
+      _asking = false;
+      return;
+    }
+
     await showModalBottomSheet<void>(
-      context: context,
+      context: navContext,
       isScrollControlled: true,
       // No barrier dismiss and no X. Not to trap anybody — both answers are
       // one tap away and equally easy — but because dismissing a consent
@@ -57,6 +87,18 @@ class _AnalyticsConsentGateState extends ConsumerState<AnalyticsConsentGate> {
       enableDrag: false,
       builder: (sheetContext) => const _ConsentSheet(),
     );
+
+    _asking = false;
+
+    // If the sheet went away without an answer — which is what a navigation
+    // does to it — ask again once things are quiet. Bounded, and it stops the
+    // moment there IS an answer.
+    if (mounted &&
+        _attempts < 5 &&
+        ref.read(analyticsConsentProvider).valueOrNull ==
+            AnalyticsConsent.unasked) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _ask());
+    }
   }
 }
 

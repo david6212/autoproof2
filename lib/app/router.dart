@@ -125,11 +125,20 @@ void popOrHome(BuildContext context) {
   }
 }
 
+/// The app's single Navigator, reachable from outside the widget tree below
+/// it.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = AuthRefresh(ref);
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
+    // Exposed so things that live ABOVE the router — the analytics consent
+    // sheet, which wraps the whole navigator — can still open a route-based
+    // surface. `showModalBottomSheet` needs a Navigator in scope, and the
+    // MaterialApp builder's own context sits above it.
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     // Auto-logs a screen_view analytics event for every pushed route.
     // A do-nothing observer until analytics consent is granted — see

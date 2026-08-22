@@ -20,10 +20,18 @@ Future<void> main() async {
   // `analyticsConsentProvider`, which turns it back on only if the reader
   // has said yes. Doing it in this order means a cold start measures nothing
   // while the answer is still being loaded.
-  try {
-    await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
-  } catch (_) {
-    // Never let a measurement toggle stop the app from starting.
+  //
+  // NOT on the web, and this is the opposite of an oversight: on the web,
+  // *touching* FirebaseAnalytics is what pulls `gtag.js` down from Google.
+  // Measured on the live site — the call meant to disable measurement was
+  // itself the request to Google's server. There, nothing initialises
+  // analytics until consent is granted.
+  if (!kIsWeb) {
+    try {
+      await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
+    } catch (_) {
+      // Never let a measurement toggle stop the app from starting.
+    }
   }
 
   runApp(const ProviderScope(child: BonnetCheckApp()));
