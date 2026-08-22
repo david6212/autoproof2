@@ -15,10 +15,19 @@ import urllib.request
 PROJECT = "autoproof-8d827"
 BASE = "https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents" % PROJECT
 
-CAR_ID = "9J8Wnc5kHEF8tF106IxQ"   # Mazda CX-5, plate 4659255, demo-seller
+CAR_ID = "LBO97dM3mrbQWGjm3W2b"   # Mazda CX-5, plate 11111111, demo-seller
 VEHICLE_ID = "demo-vehicle-mazda"
 OWNER = "demo-seller"
-PLATE = "4659255"
+
+# SYNTHETIC PLATES ONLY. This script used to seed 4659255, which is a real,
+# currently-registered private vehicle — so the demo attached an invented sale
+# advertisement, with invented service history, to somebody's actual car. The
+# data.gov.il licence forbids exactly that (misleading presentation, and a
+# privacy harm produced by cross-referencing the registry), and breach
+# terminates the licence. Before using any plate here, confirm it returns ZERO
+# records from the active registry AND the off-road set. Seven ones is a real
+# vehicle; eight ones is not.
+PLATE = "11111111"
 
 with io.open(r"C:\Users\DAVID\.config\configstore\firebase-tools.json",
              encoding="utf-8") as fh:

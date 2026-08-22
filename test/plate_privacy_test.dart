@@ -19,7 +19,7 @@ import 'package:bonnetcheck/presentation/widgets/gov_data_card_widget.dart';
 /// plate": a route parameter, and a search haystack.
 void main() {
   GovData car() => GovData(
-        plate: '46592550',
+        plate: '11111111',
         make: 'מאזדה',
         commercialName: 'CX-5',
         model: 'CX-5',
@@ -36,13 +36,13 @@ void main() {
 
   group('the masked form', () {
     test('keeps the shape of a plate and none of its digits', () {
-      final masked = PlateFormatter.masked('46592550');
+      final masked = PlateFormatter.masked('11111111');
       expect(masked, '46-592-550'.replaceAll(RegExp(r'\d'), '*'));
       expect(RegExp(r'\d').hasMatch(masked), isFalse);
     });
 
     test('works for the seven-digit grouping too', () {
-      expect(PlateFormatter.masked('4659255'), '***-**-**');
+      expect(PlateFormatter.masked('9999999'), '***-**-**');
     });
 
     test('an empty plate produces nothing rather than a row of stars', () {
@@ -171,6 +171,44 @@ void main() {
                 lines[i].contains('מספר רישוי') &&
                     lines[i].contains('חיפוש'))) {
           offenders.add('${entity.path}:${i + 1}');
+        }
+      }
+    }
+    expect(offenders, isEmpty);
+  });
+
+  test('no real plate is hard-coded anywhere in the project', () {
+    // The four demo listings once sat on four real, registered private
+    // vehicles — an invented advertisement attached to somebody's actual car.
+    // The live data was replaced with synthetic plates; this stops the
+    // numbers creeping back in through a fixture or a seed script, which is
+    // exactly how they would.
+    const real = ['4659255', '3780034', '20837803', '67688002', '46592550'];
+    final offenders = <String>[];
+    for (final dir in const ['lib', 'test', 'tool', 'landing']) {
+      final d = Directory(dir);
+      if (!d.existsSync()) continue;
+      for (final entity in d.listSync(recursive: true)) {
+        if (entity is! File) continue;
+        // Binary files are skipped rather than decoded — a font or a
+        // screenshot cannot contain a plate as text, and reading one as UTF-8
+        // throws.
+        const binary = ['.png', '.jpg', '.jpeg', '.woff2', '.ttf', '.otf',
+            '.ico', '.webp', '.jks', '.keystore'];
+        if (binary.any(entity.path.endsWith)) continue;
+        final text = entity.readAsStringSync();
+        for (final plate in real) {
+          // Two files name them on purpose: this one, which has to hold the
+          // list to search for, and the seed script, whose comment explains
+          // why the number must never be used again.
+          const namesThemDeliberately = [
+            'plate_privacy_test.dart',
+            'seed_demo_passport.py',
+          ];
+          if (text.contains(plate) &&
+              !namesThemDeliberately.any(entity.path.endsWith)) {
+            offenders.add('${entity.path} → $plate');
+          }
         }
       }
     }

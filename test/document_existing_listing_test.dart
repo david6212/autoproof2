@@ -21,7 +21,7 @@ void main() {
   }) =>
       CarModel(
         id: 'c1',
-        plate: '20837803',
+        plate: '99999999',
         make: 'סקודה',
         model: 'אוקטביה',
         year: 2018,
@@ -59,7 +59,7 @@ void main() {
   group('the badge rule is the same however the car got listed', () {
     Vehicle v({required int count, required int spanDays}) => Vehicle(
           id: 'v1',
-          plate: '20837803',
+          plate: '99999999',
           ownerId: 'seller',
           serviceCount: count,
           firstServiceAt: DateTime(2025, 1, 1),
@@ -91,7 +91,7 @@ void main() {
     // today. Freezing only protects listings the passport has moved on from.
     final listed = Vehicle(
       id: 'v1',
-      plate: '20837803',
+      plate: '99999999',
       ownerId: 'seller',
       isListed: true,
       activeCarId: 'c1',

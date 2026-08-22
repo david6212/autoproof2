@@ -19,7 +19,7 @@ void main() {
     final created = DateTime.now().subtract(age);
     return OwnershipTransfer(
       id: id,
-      plate: '20837803',
+      plate: '99999999',
       vehicleId: 'v1',
       fromUserId: from,
       status: status,
@@ -95,7 +95,7 @@ void main() {
     // written at sale time to the seller's own private subcollection.
     PastVehicle past({DateTime? from, int services = 3}) => PastVehicle(
           id: 'v1',
-          plate: '20837803',
+          plate: '99999999',
           title: 'סקודה אוקטביה',
           servicesLogged: services,
           ownedFrom: from,

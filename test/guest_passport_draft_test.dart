@@ -35,7 +35,7 @@ class _FakeGov extends GovApiRepository {
 
 void main() {
   GovData govData() => GovData(
-        plate: '67688002',
+        plate: '88888888',
         make: 'ב.מ.וו',
         commercialName: '320i',
         model: '320i',
@@ -93,11 +93,11 @@ void main() {
       await tester.pumpWidget(host(gov));
       await tester.pump();
 
-      await tester.enterText(find.byType(TextField).first, '67688002');
+      await tester.enterText(find.byType(TextField).first, '88888888');
       await tester.tap(find.text('הצג את הרכב שלי'));
       await tester.pumpAndSettle();
 
-      expect(gov.askedFor, '67688002');
+      expect(gov.askedFor, '88888888');
       expect(find.text('זה הרכב שלכם'), findsOneWidget);
       expect(find.textContaining('ב.מ.וו'), findsOneWidget);
       // Attribution, not a claim of our own — the data is the ministry's.
@@ -109,7 +109,7 @@ void main() {
       await tester.pumpWidget(host(_FakeGov(govData())));
       await tester.pump();
 
-      await tester.enterText(find.byType(TextField).first, '67688002');
+      await tester.enterText(find.byType(TextField).first, '88888888');
       await tester.tap(find.text('הצג את הרכב שלי'));
       await tester.pumpAndSettle();
 
@@ -157,7 +157,7 @@ void main() {
       ));
       await tester.pump();
 
-      await tester.enterText(find.byType(TextField).first, '67688002');
+      await tester.enterText(find.byType(TextField).first, '88888888');
       await tester.tap(find.text('הצג את הרכב שלי'));
       await tester.pumpAndSettle();
 
@@ -173,7 +173,7 @@ void main() {
 
       final draft = container.read(vehicleDraftProvider);
       expect(draft, isNotNull);
-      expect(draft!.gov.plate, '67688002');
+      expect(draft!.gov.plate, '88888888');
       expect(draft.nickname, 'האוטו של אמא');
       // Pre-filled from the registry's last test reading, so the owner is not
       // sent out to the car to read the dash.

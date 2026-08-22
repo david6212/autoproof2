@@ -201,7 +201,7 @@ void main() {
     // One car is one passport whether the owner typed dashes or not.
     test('normalise to digits only', () {
       expect(VehicleRepository.normalisePlate('123-45-678'), '12345678');
-      expect(VehicleRepository.normalisePlate(' 20-837-803 '), '20837803');
+      expect(VehicleRepository.normalisePlate(' 99-999-999 '), '99999999');
     });
   });
 }
