@@ -26,7 +26,12 @@ class MapAttribution extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: AlignmentDirectional.bottomStart,
+      // Top, not the conventional bottom corner. Both map screens keep a
+      // draggable sheet over the lower half, so a bottom-aligned credit is
+      // drawn underneath it and is never seen — which fails the part of the
+      // guideline that matters: visible without interacting with the map.
+      // Verified on the live site, not assumed.
+      alignment: AlignmentDirectional.topStart,
       child: Padding(
         padding: const EdgeInsets.all(6),
         child: GestureDetector(

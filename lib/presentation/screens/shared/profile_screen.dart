@@ -8,6 +8,7 @@ import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../../core/theme/app_dimens.dart';
+import '../../widgets/analytics_consent_gate.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/guest_prompt_view.dart';
 import '../../../core/theme/app_text.dart';
@@ -166,6 +167,7 @@ class _Content extends StatelessWidget {
             label: 'רכבים שהיו בבעלותי',
             onTap: () => context.push('/profile/past-vehicles'),
           ),
+          const AnalyticsConsentTile(),
           // The comparison against the registry is no longer a thing you do
           // on its own — it is the first step of publishing, where it has a
           // purpose. This row leads there rather than to a verification flow

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,6 +14,18 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Off before the first frame, and before anything can ask for a screen
+  // view. The stored answer is read a moment later by
+  // `analyticsConsentProvider`, which turns it back on only if the reader
+  // has said yes. Doing it in this order means a cold start measures nothing
+  // while the answer is still being loaded.
+  try {
+    await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
+  } catch (_) {
+    // Never let a measurement toggle stop the app from starting.
+  }
+
   runApp(const ProviderScope(child: BonnetCheckApp()));
 }
 

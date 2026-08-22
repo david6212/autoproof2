@@ -1,5 +1,8 @@
+import 'package:flutter/widgets.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'analytics_consent_provider.dart';
 
 /// Shared FirebaseAnalytics instance.
 final analyticsProvider = Provider<FirebaseAnalytics>((ref) {
@@ -8,17 +11,29 @@ final analyticsProvider = Provider<FirebaseAnalytics>((ref) {
 
 /// Navigator observer that auto-logs a `screen_view` for every pushed route
 /// (car detail, vehicle history, login, chat, match, ...). Wired into GoRouter.
-final analyticsObserverProvider = Provider<FirebaseAnalyticsObserver>((ref) {
+///
+/// Returns a **plain `NavigatorObserver`** — one that does nothing — until the
+/// reader has agreed. This is the observer that used to fire `screen_view` for
+/// `/splash` before anything had been asked or shown, which is what an
+/// ePrivacy complaint is made of.
+final analyticsObserverProvider = Provider<NavigatorObserver>((ref) {
+  if (!ref.watch(analyticsAllowedProvider)) return NavigatorObserver();
   return FirebaseAnalyticsObserver(analytics: ref.watch(analyticsProvider));
 });
 
 /// Thin helper for the handful of custom events we care about during beta.
 /// All calls are fire-and-forget — analytics must never block or crash the UI.
 class Analytics {
-  Analytics(this._fa);
+  Analytics(this._fa, {required this.allowed});
+
   final FirebaseAnalytics _fa;
 
+  /// Whether the reader agreed to measurement. Checked at the single choke
+  /// point rather than at each call site, so a new event cannot forget.
+  final bool allowed;
+
   Future<void> _log(String name, [Map<String, Object>? params]) async {
+    if (!allowed) return;
     try {
       await _fa.logEvent(name: name, parameters: params);
     } catch (_) {
@@ -46,5 +61,8 @@ class Analytics {
 }
 
 final analyticsHelperProvider = Provider<Analytics>((ref) {
-  return Analytics(ref.watch(analyticsProvider));
+  return Analytics(
+    ref.watch(analyticsProvider),
+    allowed: ref.watch(analyticsAllowedProvider),
+  );
 });

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/app_strings.dart';
 import '../presentation/providers/theme_provider.dart';
+import '../presentation/widgets/analytics_consent_gate.dart';
 import '../presentation/widgets/responsive_frame.dart';
 import 'router.dart';
 import 'theme.dart';
@@ -37,7 +38,11 @@ class BonnetCheckApp extends ConsumerWidget {
             : SystemUiOverlayStyle.light,
         child: Directionality(
           textDirection: TextDirection.rtl,
-          child: ResponsiveFrame(child: child ?? const SizedBox.shrink()),
+          // Asks about measurement before any of it happens, whichever
+          // screen a shared link lands on.
+          child: AnalyticsConsentGate(
+            child: ResponsiveFrame(child: child ?? const SizedBox.shrink()),
+          ),
         ),
       ),
     );

@@ -132,6 +132,8 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
     // Auto-logs a screen_view analytics event for every pushed route.
+    // A do-nothing observer until analytics consent is granted — see
+    // analytics_observer_provider. GoRouter accepts any NavigatorObserver.
     observers: [ref.watch(analyticsObserverProvider)],
     refreshListenable: refresh,
     redirect: (context, state) {
