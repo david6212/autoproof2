@@ -540,8 +540,18 @@ class _SellerCard extends StatelessWidget {
   const _SellerCard({required this.sellerType});
   final SellerType sellerType;
 
+  /// All three describe what the SELLER said, never what the registry says.
+  ///
+  /// The private line used to read "הרכב רשום כבעלות פרטית במרשם",
+  /// which is a claim about a state record — and `sellerType` is a radio
+  /// button the seller picks when publishing. `AppStrings.checkScopeNote`,
+  /// printed ten lines below it in the same card, already said the opposite:
+  /// "המוכר סומן לפי הסיווג שבחר. לא אימתנו את זהותו ולא את בעלותו על הרכב."
+  ///
+  /// The registry's own ownership class has its own row, in תובנות שווי,
+  /// where it is read from the lookup rather than from a form.
   String get _subtitle => switch (sellerType) {
-        SellerType.private => 'הרכב רשום כבעלות פרטית במרשם',
+        SellerType.private => 'המוכר מסר שהרכב שלו',
         SellerType.agent => 'סוכן — מוכר בשם בעל הרכב',
         SellerType.dealer => 'סוחר / מגרש רכב',
       };
@@ -870,6 +880,15 @@ class _RegistryUnreachableNote extends ConsumerWidget {
     // A listing with a stored answer has nothing to be unreachable about —
     // the data came with it.
     if (car.govSnapshot != null) return const SizedBox.shrink();
+    // Neither has one with no plate to look up. `cars/{id}` stopped carrying
+    // the plate when it went to the seller-only subdocument, so every listing
+    // published before snapshots — and every demo listing, whose plate is
+    // registered to nobody — arrives here with an empty string. The provider
+    // fails on it, and the reader was told the registry could not be reached
+    // and offered a retry that could never succeed. Blaming our own plumbing
+    // for something that never happened is the same false claim as blaming
+    // the car.
+    if (car.plate.isEmpty) return const SizedBox.shrink();
     final lookup = ref.watch(govDataForPlateProvider(car.plate));
     if (!lookup.hasError) return const SizedBox.shrink();
 
