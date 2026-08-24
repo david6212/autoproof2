@@ -2,14 +2,29 @@ rules_version = '2';
 
 // Storage rules cannot read Firestore, so they cannot ask "does this user own
 // that vehicle?". The only thing they can check is the path — which is why
-// every write path below starts with the uploader's uid.
+// every path below starts with the uploader's uid.
 //
-// Reads lean on a property of Firebase Storage: a download URL carries its own
-// access token, and that token works without auth. That is how a buyer sees a
-// listing photo, and how they see a document the owner chose to share. It also
-// means unsharing a document hides it in the app but does not kill a URL
-// somebody already copied — deleting the file is what revokes it, and
-// DocumentRepository.deleteDocument deletes the file and not just the record.
+// **Read is not how a buyer sees a file.** A Firebase download URL carries its
+// own access token and is served by an endpoint that does not consult these
+// rules at all. That token is what shows a listing photo or a shared document.
+// The `allow read` lines below govern something else entirely: reading and
+// *listing* by path with the SDK. In Storage rules `read` covers `get` and
+// `list` together, so a public read on a prefix is also a public directory
+// listing of it.
+//
+// That is why the passport paths are owner-only. A רישיון רכב carries an ID
+// number and a home address; `firestore.rules` keeps its record shut until the
+// owner shares it and the car is listed, and the file has to be at least as
+// shut as the record. A buyer who is allowed to see the document reads the
+// URL off that Firestore record; nobody can walk `vehicles/{uid}/` to find one
+// they were never given.
+//
+// Known limitation, deliberate: an access token, once copied, keeps working
+// until the file is deleted — unsharing hides a document in the app but does
+// not revoke a link somebody already has. `DocumentRepository.deleteDocument`
+// deletes the file and not just the record, and the delete dialog says so.
+// Replacing the token with a short-lived signed URL needs a server, which
+// needs Cloud Functions.
 service firebase.storage {
   match /b/{bucket}/o {
 
@@ -22,8 +37,9 @@ service firebase.storage {
     }
 
     // ---- Listing photos ----
-    // Public read: the marketplace is browsable before signing in, so the
-    // photos have to be too.
+    // Public read, and here that is the right answer: a listing photo is
+    // published on purpose, the marketplace is browsable before signing in,
+    // and the prefix holds nothing but the photos of one public listing.
     match /cars/{uid}/{listingId}/{fileName} {
       allow read: if true;
       allow write: if isOwner(uid)
@@ -33,9 +49,9 @@ service firebase.storage {
     }
 
     // ---- Vehicle passport documents ----
-    // Images and PDFs only — a passport is not a file host.
+    // Owner only. Images and PDFs — a passport is not a file host.
     match /vehicles/{uid}/{vehicleId}/documents/{fileName} {
-      allow read: if true;
+      allow read: if isOwner(uid);
       allow write: if isOwner(uid)
                    && withinSizeLimit(10)
                    && (request.resource.contentType.matches('image/.*')
@@ -44,8 +60,10 @@ service firebase.storage {
     }
 
     // ---- Service receipts ----
+    // Owner only, for the same reason: a garage invoice carries a name, a
+    // plate and often an address, and no screen ever fetches one by path.
     match /vehicles/{uid}/{vehicleId}/receipts/{fileName} {
-      allow read: if true;
+      allow read: if isOwner(uid);
       allow write: if isOwner(uid)
                    && withinSizeLimit(10)
                    && (request.resource.contentType.matches('image/.*')

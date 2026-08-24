@@ -66,6 +66,12 @@ void main() {
     expect(find.text('להציג את המסמך לקונים?'), findsOneWidget);
     expect(result, isNull, reason: 'nothing may be shared before confirming');
 
+    // Turning the switch back off hides the document but cannot revoke a link
+    // somebody already copied — a Storage download URL carries its own token.
+    // The moment of the decision is when that has to be said.
+    expect(find.textContaining('רק מחיקת הקובץ מבטלת גישה'),
+        findsOneWidget);
+
     await tester.tap(find.text('ביטול'));
     await tester.pumpAndSettle();
     expect(result, isNull);
