@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../widgets/support_contact.dart';
 import '../../data/models/car_model.dart';
 import '../../data/models/car_note_model.dart';
 import '../../data/models/plate_snapshot_model.dart';
@@ -479,5 +480,26 @@ final submitCorrectionProvider =
           note: note,
           reporterUid: user.uid,
         );
+
+    // And then out to a human.
+    //
+    // `data_corrections` is `allow read: if false` — no client can read it,
+    // by design, because the free-text field would otherwise be a public
+    // noticeboard. The consequence nobody had drawn: every request landed
+    // somewhere that is only visible by opening the Firebase console, while
+    // the published policy promises an answer within 14 days. A promise whose
+    // only mechanism is somebody remembering to look is not a mechanism.
+    //
+    // No server here to send mail with (Spark plan, no Cloud Functions), so
+    // the reader's own mail app carries it. The Firestore row stays as the
+    // record; this is what makes it arrive.
+    await SupportContact.open(
+      subject: 'פנייה מהאפליקציה: $kind',
+      body: [
+        'סוג הפנייה: $kind',
+        if (carId.isNotEmpty) 'מודעה: $carId',
+        if (note.isNotEmpty) 'פירוט: $note',
+      ].join('\n'),
+    );
   };
 });
