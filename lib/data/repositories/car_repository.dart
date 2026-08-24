@@ -123,6 +123,21 @@ class CarRepository {
     return _cars.doc(carId).update({'status': status.name});
   }
 
+  /// Replaces the registry answer stored on a listing, and stamps the time.
+  ///
+  /// Only the seller can call this in practice: it needs the plate, which is
+  /// theirs. The date is written in the same operation because a snapshot
+  /// without one is indistinguishable from a fresh answer.
+  Future<void> refreshGovSnapshot(
+    String carId,
+    Map<String, dynamic> snapshot,
+  ) {
+    return _cars.doc(carId).update({
+      'govSnapshot': snapshot,
+      'govCheckedAt': DateTime.now(),
+    });
+  }
+
   Future<void> updatePhotos(String carId, List<String> photos) {
     return _cars.doc(carId).update({'photos': photos});
   }

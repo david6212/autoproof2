@@ -31,6 +31,18 @@ class CarModel {
   final String sellerId;
   final CarStatus status;
   final Map<String, dynamic>? govData;
+
+  /// The registry's answer as it stood when this listing was published or
+  /// last refreshed — see `GovData.toSnapshot`.
+  ///
+  /// It exists so a buyer can be shown what the registry says **without being
+  /// handed the plate to ask with**. It deliberately carries neither the plate
+  /// nor the VIN.
+  final Map<String, dynamic>? govSnapshot;
+
+  /// When [govSnapshot] was taken. Shown to the reader, always: a stored
+  /// answer presented as a live one is the same lie as an unchecked claim.
+  final DateTime? govCheckedAt;
   final List<String> photos; // Storage download URLs
   final String reasonForSelling;
   final String description; // seller's free-text "a few words about the car"
@@ -73,6 +85,8 @@ class CarModel {
     required this.sellerId,
     required this.status,
     this.govData,
+    this.govSnapshot,
+    this.govCheckedAt,
     required this.photos,
     required this.reasonForSelling,
     this.description = '',
@@ -154,6 +168,8 @@ class CarModel {
         orElse: () => CarStatus.active,
       ),
       govData: (data['govData'] as Map?)?.cast<String, dynamic>(),
+      govSnapshot: (data['govSnapshot'] as Map?)?.cast<String, dynamic>(),
+      govCheckedAt: (data['govCheckedAt'] as dynamic)?.toDate(),
       photos: List<String>.from(data['photos'] ?? const []),
       reasonForSelling: data['reasonForSelling'] ?? '',
       description: data['description'] ?? '',
@@ -194,6 +210,8 @@ class CarModel {
         'sellerId': sellerId,
         'status': status.name,
         'govData': govData,
+        'govSnapshot': govSnapshot,
+        'govCheckedAt': govCheckedAt,
         'photos': photos,
         'reasonForSelling': reasonForSelling,
         'description': description,

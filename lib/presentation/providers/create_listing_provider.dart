@@ -208,6 +208,11 @@ class CreateListingController extends Notifier<CreateListingState> {
           'color': car.color,
           'ownershipType': car.ownershipType,
         },
+        // The registry's full answer, stored with the listing so a buyer can
+        // read it without holding the plate. No plate and no VIN inside — see
+        // GovData.toSnapshot.
+        govSnapshot: car.toSnapshot(),
+        govCheckedAt: DateTime.now(),
         // Official fields stored top-level so the buyer filters can use them.
         fuel: car.fuelType,
         color: car.color,

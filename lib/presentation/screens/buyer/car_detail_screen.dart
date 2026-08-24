@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/car_model.dart';
@@ -189,8 +190,9 @@ class _ContentState extends ConsumerState<_Content> {
               _OfficialSpecs(car: car),
             ],
             const SizedBox(height: 14),
-            _RegistryUnreachableNote(plate: car.plate),
-            _ChecksPerformedNote(plate: car.plate, currentKm: car.km),
+            _RegistryAsOf(car: car),
+            _RegistryUnreachableNote(car: car),
+            _ChecksPerformedNote(car: car),
             _ValueInsights(car: car),
             const SizedBox(height: 14),
             // Silent until there are 8 comparable listings, which with four
@@ -752,18 +754,43 @@ class _RoundAction extends StatelessWidget {
 /// everything that made it look like a verdict is gone — grey micro type, no
 /// icon, no fill, and a closing clause that says what it is not.
 ///
+/// When the registry data on this listing was taken.
+///
+/// Shown always, and never rounded to "recently". The buyer is looking at a
+/// stored answer rather than a live one — that is the price of not handing
+/// every visitor the plate — and a stored answer presented without its date
+/// is the same claim as a live one.
+class _RegistryAsOf extends StatelessWidget {
+  const _RegistryAsOf({required this.car});
+
+  final CarModel car;
+
+  @override
+  Widget build(BuildContext context) {
+    final at = car.govCheckedAt;
+    if (at == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Text(
+        'נתוני מרשם הרכב נבדקו ב-${DateFormatter.format(at)}. '
+        'המוכר יכול לרענן אותם.',
+        style: context.text.micro,
+      ),
+    );
+  }
+}
+
 /// Renders nothing until the registry answers, and nothing at all when there
 /// are findings: they are already at the top of the page, and a line about
 /// what was clean underneath them would read as an argument with them.
 class _ChecksPerformedNote extends ConsumerWidget {
-  const _ChecksPerformedNote({required this.plate, required this.currentKm});
+  const _ChecksPerformedNote({required this.car});
 
-  final String plate;
-  final int currentKm;
+  final CarModel car;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gov = ref.watch(govDataForPlateProvider(plate)).valueOrNull;
+    final gov = listingGov(ref, car).valueOrNull;
     if (gov == null) return const SizedBox.shrink();
 
     final officialKm = OdometerCheck.officialReading(gov.lastTestKm);
@@ -771,7 +798,7 @@ class _ChecksPerformedNote extends ConsumerWidget {
         gov.structuralChange ||
         gov.recalls.isNotEmpty ||
         OdometerCheck.belowOfficial(
-            officialKm: officialKm, currentKm: currentKm);
+            officialKm: officialKm, currentKm: car.km);
     if (anyFinding) return const SizedBox.shrink();
 
     // Name only the datasets that actually answered. Any endpoint can fail on
@@ -827,13 +854,16 @@ class _ChecksPerformedNote extends ConsumerWidget {
 /// our own plumbing, not a finding about the car, and it must not compete with
 /// the ones that are.
 class _RegistryUnreachableNote extends ConsumerWidget {
-  const _RegistryUnreachableNote({required this.plate});
+  const _RegistryUnreachableNote({required this.car});
 
-  final String plate;
+  final CarModel car;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final lookup = ref.watch(govDataForPlateProvider(plate));
+    // A listing with a stored answer has nothing to be unreachable about —
+    // the data came with it.
+    if (car.govSnapshot != null) return const SizedBox.shrink();
+    final lookup = ref.watch(govDataForPlateProvider(car.plate));
     if (!lookup.hasError) return const SizedBox.shrink();
 
     return Padding(
@@ -866,7 +896,7 @@ class _RegistryUnreachableNote extends ConsumerWidget {
                 foregroundColor: context.colors.tealText2,
               ),
               onPressed: () =>
-                  ref.invalidate(govDataForPlateProvider(plate)),
+                  ref.invalidate(govDataForPlateProvider(car.plate)),
               child: const Text('נסו שוב', style: TextStyle(fontSize: 12)),
             ),
           ],

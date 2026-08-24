@@ -8,6 +8,7 @@ import '../../../core/theme/app_palette.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/cars_provider.dart';
 import '../../../core/theme/app_text.dart';
+import '../../widgets/registry_refresh_card.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/share_listing_button.dart';
 import '../../../core/theme/app_dimens.dart';
@@ -52,6 +53,9 @@ class _Content extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // The seller is the only one who can refresh what buyers see from the
+        // registry, because the refresh needs the plate.
+        RegistryRefreshCard(car: car),
         AppCard(
           padding: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,

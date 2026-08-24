@@ -38,7 +38,7 @@ class CarActiveWarnings extends ConsumerWidget {
   }
 
   List<ActiveWarning> _collect(WidgetRef ref) {
-    final gov = ref.watch(govDataForPlateProvider(car.plate)).valueOrNull;
+    final gov = listingGov(ref, car).valueOrNull;
     final history =
         ref.watch(plateHistoryProvider(car.plate)).valueOrNull ?? const [];
     final tally = ref.watch(encounterTallyProvider(car.id)).valueOrNull;

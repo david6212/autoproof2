@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/models/car_model.dart';
 import '../../data/models/gov_data_model.dart';
 import '../../data/models/fuel_station.dart';
 import '../../data/models/inspection_center.dart';
@@ -106,3 +107,23 @@ final dieselReferenceProvider = FutureProvider<FuelReference?>((ref) async {
     return null;
   }
 });
+
+/// The registry answer to show for a listing.
+///
+/// Prefers the snapshot stored on the listing over asking the registry live,
+/// and that order is the point: `cars/{id}` is world-readable, so the plan is
+/// for the plate to stop living there — and a buyer who has no plate cannot
+/// ask. Everything a buyer sees therefore has to come from what the seller's
+/// app stored when it published or last refreshed, with the date shown.
+///
+/// The live lookup remains as a fallback for listings published before the
+/// snapshot existed. Migrating the readers first and removing the field second
+/// is the only order that does not break every listing already out there.
+AsyncValue<GovData?> listingGov(WidgetRef ref, CarModel car) {
+  final snapshot = car.govSnapshot;
+  if (snapshot != null && snapshot.isNotEmpty) {
+    return AsyncData(GovData.fromSnapshot(snapshot));
+  }
+  if (car.plate.isEmpty) return const AsyncData(null);
+  return ref.watch(govDataForPlateProvider(car.plate));
+}

@@ -115,6 +115,112 @@ class GovData {
 
   bool answered(GovDataset d) => !missingDatasets.contains(d);
 
+  /// The registry's answer, as it can be stored on a public listing.
+  ///
+  /// **Without the plate and without the VIN.** That is the entire reason this
+  /// exists: `cars/{id}` is world-readable, so a buyer's copy of the registry
+  /// answer must not carry the two identifiers that point back at a named
+  /// keeper. Everything else here is a fact about a car that is openly for
+  /// sale, and is already on the screen.
+  ///
+  /// Dates go out as ISO strings rather than Timestamps so the map is a plain
+  /// JSON document — the same shape whether it came from Firestore, a test, or
+  /// a file.
+  Map<String, dynamic> toSnapshot() => {
+        'make': make,
+        'commercialName': commercialName,
+        'model': model,
+        'year': year,
+        'color': color,
+        'fuelType': fuelType,
+        'ownershipType': ownershipType,
+        'trim': trim,
+        'lastTestDate': lastTestDate?.toIso8601String(),
+        'licenseExpiry': licenseExpiry?.toIso8601String(),
+        'safetyRating': safetyRating,
+        'pollutionGroup': pollutionGroup,
+        'engineModel': engineModel,
+        'frontTire': frontTire,
+        'rearTire': rearTire,
+        'firstOnRoad': firstOnRoad,
+        'lastTestKm': lastTestKm,
+        'structuralChange': structuralChange,
+        'colorChanged': colorChanged,
+        'tireChanged': tireChanged,
+        'originality': originality,
+        'firstRegistration': firstRegistration,
+        'offRoad': offRoad,
+        'offRoadDate': offRoadDate,
+        'tozeretCd': tozeretCd,
+        'degemCd': degemCd,
+        'recalls': [
+          for (final r in recalls)
+            {'system': r.system, 'description': r.description, 'date': r.date}
+        ],
+        // Which datasets did NOT answer when this was taken. Dropping it would
+        // turn "we never reached the recall list" into "no recalls", which is
+        // the one substitution this app is built to refuse.
+        'missing': [for (final d in missingDatasets) d.name],
+        'spec': spec?.toMap(),
+      };
+
+  /// Rebuilds the answer a listing stored.
+  ///
+  /// [plate] and [chassis] come back empty, because they were never written.
+  /// Every screen that draws them masks them anyway.
+  factory GovData.fromSnapshot(Map<String, dynamic> m) {
+    DateTime? date(Object? v) =>
+        v is String && v.isNotEmpty ? DateTime.tryParse(v) : null;
+
+    return GovData(
+      plate: '',
+      chassis: '',
+      make: '${m['make'] ?? ''}',
+      commercialName: '${m['commercialName'] ?? ''}',
+      model: '${m['model'] ?? ''}',
+      year: (m['year'] as num?)?.toInt() ?? 0,
+      color: '${m['color'] ?? ''}',
+      fuelType: '${m['fuelType'] ?? ''}',
+      ownershipType: '${m['ownershipType'] ?? ''}',
+      trim: '${m['trim'] ?? ''}',
+      lastTestDate: date(m['lastTestDate']),
+      licenseExpiry: date(m['licenseExpiry']),
+      safetyRating: m['safetyRating'] as String?,
+      pollutionGroup: '${m['pollutionGroup'] ?? ''}',
+      engineModel: '${m['engineModel'] ?? ''}',
+      frontTire: '${m['frontTire'] ?? ''}',
+      rearTire: '${m['rearTire'] ?? ''}',
+      firstOnRoad: '${m['firstOnRoad'] ?? ''}',
+      lastTestKm: (m['lastTestKm'] as num?)?.toInt(),
+      structuralChange: m['structuralChange'] == true,
+      colorChanged: m['colorChanged'] == true,
+      tireChanged: m['tireChanged'] == true,
+      originality: '${m['originality'] ?? ''}',
+      firstRegistration: '${m['firstRegistration'] ?? ''}',
+      offRoad: m['offRoad'] == true,
+      offRoadDate: '${m['offRoadDate'] ?? ''}',
+      tozeretCd: '${m['tozeretCd'] ?? ''}',
+      degemCd: '${m['degemCd'] ?? ''}',
+      recalls: [
+        for (final r in (m['recalls'] as List? ?? const []))
+          RecallItem(
+            system: '${(r as Map)['system'] ?? ''}',
+            description: '${r['description'] ?? ''}',
+            date: '${r['date'] ?? ''}',
+          ),
+      ],
+      missingDatasets: {
+        for (final name in (m['missing'] as List? ?? const []))
+          for (final d in GovDataset.values)
+            if (d.name == name) d,
+      },
+      spec: m['spec'] is Map
+          ? ModelSpec.fromMap(Map<String, dynamic>.from(m['spec'] as Map))
+          : null,
+    );
+  }
+
+
   /// Returns a copy carrying the per-model build spec.
   GovData withSpec(ModelSpec? s) => _copy(spec: s);
 

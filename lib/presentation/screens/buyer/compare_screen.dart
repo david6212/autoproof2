@@ -80,7 +80,7 @@ class _CompareTable extends ConsumerWidget {
     // One official lookup per plate. The family provider caches per plate, so
     // a car already opened elsewhere in the session costs nothing here.
     final lookups = [
-      for (final c in cars) ref.watch(govDataForPlateProvider(c.plate)),
+      for (final c in cars) listingGov(ref, c),
     ];
     final gov = [for (final l in lookups) l.valueOrNull];
     final stillLoading = lookups.any((l) => l.isLoading);
