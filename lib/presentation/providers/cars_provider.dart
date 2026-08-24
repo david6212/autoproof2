@@ -4,7 +4,6 @@ import '../widgets/support_contact.dart';
 import '../../data/models/car_model.dart';
 import '../../data/models/car_note_model.dart';
 import '../../data/models/plate_snapshot_model.dart';
-import '../../data/models/seller_encounter.dart';
 import '../../data/repositories/car_repository.dart';
 import '../../data/repositories/price_watch_repository.dart';
 import 'auth_provider.dart';
@@ -391,10 +390,9 @@ final carNotesProvider =
 });
 
 /// Adds a note as the current user. No-op if not signed in.
-final addNoteProvider = Provider<
-    Future<void> Function(String carId, List<NoteTag> tags, String otherText,
-        String sellerFlag)>((ref) {
-  return (carId, tags, otherText, sellerFlag) async {
+final addNoteProvider =
+    Provider<Future<void> Function(String carId, List<NoteTag> tags)>((ref) {
+  return (carId, tags) async {
     final user = ref.read(authStateProvider).valueOrNull;
     if (user == null) return;
     final profile = ref.read(currentUserModelProvider).valueOrNull;
@@ -408,8 +406,6 @@ final addNoteProvider = Provider<
           authorUid: user.uid,
           authorName: name,
           tags: tags,
-          otherText: otherText.trim(),
-          sellerFlag: sellerFlag,
         );
   };
 });
@@ -430,38 +426,6 @@ final reportNoteProvider =
     await ref.read(carRepositoryProvider).reportNote(
           carId: carId,
           noteId: noteId,
-          reporterUid: user.uid,
-        );
-  };
-});
-
-/// Live crowd tally of who buyers actually met (private/agent/dealer) for a car.
-final encounterTallyProvider =
-    StreamProvider.family<EncounterTally, String>((ref, carId) {
-  final uid = ref.watch(authStateProvider).valueOrNull?.uid;
-  return ref.watch(carRepositoryProvider).streamEncounters(carId, uid);
-});
-
-/// Records the current buyer's report of who they met. No-op if not signed in.
-final recordEncounterProvider =
-    Provider<Future<void> Function(String carId, SellerType type)>((ref) {
-  return (carId, type) async {
-    final user = ref.read(authStateProvider).valueOrNull;
-    if (user == null) return;
-    await ref
-        .read(carRepositoryProvider)
-        .recordEncounter(carId, user.uid, type);
-  };
-});
-
-/// Asks for the encounter tally on a car to be reviewed and corrected.
-final reportEncounterTallyProvider =
-    Provider<Future<void> Function(String carId)>((ref) {
-  return (carId) async {
-    final user = ref.read(authStateProvider).valueOrNull;
-    if (user == null) return;
-    await ref.read(carRepositoryProvider).reportEncounterTally(
-          carId: carId,
           reporterUid: user.uid,
         );
   };

@@ -11,8 +11,15 @@ import '../../core/theme/app_text.dart';
 import 'app_card.dart';
 import 'login_required_sheet.dart';
 
-/// "הערות מבקרים" — crowdsourced notes from people who went to see the car,
+/// "ממצאי מבקרים" — what people who went to inspect this car found,
 /// visible to every future buyer.
+///
+/// Every note is a set of ticks from a closed bank of observations about the
+/// vehicle. There is no free-text field and no way to describe the seller:
+/// both existed here until 24/08/2026 and both were removed — the text because
+/// it was queued for a review nobody performed, and the seller reporting
+/// because a crowd verdict on a named person is the one thing a listing site
+/// should not host.
 class CarNotesSection extends ConsumerWidget {
   const CarNotesSection({super.key, required this.carId});
 
@@ -25,9 +32,9 @@ class CarNotesSection extends ConsumerWidget {
 
     return AppSectionCard(
       icon: Icons.rate_review_outlined,
-      title: 'הערות מבקרים',
+      title: 'ממצאי מבקרים',
       source: DataSource.community,
-      subtitle: 'מה שמבקרים קודמים ראו ברכב — עוזר לך להחליט.',
+      subtitle: 'מה שמבקרים קודמים מצאו בבדיקה — עוזר לך להחליט מה לבדוק.',
       trailing: notesAsync.maybeWhen(
         data: (notes) => notes.isEmpty
             ? const SizedBox.shrink()
@@ -54,15 +61,13 @@ class CarNotesSection extends ConsumerWidget {
               if (notes.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Text('עדיין אין הערות. היה הראשון לשתף מה ראית 👀',
+                  child: Text(
+                      'עדיין אין ממצאים. היה הראשון לשתף מה מצאת בבדיקה 👀',
                       style: context.text.bodySmMuted),
                 );
               }
-              final flagCount =
-                  notes.where((n) => n.sellerFlag.isNotEmpty).length;
               return Column(
                 children: [
-                  if (flagCount > 0) _FlagBanner(count: flagCount),
                   for (final note in notes)
                     _NoteTile(
                       note: note,
@@ -84,7 +89,7 @@ class CarNotesSection extends ConsumerWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               icon: const Icon(Icons.add_comment_outlined, size: 19),
-              label: const Text('הוסף הערה'),
+              label: const Text('הוסף ממצא מבדיקה'),
               onPressed: () => _onAdd(context, ref),
             ),
           ),
@@ -97,15 +102,15 @@ class CarNotesSection extends ConsumerWidget {
     // Reporting requires an account.
     final isGuest = ref.read(authStateProvider).valueOrNull == null;
     if (isGuest) {
-      showLoginRequired(context, action: 'לדווח על הערה');
+      showLoginRequired(context, action: 'לדווח על ממצא');
       return;
     }
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('לדווח על ההערה?'),
+        title: const Text('לדווח על הממצא?'),
         content: const Text(
-            'ההערה תישלח לבדיקה אם היא פוגענית, שקרית או לא רלוונטית לרכב.'),
+            'הדיווח יישלח לבדיקה אם הממצאים שסומנו אינם נכונים או אינם שייכים לרכב הזה.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -121,7 +126,7 @@ class CarNotesSection extends ConsumerWidget {
     await ref.read(reportNoteProvider).call(carId, noteId);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('תודה — ההערה נשלחה לבדיקה.')),
+        const SnackBar(content: Text('תודה — הדיווח נשלח לבדיקה.')),
       );
     }
   }
@@ -131,7 +136,7 @@ class CarNotesSection extends ConsumerWidget {
     final isGuest = ref.read(authStateProvider).valueOrNull == null;
     if (isGuest) {
       ref.read(analyticsHelperProvider).guestPrompt('note');
-      showLoginRequired(context, action: 'להוסיף הערה');
+      showLoginRequired(context, action: 'להוסיף ממצא');
       return;
     }
     showModalBottomSheet<void>(
@@ -225,40 +230,6 @@ class _NoteTile extends StatelessWidget {
               for (final tag in note.tags) _TagChip(tag: tag),
             ],
           ),
-          if (note.hasPendingText) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.schedule, size: 13, color: context.colors.textSubtle),
-                const SizedBox(width: 4),
-                Text('הערה חופשית ממתינה לבדיקה',
-                    style: context.text.micro),
-              ],
-            ),
-          ],
-          if (note.flagLabel != null) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: context.colors.warnBg,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.flag, size: 13, color: context.colors.warnText),
-                  const SizedBox(width: 4),
-                  Text(note.flagLabel!,
-                      style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
-                          color: context.colors.warnText)),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -307,41 +278,6 @@ class _TagChip extends StatelessWidget {
   }
 }
 
-/// Warning shown when visitors have flagged the seller's real type.
-class _FlagBanner extends StatelessWidget {
-  const _FlagBanner({required this.count});
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: context.colors.warnBg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.report_gmailerrorred, size: 18, color: context.colors.warnText),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              count == 1
-                  ? 'מבקר סימן שהמוכר אינו בהכרח פרטי — קראו את ההערות.'
-                  : '$count מבקרים סימנו שהמוכר אינו בהכרח פרטי — קראו את ההערות.',
-              style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: context.colors.warnText),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _AddNoteSheet extends ConsumerStatefulWidget {
   const _AddNoteSheet({required this.carId});
   final String carId;
@@ -351,35 +287,20 @@ class _AddNoteSheet extends ConsumerStatefulWidget {
 }
 
 class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
-  final _controller = TextEditingController();
   final _tags = <NoteTag>{};
-  String _flag = ''; // '' | 'agent' | 'dealer'
   bool _saving = false;
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
   Future<void> _submit() async {
-    // At least one ticked observation — free text alone can't carry a note,
-    // since it isn't displayed until reviewed.
     if (_tags.isEmpty || _saving) return;
     setState(() => _saving = true);
     try {
-      await ref.read(addNoteProvider).call(
-            widget.carId,
-            _tags.toList(),
-            _controller.text,
-            _flag,
-          );
+      await ref.read(addNoteProvider).call(widget.carId, _tags.toList());
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('שמירת ההערה נכשלה. נסה שוב.')),
+          const SnackBar(content: Text('שמירת הממצאים נכשלה. נסה שוב.')),
         );
       }
     }
@@ -387,111 +308,136 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Lift the sheet above the keyboard.
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomInset),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) => Column(
         children: [
-          const Text('מה ראיתם בפגישה?',
-              style: AppText.title),
-          const SizedBox(height: 4),
-          Text(
-              'סמנו מה שמתאים. הבחירה מתוך רשימה קבועה שומרת על דיווח עובדתי.',
-              style: context.text.caption),
-          const SizedBox(height: 12),
-          // Fixed checklist instead of an open box — see NoteTag's docs.
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final tag in NoteTag.values)
-                FilterChip(
-                  label: Text(tag.label),
-                  selected: _tags.contains(tag),
-                  showCheckmark: true,
-                  checkmarkColor: context.colors.onBrand,
-                  selectedColor: context.colors.teal,
-                  backgroundColor: context.colors.background,
-                  side: BorderSide(
-                      color: _tags.contains(tag)
-                          ? context.colors.teal
-                          : context.colors.cardBorder),
-                  labelStyle: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: _tags.contains(tag)
-                        ? context.colors.onBrand
-                        : context.colors.textMuted,
-                  ),
-                  onSelected: (on) => setState(
-                      () => on ? _tags.add(tag) : _tags.remove(tag)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('מה מצאתם בבדיקה?', style: AppText.title),
+                const SizedBox(height: 4),
+                Text(
+                  'סמנו כל מה שראיתם. אין כאן שדה חופשי בכוונה — רשימה סגורה '
+                  'מתארת את הרכב, ולא את מי שמוכר אותו.',
+                  style: context.text.caption,
                 ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          // "Other" is accepted but held back from display until reviewed.
-          TextField(
-            controller: _controller,
-            maxLines: 2,
-            maxLength: 300,
-            decoration: InputDecoration(
-              labelText: 'אחר (לא חובה)',
-              helperText: 'טקסט חופשי נשלח לבדיקה ולא יוצג עד לאישור.',
-              helperMaxLines: 2,
-              filled: true,
-              fillColor: context.colors.background,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text('כיצד פעל המוכר? (לא חובה)',
-              style: context.text.caption),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final opt in const [
-                ('', 'לא סימנתי'),
-                ('agent', 'פעל כסוכן'),
-                ('dealer', 'פעל כסוחר / מגרש'),
-              ])
-                ChoiceChip(
-                  label: Text(opt.$2),
-                  selected: _flag == opt.$1,
-                  showCheckmark: false,
-                  selectedColor: context.colors.teal,
-                  labelStyle: TextStyle(
-                    fontSize: 12.5,
-                    color: _flag == opt.$1
-                        ? context.colors.onBrand
-                        : context.colors.textMuted,
+          Expanded(
+            child: ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                for (final group in NoteGroup.values) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        top: AppSpace.md, bottom: AppSpace.sm),
+                    child: Text(
+                      group.label,
+                      style: AppText.subtitle
+                          .copyWith(color: context.colors.textMuted),
+                    ),
                   ),
-                  onSelected: (_) => setState(() => _flag = opt.$1),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: context.colors.tealFill,
-              minimumSize: const Size.fromHeight(48),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final tag in NoteTagX.inGroup(group))
+                        _PickChip(
+                          tag: tag,
+                          selected: _tags.contains(tag),
+                          onSelected: (on) => setState(
+                              () => on ? _tags.add(tag) : _tags.remove(tag)),
+                        ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: AppSpace.lg),
+              ],
             ),
-            onPressed: (_saving || _tags.isEmpty) ? null : _submit,
-            child: _saving
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: context.colors.onBrand))
-                : const Text('שלח דיווח'),
+          ),
+          // Sits outside the scroll view: with twenty-seven options the button
+          // would otherwise be somewhere below the fold, and a person who has
+          // ticked what they came to tick should not have to hunt for it.
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+                16, 8, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _tags.isEmpty
+                      ? 'סמנו לפחות דבר אחד'
+                      : 'סומנו ${_tags.length} ממצאים',
+                  style: context.text.caption,
+                ),
+                const SizedBox(height: AppSpace.sm),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: context.colors.tealFill,
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  onPressed: (_saving || _tags.isEmpty) ? null : _submit,
+                  child: _saving
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: context.colors.onBrand))
+                      : const Text('שלח דיווח'),
+                ),
+              ],
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// One option in the bank. A [FilterChip] with the label allowed to wrap:
+/// "בלאי בהגה ובדוושות שאינו תואם לקילומטראז'" does not fit a phone in one
+/// line, and a chip that ellipsises hides the half that says what it means.
+class _PickChip extends StatelessWidget {
+  const _PickChip({
+    required this.tag,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final NoteTag tag;
+  final bool selected;
+  final ValueChanged<bool> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width - 64,
+      ),
+      child: FilterChip(
+        label: Text(tag.label),
+        selected: selected,
+        showCheckmark: true,
+        checkmarkColor: colors.onBrand,
+        selectedColor: colors.teal,
+        backgroundColor: colors.background,
+        side: BorderSide(
+            color: selected ? colors.teal : colors.cardBorder),
+        labelStyle: TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w600,
+          color: selected ? colors.onBrand : colors.textMuted,
+        ),
+        onSelected: onSelected,
       ),
     );
   }

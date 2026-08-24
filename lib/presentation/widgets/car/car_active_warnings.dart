@@ -6,7 +6,6 @@ import '../../../core/utils/odometer_check.dart';
 import '../../../data/models/plate_snapshot_model.dart';
 import '../../../data/models/car_model.dart';
 import '../../../data/models/gov_data_model.dart';
-import '../../providers/cars_provider.dart';
 import '../../providers/gov_api_provider.dart';
 import 'active_warnings_section.dart';
 
@@ -14,7 +13,7 @@ import 'active_warnings_section.dart';
 /// hands them to [ActiveWarningsSection].
 ///
 /// Kept apart from the section itself so the presentation stays a plain
-/// [StatelessWidget] over a list — easy to test with six hand-written
+/// [StatelessWidget] over a list — easy to test with five hand-written
 /// findings, and impossible to accidentally couple to Firestore.
 ///
 /// Nothing here decides anything new. Every rule below is the one already
@@ -46,8 +45,6 @@ class CarActiveWarnings extends ConsumerWidget {
           in car.plateHistorySnapshot ?? const <Map<String, dynamic>>[])
         PlateSnapshot.fromMap(m),
     ];
-    final tally = ref.watch(encounterTallyProvider(car.id)).valueOrNull;
-
     final warnings = <ActiveWarning>[];
 
     // --- odometer, against the registry ---
@@ -91,17 +88,6 @@ class CarActiveWarnings extends ConsumerWidget {
       if (gov.answered(GovDataset.recalls) && gov.recalls.isNotEmpty) {
         warnings.add(ActiveWarning.openRecall(count: gov.recalls.length));
       }
-    }
-
-    // --- what buyers who met the seller say ---
-    if (tally != null && tally.disagreesWith(car.sellerType)) {
-      final majority = tally.majority!;
-      warnings.add(ActiveWarning.sellerTypeDisagreement(
-        declared: car.sellerType.label,
-        reported: majority.label,
-        total: tally.total,
-        agreeing: tally.countFor(majority),
-      ));
     }
 
     // Severity first, so the thing that can stop a purchase is never below

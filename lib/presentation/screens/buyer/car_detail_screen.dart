@@ -26,7 +26,6 @@ import '../../widgets/car_photo_gallery.dart';
 import '../../widgets/login_required_sheet.dart';
 import '../../widgets/plate_history_card.dart';
 import '../../widgets/report_listing_sheet.dart';
-import '../../widgets/seller_encounter_card.dart';
 import '../../widgets/seller_type_badge.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text.dart';
@@ -221,9 +220,6 @@ class _ContentState extends ConsumerState<_Content> {
                 reason: car.reasonForSelling.trim(),
               ),
             ],
-            const SizedBox(height: 14),
-            // Crowd trust: buyers report who they actually met.
-            SellerEncounterCard(car: car, showDisagreementBanner: false),
             const SizedBox(height: 14),
             // Crowdsourced visitor notes for this listing.
             CarNotesSection(carId: car.id),

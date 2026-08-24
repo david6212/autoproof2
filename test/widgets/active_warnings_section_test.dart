@@ -22,7 +22,11 @@ void main() {
       );
 
   /// Every string the section can put on screen, for the copy rules below.
-  List<ActiveWarning> allSix() => [
+  ///
+  /// Five since 24/08: the sixth reported a disagreement between the seller's
+  /// declared type and what buyers said they met, and the whole "who did you
+  /// meet" feature was removed.
+  List<ActiveWarning> allFive() => [
         ActiveWarning.odometerBelowOfficial(
             listedKm: 82000, officialKm: 94300, testDate: '03/2026'),
         ActiveWarning.odometerBelowPastListing(
@@ -30,8 +34,6 @@ void main() {
         ActiveWarning.structuralChange(),
         ActiveWarning.openRecall(count: 1),
         ActiveWarning.offRoad(),
-        ActiveWarning.sellerTypeDisagreement(
-            declared: 'פרטי', reported: 'סוחר', total: 4, agreeing: 3),
       ];
 
   String textOf(List<ActiveWarning> ws) =>
@@ -66,12 +68,12 @@ void main() {
       expect(find.textContaining('03/2026'), findsOneWidget);
     });
 
-    testWidgets('all six findings render together', (tester) async {
-      await tester.pumpWidget(host(allSix()));
+    testWidgets('all five findings render together', (tester) async {
+      await tester.pumpWidget(host(allFive()));
 
       expect(tester.takeException(), isNull);
       expect(find.text(ActiveWarningsSection.heading), findsOneWidget);
-      for (final w in allSix()) {
+      for (final w in allFive()) {
         expect(find.text(w.title), findsOneWidget, reason: w.id);
       }
     });
@@ -108,7 +110,7 @@ void main() {
         'רמאות',
         'סכנה',
       ];
-      final copy = textOf(allSix());
+      final copy = textOf(allFive());
 
       for (final word in forbidden) {
         expect(copy.contains(word), isFalse, reason: 'found "$word"');
@@ -119,7 +121,7 @@ void main() {
       // The mirror image, and the reason §6.6 exists: this widget must never
       // become the place where the app certifies a car.
       for (final word in ['מאושר', 'תקין', 'בטוח', 'נבדק ונמצא']) {
-        expect(textOf(allSix()).contains(word), isFalse,
+        expect(textOf(allFive()).contains(word), isFalse,
             reason: 'found "$word"');
       }
     });
@@ -127,18 +129,18 @@ void main() {
     test('nothing shouts', () {
       // An exclamation mark turns a record into an alarm, and the reader
       // cannot un-hear it.
-      expect(textOf(allSix()).contains('!'), isFalse);
+      expect(textOf(allFive()).contains('!'), isFalse);
     });
 
     test('severity is assigned, not uniform', () {
       // If everything were high, the ranking would carry no information and
       // the block would be a wall again.
-      final severities = allSix().map((w) => w.severity).toSet();
+      final severities = allFive().map((w) => w.severity).toSet();
       expect(severities.length, 2, reason: 'both levels should be in use');
     });
 
     test('ids are unique, so a finding can be dismissed or linked', () {
-      final ids = allSix().map((w) => w.id).toList();
+      final ids = allFive().map((w) => w.id).toList();
       expect(ids.toSet().length, ids.length);
     });
   });

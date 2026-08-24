@@ -37,7 +37,7 @@ class ActiveWarning {
   final String? actionLabel;
   final VoidCallback? onAction;
 
-  // ---- the six findings the app can actually produce -------------------
+  // ---- the five findings the app can actually produce ------------------
   //
   // Kept together so the wording is written once and reviewed as a set.
   // Every one of them states records and leaves the reading to the buyer:
@@ -103,22 +103,6 @@ class ActiveWarning {
         severity: WarningSeverity.high,
         title: 'ירידה מהכביש',
         detail: 'רישום הרכב בוטל במרשם.',
-      );
-
-  /// Buyers who met this seller mostly describe them differently from the
-  /// way the listing does.
-  factory ActiveWarning.sellerTypeDisagreement({
-    required String declared,
-    required String reported,
-    required int total,
-    required int agreeing,
-  }) =>
-      ActiveWarning(
-        id: 'seller_type',
-        severity: WarningSeverity.medium,
-        title: 'סתירה בהצהרת המוכר',
-        detail: 'המוכר הצהיר "$declared". מתוך $total קונים שנפגשו איתו, '
-            '$agreeing דיווחו "$reported".',
       );
 
   static String _thousands(int n) => n.toString().replaceAllMapped(

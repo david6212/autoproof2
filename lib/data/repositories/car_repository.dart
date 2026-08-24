@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/car_model.dart';
 import '../models/car_note_model.dart';
 import '../models/plate_snapshot_model.dart';
-import '../models/seller_encounter.dart';
 
 /// All reads/writes for the cars collection and per-user saved cars.
 class CarRepository {
@@ -221,8 +220,6 @@ class CarRepository {
     required String authorUid,
     required String authorName,
     required List<NoteTag> tags,
-    String otherText = '',
-    String sellerFlag = '',
   }) {
     return _notes(carId).add(CarNote(
       id: '',
@@ -230,8 +227,6 @@ class CarRepository {
       authorName: authorName,
       createdAt: DateTime.now(),
       tags: tags,
-      otherText: otherText,
-      sellerFlag: sellerFlag,
     ).toFirestore());
   }
 
@@ -253,63 +248,6 @@ class CarRepository {
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
-
-  // ---- Seller-type encounters (crowd trust, one report per buyer) ----
-
-  CollectionReference<Map<String, dynamic>> _encounters(String carId) =>
-      _cars.doc(carId).collection('encounters');
-
-  /// Live tally of who buyers say they actually met, plus the current user's
-  /// own report (if [myUid] is signed in). Public read — the count is the point.
-  Stream<EncounterTally> streamEncounters(String carId, String? myUid) {
-    return _encounters(carId).snapshots().map((snap) {
-      var private = 0, agent = 0, dealer = 0;
-      SellerType? mine;
-      DateTime? newest;
-      for (final doc in snap.docs) {
-        final data = doc.data();
-        final type = SellerType.values.firstWhere(
-          (t) => t.name == data['sellerType'],
-          orElse: () => SellerType.private,
-        );
-        switch (type) {
-          case SellerType.private:
-            private++;
-          case SellerType.agent:
-            agent++;
-          case SellerType.dealer:
-            dealer++;
-        }
-        if (myUid != null && doc.id == myUid) mine = type;
-        final at = (data['createdAt'] as Timestamp?)?.toDate();
-        if (at != null && (newest == null || at.isAfter(newest))) newest = at;
-      }
-      return EncounterTally(
-        privateCount: private,
-        agentCount: agent,
-        dealerCount: dealer,
-        myReport: mine,
-        lastReportAt: newest,
-      );
-    });
-  }
-
-  /// Records (or updates) the current buyer's report of who they met. Keyed by
-  /// uid, so re-reporting overwrites — one voice per person.
-  Future<void> recordEncounter(String carId, String uid, SellerType type) {
-    return _encounters(carId).doc(uid).set({
-      'sellerType': type.name,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-  /// Flags a car's encounter tally as wrong, for admin review. The visible
-  /// correction route that keeps a crowd statistic defensible.
-  Future<void> reportEncounterTally({
-    required String carId,
-    required String reporterUid,
-  }) =>
-      submitCorrection(kind: 'encounters', carId: carId, reporterUid: reporterUid);
 
   /// One channel for every "this is wrong" and "delete my data" request, so a
   /// user never has to hunt for how to challenge something.
