@@ -35,12 +35,26 @@ class _RegistryRefreshCardState extends ConsumerState<RegistryRefreshCard> {
   Future<void> _refresh() async {
     setState(() => _busy = true);
     try {
-      final gov = await ref
-          .read(govApiRepositoryProvider)
-          .lookupPlate(widget.car.plate);
-      await ref
-          .read(carRepositoryProvider)
-          .refreshGovSnapshot(widget.car.id, gov.toSnapshot());
+      // The plate is no longer on the public listing document — it lives in
+      // `cars/{id}/private/registry`, which only this seller can read. That
+      // read is the reason this button belongs to them and to nobody else.
+      final repo = ref.read(carRepositoryProvider);
+      final plate = widget.car.plate.isNotEmpty
+          ? widget.car.plate
+          : await repo.plateFor(widget.car.id);
+      if (plate.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('לא מצאנו את מספר הרישוי של המודעה הזו.'),
+            ),
+          );
+        }
+        return;
+      }
+      final gov =
+          await ref.read(govApiRepositoryProvider).lookupPlate(plate);
+      await repo.refreshGovSnapshot(widget.car.id, gov.toSnapshot());
       ref.invalidate(activeCarsProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

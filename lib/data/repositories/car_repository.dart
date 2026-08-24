@@ -71,9 +71,44 @@ class CarRepository {
   }
 
   /// Creates a listing and returns its new id.
+  /// Creates a listing, keeping the plate out of the public document.
+  ///
+  /// Two writes rather than one: the listing everyone can read, and a private
+  /// subdocument only the seller can. The plate is what turns a car into a
+  /// named person at the registry, so it lives in the second.
   Future<String> createListing(CarModel car) async {
     final ref = await _cars.add(car.toFirestore());
+    await _writePrivatePlate(ref.id, car.plate);
     return ref.id;
+  }
+
+  /// `cars/{id}/private/registry` — see `firestore.rules`. Best-effort by
+  /// design: a listing that exists without it is a listing whose owner cannot
+  /// refresh the registry data, which is recoverable. A listing that fails to
+  /// publish because of it is not.
+  Future<void> _writePrivatePlate(String carId, String plate) async {
+    if (plate.isEmpty) return;
+    try {
+      await _cars.doc(carId).collection('private').doc('registry').set({
+        'plate': plate,
+      });
+    } catch (_) {
+      // Swallowed deliberately; see above.
+    }
+  }
+
+  /// The plate behind a listing, for the seller who owns it.
+  ///
+  /// Returns empty for anyone else — the rules refuse the read, and that is
+  /// the point rather than an error to report.
+  Future<String> plateFor(String carId) async {
+    try {
+      final doc =
+          await _cars.doc(carId).collection('private').doc('registry').get();
+      return '${doc.data()?['plate'] ?? ''}';
+    } catch (_) {
+      return '';
+    }
   }
 
   /// Publishes a listing straight from a vehicle passport, linking the two in
@@ -98,6 +133,7 @@ class CarRepository {
       'activeCarId': carRef.id,
     });
     await batch.commit();
+    await _writePrivatePlate(carRef.id, car.plate);
     return carRef.id;
   }
 

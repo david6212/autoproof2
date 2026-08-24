@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../data/models/gov_data_model.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
@@ -50,8 +51,12 @@ class _VehicleHistoryScreenState extends ConsumerState<VehicleHistoryScreen> {
     final result = ref.watch(govLookupControllerProvider);
     final uid = ref.watch(authStateProvider).valueOrNull?.uid;
 
+    // The listing carries the registry's answer now; the plate is not in the
+    // public document for anyone to look up with. A listing published before
+    // that change still has one, and the live lookup below is its fallback.
+    final stored = car.valueOrNull?.govSnapshot;
     final plate = car.valueOrNull?.plate ?? '';
-    if (plate.isNotEmpty) {
+    if (stored == null && plate.isNotEmpty) {
       // Fired from build because the plate only arrives with the car, and
       // waiting for a second frame would show an empty screen first.
       WidgetsBinding.instance.addPostFrameCallback((_) => _lookup(plate));
@@ -76,13 +81,16 @@ class _VehicleHistoryScreenState extends ConsumerState<VehicleHistoryScreen> {
                   message: 'לא הצלחנו לטעון את המודעה.',
                   onRetry: () => ref.invalidate(carByIdProvider(widget.carId)),
                 )
-              else if (car.isLoading || (plate.isNotEmpty && result.isLoading))
+              else if (car.isLoading ||
+                  (stored == null && plate.isNotEmpty && result.isLoading))
                 const Padding(
                   padding: EdgeInsets.only(top: 40),
                   child: Center(child: CircularProgressIndicator()),
                 )
               else if (car.valueOrNull == null)
                 const _Gone()
+              else if (stored != null)
+                GovDataCard(data: GovData.fromSnapshot(stored))
               else
                 result.when(
                   data: (data) => data == null

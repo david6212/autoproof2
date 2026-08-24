@@ -213,6 +213,14 @@ class CreateListingController extends Notifier<CreateListingState> {
         // GovData.toSnapshot.
         govSnapshot: car.toSnapshot(),
         govCheckedAt: DateTime.now(),
+        // This plate's earlier listings, fetched here because the seller is
+        // the last person in the flow who holds the plate. Without it the
+        // odometer-rollback check — the app's signature finding — would have
+        // no past to compare against once buyers stop getting the plate.
+        plateHistorySnapshot: [
+          for (final snap in await carRepo.getPlateHistory(car.plate))
+            snap.toMap(),
+        ],
         // Official fields stored top-level so the buyer filters can use them.
         fuel: car.fuelType,
         color: car.color,

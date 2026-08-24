@@ -40,6 +40,15 @@ class CarModel {
   /// nor the VIN.
   final Map<String, dynamic>? govSnapshot;
 
+  /// This plate's earlier listings, copied onto this one at publish time.
+  ///
+  /// The odometer-rollback check is the app's signature finding, and it needs
+  /// the car's past. `plate_history` is keyed by plate, so a buyer without the
+  /// plate cannot read it — and taking the plate away from buyers is the whole
+  /// point. So the seller's app, which does have the plate, brings the answer
+  /// with it. The records name no one.
+  final List<Map<String, dynamic>>? plateHistorySnapshot;
+
   /// When [govSnapshot] was taken. Shown to the reader, always: a stored
   /// answer presented as a live one is the same lie as an unchecked claim.
   final DateTime? govCheckedAt;
@@ -86,6 +95,7 @@ class CarModel {
     required this.status,
     this.govData,
     this.govSnapshot,
+    this.plateHistorySnapshot,
     this.govCheckedAt,
     required this.photos,
     required this.reasonForSelling,
@@ -169,6 +179,9 @@ class CarModel {
       ),
       govData: (data['govData'] as Map?)?.cast<String, dynamic>(),
       govSnapshot: (data['govSnapshot'] as Map?)?.cast<String, dynamic>(),
+      plateHistorySnapshot: (data['plateHistorySnapshot'] as List?)
+          ?.map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
       govCheckedAt: (data['govCheckedAt'] as dynamic)?.toDate(),
       photos: List<String>.from(data['photos'] ?? const []),
       reasonForSelling: data['reasonForSelling'] ?? '',
@@ -198,8 +211,14 @@ class CarModel {
     );
   }
 
+  /// The listing as it is stored **publicly**.
+  ///
+  /// `cars/{id}` is `allow read: if true` — anyone with `curl` reads every
+  /// field here, which is why the plate is not one of them. It goes to
+  /// `cars/{id}/private/registry`, written by `CarRepository`, where only the
+  /// seller can reach it. Masking the plate on screen while shipping it in
+  /// this map was decoration.
   Map<String, dynamic> toFirestore() => {
-        'plate': plate,
         'make': make,
         'model': model,
         'year': year,
@@ -211,6 +230,7 @@ class CarModel {
         'status': status.name,
         'govData': govData,
         'govSnapshot': govSnapshot,
+        'plateHistorySnapshot': plateHistorySnapshot,
         'govCheckedAt': govCheckedAt,
         'photos': photos,
         'reasonForSelling': reasonForSelling,

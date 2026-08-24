@@ -206,12 +206,7 @@ class _ContentState extends ConsumerState<_Content> {
             // here rather than repeating itself.
             KeyedSubtree(
               key: _odometerKey,
-              child: PlateHistoryCard(
-                plate: car.plate,
-                currentCarId: car.id,
-                currentKm: car.km,
-                showRollbackBanner: false,
-              ),
+              child: PlateHistoryCard(car: car, showRollbackBanner: false),
             ),
             if (car.description.trim().isNotEmpty ||
                 car.reasonForSelling.isNotEmpty) ...[

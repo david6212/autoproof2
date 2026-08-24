@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/theme/app_palette.dart';
 import '../../core/utils/odometer_check.dart';
+import '../../data/models/car_model.dart';
 import '../../data/models/plate_snapshot_model.dart';
 import '../providers/cars_provider.dart';
 import '../providers/gov_api_provider.dart';
@@ -17,15 +18,16 @@ import 'app_card.dart';
 class PlateHistoryCard extends ConsumerWidget {
   const PlateHistoryCard({
     super.key,
-    required this.plate,
-    required this.currentCarId,
-    required this.currentKm,
+    required this.car,
     this.showRollbackBanner = true,
   });
 
-  final String plate;
-  final String currentCarId;
-  final int currentKm;
+  /// The listing itself, because both halves of this comparison now travel
+  /// with it: the registry's answer (`govSnapshot`) and this plate's earlier
+  /// listings (`plateHistorySnapshot`). A buyer holds no plate to look either
+  /// one up with, which is the whole point of taking it out of the public
+  /// document.
+  final CarModel car;
 
   /// Whether to repeat the mismatch banner inside this card.
   ///
@@ -38,11 +40,14 @@ class PlateHistoryCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final history =
-        ref.watch(plateHistoryProvider(plate)).valueOrNull ?? const [];
-    final govData = ref.watch(govDataForPlateProvider(plate)).valueOrNull;
+    final history = [
+      for (final m in car.plateHistorySnapshot ?? const <Map<String, dynamic>>[])
+        PlateSnapshot.fromMap(m),
+    ];
+    final govData = listingGov(ref, car).valueOrNull;
 
-    final previous = history.where((s) => s.carId != currentCarId).toList();
+    final currentKm = car.km;
+    final previous = history.where((s) => s.carId != car.id).toList();
     // Same rule the findings block at the top of the page reads, so the two
     // can never disagree about the same two numbers.
     final govKm = OdometerCheck.officialReading(govData?.lastTestKm);
@@ -166,7 +171,7 @@ class PlateHistoryCard extends ConsumerWidget {
   Future<void> _reportWrong(BuildContext context, WidgetRef ref) async {
     await ref
         .read(submitCorrectionProvider)
-        .call(kind: 'plate_history', carId: currentCarId);
+        .call(kind: 'plate_history', carId: car.id);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('הבקשה נשלחה לבדיקה. תודה.')),

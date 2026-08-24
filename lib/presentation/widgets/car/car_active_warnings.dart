@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/odometer_check.dart';
+import '../../../data/models/plate_snapshot_model.dart';
 import '../../../data/models/car_model.dart';
 import '../../../data/models/gov_data_model.dart';
 import '../../providers/cars_provider.dart';
@@ -40,7 +41,11 @@ class CarActiveWarnings extends ConsumerWidget {
   List<ActiveWarning> _collect(WidgetRef ref) {
     final gov = listingGov(ref, car).valueOrNull;
     final history =
-        ref.watch(plateHistoryProvider(car.plate)).valueOrNull ?? const [];
+        [
+      for (final m
+          in car.plateHistorySnapshot ?? const <Map<String, dynamic>>[])
+        PlateSnapshot.fromMap(m),
+    ];
     final tally = ref.watch(encounterTallyProvider(car.id)).valueOrNull;
 
     final warnings = <ActiveWarning>[];

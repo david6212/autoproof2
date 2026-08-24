@@ -86,6 +86,19 @@ service cloud.firestore {
       allow update, delete: if isSignedIn()
                     && resource.data.sellerId == request.auth.uid;
 
+      // ---- The plate ----
+      // `cars/{carId}` itself is world-readable, so the plate cannot live in
+      // it: an app that stars the number out on screen while serving it in
+      // the document is protecting nobody. It lives here instead, readable
+      // and writable only by the seller who owns the listing.
+      //
+      // What a buyer sees instead is `govSnapshot` on the listing — the
+      // registry's ANSWER, carrying neither the plate nor the VIN.
+      match /private/{docId} {
+        allow read, write: if isSignedIn()
+                           && carSellerId(carId) == request.auth.uid;
+      }
+
       // A buyer likes a car — the doc is keyed by the buyer's uid.
       match /buyer_likes/{buyerId} {
         allow read: if isSignedIn();
@@ -174,11 +187,18 @@ service cloud.firestore {
     }
 
     // ---- Plate history (cross-listing memory, keyed by plate) ----
-    // Public read so buyers see a car's past listings (odometer/price checks).
-    // Snapshots hold NO seller identity; any signed-in user may add one when
-    // publishing a listing.
+    //
+    // The document key IS a plate, and plates are visible on every car in
+    // every street — so `allow read: if true` meant anyone could walk a car
+    // park and build a price-and-mileage history for each vehicle they
+    // photographed. Signing in is not much of a barrier, but it ends the
+    // anonymous version of that, and buyers no longer read this at all: the
+    // seller's app copies the relevant records onto the listing at publish
+    // time (`plateHistorySnapshot`), which identifies nobody.
+    //
+    // Snapshots hold NO seller identity.
     match /plate_history/{plate}/snapshots/{snapshotId} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow create: if isSignedIn();
     }
 
