@@ -306,15 +306,23 @@ class CarCard extends StatelessWidget {
           ),
         ),
         // Says where the listing's facts came from, on the listing itself
-        // rather than only on the car page. Every listing is built from a
-        // plate lookup, so this is true of all of them.
+        // rather than only on the car page. Every REAL listing is built from a
+        // plate lookup — a demo one is not built from anything, so it gets the
+        // opposite label in the same corner. Leaving "נתונים רשמיים" on a
+        // demo card was the claim in miniature: an invented car wearing the
+        // badge that means the state was asked about it.
         PositionedDirectional(
           top: 10,
           end: 10,
-          child: FactChip(
-            'נתונים רשמיים',
-            tone: (context.colors.surface, context.colors.tealText),
-          ),
+          child: car.isDemo
+              ? FactChip(
+                  'מודעת הדגמה',
+                  tone: (context.colors.warnBg, context.colors.warnText),
+                )
+              : FactChip(
+                  'נתונים רשמיים',
+                  tone: (context.colors.surface, context.colors.tealText),
+                ),
         ),
         if (priceDrop != null && priceDrop! > 0)
           PositionedDirectional(

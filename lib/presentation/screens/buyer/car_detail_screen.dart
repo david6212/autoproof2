@@ -17,6 +17,7 @@ import '../../../data/models/gov_data_model.dart';
 import '../../providers/gov_api_provider.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/car/car_active_warnings.dart';
+import '../../widgets/car/demo_listing_notice.dart';
 import '../../widgets/common/collapsible_section.dart';
 import '../../widgets/share_listing_button.dart';
 import '../../widgets/buyer_journey_card.dart';
@@ -151,6 +152,10 @@ class _ContentState extends ConsumerState<_Content> {
             // to spend tens of thousands of shekels. Nothing is hidden by
             // this order; it just stops pretending the tyre width and a
             // mileage mismatch deserve the same glance.
+            // Above the findings, because a finding about an invented car is
+            // not a finding. Everything below this line is fiction on a demo
+            // listing, including the price.
+            DemoListingNotice(car: car),
             CarActiveWarnings(
               car: car,
               onShowOdometerSource: _scrollToOdometer,
@@ -354,8 +359,12 @@ class _OfficialSpecs extends StatelessWidget {
         const SizedBox(height: AppSpace.sm - 2),
         // The provenance stays attached to the specs. It used to be carried by
         // the green wash the tiles replaced, and dropping it would leave
-        // official figures looking like something the seller typed in.
-        const DataSourceBadge(source: DataSource.official),
+        // official figures looking like something the seller typed in. On a
+        // demo listing these figures ARE something someone typed in, and the
+        // badge says which.
+        DataSourceBadge(
+          source: car.isDemo ? DataSource.demo : DataSource.official,
+        ),
         const SizedBox(height: AppSpace.md),
         SpecTileGrid(tiles: tiles),
       ],

@@ -105,6 +105,12 @@ enum DataSource {
 
   /// Reports, notes and ratings submitted by users.
   community,
+
+  /// Invented, for a demonstration listing. Not a source at all, which is the
+  /// point: this badge exists so a panel can never show figures without saying
+  /// where they came from, and "we made them up" is an answer it has to be
+  /// able to give.
+  demo,
 }
 
 /// An [AppCard] with the app's standard section header: a teal icon, a bold
@@ -193,6 +199,12 @@ class DataSourceBadge extends StatelessWidget {
           context.colors.dealerOrange,
           Icons.groups_outlined,
           'מידע קהילתי · דיווחי משתמשים',
+        ),
+      DataSource.demo => (
+          context.colors.warnBg,
+          context.colors.warnText,
+          Icons.science_outlined,
+          'נתוני הדגמה · לא ממשרד התחבורה',
         ),
     };
 

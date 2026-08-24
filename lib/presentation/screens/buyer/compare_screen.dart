@@ -237,6 +237,16 @@ class _HeaderCell extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
               style: AppText.bodySm.copyWith(fontWeight: FontWeight.bold),
             ),
+            // The official section's badge belongs to the whole section, so a
+            // demo column has to carry its own mark: without it, an invented
+            // car sits under "מידע רשמי · משרד התחבורה" beside a real one.
+            if (car.isDemo)
+              Text(
+                'מודעת הדגמה',
+                textAlign: TextAlign.center,
+                style: context.text.micro
+                    .copyWith(color: context.colors.warnText),
+              ),
           ],
         ),
       ),

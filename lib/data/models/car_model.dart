@@ -81,6 +81,16 @@ class CarModel {
   final int serviceCount;
   final int historySpanMonths;
 
+  /// A demonstration listing: the vehicle does not exist and every number on
+  /// it was invented so the app has something to show.
+  ///
+  /// It has to be readable, not just written. Four of these are live, and
+  /// because their plates are registered to nobody they have no registry data
+  /// at all — so a demo is exactly the listing that looks, to a buyer, like a
+  /// real car whose official sections happen to be empty. Saying nothing was
+  /// the previous behaviour and it is the one thing this app cannot do.
+  final bool isDemo;
+
   const CarModel({
     required this.id,
     required this.plate,
@@ -111,6 +121,7 @@ class CarModel {
     this.hasDocumentedHistory = false,
     this.serviceCount = 0,
     this.historySpanMonths = 0,
+    this.isDemo = false,
   });
 
   /// Normalised drivetrain category for filtering.
@@ -208,6 +219,7 @@ class CarModel {
       historySpanMonths: (data['historySpanMonths'] ?? 0) is int
           ? (data['historySpanMonths'] ?? 0)
           : int.tryParse('${data['historySpanMonths']}') ?? 0,
+      isDemo: data['demo'] == true,
     );
   }
 
@@ -246,6 +258,10 @@ class CarModel {
         'hasDocumentedHistory': hasDocumentedHistory,
         'serviceCount': serviceCount,
         'historySpanMonths': historySpanMonths,
+        // Only when true. A real listing must not carry the key at all —
+        // `demo: false` on every document invites the next reader to write
+        // `data['demo'] != null` and label the whole marketplace.
+        if (isDemo) 'demo': true,
       };
 
   String get title => '$make $model'.trim();
