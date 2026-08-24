@@ -433,7 +433,7 @@ class _ValueInsights extends StatelessWidget {
               icon: Icons.badge_outlined,
               label: 'סוג בעלות',
               value: ownership,
-              tag: isPrivate ? 'פרטי ✓' : 'שימוש מסחרי',
+              tag: isPrivate ? 'פרטי' : 'שימוש מסחרי',
               tagBg: isPrivate ? context.colors.tealLight : context.colors.warnBg,
               tagFg: isPrivate ? context.colors.tealText : context.colors.warnText,
             ),

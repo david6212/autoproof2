@@ -42,7 +42,10 @@ class AppStrings {
   // says "הושוו"/"מבוסס על" instead.
   static const verifyingWithGov = 'משווה למידע הזמין במרשם...';
   static const plateNotFound = 'המספר לא נמצא. בדוק את מספר הרישוי.';
-  static const idOnlyNote = 'מספר הרישוי משמש להשוואה מול מרשם הרכב בלבד 🔒';
+  // No emoji in anything a user reads: the app bundles Heebo and Poppins and
+  // nothing else, so the web engine has no font to fall back to and draws an
+  // empty box. `note_bank_test` scans for this.
+  static const idOnlyNote = 'מספר הרישוי משמש להשוואה מול מרשם הרכב בלבד.';
   static const verifiedSuccess = 'ההשוואה הושלמה';
   static const verifiedAsPrivate =
       'נתוני הרכב הושוו למידע הזמין במרשם, והמודעה תסומן לפי הסיווג שבחרת';

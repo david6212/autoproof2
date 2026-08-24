@@ -172,7 +172,7 @@ class BuyerJourneyCard extends ConsumerWidget {
     'התחל בבדיקה',
     'סימנתי — בדקתי את הרכב',
     'סימנתי — הבדיקה עברה',
-    'קניתי את הרכב 🎉',
+    'קניתי את הרכב',
   ];
 
   @override

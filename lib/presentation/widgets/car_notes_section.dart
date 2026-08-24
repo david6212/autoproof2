@@ -62,7 +62,7 @@ class CarNotesSection extends ConsumerWidget {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: Text(
-                      'עדיין אין ממצאים. היה הראשון לשתף מה מצאת בבדיקה 👀',
+                      'עדיין אין ממצאים. היה הראשון לשתף מה מצאת בבדיקה.',
                       style: context.text.bodySmMuted),
                 );
               }

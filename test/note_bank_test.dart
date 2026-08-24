@@ -118,6 +118,34 @@ void main() {
     });
   });
 
+  test('no user-facing string carries an emoji', () {
+    // Found on the live site, 24/08: the notes empty state ended in an empty
+    // box. The app bundles Heebo and Poppins and nothing else — Google Fonts
+    // was removed for a licence reason, see bundled_fonts_test — so the web
+    // engine has no font to fall back to for an emoji and draws the box.
+    //
+    // Checked by code point rather than by regex, because a regex for this
+    // range is mostly escapes and the next person has to trust it.
+    bool isEmoji(int r) =>
+        (r >= 0x1F000 && r <= 0x1FAFF) ||
+        (r >= 0x2600 && r <= 0x27BF) ||
+        r == 0xFE0F;
+
+    for (final file in Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.dart'))) {
+      final lines = file.readAsLinesSync();
+      for (var i = 0; i < lines.length; i++) {
+        // Comments are exempt: an emoji marking a warning to a developer
+        // never reaches a screen.
+        final code = lines[i].split('//').first;
+        expect(code.runes.any(isEmoji), isFalse,
+            reason: '${file.path}:${i + 1} — ${lines[i].trim()}');
+      }
+    }
+  });
+
   test('the "who did you meet" feature is gone from the codebase', () {
     // Model, card, providers, repository methods and the Firestore rule. A
     // leftover provider would keep a dead subcollection readable and would be

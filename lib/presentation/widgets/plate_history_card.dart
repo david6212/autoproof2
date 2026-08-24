@@ -121,7 +121,7 @@ class PlateHistoryCard extends ConsumerWidget {
               label: 'מד-אוץ רשמי · משרד התחבורה (טסט אחרון)',
               km: govKm,
               flagged: govRollback,
-              okNote: 'תואם ✓',
+              okNote: 'תואם',
             ),
 
           // Past listings are SUMMARISED, never itemised. Listing every past
@@ -197,7 +197,7 @@ class PlateHistoryCard extends ConsumerWidget {
     if (highest > currentKm) {
       return 'במודעה קודמת נרשמו ${_fmt.format(highest)} ק"מ — יותר מהמודעה הנוכחית';
     }
-    return 'הקילומטראז\' עלה בהתאמה בין המודעות ✓';
+    return 'הקילומטראז\' עלה בהתאמה בין המודעות';
   }
 
   /// A single summarised line — no odometer column, no price column.
