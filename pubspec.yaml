@@ -32,6 +32,12 @@ dependencies:
   # UI helpers
   cached_network_image: ^3.3.0
   image_picker: ^1.1.0
+  # Decoding, black-box burn-in and re-encoding for the document redactor.
+  # Pure Dart, so the same code runs on the phone and in the browser —
+  # `dart:ui` was the alternative and can only encode PNG, which for a photo
+  # of a licence is several megabytes and would never fit a Firestore
+  # document.
+  image: ^4.9.2
   # image_cropper — re-added in Phase 5 (photo upload). Removed for now
   # because 5.0.x references UnmodifiableUint8ListView, removed in Dart 3.4+.
 

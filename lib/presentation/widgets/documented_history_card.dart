@@ -82,7 +82,11 @@ class DocumentedHistoryCard extends ConsumerWidget {
           const SizedBox(height: AppSpace.lg),
           const Text('מסמכים שהמוכר שיתף', style: AppText.subtitle),
           const SizedBox(height: AppSpace.md),
-          DocumentList(documents: documents, readOnly: true),
+          DocumentList(
+            vehicleId: vehicleId,
+            documents: documents,
+            readOnly: true,
+          ),
           const SizedBox(height: AppSpace.sm),
           AppCard(
             padding: const EdgeInsets.all(AppSpace.md),

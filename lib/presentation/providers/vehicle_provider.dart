@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/utils/document_redactor.dart';
 import '../../data/models/car_model.dart' show CarModel, CarStatus;
 import '../../data/models/expense.dart';
 import '../../data/models/gov_data_model.dart';
@@ -368,28 +369,34 @@ class DocumentActions {
 
   final Ref _ref;
 
-  Future<String?> upload({
+  /// Saves a document that has ALREADY been through [DocumentRedactor].
+  ///
+  /// Taking a [RedactedDocument] rather than raw bytes is the enforcement:
+  /// there is no way to reach the repository with a file that skipped the
+  /// redactor, so no upload path can accidentally store an original with its
+  /// EXIF block and its ID number intact.
+  Future<String?> save({
     required String vehicleId,
-    required Uint8List bytes,
-    required String fileName,
+    required RedactedDocument redacted,
     required DocumentType type,
     required String title,
-    String contentType = 'image/jpeg',
     bool shareWithBuyers = false,
   }) async {
     final uid = _ref.read(authStateProvider).valueOrNull?.uid;
     if (uid == null) return null;
-    return _ref.read(documentRepositoryProvider).uploadDocument(
+    return _ref.read(documentRepositoryProvider).saveDocument(
           uid: uid,
           vehicleId: vehicleId,
-          bytes: bytes,
-          fileName: fileName,
+          redacted: redacted,
           type: type,
           title: title,
-          contentType: contentType,
           shareWithBuyers: shareWithBuyers,
         );
   }
+
+  /// The image itself, fetched only when someone opens it.
+  Future<Uint8List?> bytes(String vehicleId, String documentId) =>
+      _ref.read(documentRepositoryProvider).fileBytes(vehicleId, documentId);
 
   Future<void> setShared(String vehicleId, String documentId, bool shared) =>
       _ref

@@ -7,9 +7,13 @@ class AppConfig {
   ///
   /// **It is not.** `autoproof-8d827` has never had a Cloud Storage bucket —
   /// `firebase deploy --only storage` fails with "Storage has not been set up",
-  /// and provisioning the first bucket needs the Blaze plan. So every upload
-  /// path in the app — listing photos, service receipts, passport documents —
-  /// fails at the network call.
+  /// and provisioning the first bucket needs the Blaze plan.
+  ///
+  /// **Passport documents no longer wait for it.** Their bytes go into a
+  /// Firestore document instead — see [DocumentRepository] — which works on
+  /// the free plan today and, as a side effect, makes unsharing an actual
+  /// revocation. What still depends on this flag is **listing photos** and
+  /// **service receipts**: both fail at the network call while it is false.
   ///
   /// This flag exists so the app can say that instead of discovering it. A
   /// button that always fails is worse than a button that is not there: the

@@ -1,28 +1,48 @@
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
+import '../../core/utils/document_redactor.dart';
 import '../models/vehicle_document.dart';
 
-/// Files attached to a vehicle passport, and the sharing switch on each one.
+/// Files attached to a vehicle passport, the sharing switch on each one, and
+/// the black boxes burned into them before they were saved.
+///
+/// **The bytes live in Firestore, not Cloud Storage.** Storage needs the Blaze
+/// plan and this project does not have it, which is why every upload in the
+/// app failed at the network call for months. A Firestore document holds 1 MiB
+/// and a resized licence is well under that, so the file goes into a `file`
+/// subcollection under its own record — down one level, so listing the drawer
+/// does not download every scan in it.
+///
+/// The move is not only a workaround. A Storage download URL carries its own
+/// access token and keeps working after the owner turns sharing off; a
+/// Firestore read is checked against the rules every single time. Unsharing
+/// here actually revokes.
 class DocumentRepository {
-  DocumentRepository({FirebaseFirestore? firestore, FirebaseStorage? storage})
-      : _db = firestore ?? FirebaseFirestore.instance,
-        _storage = storage ?? FirebaseStorage.instance;
+  DocumentRepository({FirebaseFirestore? firestore})
+      : _db = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _db;
-  final FirebaseStorage _storage;
 
-  /// 10 MB. A phone photo of a certificate is ~2 MB and a scanned PDF ~1 MB;
-  /// anything past this is someone uploading the wrong thing, and the free
-  /// Storage quota is shared by every user of the app.
-  static const maxBytes = 10 * 1024 * 1024;
+  /// What one document may weigh once resized and re-encoded. Firestore's own
+  /// ceiling is 1 MiB per document; the rest is room for the field names and
+  /// the blob's length prefix.
+  static const maxBytes = DocumentRedactor.maxBytes;
+
+  /// The single document inside the `file` subcollection. A fixed id rather
+  /// than a generated one so the file can be read, replaced and deleted
+  /// without a lookup.
+  static const _blobId = 'blob';
 
   CollectionReference<Map<String, dynamic>> _documents(String vehicleId) =>
       _db.collection('vehicles').doc(vehicleId).collection('documents');
 
-  /// Everything on this vehicle — the owner's view.
+  DocumentReference<Map<String, dynamic>> _blob(
+          String vehicleId, String documentId) =>
+      _documents(vehicleId).doc(documentId).collection('file').doc(_blobId);
+
+  /// Everything on this vehicle — the owner's view. Metadata only.
   Stream<List<VehicleDocument>> watchDocuments(String vehicleId) =>
       _documents(vehicleId).snapshots().map(_sorted);
 
@@ -39,6 +59,18 @@ class DocumentRepository {
     return _sorted(snap);
   }
 
+  /// The image itself, fetched only when someone opens it.
+  ///
+  /// Null when the record has no file — a document written before the bytes
+  /// moved into Firestore, or one whose blob was removed. The caller shows
+  /// that as a missing file rather than as a blank image.
+  Future<Uint8List?> fileBytes(String vehicleId, String documentId) async {
+    final snap = await _blob(vehicleId, documentId).get();
+    final data = snap.data();
+    final blob = data?['bytes'];
+    return blob is Blob ? blob.bytes : null;
+  }
+
   static List<VehicleDocument> _sorted(QuerySnapshot<Map<String, dynamic>> s) {
     final list = [
       for (final d in s.docs) VehicleDocument.fromFirestore(d.data(), d.id),
@@ -47,44 +79,46 @@ class DocumentRepository {
     return list;
   }
 
-  /// Uploads a file and records it. Returns the new document id.
+  /// Saves an already-redacted image and its record. Returns the new id.
   ///
-  /// The storage path starts with the owner's uid because Storage rules cannot
-  /// read Firestore — the only thing they can check is the path itself, so
-  /// ownership has to be written into it.
-  Future<String> uploadDocument({
+  /// The bytes must have been through [DocumentRedactor] — this is where they
+  /// stop being changeable, and a file that arrives here unprocessed still
+  /// carries its EXIF block and whatever the owner meant to paint over. The
+  /// size check is a backstop, not the mechanism.
+  ///
+  /// The file is written BEFORE the record. A record with no file shows as a
+  /// broken row; a file with no record is invisible and unreachable, and the
+  /// next upload's cleanup would not know to remove it.
+  Future<String> saveDocument({
     required String uid,
     required String vehicleId,
-    required Uint8List bytes,
-    required String fileName,
+    required RedactedDocument redacted,
     required DocumentType type,
     required String title,
-    String contentType = 'application/octet-stream',
     bool shareWithBuyers = false,
   }) async {
-    if (bytes.lengthInBytes > maxBytes) {
-      throw ArgumentError('הקובץ גדול מדי — עד 10MB');
+    if (redacted.bytes.lengthInBytes > maxBytes) {
+      throw ArgumentError('הקובץ גדול מדי');
     }
 
     final docRef = _documents(vehicleId).doc();
-    final safeName = fileName.replaceAll(RegExp(r'[^\w.\-]'), '_');
-    final path = 'vehicles/$uid/$vehicleId/documents/${docRef.id}_$safeName';
 
-    final ref = _storage.ref(path);
-    await ref.putData(bytes, SettableMetadata(contentType: contentType));
-    final url = await ref.getDownloadURL();
+    await _blob(vehicleId, docRef.id).set({
+      'bytes': Blob(redacted.bytes),
+      'width': redacted.width,
+      'height': redacted.height,
+    });
 
     final document = VehicleDocument(
       id: docRef.id,
       type: type,
       title: title,
-      fileUrl: url,
-      storagePath: path,
-      contentType: contentType,
-      sizeBytes: bytes.lengthInBytes,
+      contentType: 'image/jpeg',
+      sizeBytes: redacted.bytes.lengthInBytes,
       isSharedWithBuyers: shareWithBuyers,
       uploadedByOwnerId: uid,
       uploadedAt: DateTime.now(),
+      redactedAreas: redacted.boxCount,
     );
     await docRef.set(document.toFirestore());
     return docRef.id;
@@ -104,18 +138,13 @@ class DocumentRepository {
 
   /// Deletes the record **and the file**.
   ///
-  /// Deleting only the Firestore record would leave a live download URL: a
-  /// Storage URL carries its own access token and keeps working even once
-  /// nothing links to it. For a document someone wants gone, that is not good
-  /// enough. If the file is already missing the record is still removed.
+  /// The file first: a record whose blob survived would leave the image
+  /// readable to anyone who knew the path, and deleting a Firestore document
+  /// does not touch its subcollections. That is a rule of the database, not an
+  /// oversight, and it is the reason this method exists rather than a plain
+  /// `.delete()` at the call site.
   Future<void> deleteDocument(String vehicleId, VehicleDocument document) async {
-    if (document.storagePath.isNotEmpty) {
-      try {
-        await _storage.ref(document.storagePath).delete();
-      } on FirebaseException catch (e) {
-        if (e.code != 'object-not-found') rethrow;
-      }
-    }
+    await _blob(vehicleId, document.id).delete();
     await _documents(vehicleId).doc(document.id).delete();
   }
 }

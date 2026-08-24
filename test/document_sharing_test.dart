@@ -42,7 +42,7 @@ void main() {
   testWidgets('a document is private until the owner shares it',
       (tester) async {
     await tester.pumpWidget(host(
-      DocumentList(documents: [doc()], onToggleShare: (_, __) {}),
+      DocumentList(vehicleId: 'v1', documents: [doc()], onToggleShare: (_, __) {}),
     ));
 
     expect(find.text('פרטי'), findsOneWidget);
@@ -55,6 +55,7 @@ void main() {
     bool? result;
     await tester.pumpWidget(host(
       DocumentList(
+        vehicleId: 'v1',
         documents: [doc(type: DocumentType.licence)],
         onToggleShare: (_, shared) => result = shared,
       ),
@@ -82,6 +83,7 @@ void main() {
     bool? result;
     await tester.pumpWidget(host(
       DocumentList(
+        vehicleId: 'v1',
         documents: [doc(type: DocumentType.insurance)],
         onToggleShare: (_, shared) => result = shared,
       ),
@@ -102,6 +104,7 @@ void main() {
     bool? result;
     await tester.pumpWidget(host(
       DocumentList(
+        vehicleId: 'v1',
         documents: [doc(type: DocumentType.inspectionReport)],
         onToggleShare: (_, shared) => result = shared,
       ),
@@ -119,6 +122,7 @@ void main() {
     bool? result;
     await tester.pumpWidget(host(
       DocumentList(
+        vehicleId: 'v1',
         documents: [doc(type: DocumentType.licence, shared: true)],
         onToggleShare: (_, shared) => result = shared,
       ),
@@ -137,7 +141,7 @@ void main() {
     // A Storage download URL keeps working after unsharing, so the dialog has
     // to be honest about what deletion is for.
     await tester.pumpWidget(host(
-      DocumentList(documents: [doc()], onDelete: (_) {}),
+      DocumentList(vehicleId: 'v1', documents: [doc()], onDelete: (_) {}),
     ));
 
     await tester.tap(find.byIcon(Icons.delete_outline));
@@ -150,6 +154,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(host(
       DocumentList(
+        vehicleId: 'v1',
         documents: [doc(shared: true)],
         readOnly: true,
         onToggleShare: (_, __) {},

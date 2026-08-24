@@ -5,7 +5,7 @@ import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
 import '../../data/models/vehicle_document.dart';
 import 'app_card.dart';
-import 'photo_viewer.dart';
+import 'document_viewer.dart';
 
 /// The owner's attached files, each with its own sharing switch.
 ///
@@ -17,11 +17,16 @@ import 'photo_viewer.dart';
 class DocumentList extends StatelessWidget {
   const DocumentList({
     super.key,
+    required this.vehicleId,
     required this.documents,
     this.onToggleShare,
     this.onDelete,
     this.readOnly = false,
   });
+
+  /// Needed to fetch a file: the bytes live under the vehicle, not on the
+  /// record, and there is no URL to follow.
+  final String vehicleId;
 
   final List<VehicleDocument> documents;
   final void Function(VehicleDocument doc, bool shared)? onToggleShare;
@@ -37,6 +42,7 @@ class DocumentList extends StatelessWidget {
       children: [
         for (final d in documents)
           _DocumentRow(
+            vehicleId: vehicleId,
             document: d,
             onToggleShare: readOnly ? null : onToggleShare,
             onDelete: readOnly ? null : onDelete,
@@ -48,10 +54,13 @@ class DocumentList extends StatelessWidget {
 
 class _DocumentRow extends StatelessWidget {
   const _DocumentRow({
+    required this.vehicleId,
     required this.document,
     this.onToggleShare,
     this.onDelete,
   });
+
+  final String vehicleId;
 
   final VehicleDocument document;
   final void Function(VehicleDocument doc, bool shared)? onToggleShare;
@@ -163,19 +172,18 @@ class _DocumentRow extends StatelessWidget {
             const SizedBox(height: AppSpace.sm),
             Row(
               children: [
-                if (!document.isPdf)
-                  TextButton.icon(
-                    icon: const Icon(Icons.open_in_full, size: 18),
-                    label: const Text('פתח'),
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => PhotoViewer(
-                          photos: [document.fileUrl],
-                          initialIndex: 0,
-                        ),
+                TextButton.icon(
+                  icon: const Icon(Icons.open_in_full, size: 18),
+                  label: const Text('פתח'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => DocumentViewerScreen(
+                        vehicleId: vehicleId,
+                        document: document,
                       ),
                     ),
                   ),
+                ),
                 const Spacer(),
                 if (onToggleShare != null) ...[
                   Text(

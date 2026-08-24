@@ -56,6 +56,10 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/transfers/$(claimCode)).data;
     }
 
+    function attachedDocument(vehicleId, documentId) {
+      return get(/databases/$(database)/documents/vehicles/$(vehicleId)/documents/$(documentId)).data;
+    }
+
     // ---- Users (profile + saved cars) ----
     // A user can only read and write their own profile document.
     match /users/{uid} {
@@ -283,6 +287,32 @@ service cloud.firestore {
                       && request.resource.data.uploadedByOwnerId == request.auth.uid;
         allow update, delete: if isSignedIn()
                               && vehicleData(vehicleId).ownerId == request.auth.uid;
+
+        // ---- The file itself ----
+        //
+        // The bytes live in their own document, one level down, for two
+        // reasons. Listing the drawer would otherwise download every scan in
+        // it — the owner's list view reads metadata only, and a licence is
+        // most of a megabyte. And a Firestore document is capped at 1 MiB
+        // TOTAL, so bytes sharing a document with the title and the sharing
+        // flag would shrink the picture to pay for them.
+        //
+        // The read rule is the parent's, restated: rules are not inherited by
+        // subcollections, and a file readable when its record is not would
+        // make the sharing switch decorative. `get()` on the parent costs one
+        // read, and repeated gets inside one evaluation are cached.
+        //
+        // Unlike a Storage download URL, this genuinely revokes: there is no
+        // token, so turning sharing off closes the door on anyone who has not
+        // already saved the image to their own device.
+        match /file/{fileId} {
+          allow read: if (attachedDocument(vehicleId, documentId).isSharedWithBuyers == true
+                          && vehicleData(vehicleId).isListed == true)
+                      || (isSignedIn()
+                          && vehicleData(vehicleId).ownerId == request.auth.uid);
+          allow write: if isSignedIn()
+                       && vehicleData(vehicleId).ownerId == request.auth.uid;
+        }
       }
     }
 

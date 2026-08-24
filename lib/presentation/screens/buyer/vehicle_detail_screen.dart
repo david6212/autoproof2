@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/constants/app_config.dart';
 import '../../../core/theme/app_dimens.dart';
+import '../../../core/utils/document_redactor.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../data/models/expense.dart';
@@ -19,6 +19,7 @@ import '../../widgets/documented_progress_meter.dart';
 import '../../widgets/error_retry.dart';
 import '../../widgets/document_list.dart';
 import '../../widgets/expense_summary.dart';
+import 'redact_document_screen.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../widgets/service_timeline.dart';
 import '../../widgets/skeleton.dart';
@@ -477,7 +478,6 @@ class _DocumentsTabState extends ConsumerState<_DocumentsTab> {
     );
     if (type == null || !mounted) return;
 
-    setState(() => _uploading = true);
     final bytes = await picked.readAsBytes();
 
     // Reading a phone photo off disk is not instant, and `ref` throws once the
@@ -487,11 +487,23 @@ class _DocumentsTabState extends ConsumerState<_DocumentsTab> {
     // doing.
     if (!mounted) return;
 
+    // Nothing reaches the repository without passing through here. The
+    // redactor is what strips the EXIF block and burns in whatever the owner
+    // painted over, and `DocumentActions.save` takes only its output — so
+    // there is no path that stores an original by accident.
+    final redacted = await Navigator.of(context).push<RedactedDocument>(
+      MaterialPageRoute(
+        builder: (_) => RedactDocumentScreen(bytes: bytes, type: type),
+      ),
+    );
+    if (redacted == null || !mounted) return;
+
+    setState(() => _uploading = true);
+
     try {
-      await ref.read(documentActionsProvider).upload(
+      await ref.read(documentActionsProvider).save(
             vehicleId: widget.vehicle.id,
-            bytes: bytes,
-            fileName: picked.name,
+            redacted: redacted,
             type: type,
             title: type.label,
           );
@@ -512,19 +524,20 @@ class _DocumentsTabState extends ConsumerState<_DocumentsTab> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: AppConfig.storageEnabled
-          ? FloatingActionButton.extended(
-              onPressed: _uploading ? null : _add,
-              icon: _uploading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.upload_file),
-              label: Text(_uploading ? 'מעלה...' : 'העלה מסמך'),
-            )
-          : null,
+      // No longer gated on Storage: a document's bytes go into Firestore, so
+      // this is the one upload in the app that works without the Blaze plan.
+      // Service receipts and listing photos still wait for a bucket.
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _uploading ? null : _add,
+        icon: _uploading
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.upload_file),
+        label: Text(_uploading ? 'שומר...' : 'העלה מסמך'),
+      ),
       body: docsAsync.when(
         loading: () => const _DetailSkeleton(),
         error: (_, __) => ErrorRetry(
@@ -542,19 +555,23 @@ class _DocumentsTabState extends ConsumerState<_DocumentsTab> {
           ),
           children: [
             Text(
-              AppConfig.storageEnabled
-                  ? 'כל מסמך שתעלו נשמר פרטי. תוכלו לבחור, לכל מסמך בנפרד, '
-                      'אם להציג אותו לקונים כשהרכב מפורסם למכירה.'
-                  : 'העלאת מסמכים עדיין לא זמינה. כשהיא תיפתח, כל מסמך '
-                      'יישמר פרטי ותוכלו לבחור לכל אחד בנפרד אם להציג אותו '
-                      'לקונים.',
+              'כל מסמך שתעלו נשמר פרטי. תוכלו לבחור, לכל מסמך בנפרד, '
+              'אם להציג אותו לקונים כשהרכב מפורסם למכירה.',
               style: context.text.bodyMuted,
+            ),
+            const SizedBox(height: AppSpace.sm),
+            Text(
+              'לפני שמסמך נשמר תוכלו להשחיר בו פרטים — מספר תעודת '
+              'זהות, כתובת. מה שתסמנו נמחק מהתמונה עצמה, ונתוני המיקום '
+              'של הצילום מוסרים תמיד.',
+              style: context.text.micro,
             ),
             const SizedBox(height: AppSpace.lg),
             if (documents.isEmpty)
               Text('עוד לא הועלו מסמכים', style: context.text.caption)
             else
               DocumentList(
+                vehicleId: widget.vehicle.id,
                 documents: documents,
                 onToggleShare: (doc, shared) =>
                     actions.setShared(widget.vehicle.id, doc.id, shared),
