@@ -34,5 +34,5 @@ class AppConfig {
   /// string. `app_version_test` reads pubspec and fails if the two drift — a
   /// version number that lies is worse than none, since it sends support
   /// looking at the wrong build.
-  static const appVersion = '0.5.0+5';
+  static const appVersion = '0.7.0+7';
 }
