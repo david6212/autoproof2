@@ -39,15 +39,8 @@ class VehicleDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final vehicleAsync = ref.watch(vehicleProvider(vehicleId));
 
-    // The documents tab is the whole feature, not a corner of one: it exists
-    // to upload files, and there is no bucket to upload them to. Leaving it in
-    // meant a tab whose only content was a sentence explaining that it does
-    // not work. Nothing is lost by removing it — no document has ever been
-    // uploaded, because none ever could be — and it comes back with the flag.
-    const uploads = AppConfig.storageEnabled;
-
     return DefaultTabController(
-      length: uploads ? 4 : 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: Text(
@@ -79,7 +72,7 @@ class VehicleDetailScreen extends ConsumerWidget {
               Tab(text: 'סקירה'),
               Tab(text: 'טיפולים'),
               Tab(text: 'הוצאות'),
-              if (uploads) Tab(text: 'מסמכים'),
+              Tab(text: 'מסמכים'),
             ],
           ),
         ),
@@ -97,7 +90,7 @@ class VehicleDetailScreen extends ConsumerWidget {
                       _Overview(vehicle: vehicle),
                       _ServicesTab(vehicle: vehicle),
                       _ExpensesTab(vehicle: vehicle),
-                      if (uploads) _DocumentsTab(vehicle: vehicle),
+                      _DocumentsTab(vehicle: vehicle),
                     ],
                   ),
           ),

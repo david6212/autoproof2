@@ -74,17 +74,16 @@ void main() {
     // TabController and a route to build, and the point being pinned is
     // structural: whether the control exists at all.
 
-    test('the passport has no documents tab while there is no bucket', () {
-      // It was a tab whose entire content was a sentence explaining that the
-      // feature does not work. No document has ever been uploaded, because
-      // none ever could be, so nothing is hidden by removing it.
+    test('the passport keeps its documents tab', () {
+      // Removed on 24/08 and put back the same day: David wants uploads to
+      // WORK there, not to be tidied away. The tab stays, and what it says
+      // while the bucket does not exist is the honest line below.
       final src = File(
         'lib/presentation/screens/buyer/vehicle_detail_screen.dart',
       ).readAsStringSync();
 
-      expect(src, contains('length: uploads ? 4 : 3'));
-      expect(src, contains("if (uploads) Tab(text: 'מסמכים')"));
-      expect(src, contains('if (uploads) _DocumentsTab(vehicle: vehicle)'));
+      expect(src, contains("Tab(text: 'מסמכים')"));
+      expect(src, contains('_DocumentsTab(vehicle: vehicle)'));
     });
 
     test('publishing offers no photo picker, and does not demand a photo', () {
