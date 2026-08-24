@@ -48,7 +48,12 @@ curl -s "$SITE/" \
 
 echo
 echo "==> The APK a visitor actually downloads"
-check "https://github.com/david6212/autoproof2/releases/latest" "releases page"
+# The button links straight at the asset now, not at the releases page, so a
+# release published without this exact filename breaks the download for
+# everyone while the releases page keeps returning 200. That is the failure
+# this script was written for, and checking the page instead of the file would
+# have missed it.
+check "https://github.com/david6212/autoproof2/releases/latest/download/app-arm64-v8a-release.apk" "the APK itself"
 
 echo
 if [ "$fail" = "0" ]; then
