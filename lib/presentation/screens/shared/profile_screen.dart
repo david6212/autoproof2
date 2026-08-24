@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../data/repositories/account_deletion_repository.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../providers/theme_provider.dart';
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/cars_provider.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../widgets/analytics_consent_gate.dart';
 import '../../widgets/app_card.dart';
@@ -63,33 +63,63 @@ class _Content extends StatelessWidget {
     if (context.mounted) context.go('/login');
   }
 
-  /// Files a deletion request. Deliberately a request rather than an instant
-  /// wipe: listings and reports a user left are entangled with other people's
-  /// records, so each case is handled rather than cascaded blindly.
+  /// Deletes the account, in the app, now.
+  ///
+  /// It used to file a *request* into a collection no client can read, which
+  /// Apple rejects outright (§5.1.1(v)) and which the product could not
+  /// actually keep. The entanglement worry behind that decision was real but
+  /// misapplied: what belongs to this person — their listings, their
+  /// passports, their saved cars — goes with them. What they wrote **about
+  /// other people's cars** (visitor notes, seller-encounter reports) is other
+  /// buyers' evidence, so it stays and is not tied back to a live account.
+  ///
+  /// The dialog lists all of that before anything happens, because a
+  /// destructive action that surprises somebody is worse than no button.
   Future<void> _requestDeletion(BuildContext context, WidgetRef ref) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('בקשת מחיקת מידע'),
+        title: const Text('מחיקת החשבון'),
         content: const Text(
-            'נטפל בבקשה ונמחק את המידע האישי שלך מהמערכת. מודעות ודיווחים שפרסמת '
-            'ייבדקו בנפרד. נחזור אליך באמצעי הקשר הרשום בחשבון.'),
+            'הפעולה הזו מוחקת עכשיו, ואי אפשר לבטל אותה:\n\n'
+            '• המודעה שפרסמתם, אם יש\n'
+            '• תיקי הרכב שלכם וכל מה שתיעדתם בהם\n'
+            '• הרכבים ששמרתם והחשבון עצמו\n\n'
+            'הערות ודיווחים שכתבתם על רכבים של אחרים יישארו — קונים אחרים '
+            'נשענים עליהם — והם אינם מקושרים לחשבון חי.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
               child: const Text('ביטול')),
           FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('שלח בקשה')),
+              child: const Text('מחקו את החשבון')),
         ],
       ),
     );
     if (confirm != true) return;
-    await ref.read(submitCorrectionProvider).call(kind: 'account_deletion');
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('הבקשה נשלחה. נטפל בה ונעדכן אותך.')),
-      );
+
+    try {
+      await ref.read(accountDeletionRepositoryProvider).deleteEverything();
+      if (context.mounted) context.go('/login');
+    } on AccountDeletionNeedsRecentLogin {
+      // Firebase refuses to delete a credential on an old sign-in. The data
+      // is already gone by this point, so say exactly that rather than
+      // implying nothing happened.
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('המידע נמחק. כדי למחוק את החשבון עצמו, התחברו שוב '
+                'ולחצו שוב על מחיקה.'),
+          ),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('המחיקה נכשלה. נסו שוב.')),
+        );
+      }
     }
   }
 
@@ -208,7 +238,7 @@ class _Content extends StatelessWidget {
         _MenuGroup(rows: [
           _MenuRow(
             icon: Icons.delete_sweep_outlined,
-            label: 'בקשת מחיקת המידע שלי',
+            label: 'מחיקת החשבון והמידע שלי',
             color: context.colors.errorRed,
             showChevron: false,
             onTap: () => _requestDeletion(context, ref),

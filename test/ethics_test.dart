@@ -95,16 +95,20 @@ void main() {
           reason: 'a dialog on the way out of a saved list is a dark pattern');
     });
 
-    test('the deletion request is on the profile, not buried', () {
-      // Reachable in one tap from the profile's own menu. It is a request
-      // rather than an instant wipe because listings and reports are
-      // entangled with other people's records and there is no server to
-      // cascade them — but the route out has to be visible either way.
+    test('deleting the account happens in the app, in one tap', () {
+      // It used to file a *request* into a collection no client can read —
+      // which is an automatic App Store rejection (§5.1.1(v)) and, worse, a
+      // promise the product could not keep. The entanglement argument behind
+      // that was real but misapplied: what belongs to the person goes with
+      // them; what they wrote about other people's cars is other buyers'
+      // evidence and stays.
       final profile =
           File('lib/presentation/screens/shared/profile_screen.dart')
               .readAsStringSync();
-      expect(profile.contains('בקשת מחיקת המידע שלי'), isTrue);
+      expect(profile.contains('מחיקת החשבון והמידע שלי'), isTrue);
       expect(profile.contains('_requestDeletion'), isTrue);
+      expect(profile.contains('deleteEverything()'), isTrue,
+          reason: 'the button must delete, not file a ticket');
     });
   });
 

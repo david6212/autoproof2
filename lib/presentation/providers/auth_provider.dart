@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/user_model.dart';
+import '../../data/repositories/account_deletion_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 
 /// Single shared AuthRepository instance.
@@ -10,6 +11,12 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 /// Emits the FirebaseAuth user (or null) as auth state changes.
+/// Deleting an account, for real, from inside the app.
+final accountDeletionRepositoryProvider =
+    Provider<AccountDeletionRepository>((ref) {
+  return AccountDeletionRepository();
+});
+
 final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authRepositoryProvider).authStateChanges();
 });
