@@ -67,6 +67,22 @@ class ApiConstants {
   // live here, per model. Join on tozeret_cd + degem_cd + shnat_yitzur.
   static const modelSpecResourceId = '142afde2-6228-49f9-8a29-9b6c3a0cbe40';
 
+  /// The Ministry of Transport datasets consulted for ONE vehicle.
+  ///
+  /// The landing page and the buyer journey both quote this number out loud
+  /// ("חמישה מאגרים"), and a claims audit found the count adrift once already.
+  /// `dataset_count_test` reads this list and the copy, so they cannot drift
+  /// apart again without a test failing.
+  ///
+  /// The garages list is not here: it is a directory, not a fact about a car.
+  static const perVehicleDatasets = <String>[
+    vehicleResourceId,
+    vehicleHistoryResourceId,
+    openRecallResourceId,
+    offRoadResourceId,
+    modelSpecResourceId,
+  ];
+
   // Licensed garages & inspection institutes ("מוסכים ומכוני רישוי").
   static const garagesResourceId = 'bb68386a-a331-4bbc-b668-bba2766d517d';
 

@@ -802,8 +802,11 @@ class _ChecksPerformedNote extends ConsumerWidget {
     final checked = <String>[
       if (gov.answered(GovDataset.history)) 'שינוי מבנה',
       if (gov.answered(GovDataset.recalls)) 'קריאת שירות פתוחה',
-      'ירידה מהכביש',
+      if (gov.answered(GovDataset.offRoad)) 'ירידה מהכביש',
     ];
+
+    // Every dataset failed, so there is nothing to report having checked.
+    if (checked.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),

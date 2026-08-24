@@ -24,6 +24,15 @@ enum GovDataset {
 
   /// Open manufacturer recalls.
   recalls,
+
+  /// Off the road / finally cancelled (scrapped).
+  ///
+  /// It only became a member of this enum on 24/08/2026, and that is the
+  /// finding rather than a detail: the register was consulted **only** when
+  /// the active lookup failed, while the listing page said flatly that it had
+  /// been checked. For every car that is in the registry — which is every real
+  /// listing — the app was naming a check it had not run.
+  offRoad,
 }
 
 class GovData {

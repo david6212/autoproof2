@@ -26,10 +26,12 @@ class GovApiRepository {
     // active lookup fails, fall back to the off-road dataset (same fields).
     Map<String, dynamic> record;
     Map<String, dynamic>? offRoad;
+    var offRoadAnswered = false;
     try {
       record = await _service.fetchByPlate(digits);
     } on GovApiException {
       offRoad = await _service.fetchOffRoad(digits);
+      offRoadAnswered = true;
       if (offRoad == null) rethrow; // truly not found
       record = offRoad;
     }
@@ -59,6 +61,19 @@ class GovApiRepository {
         missing.add(which);
         return null;
       }
+    }
+
+    // Asked on every lookup, not only when the active registry misses.
+    //
+    // It used to run purely as a fallback, which meant that for a car that IS
+    // in the registry the off-road register was never consulted — while the
+    // listing page told the reader it had been. The check is cheap; the claim
+    // was not ours to make.
+    if (!offRoadAnswered) {
+      offRoad = await tryFetch<Map<String, dynamic>?>(
+        GovDataset.offRoad,
+        () => _service.fetchOffRoad(digits),
+      );
     }
 
     final history =

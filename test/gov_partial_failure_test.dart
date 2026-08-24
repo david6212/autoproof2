@@ -40,10 +40,13 @@ void main() {
 
       expect(data.answered(GovDataset.history), isFalse);
       expect(data.answered(GovDataset.recalls), isFalse);
-      // Only two datasets are recorded as answerable now: the disability-tag
-      // set was removed from the app entirely, because fetching health data
-      // and choosing not to show it is still collecting it.
-      expect(GovDataset.values.length, 2);
+      // Three datasets are recorded as answerable: history, recalls and
+      // off-road. The disability-tag set was removed from the app entirely
+      // (fetching health data and choosing not to show it is still collecting
+      // it), and off-road JOINED the list on 24/08/2026 — it used to be
+      // consulted only when the active lookup failed, while the listing page
+      // claimed it had been checked either way.
+      expect(GovDataset.values.length, 3);
     });
 
     test('does not take the base record down with it', () {
