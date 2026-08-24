@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/constants/app_config.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/auth_provider.dart';
@@ -52,9 +53,16 @@ class SellerHomeScreen extends ConsumerWidget {
                     fontWeight: FontWeight.bold,
                     color: context.colors.textPrimary)),
             const SizedBox(height: 8),
+            // Advice to do something the app cannot currently do is worse
+            // than no advice: the seller goes looking for the button.
+            if (AppConfig.storageEnabled)
+              const _Tip(
+                icon: Icons.photo_camera_outlined,
+                text: 'העלה לפחות 6 תמונות באור יום — מודעות עם תמונות נצפות פי 3.',
+              ),
             const _Tip(
-              icon: Icons.photo_camera_outlined,
-              text: 'העלה לפחות 6 תמונות באור יום — מודעות עם תמונות נצפות פי 3.',
+              icon: Icons.description_outlined,
+              text: 'כתוב למה אתה מוכר ומה טופל לאחרונה — קונים שואלים את זה ראשון.',
             ),
             const _Tip(
               icon: Icons.bolt_outlined,

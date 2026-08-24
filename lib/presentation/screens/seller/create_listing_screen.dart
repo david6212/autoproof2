@@ -409,34 +409,50 @@ class _StepPhotos extends ConsumerWidget {
                   style: TextStyle(color: context.colors.textMuted),
                 ),
                 const SizedBox(height: 16),
-                Expanded(
-                  child: GridView.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
+                // No picker while there is nowhere to put a photo. The tile
+                // was still here under the line saying uploads are
+                // unavailable: a seller picked six pictures, watched the
+                // thumbnails appear, published, and got a listing with none —
+                // `CreateListingController` swallows the upload failure on
+                // purpose so the listing itself survives.
+                //
+                // Removing the tile means `photos` can never fill, so the
+                // "המשך" gate below had to move with it. Requiring photos
+                // to continue, when the only way to add one does nothing, is
+                // a dead end in the middle of the app's main action.
+                if (AppConfig.storageEnabled)
+                  Expanded(
+                    child: GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                      ),
+                      itemCount: photos.length + 1,
+                      itemBuilder: (context, i) {
+                        if (i == photos.length) {
+                          return _AddTile(onTap: () => _pick(ref));
+                        }
+                        return _PhotoThumb(
+                          file: photos[i],
+                          isCover: i == 0,
+                          onRemove: () => notifier.removePhoto(i),
+                        );
+                      },
                     ),
-                    itemCount: photos.length + 1,
-                    itemBuilder: (context, i) {
-                      if (i == photos.length) {
-                        return _AddTile(onTap: () => _pick(ref));
-                      }
-                      return _PhotoThumb(
-                        file: photos[i],
-                        isCover: i == 0,
-                        onRemove: () => notifier.removePhoto(i),
-                      );
-                    },
-                  ),
-                ),
+                  )
+                else
+                  const Spacer(),
               ],
             ),
           ),
         ),
         _BottomBar(
           label: 'המשך',
-          onPressed: photos.isNotEmpty ? () => notifier.next() : null,
+          onPressed: !AppConfig.storageEnabled || photos.isNotEmpty
+              ? () => notifier.next()
+              : null,
         ),
       ],
     );

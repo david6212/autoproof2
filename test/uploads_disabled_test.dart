@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,6 +67,55 @@ void main() {
     expect(find.text('מה נעשה'), findsOneWidget);
     expect(find.text('קילומטראז\''), findsOneWidget);
     expect(find.text('שמור רשומה'), findsOneWidget);
+  });
+
+  group('the affordances that lead nowhere are gone, not just labelled', () {
+    // These read the source. The screens they describe need Firestore, a
+    // TabController and a route to build, and the point being pinned is
+    // structural: whether the control exists at all.
+
+    test('the passport has no documents tab while there is no bucket', () {
+      // It was a tab whose entire content was a sentence explaining that the
+      // feature does not work. No document has ever been uploaded, because
+      // none ever could be, so nothing is hidden by removing it.
+      final src = File(
+        'lib/presentation/screens/buyer/vehicle_detail_screen.dart',
+      ).readAsStringSync();
+
+      expect(src, contains('length: uploads ? 4 : 3'));
+      expect(src, contains("if (uploads) Tab(text: 'מסמכים')"));
+      expect(src, contains('if (uploads) _DocumentsTab(vehicle: vehicle)'));
+    });
+
+    test('publishing offers no photo picker, and does not demand a photo', () {
+      // The two halves have to move together. The tile was the only way to
+      // fill `photos`, and "המשך" was gated on `photos.isNotEmpty` — so
+      // removing the tile without moving the gate would dead-end the app's
+      // main action at step 3 of 4.
+      final src = File(
+        'lib/presentation/screens/seller/create_listing_screen.dart',
+      ).readAsStringSync();
+
+      // The picker only exists inside the flag's branch.
+      final tile = src.indexOf('_AddTile(onTap: () => _pick(ref))');
+      expect(tile, greaterThan(-1));
+      expect(src.lastIndexOf('if (AppConfig.storageEnabled)', tile),
+          greaterThan(-1),
+          reason: 'the grid holding the add tile is behind the flag');
+      expect(src, contains('!AppConfig.storageEnabled || photos.isNotEmpty'));
+    });
+
+    test('the seller is not told to upload photos', () {
+      // Advice to do something the app cannot do sends the seller looking for
+      // a button that is not there.
+      final src = File(
+        'lib/presentation/screens/seller/seller_home_screen.dart',
+      ).readAsStringSync();
+
+      final tip = src.indexOf('העלה לפחות 6 תמונות');
+      expect(tip, greaterThan(-1));
+      expect(src.substring(0, tip), contains('if (AppConfig.storageEnabled)'));
+    });
   });
 
   test('the message says what is unavailable without blaming the user', () {
