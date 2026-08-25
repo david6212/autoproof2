@@ -5,7 +5,8 @@
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-  <url><loc>https://bonnetcheck.web.app/legal/</loc><changefreq>yearly</changefreq></url>
+  <url><loc>https://bonnetcheck.web.app/install/</loc></url>
+<url><loc>https://bonnetcheck.web.app/legal/</loc><changefreq>yearly</changefreq></url>
   <url><loc>https://bonnetcheck.web.app/legal/terms/</loc><changefreq>yearly</changefreq></url>
   <url><loc>https://bonnetcheck.web.app/legal/privacy/</loc><changefreq>yearly</changefreq></url>
   <url><loc>https://bonnetcheck.web.app/legal/cookies/</loc><changefreq>yearly</changefreq></url>
