@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/place.dart';
@@ -19,8 +21,13 @@ final placeSearchProvider =
   // Keep a result alive briefly after the widget stops watching it. Without
   // this, every keystroke disposes the previous provider and a backspace pays
   // full price again.
+  //
+  // The timer is cancelled on dispose. A pending timer outliving its provider
+  // holds a closure over a dead element, and a widget test that touches this
+  // field fails on the dangling timer — which is how it was noticed.
   final link = ref.keepAlive();
-  Future<void>.delayed(const Duration(seconds: 30), link.close);
+  final timer = Timer(const Duration(seconds: 30), link.close);
+  ref.onDispose(timer.cancel);
 
   return ref.watch(placeRepositoryProvider).search(query);
 });
