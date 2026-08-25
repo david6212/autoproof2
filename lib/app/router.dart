@@ -9,6 +9,7 @@ import '../presentation/providers/analytics_provider.dart';
 // Auth
 import '../presentation/screens/auth/splash_screen.dart';
 import '../presentation/screens/auth/onboarding_screen.dart';
+import '../presentation/screens/places/add_place_screen.dart';
 import '../presentation/screens/places/place_detail_screen.dart';
 import '../presentation/screens/places/write_review_screen.dart';
 import '../presentation/screens/auth/login_screen.dart';
@@ -261,6 +262,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       // ---- Garages and car washes ----
       // Public to read: a buyer looking a garage up should not have to sign in
       // first. Writing a review does need an account, and the screen asks.
+      // Before `/place/:placeId`, or "add" would be read as a place id.
+      GoRoute(
+        path: '/place/add',
+        builder: (c, s) => AddPlaceScreen(
+          initialCategory: s.uri.queryParameters['category'],
+          initialName: s.uri.queryParameters['name'],
+        ),
+      ),
       GoRoute(
         path: '/place/:placeId',
         builder: (c, s) => PlaceDetailScreen(

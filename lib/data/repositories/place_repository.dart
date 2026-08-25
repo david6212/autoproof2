@@ -197,6 +197,64 @@ class PlaceRepository {
     await batch.commit();
   }
 
+  /// Everything in one category, newest first, hidden entries excluded.
+  Future<List<Place>> byCategory(PlaceCategory category, {int limit = 20}) async {
+    final snap = await _places
+        .where('category', isEqualTo: category.id)
+        .where('isHidden', isEqualTo: false)
+        .limit(limit)
+        .get();
+
+    final list = [
+      for (final d in snap.docs) Place.fromFirestore(d.data(), d.id),
+    ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
+
+  /// How many people have said this place does not exist, and whether the
+  /// reader is one of them.
+  Future<({int count, bool mine})> reportState(
+      String placeId, String? uid) async {
+    final snap = await _places.doc(placeId).collection('reports').get();
+    return (
+      count: snap.docs.length,
+      mine: uid != null && snap.docs.any((d) => d.id == uid),
+    );
+  }
+
+  /// Files a report, and hides the place once three people have filed one.
+  ///
+  /// **The hiding happens on the device that files the third report**, because
+  /// this plan has no server to do it. That is a real limitation and it shapes
+  /// the design: the threshold is deliberately low enough to be useful and
+  /// high enough that one person cannot act alone, and the report is keyed by
+  /// uid so nobody can reach three by themselves.
+  ///
+  /// Hiding is not deleting. The place, its reviews and its reports all stay;
+  /// it simply stops appearing. Nothing here can be undone by a client, which
+  /// is why three strangers are required to do it.
+  Future<void> reportDoesNotExist({
+    required String placeId,
+    required String uid,
+    String reason = 'not_exists',
+  }) async {
+    final placeRef = _places.doc(placeId);
+    final reportRef = placeRef.collection('reports').doc(uid);
+
+    await reportRef.set({
+      'reason': reason,
+      'reporterUid': uid,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // Counted after the write, so the reporter's own report is included and
+    // the third person to file is the one who acts on it.
+    final reports = await placeRef.collection('reports').get();
+    if (reports.docs.length >= 3) {
+      await placeRef.update({'isHidden': true});
+    }
+  }
+
   /// Adds a place somebody typed in. Returns its new id.
   ///
   /// [source] is not a parameter. Everything written here is community-added,

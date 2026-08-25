@@ -105,3 +105,43 @@ class PlaceReviewActions {
 
 final placeReviewActionsProvider =
     Provider<PlaceReviewActions>(PlaceReviewActions.new);
+
+/// Several places at once, for a screen that already knows which ids it needs.
+///
+/// Keyed by the joined ids so two screens asking for the same set share one
+/// result rather than each paying for it.
+final placesByIdsProvider =
+    FutureProvider.autoDispose.family<List<Place>, List<String>>((ref, ids) {
+  return ref.watch(placeRepositoryProvider).byIds(ids);
+});
+
+/// How many people have reported a place as gone, and whether you are one.
+final placeReportStateProvider = FutureProvider.autoDispose
+    .family<({int count, bool mine}), String>((ref, placeId) {
+  final uid = ref.watch(authStateProvider).valueOrNull?.uid;
+  return ref.watch(placeRepositoryProvider).reportState(placeId, uid);
+});
+
+/// Files "this place does not exist", and hides it once three people have.
+final reportPlaceProvider =
+    Provider<Future<void> Function(String placeId)>((ref) {
+  return (placeId) async {
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (uid == null) return;
+    await ref
+        .read(placeRepositoryProvider)
+        .reportDoesNotExist(placeId: placeId, uid: uid);
+    ref.invalidate(placeReportStateProvider(placeId));
+    ref.invalidate(placeByIdProvider(placeId));
+  };
+});
+
+/// Every car wash in the directory, newest first.
+///
+/// Not filtered by distance: this app asks for location on two map screens and
+/// nowhere else, and taking the permission to sort a row of cards would be
+/// taking it for a garnish. The list is short by definition — it holds only
+/// what people have added.
+final washesProvider = FutureProvider.autoDispose<List<Place>>((ref) {
+  return ref.watch(placeRepositoryProvider).byCategory(PlaceCategory.carWash);
+});

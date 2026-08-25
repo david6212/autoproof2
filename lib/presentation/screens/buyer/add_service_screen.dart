@@ -103,6 +103,19 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
     });
   }
 
+  /// Opens the add-a-place screen with what was typed, and links the record to
+  /// whatever comes back.
+  Future<void> _addPlace(String typedName) async {
+    final id = await context.push<String>(
+        '/place/add?category=garage_mechanical&name=${Uri.encodeComponent(typedName)}');
+    if (id == null || !mounted) return;
+    setState(() {
+      _placeId = id;
+      // The name is left exactly as the person typed it into the new place, so
+      // the field and the directory entry cannot disagree.
+    });
+  }
+
   /// Offers to rate the garage, once, right after the record it belongs to.
   ///
   /// **Only when the owner picked the garage from the directory** — a typed
@@ -319,6 +332,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
             GarageNameField(
               controller: _garage,
               onPlaceIdSelected: (id) => _placeId = id,
+              onAddPlace: _addPlace,
             ),
             const SizedBox(height: AppSpace.lg),
             TextField(

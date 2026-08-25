@@ -125,6 +125,7 @@ class _Body extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpace.lg),
         const _Disclaimer(),
+        _ReportRow(place: place),
       ],
     );
   }
@@ -260,6 +261,91 @@ class _Actions extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// "This place does not exist."
+///
+/// Only offered for community entries — there is nothing useful a reader can
+/// tell us about an official register, and a report button on one would invite
+/// people to use it as a complaint box about the business.
+///
+/// **Three reports hide the place, and the third reporter's device is what
+/// hides it**, because this plan has no server to do it. The count is shown
+/// before the tap and the report cannot be withdrawn, so nobody files one
+/// casually.
+class _ReportRow extends ConsumerWidget {
+  const _ReportRow({required this.place});
+
+  final Place place;
+
+  Future<void> _report(BuildContext context, WidgetRef ref) async {
+    if (ref.read(authStateProvider).valueOrNull == null) {
+      showLoginRequired(context, action: 'לדווח על מקום');
+      return;
+    }
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('המקום הזה לא קיים?'),
+        content: const Text(
+          'אחרי שלושה דיווחים המקום יפסיק להופיע ברשימות. '
+          'אי אפשר לבטל דיווח.',
+          style: AppText.body,
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(c).pop(false),
+              child: const Text('ביטול')),
+          TextButton(
+              onPressed: () => Navigator.of(c).pop(true),
+              child: const Text('דווח')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    await ref.read(reportPlaceProvider)(place.id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('תודה. הדיווח נרשם.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!place.isCommunity) return const SizedBox.shrink();
+    final state = ref.watch(placeReportStateProvider(place.id)).valueOrNull;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpace.sm),
+      child: Row(
+        children: [
+          if (state != null && state.count > 0)
+            Expanded(
+              child: Text(
+                state.count == 1
+                    ? 'אדם אחד דיווח שהמקום הזה לא קיים'
+                    : '${state.count} אנשים דיווחו שהמקום הזה לא קיים',
+                style: context.text.micro,
+              ),
+            )
+          else
+            const Spacer(),
+          if (state?.mine == true)
+            Text('דיווחת', style: context.text.micro)
+          else
+            TextButton.icon(
+              icon: const Icon(Icons.flag_outlined, size: 16),
+              label: const Text('המקום לא קיים'),
+              style: TextButton.styleFrom(
+                  foregroundColor: context.colors.textMuted),
+              onPressed: () => _report(context, ref),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -435,13 +435,28 @@ service cloud.firestore {
       }
     }
 
-    // "This place does not exist." Write-only, like the other report channels:
-    // a reporter must not be able to read who else reported, or withdraw a
-    // report once the count has acted on it.
-    match /place_reports/{reportId} {
+    // ---- "This place does not exist" ----
+    //
+    // **The spec asked for a write-only top-level `place_reports`, and that
+    // cannot work.** Three reports hide a place, and with no Cloud Functions
+    // the counting happens on the device that files the third one — which
+    // means it has to be able to READ the reports to count them. A collection
+    // that is `allow read: if false` cannot be counted by the client that is
+    // told to count it.
+    //
+    // So the reports live under the place, keyed by reporter, and are
+    // readable. What that reveals is which places were reported and by how
+    // many uids — not names, not reasons about people. Keying by uid also
+    // does the job a top-level collection could not: one report per person,
+    // enforced by the database, so nobody hides a rival by filing three.
+    match /places/{placeId}/reports/{reporterUid} {
+      allow read: if isSignedIn();
       allow create: if isSignedIn()
-                    && request.resource.data.reporterUid == request.auth.uid;
-      allow read, update, delete: if false;
+                    && request.auth.uid == reporterUid
+                    && request.resource.data.reason is string;
+      // A report stands. Withdrawing one after it has hidden a place would
+      // leave the place hidden with nothing on record explaining why.
+      allow update, delete: if false;
     }
 
     // ---- Retired collections ----

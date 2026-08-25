@@ -20,6 +20,8 @@ import '../../widgets/documented_progress_meter.dart';
 import '../../widgets/error_retry.dart';
 import '../../widgets/document_list.dart';
 import '../../widgets/expense_summary.dart';
+import '../../widgets/garage/my_garages_section.dart';
+import '../../widgets/garage/nearby_washes_section.dart';
 import 'redact_document_screen.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../widgets/service_timeline.dart';
@@ -718,6 +720,15 @@ class _Overview extends ConsumerWidget {
                   .deleteReminder(vehicle.id, r.id),
             ),
         const SizedBox(height: AppSpace.xl),
+        // The garages this car has been to, then the washes anybody can add.
+        // Two separate groups with their own headings, never mixed: "somewhere
+        // you have been" and "somewhere that exists" are different claims.
+        MyGaragesSection(
+          vehicleId: vehicle.id,
+          services: ref.watch(vehicleServicesProvider(vehicle.id)).valueOrNull ??
+              const [],
+        ),
+        const NearbyWashesSection(),
         Text(
           'הנתונים נמשכו ממרשם כלי הרכב של משרד התחבורה בעת הוספת הרכב. '
           'BonnetCheck אינה מאמתת אותם ואינה מעידה על מצב הרכב.',
