@@ -119,19 +119,35 @@ class _ConsentSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('מדידת שימוש', style: AppText.h3),
+            // The wording, rewritten 25/08. It said the true thing in the
+            // voice of a legal notice — "זהו מזהה מתמשך שנשמר במכשיר
+            // ונשלח ל-Firebase Analytics" — as the second sentence a newcomer
+            // reads. The facts are unchanged and none was dropped; what moved
+            // is which of them opens.
+            //
+            // What could NOT change, whatever it costs in warmth: two buttons
+            // of equal weight, an active choice, and no "carrying on means you
+            // agreed". Implied consent is not consent (CJEU, Planet49), a
+            // single-button banner is what CNIL fined Google €150M for, and
+            // Apple rejects under §5.1.1(ii). A friendlier sheet that cannot
+            // ship is not friendlier.
+            const Text('עוזרים לנו לשפר?', style: AppText.h3),
             const SizedBox(height: AppSpace.sm),
             const Text(
-              'אנחנו רוצים לדעת אילו מסכים נפתחים וכמה חיפושים רצים, כדי לדעת '
-              'מה לשפר. זהו מזהה מתמשך שנשמר במכשיר ונשלח ל-Firebase Analytics '
-              'של Google.',
+              'אם תרשו, נדע אילו מסכים נפתחים וכמה חיפושים רצים — ולפי זה '
+              'נחליט מה לשפר. מספר הרישוי לעולם לא נשלח.',
               style: AppText.bodySm,
             ),
             const SizedBox(height: AppSpace.sm),
             Text(
-              'מספר הרישוי אף פעם לא נשלח. אפשר לשנות את התשובה בכל רגע '
-              'בפרופיל, והאפליקציה עובדת אותו דבר בשתי האפשרויות.',
+              'האפליקציה עובדת בדיוק אותו דבר בשתי האפשרויות, ואפשר '
+              'לשנות את התשובה בכל רגע בפרופיל.',
               style: context.text.bodySmMuted,
+            ),
+            const SizedBox(height: AppSpace.xs),
+            Text(
+              'בפועל: מזהה מתמשך שנשמר במכשיר ונשלח ל-Firebase Analytics של Google.',
+              style: context.text.micro,
             ),
             const SizedBox(height: AppSpace.lg),
             // Two buttons of the same size, in the same row, in the same
@@ -146,7 +162,7 @@ class _ConsentSheet extends ConsumerWidget {
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
                     ),
-                    child: const Text('בלי מדידה'),
+                    child: const Text('לא, תודה'),
                   ),
                 ),
                 const SizedBox(width: AppSpace.md),
@@ -156,7 +172,7 @@ class _ConsentSheet extends ConsumerWidget {
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
                     ),
-                    child: const Text('אפשר למדוד'),
+                    child: const Text('כן, בשמחה'),
                   ),
                 ),
               ],
