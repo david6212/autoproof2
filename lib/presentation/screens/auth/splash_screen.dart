@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../providers/onboarding_seen_provider.dart';
 import '../../widgets/brand_logo.dart';
 
 /// Animated BonnetCheck splash.
@@ -81,10 +82,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     });
   }
 
-  void _goNext() {
+  Future<void> _goNext() async {
     if (!mounted) return;
     final user = ref.read(authRepositoryProvider).currentUser;
-    context.go(user != null ? '/home' : '/onboarding');
+    if (user != null) {
+      context.go('/home');
+      return;
+    }
+
+    // A guest who has already seen the slides goes straight in. Before this,
+    // the three screens and then the login wall ran on every launch for anyone
+    // without an account — and reading the registry needs no account, so that
+    // was most of the product behind a pitch the person had already read.
+    final seen = await OnboardingSeen.get();
+    if (!mounted) return;
+    context.go(seen ? '/home' : '/onboarding');
   }
 
   @override

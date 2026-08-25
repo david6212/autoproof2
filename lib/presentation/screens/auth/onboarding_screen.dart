@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../providers/onboarding_seen_provider.dart';
 import '../../widgets/onboarding_art.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../../core/theme/app_text.dart';
@@ -35,6 +36,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _next() {
     if (_isLast) {
+      OnboardingSeen.mark();
       context.go('/login');
     } else {
       _controller.nextPage(
@@ -59,7 +61,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton(
-                onPressed: () => context.go('/login'),
+                // Skipping goes to the marketplace, not to the login wall.
+                // Someone who taps "דלג" has said they want to look around,
+                // and answering that with a sign-in form is answering a
+                // different question.
+                onPressed: () {
+                  OnboardingSeen.mark();
+                  context.go('/home');
+                },
                 child: Text(
                   AppStrings.skip,
                   style: TextStyle(color: context.colors.textMuted),
