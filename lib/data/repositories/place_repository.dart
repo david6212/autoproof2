@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/place.dart';
+import '../models/place_review.dart';
 
 /// Garages and car washes: the directory the app did not have.
 ///
@@ -89,6 +90,111 @@ class PlaceRepository {
       for (final d in docs)
         if (d.data() case final data?) Place.fromFirestore(data, d.id),
     ];
+  }
+
+  /// Whether this person has already written a review here.
+  ///
+  /// Asked before offering to rate: a prompt that appears again after somebody
+  /// has answered it is not a prompt, it is nagging.
+  Future<bool> hasReviewed(String placeId, String uid) async {
+    final snap = await _places.doc(placeId).collection('reviews').doc(uid).get();
+    return snap.exists;
+  }
+
+  /// The reviews on a place, newest first.
+  Stream<List<PlaceReview>> watchReviews(String placeId) =>
+      _places.doc(placeId).collection('reviews').snapshots().map((snap) {
+        final list = [
+          for (final d in snap.docs) PlaceReview.fromFirestore(d.data(), d.id),
+        ];
+        // Sorted here rather than in the query so no composite index is
+        // needed, and so the order is identical for everyone reading it.
+        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return list;
+      });
+
+  Future<PlaceReview?> myReview(String placeId, String uid) async {
+    final snap =
+        await _places.doc(placeId).collection('reviews').doc(uid).get();
+    final data = snap.data();
+    return data == null ? null : PlaceReview.fromFirestore(data, snap.id);
+  }
+
+  /// Writes a review and moves the place's aggregates in the same batch.
+  ///
+  /// **Both writes or neither.** A review that landed without its counters
+  /// would sit under an average that does not include it, and the two would
+  /// never reconcile — there is no server-side job on this plan to notice.
+  ///
+  /// The delta is computed from the review being replaced, not from a count of
+  /// documents: replacing a 5 with a 2 must move the sum by -3 and leave the
+  /// count alone, and only the old rating knows that.
+  Future<void> saveReview({
+    required String placeId,
+    required PlaceReview review,
+  }) async {
+    final placeRef = _places.doc(placeId);
+    final reviewRef = placeRef.collection('reviews').doc(review.uid);
+
+    final existing = await reviewRef.get();
+    final previous = existing.data();
+    final isNew = previous == null;
+    final oldRating = isNew ? 0 : (previous['rating'] as num?)?.toInt() ?? 0;
+
+    final placeSnap = await placeRef.get();
+    final placeData = placeSnap.data();
+    if (placeData == null) throw StateError('המקום לא נמצא');
+    final oldCount = (placeData['ratingCount'] as num?)?.toInt() ?? 0;
+    final oldSum = (placeData['ratingSum'] as num?)?.toInt() ?? 0;
+
+    final count = oldCount + (isNew ? 1 : 0);
+    final sum = oldSum + review.rating - oldRating;
+
+    final batch = _db.batch();
+    batch.set(
+      reviewRef,
+      {
+        ...review.toFirestore(),
+        // The original stands; only an edit carries a second stamp.
+        if (!isNew) 'createdAt': previous['createdAt'],
+        if (!isNew) 'editedAt': DateTime.now(),
+      },
+    );
+    batch.update(placeRef, {
+      'ratingCount': count,
+      'ratingSum': sum,
+      'ratingAvg': count == 0 ? 0 : sum / count,
+      'lastReviewAt': FieldValue.serverTimestamp(),
+    });
+    await batch.commit();
+  }
+
+  /// Removes a review and takes its rating back out of the aggregates.
+  Future<void> deleteReview({
+    required String placeId,
+    required String uid,
+  }) async {
+    final placeRef = _places.doc(placeId);
+    final reviewRef = placeRef.collection('reviews').doc(uid);
+
+    final existing = await reviewRef.get();
+    final data = existing.data();
+    if (data == null) return;
+    final rating = (data['rating'] as num?)?.toInt() ?? 0;
+
+    final placeSnap = await placeRef.get();
+    final placeData = placeSnap.data() ?? const <String, dynamic>{};
+    final count = ((placeData['ratingCount'] as num?)?.toInt() ?? 1) - 1;
+    final sum = ((placeData['ratingSum'] as num?)?.toInt() ?? rating) - rating;
+
+    final batch = _db.batch();
+    batch.delete(reviewRef);
+    batch.update(placeRef, {
+      'ratingCount': count < 0 ? 0 : count,
+      'ratingSum': sum < 0 ? 0 : sum,
+      'ratingAvg': count <= 0 ? 0 : sum / count,
+    });
+    await batch.commit();
   }
 
   /// Adds a place somebody typed in. Returns its new id.

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_config.dart';
@@ -10,6 +11,11 @@ import '../../../core/theme/app_text.dart';
 import '../../../data/models/service_record.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/app_card.dart';
+
+import '../../../data/models/place.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/place_provider.dart';
+import '../../widgets/garage/garage_name_field.dart';
 import '../../widgets/primary_button_widget.dart';
 
 /// Adds one record to a vehicle's permanent history.
@@ -48,6 +54,10 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
   final _notes = TextEditingController();
   DateTime _date = DateTime.now();
 
+  /// Set when the owner picked a garage from the directory rather than typing
+  /// a name. Cleared by [GarageNameField] the moment the text stops matching.
+  String? _placeId;
+
   Uint8List? _receipt;
   String _receiptType = 'image/jpeg';
   String? _error;
@@ -66,6 +76,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
     _km.text = '${e.km}';
     if (e.cost > 0) _cost.text = '${e.cost}';
     _garage.text = e.garageName ?? '';
+    _placeId = e.placeId;
     _notes.text = e.notes ?? '';
     _date = e.date;
   }
@@ -90,6 +101,64 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
       _receipt = bytes;
       _receiptType = 'image/jpeg';
     });
+  }
+
+  /// Offers to rate the garage, once, right after the record it belongs to.
+  ///
+  /// **Only when the owner picked the garage from the directory** — a typed
+  /// name has no page to rate. And only when they have not rated it before: a
+  /// prompt that returns after being answered is not a prompt.
+  ///
+  /// "אולי אחר כך" simply closes. The spec asked for a reminder record, and
+  /// there is a reminders list in this app — but it holds dates and mileages
+  /// that come from the car, and a nudge to review a business sitting between
+  /// "טסט" and "ביטוח" would be noise in a list people rely on. The
+  /// invitation stays permanently available instead: every garage the owner has
+  /// used carries a "דרג" action on its own page.
+  Future<void> _maybeOfferToRate() async {
+    final placeId = _placeId;
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (placeId == null || uid == null || _isEdit) return;
+
+    final repo = ref.read(placeRepositoryProvider);
+    Place? place;
+    try {
+      if (await repo.hasReviewed(placeId, uid)) return;
+      place = await repo.byId(placeId);
+    } catch (_) {
+      // The record is saved. A failed lookup costs a prompt, nothing more.
+      return;
+    }
+    if (place == null || !mounted) return;
+
+    final rate = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('הטיפול נשמר'),
+        content: Text(
+          'רוצה לדרג את ${place!.name}? דירוג שלך עוזר למי שמחפש '
+          'מוסך אחריך.',
+          style: AppText.body,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(c).pop(false),
+            child: const Text('אולי אחר כך'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(c).pop(true),
+            child: const Text('דרג עכשיו'),
+          ),
+        ],
+      ),
+    );
+
+    if (rate == true && mounted) {
+      // Carries the vehicle and this record, so the review can name what was
+      // done without the person typing it again.
+      context.push('/place/$placeId/review'
+          '?vehicleId=${widget.vehicleId}');
+    }
   }
 
   Future<void> _pickDate() async {
@@ -129,6 +198,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
             km: km,
             cost: int.tryParse(_cost.text.replaceAll(',', '')) ?? 0,
             garageName: _garage.text,
+            placeId: _placeId,
             notes: _notes.text,
           )
         : await controller.submit(
@@ -139,6 +209,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
             km: km,
             cost: int.tryParse(_cost.text.replaceAll(',', '')) ?? 0,
             garageName: _garage.text,
+            placeId: _placeId,
             notes: _notes.text,
             receiptBytes: _receipt,
             receiptContentType: _receiptType,
@@ -147,7 +218,8 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
 
     if (!mounted) return;
     if (ok) {
-      Navigator.of(context).pop(true);
+      await _maybeOfferToRate();
+      if (mounted) Navigator.of(context).pop(true);
       return;
     }
 
@@ -241,11 +313,12 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
               decoration: const InputDecoration(labelText: 'עלות (₪)'),
             ),
             const SizedBox(height: AppSpace.lg),
-            TextField(
+            // Typing a name freehand stays completely valid — most people
+            // will, and a record without a link is a complete record. Picking
+            // from the list is what turns the name into a page.
+            GarageNameField(
               controller: _garage,
-              decoration: const InputDecoration(
-                labelText: 'שם המוסך (לא חובה)',
-              ),
+              onPlaceIdSelected: (id) => _placeId = id,
             ),
             const SizedBox(height: AppSpace.lg),
             TextField(

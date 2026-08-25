@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_dimens.dart';
 import '../../core/utils/date_formatter.dart';
@@ -113,10 +114,50 @@ class _ServiceRow extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpace.sm),
-            Text(
-              '${_dateOf(record.date)} · ${_thousands(record.km)} ק"מ'
-              '${record.garageName != null ? ' · ${record.garageName}' : ''}',
-              style: context.text.caption,
+            // The garage's name is a link when the owner picked it from the
+            // directory, and plain text when they typed it. Most records will
+            // be plain text, and that is fine — a record without a garage page
+            // is a complete record.
+            Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    '${_dateOf(record.date)} · ${_thousands(record.km)} ק"מ'
+                    '${record.placeId == null && record.garageName != null ? ' · ${record.garageName}' : ''}',
+                    style: context.text.caption,
+                  ),
+                ),
+                if (record.placeId != null && record.garageName != null)
+                  Flexible(
+                    child: InkWell(
+                      onTap: () => context.push('/place/${record.placeId}'),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('· ', style: context.text.caption),
+                            Flexible(
+                              child: Text(
+                                record.garageName!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.text.caption.copyWith(
+                                  color: colors.tealText2,
+                                  decoration: TextDecoration.underline,
+                                  decorationStyle: TextDecorationStyle.dotted,
+                                  decorationColor: colors.tealText2,
+                                ),
+                              ),
+                            ),
+                            Icon(Icons.chevron_left,
+                                size: 14, color: colors.tealText2),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             if (record.notes != null && record.notes!.isNotEmpty) ...[
               const SizedBox(height: AppSpace.sm),

@@ -282,6 +282,8 @@ class AddServiceController extends AutoDisposeAsyncNotifier<void> {
     required int km,
     required int cost,
     String? garageName,
+    /// The directory entry the owner picked, when they picked one.
+    String? placeId,
     String? notes,
     Uint8List? receiptBytes,
     String receiptContentType = 'image/jpeg',
@@ -322,6 +324,7 @@ class AddServiceController extends AutoDisposeAsyncNotifier<void> {
           km: km,
           cost: cost,
           garageName: (garageName ?? '').trim().isEmpty ? null : garageName!.trim(),
+          placeId: placeId,
           notes: (notes ?? '').trim().isEmpty ? null : notes!.trim(),
           receiptUrl: receiptUrl,
           addedByOwnerId: uid,
@@ -351,6 +354,7 @@ class AddServiceController extends AutoDisposeAsyncNotifier<void> {
     required int km,
     required int cost,
     String? garageName,
+    String? placeId,
     String? notes,
   }) async {
     final uid = ref.read(authStateProvider).valueOrNull?.uid;
@@ -368,6 +372,7 @@ class AddServiceController extends AutoDisposeAsyncNotifier<void> {
               cost: cost,
               garageName:
                   (garageName ?? '').trim().isEmpty ? null : garageName!.trim(),
+              placeId: placeId,
               notes: (notes ?? '').trim().isEmpty ? null : notes!.trim(),
               at: DateTime.now(),
             ),

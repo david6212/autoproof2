@@ -9,6 +9,8 @@ import '../presentation/providers/analytics_provider.dart';
 // Auth
 import '../presentation/screens/auth/splash_screen.dart';
 import '../presentation/screens/auth/onboarding_screen.dart';
+import '../presentation/screens/places/place_detail_screen.dart';
+import '../presentation/screens/places/write_review_screen.dart';
 import '../presentation/screens/auth/login_screen.dart';
 // Verify
 import '../presentation/screens/verify/verify_phone_screen.dart';
@@ -255,6 +257,25 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Outside the tab shell: the comparison is a full-width table and the
       // nav bar would eat the room it needs.
       GoRoute(path: '/compare', builder: (c, s) => const CompareScreen()),
+
+      // ---- Garages and car washes ----
+      // Public to read: a buyer looking a garage up should not have to sign in
+      // first. Writing a review does need an account, and the screen asks.
+      GoRoute(
+        path: '/place/:placeId',
+        builder: (c, s) => PlaceDetailScreen(
+          placeId: s.pathParameters['placeId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/place/:placeId/review',
+        builder: (c, s) => WriteReviewScreen(
+          placeId: s.pathParameters['placeId']!,
+          vehicleId: s.uri.queryParameters['vehicleId'],
+          serviceRecordIds:
+              s.uri.queryParameters['serviceIds']?.split(',') ?? const [],
+        ),
+      ),
 
       // Seller shell
       ShellRoute(

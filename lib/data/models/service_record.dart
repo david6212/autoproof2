@@ -55,6 +55,20 @@ class ServiceRecord {
   /// Set when this record corrects an earlier one.
   final String? correctsServiceId;
 
+  /// The garage in the places directory, when the owner picked one from the
+  /// suggestions rather than typing a name freehand.
+  ///
+  /// Null is the ordinary case and always will be: most people type. A record
+  /// without it is a complete record — this only decides whether the garage's
+  /// name is a link to its page.
+  ///
+  /// **The garage's rating is deliberately NOT stored here.** Denormalising it
+  /// at save time would freeze a number that moves: a service logged in 2024
+  /// would show that garage's 2024 rating forever. The timeline reads the
+  /// places it needs in one batch instead — a handful of documents per screen,
+  /// always current.
+  final String? placeId;
+
   /// When the owner last changed this record, or null if they never have.
   ///
   /// Records became editable on David's instruction, because typos happen and
@@ -78,6 +92,7 @@ class ServiceRecord {
     required this.createdAt,
     this.correctsServiceId,
     this.editedAt,
+    this.placeId,
   });
 
   bool get isCorrection => correctsServiceId != null;
@@ -94,6 +109,10 @@ class ServiceRecord {
     required int km,
     required int cost,
     String? garageName,
+    /// Passed rather than carried over: an edit that changes the garage name
+    /// has to be able to drop the link, or the record would point at the page
+    /// of a garage it no longer names.
+    String? placeId,
     String? notes,
     required DateTime at,
   }) =>
@@ -105,6 +124,7 @@ class ServiceRecord {
         km: km,
         cost: cost,
         garageName: garageName,
+        placeId: placeId,
         notes: notes,
         receiptUrl: receiptUrl,
         addedByOwnerId: addedByOwnerId,
@@ -135,6 +155,7 @@ class ServiceRecord {
       createdAt: (data['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
       correctsServiceId: data['correctsServiceId'],
       editedAt: (data['editedAt'] as dynamic)?.toDate(),
+      placeId: data['placeId'],
     );
   }
 
@@ -154,5 +175,6 @@ class ServiceRecord {
         // make "was this changed?" a question about null rather than about
         // presence, and the security rule reads the same field.
         if (editedAt != null) 'editedAt': editedAt,
+        if (placeId != null) 'placeId': placeId,
       };
 }
