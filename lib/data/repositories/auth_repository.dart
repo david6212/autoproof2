@@ -224,6 +224,25 @@ class AuthRepository {
       case 'quota-exceeded':
         return 'מכסת ההודעות שלנו נגמרה להיום. זו תקלה שלנו, לא במספר שלך.';
 
+      // The one that was actually happening, unnamed until 25/08.
+      //
+      // Phone verification had been failing since 13/08 and the cause was
+      // recorded as unknown, waiting for a user to report the code this
+      // message prints in brackets. It was found instead by asking the
+      // Identity Toolkit REST API directly, with the web key, for a number
+      // that could not receive anything:
+      //
+      //   accounts:sendVerificationCode -> "BILLING_NOT_ENABLED"
+      //
+      // Firebase phone auth requires the Blaze plan. Not the keystore, not the
+      // SHA-1 — both of those were checked and re-checked for weeks. The same
+      // probe showed Israel IS an allowed SMS region, so nothing else is
+      // misconfigured.
+      case 'billing-not-enabled':
+      case 'BILLING_NOT_ENABLED':
+        return 'אימות ב-SMS אינו פעיל כרגע — תקלה בהגדרות שלנו, לא '
+            'במספר שלך. אפשר להתחבר עם חשבון Google במקום.';
+
       default:
         return 'האימות נכשל ($code). אם זה חוזר, שלחו לנו צילום מסך.';
     }

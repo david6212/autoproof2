@@ -48,6 +48,22 @@ void main() {
     });
   });
 
+  test('the billing failure blames us, and offers the route that works', () {
+    // Phone verification failed for twelve days with the cause recorded as
+    // unknown. It is BILLING_NOT_ENABLED: Firebase phone auth needs the Blaze
+    // plan. Until that is switched on the message must not leave the reader
+    // checking their own number, and must point at Google sign-in, which
+    // works today.
+    for (final code in ['billing-not-enabled', 'BILLING_NOT_ENABLED']) {
+      final msg = AuthRepository.messageFor(code);
+      expect(msg, contains('לא '));
+      expect(msg, contains('במספר שלך'));
+      expect(msg, contains('Google'));
+      expect(msg.contains('נסה שוב'), isFalse,
+          reason: 'retrying cannot help until billing is enabled');
+    }
+  });
+
   test('anything unrecognised carries its code, so a screenshot names it', () {
     expect(AuthRepository.messageFor('some-new-code-2027'),
         contains('some-new-code-2027'));
