@@ -3,12 +3,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../widgets/onboarding_art.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../../core/theme/app_text.dart';
 
 class _Slide {
-  const _Slide(this.icon, this.title, this.body);
-  final IconData icon;
+  const _Slide(this.title, this.body);
   final String title;
   final String body;
 }
@@ -24,13 +24,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _controller = PageController();
   int _page = 0;
 
+  // The picture for each is [OnboardingArt], drawn from the slide's index.
   static const _slides = [
-    _Slide(Icons.manage_search, AppStrings.onboard1Title,
-        AppStrings.onboard1Body),
-    _Slide(Icons.fact_check_outlined, AppStrings.onboard2Title,
-        AppStrings.onboard2Body),
-    _Slide(Icons.folder_shared_outlined, AppStrings.onboard3Title,
-        AppStrings.onboard3Body),
+    _Slide(AppStrings.onboard1Title, AppStrings.onboard1Body),
+    _Slide(AppStrings.onboard2Title, AppStrings.onboard2Body),
+    _Slide(AppStrings.onboard3Title, AppStrings.onboard3Body),
   ];
 
   bool get _isLast => _page == _slides.length - 1;
@@ -80,17 +78,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: context.colors.tealLight,
-                            borderRadius: BorderRadius.circular(32),
-                          ),
-                          child: Icon(s.icon,
-                              size: 60, color: context.colors.teal),
-                        ),
-                        const SizedBox(height: 32),
+                        // Was a single Material glyph in a rounded square —
+                        // the same shape three times, telling the reader
+                        // nothing the heading had not already said.
+                        OnboardingArt(index: i),
+                        const SizedBox(height: 28),
                         Text(
                           s.title,
                           textAlign: TextAlign.center,

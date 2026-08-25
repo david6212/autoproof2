@@ -41,7 +41,9 @@ void main() {
     // append-only service log.
     expect(AppStrings.onboard1Body, contains('ריקולים'));
     expect(AppStrings.onboard2Body, contains('בטסט האחרון'));
-    expect(AppStrings.onboard3Body, contains('לצמיתות'));
+    // Was 'לצמיתות' until David asked for the permanence clause to come out.
+    // The screen now names the three fields a record actually carries.
+    expect(AppStrings.onboard3Body, contains('המוסך'));
   });
 
   test('no slide oversells with a superlative', () {

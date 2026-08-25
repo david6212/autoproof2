@@ -37,9 +37,14 @@ class AppStrings {
       'אם המודעה מציינת פחות ק"מ ממה שנרשם בטסט האחרון, '
       'תראו את זה ראשון — עם המספר והתאריך.';
   static const onboard3Title = 'לרכב שלכם יש תיק';
+  // The permanence clause came out on David's instruction: he wants room to
+  // fix a mistake, and a promise about how the storage behaves is not what
+  // sells this screen anyway. What the records ARE is unchanged — the security
+  // rules still refuse update and delete, and a mistake is fixed by adding a
+  // correction that leaves the original visible.
   static const onboard3Body =
-      'כל טיפול שתתעדו נשמר לצמיתות ואי אפשר לערוך אותו. ביום '
-      'שתמכרו, זה מה שיש לכם להראות.';
+      'כל טיפול שתתעדו נשמר עם התאריך, הקילומטראז\' והמוסך. '
+      'ביום שתמכרו, זה מה שיש לכם להראות.';
   static const continueBtn = 'המשך';
   static const skip = 'דלג';
 
