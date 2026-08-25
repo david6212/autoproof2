@@ -223,9 +223,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   );
                 }),
                 const SizedBox(height: 12),
-                TextButton(
+                // The arrow used to be the character ←. Heebo does not carry
+                // it, and Flutter's web engine answers a missing glyph by
+                // downloading a Noto fallback from fonts.gstatic.com at
+                // runtime — which is the exact request HALT-5 was closed by
+                // bundling the fonts to stop. A Material icon is drawn from
+                // the bundled icon font.
+                TextButton.icon(
                   onPressed: () => context.go('/home'),
-                  child: const Text('גלוש בלי להתחבר ←'),
+                  icon: const Icon(Icons.arrow_back, size: 18),
+                  label: const Text('גלוש בלי להתחבר'),
                 ),
                 // Only shown once the documents actually exist — a consent
                 // line pointing at nothing is worse than no line.
