@@ -13,15 +13,33 @@ class AppStrings {
   static const siteUrl = 'https://bonnetcheck.web.app';
 
   // Onboarding
-  static const onboard1Title = 'תדעו כיצד המוכר סיווג את עצמו';
+  // ---- The three slides, rewritten 25/08 ----
+  //
+  // They opened on how the seller had classified themselves and closed on
+  // "chat with the seller", with the registry lookup — the only thing here
+  // that no other Israeli app gives away — squeezed into four words between
+  // them.
+  //
+  // The first slide also carried a claim that had just been removed from the
+  // car page as untrue: "מוצלב מול מרשם הרכב". `sellerType` is a radio
+  // button on the publish form, nothing cross-checks it, and the crowd
+  // reports that partly backed it were deleted the same day.
+  //
+  // The order is the actual ladder now: look up any car, see what does not
+  // add up, keep a record of your own. Chat lost its slide — every
+  // classifieds app has one, and it was never the reason to install this.
+  static const onboard1Title = 'כל רכב בישראל, מול משרד התחבורה';
   static const onboard1Body =
-      'כל מוכר מסווג את עצמו ומוצלב מול מרשם הרכב — פרטי, סוכן או סוחר';
-  static const onboard2Title = 'נתונים רשמיים בלחיצה';
-  static const onboard2Body = 'ק"מ, טסט, ריקול — ממשרד התחבורה';
-  static const onboard3Title = 'דבר ישירות עם המוכר';
-  // "מאובטח" reads as end-to-end encryption, which this is not. Security rules
-  // do restrict a thread to its two participants, so "פרטי" is accurate.
-  static const onboard3Body = 'צ\'אט פרטי וישיר מול המוכר';
+      'מספר רישוי אחד — וק"מ בטסט האחרון, ריקולים פתוחים, שינוי '
+      'מבנה וירידה מהכביש. בלי הרשמה.';
+  static const onboard2Title = 'מה שלא מסתדר — למעלה';
+  static const onboard2Body =
+      'אם המודעה מציינת פחות ק"מ ממה שנרשם בטסט האחרון, '
+      'תראו את זה ראשון — עם המספר והתאריך.';
+  static const onboard3Title = 'לרכב שלכם יש תיק';
+  static const onboard3Body =
+      'כל טיפול שתתעדו נשמר לצמיתות ואי אפשר לערוך אותו. ביום '
+      'שתמכרו, זה מה שיש לכם להראות.';
   static const continueBtn = 'המשך';
   static const skip = 'דלג';
 

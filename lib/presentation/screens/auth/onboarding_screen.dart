@@ -25,10 +25,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _page = 0;
 
   static const _slides = [
-    _Slide(Icons.verified_user, AppStrings.onboard1Title,
+    _Slide(Icons.manage_search, AppStrings.onboard1Title,
         AppStrings.onboard1Body),
-    _Slide(Icons.insights, AppStrings.onboard2Title, AppStrings.onboard2Body),
-    _Slide(Icons.chat_bubble_outline, AppStrings.onboard3Title,
+    _Slide(Icons.fact_check_outlined, AppStrings.onboard2Title,
+        AppStrings.onboard2Body),
+    _Slide(Icons.folder_shared_outlined, AppStrings.onboard3Title,
         AppStrings.onboard3Body),
   ];
 
