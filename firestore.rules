@@ -372,6 +372,78 @@ service cloud.firestore {
                     && request.resource.data.reporterUid == request.auth.uid;
     }
 
+    // ---- Garages and car washes ----
+    //
+    // The directory the app did not have. **Inspection centres are NOT here**
+    // — they ship as an asset from Ministry of Transport data and have their
+    // own screen, and a second copy would drift from the official one.
+    //
+    // Public read: the whole point is that a buyer can look a garage up.
+    match /places/{placeId} {
+      allow read: if true;
+
+      // Everything written from the app is community-added. There is no path
+      // that mints an entry claiming to be on an official register.
+      allow create: if isSignedIn()
+                    && request.resource.data.source == 'community'
+                    && request.resource.data.addedByUid == request.auth.uid
+                    && request.resource.data.ratingCount == 0
+                    && request.resource.data.ratingSum == 0
+                    && request.resource.data.isHidden == false;
+
+      // Only the aggregates and the hidden flag, and only within bounds.
+      //
+      // **Spark has no Cloud Functions, so the counters are maintained by the
+      // client** — which means the rules, not the code, are the only thing
+      // standing between a rating and whoever wants to move it. They cannot
+      // check the arithmetic, but they can stop one write from doing real
+      // damage: a rating is 1..5, so a single update may move the count by at
+      // most one and the sum by at most five.
+      //
+      // What this does NOT prevent is somebody looping. That is the reason the
+      // app must never present a community rating as a verdict, and why the
+      // average stays hidden below three reviews.
+      allow update: if isSignedIn()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['ratingCount', 'ratingSum', 'ratingAvg',
+                                   'lastReviewAt', 'isHidden'])
+                    && request.resource.data.ratingCount >= resource.data.ratingCount
+                    && request.resource.data.ratingCount <= resource.data.ratingCount + 1
+                    && request.resource.data.ratingSum >= resource.data.ratingSum - 5
+                    && request.resource.data.ratingSum <= resource.data.ratingSum + 5
+                    // Hiding is one-way. An entry three people said does not
+                    // exist cannot be un-hidden by the fourth.
+                    && (resource.data.isHidden == false
+                        || request.resource.data.isHidden == true);
+
+      // Never. A place with reviews on it is a record other people wrote.
+      allow delete: if false;
+
+      // One review per person, keyed by their uid so the database enforces it.
+      match /reviews/{reviewUid} {
+        allow read: if true;
+        allow create, update: if isSignedIn()
+                              && request.auth.uid == reviewUid
+                              && request.resource.data.rating is int
+                              && request.resource.data.rating >= 1
+                              && request.resource.data.rating <= 5
+                              && (!('text' in request.resource.data)
+                                  || request.resource.data.text.size() <= 500);
+        // Yours to withdraw. Unlike a service record, a review is an opinion
+        // about somebody else's business and nobody is owed its permanence.
+        allow delete: if isSignedIn() && request.auth.uid == reviewUid;
+      }
+    }
+
+    // "This place does not exist." Write-only, like the other report channels:
+    // a reporter must not be able to read who else reported, or withdraw a
+    // report once the count has acted on it.
+    match /place_reports/{reportId} {
+      allow create: if isSignedIn()
+                    && request.resource.data.reporterUid == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
     // ---- Retired collections ----
     // `reviews` collected anonymous feedback that no client could ever read,
     // so it gathered personal data with no purpose — the feature is gone and
