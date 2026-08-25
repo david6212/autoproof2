@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_dimens.dart';
+import '../../core/utils/date_formatter.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
 import '../../data/models/service_record.dart';
@@ -9,25 +10,31 @@ import 'photo_viewer.dart';
 
 /// A vehicle's service history, newest first.
 ///
-/// **There is no edit button and no delete button here, and that is the
-/// feature.** The only way to change what the timeline says is [onCorrect],
-/// which adds a record; the wrong entry stays visible with the correction
-/// linked to it. If a future change adds a delete action to this widget, the
-/// history stops being evidence and the "תיק מתועד" badge stops meaning
-/// anything.
+/// **The owner may edit a record. Nobody may delete one**, and that half is
+/// still the feature: fixing a wrong figure leaves a history, erasing an
+/// inconvenient service does not. If a future change adds a delete action
+/// here, the "תיק מתועד" badge stops meaning anything.
 ///
-/// [onCorrect] is null in the buyer's view — a buyer reads the history, they
-/// do not write to it.
+/// An edited record carries a visible mark and the date it changed. That mark
+/// is what an editable history costs, and it is not optional — without it the
+/// list would be a log that quietly rewrote itself while still being shown to
+/// buyers as evidence.
+///
+/// [onEdit] is null in the buyer's view — a buyer reads the history, they do
+/// not write to it. [onCorrect] predates editing and is kept for the records
+/// written while it was the only way to fix one.
 class ServiceTimeline extends StatelessWidget {
   const ServiceTimeline({
     super.key,
     required this.records,
     this.onCorrect,
+    this.onEdit,
     this.showFooter = true,
   });
 
   final List<ServiceRecord> records;
   final void Function(ServiceRecord record)? onCorrect;
+  final void Function(ServiceRecord record)? onEdit;
 
   /// The line explaining why nothing here can be edited. Shown to owners and
   /// to buyers alike — for the buyer it is the whole reason to trust the list.
@@ -51,12 +58,13 @@ class ServiceTimeline extends StatelessWidget {
             record: r,
             wasCorrected: correctedIds.contains(r.id),
             onCorrect: onCorrect,
+            onEdit: onEdit,
           ),
         if (showFooter) ...[
           const SizedBox(height: AppSpace.md),
           Text(
-            'רשומות טיפול אינן ניתנות לעריכה או מחיקה לאחר הזנתן. '
-            'הן הוזנו על ידי בעל הרכב ולא אומתו על ידי BonnetCheck.',
+            'רשומה שעודכנה מסומנת ומציינת מתי. מחיקה אינה אפשרית. '
+            'הרשומות הוזנו על ידי בעל הרכב ולא אומתו על ידי BonnetCheck.',
             style: context.text.caption,
           ),
         ],
@@ -70,11 +78,13 @@ class _ServiceRow extends StatelessWidget {
     required this.record,
     required this.wasCorrected,
     this.onCorrect,
+    this.onEdit,
   });
 
   final ServiceRecord record;
   final bool wasCorrected;
   final void Function(ServiceRecord record)? onCorrect;
+  final void Function(ServiceRecord record)? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +138,19 @@ class _ServiceRow extends StatelessWidget {
                 background: colors.warnBg,
               ),
             ],
-            if (record.receiptUrl != null || onCorrect != null) ...[
+            // What an editable history costs. A buyer is entitled to know
+            // which entries changed after they were written, and when.
+            if (record.wasEdited) ...[
+              const SizedBox(height: AppSpace.sm),
+              _Tag(
+                text: 'עודכנה ב-${DateFormatter.format(record.editedAt!)}',
+                color: colors.textMuted,
+                background: colors.background,
+              ),
+            ],
+            if (record.receiptUrl != null ||
+                onCorrect != null ||
+                onEdit != null) ...[
               const SizedBox(height: AppSpace.sm),
               Row(
                 children: [
@@ -146,12 +168,11 @@ class _ServiceRow extends StatelessWidget {
                       ),
                     ),
                   const Spacer(),
-                  // The stand-in for "edit". It writes a new record; it cannot
-                  // touch this one.
-                  if (onCorrect != null)
-                    TextButton(
-                      onPressed: () => onCorrect!(record),
-                      child: const Text('הוסף תיקון'),
+                  if (onEdit != null)
+                    TextButton.icon(
+                      icon: const Icon(Icons.edit_outlined, size: 17),
+                      label: const Text('ערוך'),
+                      onPressed: () => onEdit!(record),
                     ),
                 ],
               ),

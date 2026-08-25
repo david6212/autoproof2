@@ -8,6 +8,7 @@ import '../../../core/utils/document_redactor.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../data/models/expense.dart';
+import '../../../data/models/service_record.dart';
 import '../../../data/models/vehicle.dart';
 import '../../../data/models/vehicle_document.dart';
 import '../../../data/models/vehicle_reminder.dart';
@@ -191,12 +192,14 @@ class _ServicesTab extends ConsumerWidget {
 
   final Vehicle vehicle;
 
-  Future<void> _add(BuildContext context, {String? corrects}) async {
+  Future<void> _add(BuildContext context,
+      {String? corrects, ServiceRecord? editing}) async {
     await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => AddServiceScreen(
           vehicleId: vehicle.id,
           correctsServiceId: corrects,
+          editing: editing,
         ),
       ),
     );
@@ -236,7 +239,11 @@ class _ServicesTab extends ConsumerWidget {
                     ),
                   ServiceTimeline(
                     records: records,
-                    onCorrect: (r) => _add(context, corrects: r.id),
+                    // "הוסף תיקון" is gone from the row: since 25/08 the
+                    // owner edits the record itself. The correction path
+                    // stays in the model and the repository for the entries
+                    // written while it was the only way to fix one.
+                    onEdit: (r) => _add(context, editing: r),
                   ),
                 ],
               ),
@@ -602,7 +609,7 @@ class _EmptyServices extends StatelessWidget {
             const Text('עוד לא תועד כאן טיפול', style: AppText.h3),
             const SizedBox(height: AppSpace.sm),
             Text(
-              'כל טיפול שתתעדו נשמר לצמיתות ולא ניתן לשנותו. '
+              'כל טיפול שתתעדו נשמר עם התאריך והקילומטראז\'. '
               'אחרי 3 רשומות לאורך חצי שנה הרכב יקבל תג "תיק מתועד", '
               'שיוצג לקונים אם תחליטו למכור.',
               textAlign: TextAlign.center,

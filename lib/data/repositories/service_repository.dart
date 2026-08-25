@@ -4,18 +4,25 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/service_record.dart';
 
-/// The append-only service history of a vehicle.
+/// The service history of a vehicle: add and edit, never delete.
 ///
-/// ⚠️ **There is no `updateService` and no `deleteService` in this class, and
-/// there never will be.** Do not add one, even if asked — the security rules
-/// refuse both operations anyway, so such a method could only fail at runtime,
-/// and its existence would suggest the history is editable when the entire
-/// value of the feature is that it is not.
+/// **This class was append-only until 25/08/2026**, and the comment here used
+/// to say no edit method would ever exist. David asked for one — typos happen,
+/// and the correction flow (a second record pointing at the first) was more
+/// machinery than the problem needed. [updateService] is that method.
 ///
-/// A mistake is corrected by adding a NEW record whose `correctsServiceId`
-/// points at the wrong one — [addService] handles that like any other write.
-/// Both records stay visible, so a reader sees that something was corrected
-/// rather than finding a history that quietly changed.
+/// Three things hold the feature together in its place:
+/// - **An edit stamps itself.** `editedAt` is set on every update and shown to
+///   buyers, so an entry that changed after the fact says so.
+/// - **An edit cannot change whose record it is**, or when it entered the
+///   history. The security rule pins `addedByOwnerId` and `createdAt`.
+/// - **[deleteService] still does not exist, and should not.** Fixing a wrong
+///   figure and erasing an inconvenient service are different acts, and only
+///   the first leaves something that is still a history. The rules refuse
+///   deletion outright, so such a method could only fail at runtime.
+///
+/// `correctsServiceId` is kept: records written before editing existed carry
+/// it, and dropping the field would orphan them.
 class ServiceRepository {
   ServiceRepository({FirebaseFirestore? firestore})
       : _db = firestore ?? FirebaseFirestore.instance;
@@ -48,6 +55,43 @@ class ServiceRepository {
     ];
     list.sort((a, b) => b.date.compareTo(a.date));
     return list;
+  }
+
+  /// Saves the owner's changes to a record they already entered.
+  ///
+  /// Deliberately NOT gated on the odometer rule that [addService] enforces.
+  /// The commonest edit is exactly the one that has to go down — fixing a
+  /// typed 168,400 to 68,400 — and refusing it would leave the wrong figure
+  /// in place.
+  ///
+  /// Which is why the vehicle's `currentKm` is recomputed here from every
+  /// record rather than left alone: it is a denormalised copy of the highest
+  /// reading, and editing the record that set it would otherwise leave the
+  /// car showing a mileage no record supports.
+  Future<void> updateService(String vehicleId, ServiceRecord record) async {
+    // The two fields the rule pins are removed rather than rewritten with
+    // the same values. A Firestore timestamp carries nanoseconds and a Dart
+    // DateTime only microseconds, so a `createdAt` that has been read into the
+    // model and written back is not always byte-identical to the one stored —
+    // and the rule compares them exactly. `update` writes only the keys it is
+    // given, so leaving them out leaves them untouched.
+    final fields = record.toFirestore()
+      ..remove('createdAt')
+      ..remove('addedByOwnerId');
+
+    final batch = _db.batch();
+    batch.update(_services(vehicleId).doc(record.id), fields);
+
+    final others = await _services(vehicleId).get();
+    var highest = record.km;
+    for (final d in others.docs) {
+      if (d.id == record.id) continue;
+      final km = ServiceRecord.fromFirestore(d.data(), d.id).km;
+      if (km > highest) highest = km;
+    }
+    batch.update(_vehicle(vehicleId), {'currentKm': highest});
+
+    await batch.commit();
   }
 
   /// An id reserved before the record is written, so a receipt can be uploaded

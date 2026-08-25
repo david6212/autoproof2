@@ -24,10 +24,16 @@ class AddServiceScreen extends ConsumerStatefulWidget {
     super.key,
     required this.vehicleId,
     this.correctsServiceId,
+    this.editing,
   });
 
   final String vehicleId;
   final String? correctsServiceId;
+
+  /// The record being edited, or null when adding a new one. Editing became
+  /// possible on 25/08; before that a mistake could only be answered with a
+  /// correction record.
+  final ServiceRecord? editing;
 
   @override
   ConsumerState<AddServiceScreen> createState() => _AddServiceScreenState();
@@ -48,6 +54,21 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
   bool _saving = false;
 
   bool get _isCorrection => widget.correctsServiceId != null;
+  bool get _isEdit => widget.editing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.editing;
+    if (e == null) return;
+    _type = e.type;
+    _title.text = e.title;
+    _km.text = '${e.km}';
+    if (e.cost > 0) _cost.text = '${e.cost}';
+    _garage.text = e.garageName ?? '';
+    _notes.text = e.notes ?? '';
+    _date = e.date;
+  }
 
   @override
   void dispose() {
@@ -97,19 +118,32 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
       _saving = true;
     });
 
-    final ok = await ref.read(addServiceControllerProvider.notifier).submit(
-          vehicleId: widget.vehicleId,
-          type: _type,
-          title: _title.text,
-          date: _date,
-          km: km,
-          cost: int.tryParse(_cost.text.replaceAll(',', '')) ?? 0,
-          garageName: _garage.text,
-          notes: _notes.text,
-          receiptBytes: _receipt,
-          receiptContentType: _receiptType,
-          correctsServiceId: widget.correctsServiceId,
-        );
+    final controller = ref.read(addServiceControllerProvider.notifier);
+    final ok = _isEdit
+        ? await controller.saveEdit(
+            vehicleId: widget.vehicleId,
+            original: widget.editing!,
+            type: _type,
+            title: _title.text,
+            date: _date,
+            km: km,
+            cost: int.tryParse(_cost.text.replaceAll(',', '')) ?? 0,
+            garageName: _garage.text,
+            notes: _notes.text,
+          )
+        : await controller.submit(
+            vehicleId: widget.vehicleId,
+            type: _type,
+            title: _title.text,
+            date: _date,
+            km: km,
+            cost: int.tryParse(_cost.text.replaceAll(',', '')) ?? 0,
+            garageName: _garage.text,
+            notes: _notes.text,
+            receiptBytes: _receipt,
+            receiptContentType: _receiptType,
+            correctsServiceId: widget.correctsServiceId,
+          );
 
     if (!mounted) return;
     if (ok) {
@@ -134,7 +168,11 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isCorrection ? 'תיקון רשומה' : 'הוספת טיפול'),
+        title: Text(_isEdit
+            ? 'עריכת רשומה'
+            : _isCorrection
+                ? 'תיקון רשומה'
+                : 'הוספת טיפול'),
       ),
       body: SafeArea(
         child: ListView(
@@ -251,13 +289,18 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
             ],
             const SizedBox(height: AppSpace.xl),
             PrimaryButton(
-              label: _isCorrection ? 'שמור תיקון' : 'שמור רשומה',
+              label: _isEdit
+                  ? 'שמור שינויים'
+                  : _isCorrection
+                      ? 'שמור תיקון'
+                      : 'שמור רשומה',
               loading: _saving,
               onPressed: _save,
             ),
             const SizedBox(height: AppSpace.md),
             Text(
-              'לאחר השמירה לא ניתן לערוך או למחוק את הרשומה. '
+              'אפשר לערוך את הרשומה אחר כך, וקונים יראו שעודכנה. '
+              'מחיקה אינה אפשרית. '
               'זה מה שהופך את התיק לאמין בעיני קונה.',
               style: context.text.caption,
               textAlign: TextAlign.center,

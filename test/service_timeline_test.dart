@@ -33,6 +33,7 @@ void main() {
     int cost = 1200,
     String? corrects,
     String? receiptUrl,
+      DateTime? editedAt,
   }) =>
       ServiceRecord(
         id: id,
@@ -45,40 +46,61 @@ void main() {
         createdAt: DateTime(2026, 3, 4),
         correctsServiceId: corrects,
         receiptUrl: receiptUrl,
+        editedAt: editedAt,
       );
 
-  testWidgets('offers no way to delete or edit a record', (tester) async {
+  testWidgets('the owner may edit a record, and never delete one',
+      (tester) async {
+    // Editing arrived 25/08 on David's instruction. Deletion did not, and the
+    // difference is the point: fixing a wrong figure leaves a history, erasing
+    // an inconvenient service does not.
     await tester.pumpWidget(host(
-      ServiceTimeline(records: [record()], onCorrect: (_) {}),
+      ServiceTimeline(records: [record()], onEdit: (_) {}),
     ));
 
+    expect(find.text('ערוך'), findsOneWidget);
     expect(find.text('מחק'), findsNothing);
     expect(find.text('מחיקה'), findsNothing);
-    expect(find.text('ערוך'), findsNothing);
-    expect(find.text('עריכה'), findsNothing);
     expect(find.byIcon(Icons.delete), findsNothing);
     expect(find.byIcon(Icons.delete_outline), findsNothing);
-    expect(find.byIcon(Icons.edit), findsNothing);
-    expect(find.byIcon(Icons.edit_outlined), findsNothing);
   });
 
-  testWidgets('the only way to change it is to add a correction',
+  testWidgets('the edit action hands back the record it belongs to',
       (tester) async {
     ServiceRecord? asked;
     await tester.pumpWidget(host(
-      ServiceTimeline(records: [record()], onCorrect: (r) => asked = r),
+      ServiceTimeline(records: [record()], onEdit: (r) => asked = r),
     ));
 
-    await tester.tap(find.text('הוסף תיקון'));
+    await tester.tap(find.text('ערוך'));
     await tester.pump();
     expect(asked?.id, 's1');
   });
 
+  testWidgets('an edited record says so, with the date', (tester) async {
+    // The price of an editable history. Without this the list would be a log
+    // that quietly rewrote itself while still being shown to buyers as
+    // evidence.
+    await tester.pumpWidget(host(ServiceTimeline(
+      records: [record(editedAt: DateTime(2026, 8, 25))],
+    )));
+
+    expect(find.textContaining('עודכנה ב-'), findsOneWidget);
+  });
+
+  testWidgets('a record nobody touched carries no edit mark', (tester) async {
+    await tester.pumpWidget(host(ServiceTimeline(records: [record()])));
+    // The dated form, not the bare word: the footer explains that an edited
+    // record is marked, and would match a looser search.
+    expect(find.textContaining('עודכנה ב-'), findsNothing);
+  });
+
   testWidgets('a buyer gets the history with no way to write to it',
       (tester) async {
-    // onCorrect null is the read-only view. A buyer reads the record; they do
+    // onEdit null is the read-only view. A buyer reads the record; they do
     // not get an action that writes to someone else's car.
     await tester.pumpWidget(host(ServiceTimeline(records: [record()])));
+    expect(find.text('ערוך'), findsNothing);
     expect(find.text('הוסף תיקון'), findsNothing);
     expect(find.text('טיפול 60,000'), findsOneWidget);
   });
@@ -113,15 +135,15 @@ void main() {
       find.textContaining('לא אומתו על ידי BonnetCheck'),
       findsOneWidget,
     );
-    expect(
-      find.textContaining('אינן ניתנות לעריכה או מחיקה'),
-      findsOneWidget,
-    );
+    // Records became editable, so the footer had to stop saying they are not.
+    // What it says instead is the two things that are still true.
+    expect(find.textContaining('מחיקה אינה אפשרית'), findsOneWidget);
+    expect(find.textContaining('רשומה שעודכנה מסומנת'), findsOneWidget);
   });
 
   testWidgets('an empty history renders nothing at all', (tester) async {
     await tester.pumpWidget(host(const ServiceTimeline(records: [])));
-    expect(find.textContaining('אינן ניתנות'), findsNothing);
+    expect(find.textContaining('מחיקה אינה אפשרית'), findsNothing);
   });
 
   testWidgets('a receipt is offered only when one exists', (tester) async {

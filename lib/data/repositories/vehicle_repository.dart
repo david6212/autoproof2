@@ -127,7 +127,7 @@ class VehicleRepository {
   ///
   /// Once even one service record exists the vehicle cannot be deleted, here
   /// or in the rules. Otherwise "delete the car and add it again" would be a
-  /// way to erase an inconvenient record, and the append-only guarantee would
+  /// way to erase an inconvenient record, and the no-deletion guarantee would
   /// be decorative.
   Future<void> deleteEmptyVehicle(String vehicleId) async {
     final v = await getVehicle(vehicleId);

@@ -248,7 +248,23 @@ service cloud.firestore {
         allow create: if isSignedIn()
                       && vehicleData(vehicleId).ownerId == request.auth.uid
                       && request.resource.data.addedByOwnerId == request.auth.uid;
-        allow update: if false; // never. a correction is a new record
+        // ---- Editable since 25/08, deletable never ----
+        //
+        // The owner may fix a record they entered: typos happen, and the
+        // correction flow — a second record pointing at the first — was more
+        // machinery than the problem needed. What an edit may NOT do is change
+        // whose record it is or when it entered the history, and it must stamp
+        // itself, so a buyer reading the log can see which entries were
+        // changed after the fact.
+        //
+        // Deletion stays closed. Editing a wrong figure and erasing an
+        // inconvenient service are different acts: the first leaves a history
+        // that is still a history.
+        allow update: if isSignedIn()
+                      && vehicleData(vehicleId).ownerId == request.auth.uid
+                      && request.resource.data.addedByOwnerId == resource.data.addedByOwnerId
+                      && request.resource.data.createdAt == resource.data.createdAt
+                      && request.resource.data.editedAt is timestamp;
         allow delete: if false; // never
       }
 

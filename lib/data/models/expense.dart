@@ -18,7 +18,8 @@ extension ExpenseTypeX on ExpenseType {
 /// **Deliberately separate from [ServiceRecord], and deliberately editable.**
 /// The two are different things pretending to be similar:
 ///
-/// A service record is evidence for the next buyer, so it is append-only and
+/// A service record is evidence for the next buyer, so it may be corrected
+/// but never deleted, and
 /// public once the car is listed. An expense is the owner's own budget. Nobody
 /// buying a car needs to know what its previous owner spent on petrol in
 /// March, and locking a weekly refuel entry forever would mean a single typo

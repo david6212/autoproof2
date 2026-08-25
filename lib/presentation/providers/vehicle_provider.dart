@@ -334,6 +334,49 @@ class AddServiceController extends AutoDisposeAsyncNotifier<void> {
     state = result;
     return !result.hasError;
   }
+
+  /// Saves changes to a record the owner already entered.
+  ///
+  /// Takes the original so the fields an edit may not touch — who wrote it,
+  /// when it entered the history, the receipt — travel through untouched. The
+  /// security rule refuses an update that changes the first two, so building
+  /// the new record from the old one is not just tidy: it is what makes the
+  /// write legal.
+  Future<bool> saveEdit({
+    required String vehicleId,
+    required ServiceRecord original,
+    required ServiceType type,
+    required String title,
+    required DateTime date,
+    required int km,
+    required int cost,
+    String? garageName,
+    String? notes,
+  }) async {
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (uid == null) return false;
+
+    state = const AsyncLoading();
+    final result = await AsyncValue.guard(() async {
+      await ref.read(serviceRepositoryProvider).updateService(
+            vehicleId,
+            original.edited(
+              type: type,
+              title: title.trim(),
+              date: date,
+              km: km,
+              cost: cost,
+              garageName:
+                  (garageName ?? '').trim().isEmpty ? null : garageName!.trim(),
+              notes: (notes ?? '').trim().isEmpty ? null : notes!.trim(),
+              at: DateTime.now(),
+            ),
+          );
+    });
+
+    state = result;
+    return !result.hasError;
+  }
 }
 
 final addServiceControllerProvider =

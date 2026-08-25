@@ -55,6 +55,15 @@ class ServiceRecord {
   /// Set when this record corrects an earlier one.
   final String? correctsServiceId;
 
+  /// When the owner last changed this record, or null if they never have.
+  ///
+  /// Records became editable on David's instruction, because typos happen and
+  /// the correction flow was more machinery than the problem needed. This
+  /// field is the price of that: a buyer reading the history is told which
+  /// entries were changed after the fact, and when. An editable log that does
+  /// not say so is a log that quietly rewrote itself.
+  final DateTime? editedAt;
+
   const ServiceRecord({
     required this.id,
     required this.type,
@@ -68,9 +77,41 @@ class ServiceRecord {
     required this.addedByOwnerId,
     required this.createdAt,
     this.correctsServiceId,
+    this.editedAt,
   });
 
   bool get isCorrection => correctsServiceId != null;
+
+  bool get wasEdited => editedAt != null;
+
+  /// The same record with the caller's changes and a fresh edit stamp. The
+  /// three fields it refuses to take are the ones that decide whose record
+  /// this is and when it entered the history.
+  ServiceRecord edited({
+    required ServiceType type,
+    required String title,
+    required DateTime date,
+    required int km,
+    required int cost,
+    String? garageName,
+    String? notes,
+    required DateTime at,
+  }) =>
+      ServiceRecord(
+        id: id,
+        type: type,
+        title: title,
+        date: date,
+        km: km,
+        cost: cost,
+        garageName: garageName,
+        notes: notes,
+        receiptUrl: receiptUrl,
+        addedByOwnerId: addedByOwnerId,
+        createdAt: createdAt,
+        correctsServiceId: correctsServiceId,
+        editedAt: at,
+      );
 
   factory ServiceRecord.fromFirestore(Map<String, dynamic> data, String id) {
     return ServiceRecord(
@@ -93,6 +134,7 @@ class ServiceRecord {
       addedByOwnerId: data['addedByOwnerId'] ?? '',
       createdAt: (data['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
       correctsServiceId: data['correctsServiceId'],
+      editedAt: (data['editedAt'] as dynamic)?.toDate(),
     );
   }
 
@@ -108,5 +150,9 @@ class ServiceRecord {
         'addedByOwnerId': addedByOwnerId,
         'createdAt': createdAt,
         'correctsServiceId': correctsServiceId,
+        // Only when it has been edited. A key present on every record would
+        // make "was this changed?" a question about null rather than about
+        // presence, and the security rule reads the same field.
+        if (editedAt != null) 'editedAt': editedAt,
       };
 }
