@@ -64,6 +64,30 @@ void main() {
     expect(csp.contains('fonts.googleapis.com'), isFalse);
   });
 
+  test('Google sign-in has everything it loads', () {
+    // The omission that broke it. firebase-auth pulls
+    // https://apis.google.com/js/api.js to manage the sign-in popup, and then
+    // frames content from the same host. It was in none of the three lists,
+    // so the CSP added earlier the same day blocked Google sign-in on the web
+    // outright — the button did nothing and the console said why.
+    for (final directive in ['script-src', 'frame-src', 'connect-src']) {
+      final segment = csp
+          .split(';')
+          .map((s) => s.trim())
+          .firstWhere((s) => s.startsWith(directive));
+      expect(segment, contains('https://apis.google.com'), reason: directive);
+    }
+  });
+
+  test('no Cross-Origin-Opener-Policy is sent', () {
+    // Removed after the sign-in break. COOP was not one of the security
+    // review's findings; it rode along with the headers that were. Firebase
+    // Auth's popup flow polls `popup.closed`, which COOP restricts, and a real
+    // Google account cannot be exercised in a headless test — so the risk to
+    // sign-in could not be measured, only avoided.
+    expect(headers.containsKey('Cross-Origin-Opener-Policy'), isFalse);
+  });
+
   test('the allow-lists name every host the app really uses', () {
     // Measured from the deployed app, not guessed: the registry proxy, the map
     // tiles, Firestore and auth. A host missing here is a feature that dies
