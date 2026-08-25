@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart' show User;
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -42,6 +42,9 @@ import '../presentation/screens/shared/legal_screen.dart';
 // Shells
 import '../presentation/widgets/buyer_shell.dart';
 import '../presentation/widgets/seller_shell.dart';
+import '../core/theme/app_palette.dart';
+import '../core/theme/app_text.dart';
+import '../presentation/widgets/primary_button_widget.dart';
 
 /// Routes that cannot work at all without an account.
 ///
@@ -140,6 +143,12 @@ final routerProvider = Provider<GoRouter>((ref) {
     // MaterialApp builder's own context sits above it.
     navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
+    // Without this, go_router draws its own page: the word "Page Not Found"
+    // in English over a raw `GoException: no routes for location: …`. Every
+    // listing link ever shared points at a document id, so a stale or mistyped
+    // one is not a hypothetical — and a stack trace in a foreign language is
+    // read as "the app is broken", not as "that car is gone".
+    errorBuilder: (context, state) => _NotFoundScreen(location: state.uri.path),
     // Auto-logs a screen_view analytics event for every pushed route.
     // A do-nothing observer until analytics consent is granted — see
     // analytics_observer_provider. GoRouter accepts any NavigatorObserver.
@@ -275,3 +284,48 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+/// Shown for any address the app does not recognise.
+///
+/// Deliberately says nothing about routes, exceptions or paths: the person
+/// holding a dead link did not type it, they were sent it, and the only useful
+/// things to tell them are that the page is not there and where to go instead.
+class _NotFoundScreen extends StatelessWidget {
+  const _NotFoundScreen({required this.location});
+
+  final String location;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.travel_explore_outlined,
+                    size: 56, color: context.colors.teal),
+                const SizedBox(height: 16),
+                const Text('הדף הזה לא קיים', style: AppText.h2),
+                const SizedBox(height: 8),
+                Text(
+                  'ייתכן שהקישור ישן, או שהמודעה הוסרה על ידי המוכר.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: context.colors.textMuted),
+                ),
+                const SizedBox(height: 24),
+                PrimaryButton(
+                  label: 'למסך הבית',
+                  onPressed: () => context.go('/home'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

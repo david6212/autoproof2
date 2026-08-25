@@ -14,7 +14,12 @@ class GuestPromptView extends StatelessWidget {
     required this.title,
     required this.body,
     this.iconWidget,
+    this.fillHeight = true,
   });
+
+  /// False when the prompt shares a scrolling page with other rows — the
+  /// profile tab puts the measurement switch and the legal documents beneath
+  /// it, and a [Center] that fills the viewport would push them off-screen.
 
   final IconData icon;
 
@@ -23,8 +28,15 @@ class GuestPromptView extends StatelessWidget {
   final String title;
   final String body;
 
+  final bool fillHeight;
+
   @override
   Widget build(BuildContext context) {
+    if (!fillHeight) return _content(context);
+    return Center(child: _content(context));
+  }
+
+  Widget _content(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),

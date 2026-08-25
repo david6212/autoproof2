@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_palette.dart';
+import '../../../core/constants/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/legal_info.dart';
 import '../../providers/analytics_provider.dart';
@@ -141,13 +142,64 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Text(
                 isCodeStep
                     ? 'שלחנו קוד בן 6 ספרות אל ${state.phoneE164}'
-                    : 'נשלח אליך קוד אימות ב-SMS',
+                    : 'בלחיצה אחת עם חשבון Google, או במספר טלפון.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 13, color: context.colors.textMuted),
               ),
               const SizedBox(height: 24),
 
+              // ---- Google first ----
+              //
+              // It is the only route that works today: phone verification is
+              // broken and Apple has no provider behind it. Ordering is the
+              // whole fix here — the SMS field was the first and loudest thing
+              // on the screen, and it is the one that fails.
+              if (!isCodeStep) ...[
+                _SocialButton(
+                  label: 'המשך עם Google',
+                  leading: Image.asset('assets/google_g.png',
+                      width: 22, height: 22),
+                  background: context.colors.surface,
+                  foreground: context.colors.textPrimary,
+                  border: true,
+                  loading: _socialLoading,
+                  onPressed: () => _social(
+                      () => ref.read(authRepositoryProvider).signInWithGoogle()),
+                ),
+                // Apple's mark inverts with the theme, which is both what
+                // Apple's own guidance asks for and the only way this button
+                // stays visible: the old hard-coded #111111 sat on a #101312
+                // page in the dark theme — a contrast ratio of about 1.01,
+                // i.e. an invisible button.
+                if (AppConfig.appleSignInEnabled) ...[
+                  const SizedBox(height: 10),
+                  Builder(builder: (context) {
+                    final onDark =
+                        Theme.of(context).brightness == Brightness.dark;
+                    final bg = onDark
+                        ? context.colors.onBrand
+                        : const Color(0xFF111111);
+                    final fg = onDark
+                        ? const Color(0xFF111111)
+                        : context.colors.onBrand;
+                    return _SocialButton(
+                      label: 'המשך עם Apple',
+                      leading: Icon(Icons.apple, color: fg, size: 22),
+                      background: bg,
+                      foreground: fg,
+                      loading: _socialLoading,
+                      onPressed: () => _social(() =>
+                          ref.read(authRepositoryProvider).signInWithApple()),
+                    );
+                  }),
+                ],
+                const SizedBox(height: 20),
+                const _OrDivider(),
+                const SizedBox(height: 16),
+              ],
+
+              // ---- and the phone route, second ----
               if (!isCodeStep)
                 _PhoneField(controller: _phoneController)
               else
@@ -158,19 +210,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 _ErrorBanner(message: state.error!),
               ],
 
-              const SizedBox(height: 24),
-              PrimaryButton(
-                label: isCodeStep ? 'אמת קוד' : AppStrings.sendCode,
-                loading: state.loading,
-                onPressed: () {
-                  FocusScope.of(context).unfocus();
-                  if (isCodeStep) {
+              const SizedBox(height: 16),
+              // Outlined rather than filled while it sits below Google: two
+              // buttons of equal weight is not a recommendation, and this is
+              // the route that currently fails.
+              if (isCodeStep)
+                PrimaryButton(
+                  label: 'אמת קוד',
+                  loading: state.loading,
+                  onPressed: () {
+                    FocusScope.of(context).unfocus();
                     controller.verifyCode(_codeController.text.trim());
-                  } else {
-                    controller.sendCode(_phoneController.text.trim());
-                  }
-                },
-              ),
+                  },
+                )
+              else
+                SizedBox(
+                  height: 52,
+                  child: OutlinedButton(
+                    // A neutral border, not the theme's brand green. Reordering
+                    // alone did not finish the job: the themed outline was
+                    // louder than Google's grey-bordered white button above it,
+                    // so the eye still landed on the route that fails.
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: context.colors.textPrimary,
+                      side: BorderSide(color: context.colors.cardBorder),
+                    ),
+                    onPressed: state.loading
+                        ? null
+                        : () {
+                            FocusScope.of(context).unfocus();
+                            controller.sendCode(_phoneController.text.trim());
+                          },
+                    child: Text(state.loading ? 'שולח...' : AppStrings.sendCode),
+                  ),
+                ),
 
               if (isCodeStep) ...[
                 const SizedBox(height: 8),
@@ -184,44 +257,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: const Text('שנה מספר טלפון'),
                 ),
               ] else ...[
-                const SizedBox(height: 20),
-                const _OrDivider(),
-                const SizedBox(height: 16),
-                _SocialButton(
-                  label: 'המשך עם Google',
-                  leading: Image.asset('assets/google_g.png',
-                      width: 22, height: 22),
-                  background: context.colors.surface,
-                  foreground: context.colors.textPrimary,
-                  border: true,
-                  loading: _socialLoading,
-                  onPressed: () => _social(
-                      () => ref.read(authRepositoryProvider).signInWithGoogle()),
-                ),
-                const SizedBox(height: 10),
-                // Apple's mark inverts with the theme, which is both what
-                // Apple's own guidance asks for and the only way this button
-                // stays visible: the old hard-coded #111111 sat on a #101312
-                // page in the dark theme — a contrast ratio of about 1.01,
-                // i.e. an invisible button.
-                Builder(builder: (context) {
-                  final onDark =
-                      Theme.of(context).brightness == Brightness.dark;
-                  final bg = onDark
-                      ? context.colors.onBrand
-                      : const Color(0xFF111111);
-                  final fg =
-                      onDark ? const Color(0xFF111111) : context.colors.onBrand;
-                  return _SocialButton(
-                    label: 'המשך עם Apple',
-                    leading: Icon(Icons.apple, color: fg, size: 22),
-                    background: bg,
-                    foreground: fg,
-                    loading: _socialLoading,
-                    onPressed: () => _social(() =>
-                        ref.read(authRepositoryProvider).signInWithApple()),
-                  );
-                }),
                 const SizedBox(height: 12),
                 // The arrow used to be the character ←. Heebo does not carry
                 // it, and Flutter's web engine answers a missing glyph by

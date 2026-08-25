@@ -25,13 +25,46 @@ class ProfileScreen extends ConsumerWidget {
     final userAsync = ref.watch(currentUserModelProvider);
 
     if (isGuest) {
+      // A guest gets the sign-in prompt AND the two things that must never sit
+      // behind an account: the measurement switch and the legal documents.
+      //
+      // The guest is precisely the person who was asked about analytics on
+      // first launch — and until this was here, somebody who tapped
+      // "אפשר למדוד" had no way back. GDPR Art. 7(3) requires withdrawal to
+      // be as easy as consent was to give, and both stores expect a route to
+      // the privacy policy from inside the app. Neither can depend on having
+      // signed up.
       return Scaffold(
         appBar: AppBar(title: const Text('פרופיל')),
-        body: const SafeArea(
-          child: GuestPromptView(
-            icon: Icons.person_outline,
-            title: 'הפרופיל שלך',
-            body: 'התחבר כדי לנהל מודעות, שמורים והתכתבויות.',
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+                AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xxl),
+            children: [
+              const SizedBox(height: AppSpace.xl),
+              const GuestPromptView(
+                icon: Icons.person_outline,
+                title: 'הפרופיל שלך',
+                body: 'התחבר כדי לנהל מודעות, שמורים והתכתבויות.',
+                fillHeight: false,
+              ),
+              const SizedBox(height: AppSpace.xl),
+              _MenuGroup(rows: [
+                const AnalyticsConsentTile(),
+                _MenuRow(
+                  icon: Icons.info_outline,
+                  label: 'אודות BonnetCheck',
+                  onTap: () => context.push('/about'),
+                ),
+                _MenuRow(
+                  icon: Icons.gavel_outlined,
+                  label: 'תנאי שימוש ופרטיות',
+                  onTap: () => context.push('/legal'),
+                ),
+              ]),
+              const SizedBox(height: AppSpace.md),
+              const _ThemeToggle(),
+            ],
           ),
         ),
       );
