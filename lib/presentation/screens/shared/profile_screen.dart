@@ -8,6 +8,7 @@ import '../../providers/theme_provider.dart';
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../../core/theme/app_dimens.dart';
+import '../../../core/constants/app_config.dart';
 import '../../widgets/analytics_consent_gate.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/guest_prompt_view.dart';
@@ -64,6 +65,7 @@ class ProfileScreen extends ConsumerWidget {
               ]),
               const SizedBox(height: AppSpace.md),
               const _ThemeToggle(),
+              const _VersionLine(),
             ],
           ),
         ),
@@ -263,6 +265,7 @@ class _Content extends StatelessWidget {
         ]),
         const SizedBox(height: AppSpace.md),
         const _ThemeToggle(),
+        const _VersionLine(),
         const SizedBox(height: AppSpace.md),
         // The two actions you cannot simply undo, kept apart from navigation
         // and marked. The reference design put the terms-of-use link in this
@@ -444,6 +447,33 @@ class _MenuRow extends StatelessWidget {
               Icon(Icons.chevron_left,
                   size: 18, color: context.colors.textSubtle),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The build the person is actually holding.
+///
+/// It existed only inside the support email's footer until 25/08, and that is
+/// half a version number: the first thing anyone needs when a friend says "it
+/// doesn't work" is which build they have, and neither of them could see it.
+/// Side-loaded copies make this worse than it would be in a store, where the
+/// installed version is one tap away in Settings.
+///
+/// Quiet on purpose — nobody opens the profile to read this, they come looking
+/// for it once.
+class _VersionLine extends StatelessWidget {
+  const _VersionLine();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpace.lg),
+      child: Center(
+        child: Text(
+          'BonnetCheck ${AppConfig.appVersion}',
+          style: context.text.micro,
         ),
       ),
     );

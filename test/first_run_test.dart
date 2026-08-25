@@ -57,6 +57,18 @@ void main() {
     expect(guestBranch, contains("context.push('/legal')"));
   });
 
+  test('the build number is on screen, for both a guest and an owner', () {
+    // It lived only inside the support email's footer until 25/08. The first
+    // thing anyone needs when a friend reports a problem is which build they
+    // have — and with a side-loaded copy neither of them could see it.
+    final profile = File('lib/presentation/screens/shared/profile_screen.dart')
+        .readAsStringSync();
+
+    expect('const _VersionLine(),'.allMatches(profile).length, 2,
+        reason: 'once in the guest branch, once for a signed-in owner');
+    expect(profile, contains('AppConfig.appVersion'));
+  });
+
   test('an unknown address gets a Hebrew page, not a stack trace', () {
     // go_router's default draws "Page Not Found" in English over a raw
     // GoException. Every shared listing link carries a document id, so a stale
