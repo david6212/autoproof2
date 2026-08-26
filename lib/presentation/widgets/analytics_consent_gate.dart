@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/router.dart' show rootNavigatorKey;
+import '../../app/router.dart' show rootNavigatorKey, routerProvider;
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
@@ -19,6 +19,17 @@ import 'app_card.dart';
 ///
 /// Wrapped around the whole navigator, so it does not matter which screen the
 /// visitor lands on from a shared link.
+///
+/// **It waits for the opening screens to finish first.** Nothing is collected
+/// in the meantime — collection is switched off in `main()` and, on the web,
+/// the analytics instance is never even reached for until the answer is yes —
+/// so waiting costs no compliance and buys the thing consent law actually
+/// asks for. GDPR Art. 4(11) wants consent that is *informed*, and a stranger
+/// two seconds into a first launch, who has not yet been told what
+/// BonnetCheck is, cannot give an informed answer about whether measuring
+/// their use of it is fair. Measured on the live site 26/08: the sheet was
+/// the first thing a new install saw, painted over slide one of the
+/// onboarding.
 class AnalyticsConsentGate extends ConsumerStatefulWidget {
   const AnalyticsConsentGate({super.key, required this.child});
 
@@ -37,16 +48,76 @@ class _AnalyticsConsentGateState extends ConsumerState<AnalyticsConsentGate> {
   /// into a loop that reopens a sheet forever.
   int _attempts = 0;
 
+  /// The screens that exist to introduce the app. Asking to measure somebody
+  /// before they have been told what they are looking at is the one moment
+  /// the question cannot be answered meaningfully.
+  static const _introRoutes = {'/', '/splash', '/onboarding'};
+
+  /// Set once the listener is attached, so it is removed exactly once.
+  VoidCallback? _detach;
+
+  @override
+  void initState() {
+    super.initState();
+    // The gate sits outside the Navigator, so `GoRouterState.of` has no
+    // ancestor to find here. Listening to the delegate is how this widget
+    // learns that the opening screens are done.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final delegate = ref.read(routerProvider).routerDelegate;
+      void onRouteChanged() => _maybeAsk();
+      delegate.addListener(onRouteChanged);
+      _detach = () => delegate.removeListener(onRouteChanged);
+      _maybeAsk();
+    });
+  }
+
+  @override
+  void dispose() {
+    _detach?.call();
+    super.dispose();
+  }
+
+  /// Where the router currently is, or null if it has not settled yet.
+  String? get _location {
+    try {
+      return ref
+          .read(routerProvider)
+          .routerDelegate
+          .currentConfiguration
+          .uri
+          .path;
+    } catch (_) {
+      // A router mid-rebuild is not a reason to take the app down over a
+      // measurement prompt.
+      return null;
+    }
+  }
+
+  bool get _onIntroScreen {
+    final loc = _location;
+    // Unknown counts as "still opening": the safe direction to fail in is
+    // asking later, never asking over the first thing somebody sees.
+    return loc == null || _introRoutes.contains(loc);
+  }
+
+  void _maybeAsk() {
+    if (!mounted || _asking) return;
+    if (ref.read(analyticsConsentProvider).valueOrNull !=
+        AnalyticsConsent.unasked) {
+      return;
+    }
+    if (_onIntroScreen) return;
+    // After the frame: a route cannot be pushed while one is building.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _ask());
+  }
+
   @override
   Widget build(BuildContext context) {
-    final consent = ref.watch(analyticsConsentProvider).valueOrNull;
-
-    if (!_asking && consent == AnalyticsConsent.unasked) {
-      // After the frame: a route cannot be pushed while one is building, and
-      // the splash animation should not be interrupted mid-entrance.
-      WidgetsBinding.instance.addPostFrameCallback((_) => _ask());
-    }
-
+    // Watched, not just read: the answer arrives asynchronously from
+    // SharedPreferences, and this is what re-runs the check once it has.
+    ref.watch(analyticsConsentProvider);
+    _maybeAsk();
     return widget.child;
   }
 
@@ -62,6 +133,14 @@ class _AnalyticsConsentGateState extends ConsumerState<AnalyticsConsentGate> {
     await Future<void>.delayed(const Duration(seconds: 2));
     if (!mounted) {
       _asking = false;
+      return;
+    }
+    // Re-checked after the delay, not only before it: two seconds is long
+    // enough to land back on the opening screens, and an attempt burned there
+    // is one the reader never gets back.
+    if (_onIntroScreen) {
+      _asking = false;
+      _attempts--;
       return;
     }
     // The navigator's own context, not this widget's: this gate wraps the
@@ -95,6 +174,7 @@ class _AnalyticsConsentGateState extends ConsumerState<AnalyticsConsentGate> {
     // moment there IS an answer.
     if (mounted &&
         _attempts < 5 &&
+        !_onIntroScreen &&
         ref.read(analyticsConsentProvider).valueOrNull ==
             AnalyticsConsent.unasked) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _ask());

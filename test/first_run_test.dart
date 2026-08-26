@@ -81,4 +81,61 @@ void main() {
     // It must not repeat the address back at someone who did not type it.
     expect(router.contains('state.error'), isFalse);
   });
+
+  group('the measurement question waits its turn', () {
+    // Measured on the live site 26/08, on a browser profile with nothing
+    // stored: the consent sheet was painted over slide one of the onboarding.
+    // The very first thing a stranger met was a paragraph about persistent
+    // identifiers and Firebase Analytics — before a single word about what
+    // BonnetCheck is or does.
+    final gate =
+        File('lib/presentation/widgets/analytics_consent_gate.dart')
+            .readAsStringSync();
+    final provider =
+        File('lib/presentation/providers/analytics_consent_provider.dart')
+            .readAsStringSync();
+
+    test('the opening screens are named, and asked about', () {
+      expect(gate, contains('_introRoutes'));
+      for (final route in ['/splash', '/onboarding']) {
+        expect(gate, contains("'$route'"),
+            reason: '$route is an opening screen and must not be asked over');
+      }
+      expect(gate, contains('_onIntroScreen'));
+    });
+
+    test('an unsettled router counts as still opening', () {
+      // The safe direction to fail in. If the location cannot be read, asking
+      // later costs nothing; asking now risks landing on the first screen
+      // again, which is the whole bug.
+      expect(gate, contains('return loc == null || _introRoutes.contains(loc)'));
+    });
+
+    test('the location is re-read after the settle delay, not only before', () {
+      // Two seconds is long enough to navigate. Checking only on the way in
+      // would let the sheet open onto a screen that arrived during the wait.
+      final settle = gate.indexOf('Duration(seconds: 2)');
+      final recheck = gate.indexOf('if (_onIntroScreen) {');
+      expect(settle, greaterThan(-1));
+      expect(recheck, greaterThan(settle),
+          reason: 'the re-check has to come after the delay it guards');
+    });
+
+    test('a blocked attempt is given back, not spent', () {
+      // Attempts are capped at 5. Burning them while the reader is still in
+      // the onboarding would mean nobody is ever asked at all.
+      expect(gate, contains('_attempts--'));
+    });
+
+    test('waiting is free: nothing is measured before the answer', () {
+      // This is what makes the delay lawful rather than merely nicer. If
+      // collection ran while unasked, the sheet would have to come first and
+      // the ordering above would be a compliance regression, not a fix.
+      expect(provider,
+          contains('if (kIsWeb && !granted && !_touched) return;'));
+      expect(provider, contains('AnalyticsConsent.unasked'));
+      // "Still loading" and "failed" both have to count as no.
+      expect(provider, contains('AnalyticsConsent.granted;'));
+    });
+  });
 }
