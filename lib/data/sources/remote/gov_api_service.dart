@@ -39,14 +39,70 @@ class GovApiException implements Exception {
 
 /// Low-level HTTP client for the data.gov.il datastore_search endpoint.
 class GovApiService {
-  GovApiService({Dio? dio})
+  GovApiService({Dio? dio, Duration? deadline})
       : _dio = dio ??
             Dio(BaseOptions(
               connectTimeout: const Duration(seconds: 15),
               receiveTimeout: const Duration(seconds: 15),
-            ));
+            )),
+        // Injectable only so a test can prove the deadline fires without
+        // spending twenty seconds doing it. Production never passes one.
+        requestDeadline = deadline ?? defaultDeadline;
 
   final Dio _dio;
+
+  /// A ceiling on a whole request, which Dio's own options cannot give.
+  ///
+  /// `connectTimeout` is measured from the TCP connect — it does **not**
+  /// cover the DNS lookup that comes first, and `receiveTimeout` only measures
+  /// the gap between body chunks. A resolver that stalls therefore produces no
+  /// error and no timeout: the future never completes at all. That is not a
+  /// hypothetical — it is what the fuel screen did on a real phone on 26/08,
+  /// spinning forever, while the same dataset loaded in half a second in a
+  /// browser and from `dart:io` on a desktop.
+  ///
+  /// Longer than Dio's 15s on purpose: when Dio's own timeouts work they
+  /// should be the ones to fire, with their more specific error. This is the
+  /// backstop underneath them.
+  static const defaultDeadline = Duration(seconds: 20);
+
+  final Duration requestDeadline;
+
+  /// Every request this service makes goes through here.
+  ///
+  /// On failure it tries once more through the CORS Worker. The phone is
+  /// deliberately not routed through it normally — see
+  /// [ApiConstants.govApiFallback] — but a direct route that has already
+  /// failed costs nothing to give up on.
+  Future<Response<dynamic>> _get(
+    String url, {
+    required Map<String, dynamic> queryParameters,
+  }) async {
+    try {
+      return await _attempt(url, queryParameters);
+    } on DioException {
+      final fallback = ApiConstants.govApiFallback;
+      // Nothing to fall back to if the proxy is unset, or if this request was
+      // already the proxy — retrying the same host twice is just a slower
+      // failure.
+      if (fallback.isEmpty || url == fallback) rethrow;
+      return _attempt(fallback, queryParameters);
+    }
+  }
+
+  Future<Response<dynamic>> _attempt(
+    String url,
+    Map<String, dynamic> queryParameters,
+  ) =>
+      _dio.get(url, queryParameters: queryParameters).timeout(
+        requestDeadline,
+        // Raised as a Dio timeout so all eight call sites keep the error
+        // handling and the Hebrew wording they already have.
+        onTimeout: () => throw DioException.connectionTimeout(
+          timeout: requestDeadline,
+          requestOptions: RequestOptions(path: url),
+        ),
+      );
 
   /// The plate column, per dataset. Spelled as the ministry spells it, which
   /// is three different ways across five datasets — including one with a
@@ -81,7 +137,7 @@ class GovApiService {
         throw GovApiException('מספר רישוי לא תקין.',
             kind: GovApiErrorKind.badInput);
       }
-      final res = await _dio.get(
+      final res = await _get(
         ApiConstants.govApiBase,
         queryParameters: {
           'resource_id': ApiConstants.vehicleResourceId,
@@ -124,7 +180,7 @@ class GovApiService {
     try {
       final filters =
           '{"tozeret_cd":"$tozeretCd","degem_cd":"$degemCd","shnat_yitzur":"$year"}';
-      final res = await _dio.get(ApiConstants.govApiBase, queryParameters: {
+      final res = await _get(ApiConstants.govApiBase, queryParameters: {
         'resource_id': ApiConstants.modelSpecResourceId,
         'filters': filters,
         'limit': 1,
@@ -158,7 +214,7 @@ class GovApiService {
     Map<String, dynamic> extra = const {},
   }) async {
     try {
-      final res = await _dio.get(
+      final res = await _get(
         ApiConstants.govApiBase,
         queryParameters: {
           'resource_id': resourceId,
@@ -183,7 +239,7 @@ class GovApiService {
 
   Future<List<Map<String, dynamic>>> fetchInspectionCenters() async {
     try {
-      final res = await _dio.get(
+      final res = await _get(
         ApiConstants.govApiBase,
         queryParameters: {
           'resource_id': ApiConstants.garagesResourceId,
@@ -226,7 +282,7 @@ class GovApiService {
       if (town != null && town.trim().isNotEmpty) {
         filters['yishuv'] = town.trim();
       }
-      final res = await _dio.get(
+      final res = await _get(
         ApiConstants.govApiBase,
         queryParameters: {
           'resource_id': ApiConstants.garagesResourceId,
@@ -253,7 +309,7 @@ class GovApiService {
   /// structural change...). Returns null if missing — that's normal.
   Future<Map<String, dynamic>?> fetchHistory(String plateDigits) async {
     try {
-      final res = await _dio.get(ApiConstants.govApiBase, queryParameters: {
+      final res = await _get(ApiConstants.govApiBase, queryParameters: {
         'resource_id': ApiConstants.vehicleHistoryResourceId,
         'filters': plateFilter(plateFieldDefault, plateDigits),
         'limit': 5,
@@ -275,7 +331,7 @@ class GovApiService {
   /// Empty list = no open recalls (good).
   Future<List<Map<String, dynamic>>> fetchRecalls(String plateDigits) async {
     try {
-      final res = await _dio.get(ApiConstants.govApiBase, queryParameters: {
+      final res = await _get(ApiConstants.govApiBase, queryParameters: {
         'resource_id': ApiConstants.openRecallResourceId,
         'filters': plateFilter(plateFieldRecalls, plateDigits),
         'limit': 20,
@@ -295,7 +351,7 @@ class GovApiService {
   /// Returns the record (with bitul_dt) if so, else null.
   Future<Map<String, dynamic>?> fetchOffRoad(String plateDigits) async {
     try {
-      final res = await _dio.get(ApiConstants.govApiBase, queryParameters: {
+      final res = await _get(ApiConstants.govApiBase, queryParameters: {
         'resource_id': ApiConstants.offRoadResourceId,
         'filters': plateFilter(plateFieldDefault, plateDigits),
         'limit': 5,

@@ -48,6 +48,22 @@ class ApiConstants {
           ? '$proxyHost$_govPath'
           : '$govDirectHost$_govPath';
 
+  /// The proxy endpoint, for use as a **fallback only**.
+  ///
+  /// The phone still calls [govDirectHost] first, for the reasons above. But
+  /// "the phone never needs the shim" turned out to be true only about CORS:
+  /// on 26/08 the fuel screen span forever on a real device while the same
+  /// data loaded instantly in a browser — the browser being the build that
+  /// goes through this Worker. A network that cannot reach data.gov.il, for
+  /// whatever reason its resolver or its operator has, leaves the direct
+  /// route with nowhere to go.
+  ///
+  /// Only reached after a direct attempt has already failed, so a Worker
+  /// outage still cannot take down a phone whose direct route works, and the
+  /// free tier still carries no traffic it did not have to.
+  static String get govApiFallback =>
+      govProxyHost.isEmpty ? '' : '$govProxyHost$_govPath';
+
   static const vehicleResourceId = '053cea08-09bc-40ec-8f7a-156f0677aff3';
 
   // Additional Ministry of Transport datasets.
