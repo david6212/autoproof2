@@ -6,10 +6,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
+import 'core/utils/release_error_widget.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Before anything can build, so a failure during startup is reported too.
+  ReleaseErrorWidget.install();
   _registerFontLicences();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
