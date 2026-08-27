@@ -15,6 +15,7 @@ import '../../widgets/app_bar_action.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/map_attribution.dart';
 import '../../widgets/map_basemap.dart';
+import '../../widgets/navigate_sheet.dart';
 import '../../widgets/map_sheet.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/gov_api_provider.dart';
@@ -795,7 +796,13 @@ class _CenterCard extends StatelessWidget {
                   ),
                   icon: const Icon(Icons.navigation_outlined, size: 18),
                   label: const Text('ניווט'),
-                  onPressed: () => _launch(context, _mapsUri()),
+                  onPressed: () => NavigateSheet.show(
+                    context,
+                    lat: center.lat,
+                    lng: center.lng,
+                    query: center.mapsQuery,
+                    label: center.name,
+                  ),
                 ),
               ),
             ],
@@ -805,15 +812,6 @@ class _CenterCard extends StatelessWidget {
     );
   }
 
-  /// Prefer exact coordinates for navigation; fall back to a text search.
-  Uri _mapsUri() {
-    if (center.hasCoords) {
-      return Uri.parse(
-          'https://www.google.com/maps/search/?api=1&query=${center.lat},${center.lng}');
-    }
-    return Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(center.mapsQuery)}');
-  }
 }
 
 class _Message extends StatelessWidget {

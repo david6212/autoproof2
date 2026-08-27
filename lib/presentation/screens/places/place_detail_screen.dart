@@ -14,6 +14,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/place_provider.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/navigate_sheet.dart';
 import '../../widgets/error_retry.dart';
 import '../../widgets/garage/star_rating.dart';
 import '../../widgets/login_required_sheet.dart';
@@ -238,7 +239,6 @@ class _Actions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasPhone = (place.phone ?? '').trim().isNotEmpty;
-    final hasPoint = place.lat != 0 || place.lng != 0;
 
     return Row(
       children: [
@@ -250,16 +250,28 @@ class _Actions extends StatelessWidget {
               onPressed: () => _open(Uri.parse('tel:${place.phone}')),
             ),
           ),
-        if (hasPhone && hasPoint) const SizedBox(width: AppSpace.sm),
-        if (hasPoint)
-          Expanded(
-            child: OutlinedButton.icon(
-              icon: const Icon(Icons.navigation_outlined, size: 18),
-              label: const Text('נווט'),
-              onPressed: () => _open(Uri.parse(
-                  'https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}')),
+        if (hasPhone) const SizedBox(width: AppSpace.sm),
+        // Offered even without coordinates now, which is most community
+        // entries: `addCommunityPlace` stores 0,0 because the add screen does
+        // not capture a location. NavigateSheet sends the name and the town
+        // instead, which is what a person would have typed anyway — and it
+        // refuses to hand 0,0 to a navigation app, which would confidently
+        // drive somebody into the Atlantic.
+        Expanded(
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.navigation_outlined, size: 18),
+            label: const Text('נווט'),
+            onPressed: () => NavigateSheet.show(
+              context,
+              lat: place.lat,
+              lng: place.lng,
+              query: [place.name, place.address, place.city]
+                  .where((p) => p.trim().isNotEmpty)
+                  .join(' '),
+              label: place.name,
             ),
           ),
+        ),
       ],
     );
   }

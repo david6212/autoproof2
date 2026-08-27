@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_palette.dart';
@@ -15,6 +14,7 @@ import '../../widgets/app_bar_action.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/map_attribution.dart';
 import '../../widgets/map_basemap.dart';
+import '../../widgets/navigate_sheet.dart';
 import '../../widgets/map_sheet.dart';
 import '../../widgets/fuel_report_sheet.dart';
 import '../../widgets/map_cluster.dart';
@@ -560,14 +560,17 @@ class _StationCard extends ConsumerWidget {
                   ),
                   icon: const Icon(Icons.directions_outlined, size: 18),
                   label: const Text('ניווט'),
-                  onPressed: () {
-                    final q = '${station.lat},${station.lng}';
-                    launchUrl(
-                      Uri.parse(
-                          'https://www.google.com/maps/search/?api=1&query=$q'),
-                      mode: LaunchMode.externalApplication,
-                    );
-                  },
+                  // Was a Google Maps *search* link, which drops the reader on
+                  // a pin and leaves them to press "directions" themselves.
+                  // This offers Waze first, which is what most people here
+                  // actually drive with.
+                  onPressed: () => NavigateSheet.show(
+                    context,
+                    lat: station.lat,
+                    lng: station.lng,
+                    query: station.mapsQuery,
+                    label: station.displayName,
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpace.sm),

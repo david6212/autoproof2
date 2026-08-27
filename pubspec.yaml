@@ -2,7 +2,7 @@ name: bonnetcheck
 description: "BonnetCheck — trusted marketplace for buying used cars in Israel."
 publish_to: 'none'
 
-version: 0.9.0+14
+version: 0.9.1+15
 
 environment:
   sdk: ^3.7.2
