@@ -324,7 +324,14 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
                   ),
                   const SizedBox(height: AppSpace.md),
                 ],
-                Row(
+                // Wrap, not Row. Side by side the two chips need more width
+                // than a 360dp phone has — measured at 328dp available, they
+                // overflowed by 37 — and an overflowing Row does not shrink,
+                // it clips. On a narrow screen the second chip simply moves
+                // to its own line.
+                Wrap(
+                  spacing: AppSpace.sm,
+                  runSpacing: AppSpace.sm,
                   children: [
                     _SortChip(
                       label: 'הקרובות אליי',
@@ -332,7 +339,6 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
                       enabled: me != null,
                       onTap: () => setState(() => _byPrice = false),
                     ),
-                    const SizedBox(width: AppSpace.sm),
                     _SortChip(
                       label: 'המחיר שדווח',
                       on: _byPrice,

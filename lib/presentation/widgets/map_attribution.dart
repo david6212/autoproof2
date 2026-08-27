@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/constants/app_config.dart';
 
 /// The map tiles come from OpenStreetMap, and this says so.
 ///
@@ -70,9 +71,17 @@ TileLayer osmTileLayer() => TileLayer(
       urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       userAgentPackageName: 'il.autoproof.autoproof',
       tileProvider: NetworkTileProvider(
-        headers: const {
+        // NOT const. flutter_map writes its own `User-Agent` into this very
+        // map at runtime, and a const map is unmodifiable — the write throws
+        // `UnsupportedError: Cannot modify unmodifiable map`, which happens
+        // during build and takes the whole screen with it.
+        //
+        // It never showed up in a browser because a browser forbids setting
+        // User-Agent at all, so flutter_map skips the write on web entirely.
+        // Both maps in this app were dead on Android and fine on the site.
+        headers: {
           'User-Agent':
-              'BonnetCheck/0.5.0 (+https://bonnetcheck.web.app; support@bonnetcheck.com)',
+              'BonnetCheck/${AppConfig.appVersion} (+https://bonnetcheck.web.app; support@bonnetcheck.com)',
         },
       ),
     );
