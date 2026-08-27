@@ -28,7 +28,15 @@ class OnboardingArt extends StatelessWidget {
     return SizedBox(
       width: _size,
       height: _size,
-      child: Center(
+      // scaleDown, not a bigger _size. Slide one already stood 173px tall in
+      // a 168px box and clipped its own bottom edge on a 360x780 phone — but
+      // raising the number only moves the cliff. These drawings are built
+      // from text and icons, so they grow with the reader's font setting, and
+      // somebody running Android's largest text size overflows by far more
+      // than five pixels. Shrinking to fit answers every size at once, and
+      // costs nothing at the default one, where nothing is scaled.
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
         child: switch (index) {
           0 => const _PlateLookup(),
           1 => const _Mismatch(),

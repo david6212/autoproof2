@@ -141,44 +141,51 @@ class BrandWordmark extends StatelessWidget {
     // Latin mark in an RTL app — pin the direction so it never flips.
     return Directionality(
       textDirection: TextDirection.ltr,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          // Translating rather than re-laying-out: the Row keeps its slots, so
-          // the mark never reflows while it assembles.
-          Transform.translate(
-            offset: Offset(-travel, 0),
-            child: Text(
-              'Bonnet',
-              style: TextStyle(
-                // Bundled with the app rather than fetched from Google's
-                // servers at first paint — see the fonts: block in pubspec.
-                fontFamily: 'Poppins',
-                fontSize: fontSize,
-                fontWeight: FontWeight.w700,
-                color: ink,
-                letterSpacing: 0.5,
-                height: 1,
+      // A wordmark is a drawing that happens to be made of letters, and it
+      // overflowed its slot at Android's 1.5x text size. Shrinking to fit is
+      // the right answer rather than refusing to scale at all: it still grows
+      // with the reader up to the width it has, and never past it.
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            // Translating rather than re-laying-out: the Row keeps its slots, so
+            // the mark never reflows while it assembles.
+            Transform.translate(
+              offset: Offset(-travel, 0),
+              child: Text(
+                'Bonnet',
+                style: TextStyle(
+                  // Bundled with the app rather than fetched from Google's
+                  // servers at first paint — see the fonts: block in pubspec.
+                  fontFamily: 'Poppins',
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w700,
+                  color: ink,
+                  letterSpacing: 0.5,
+                  height: 1,
+                ),
               ),
             ),
-          ),
-          Padding(
-            // Optical spacing: the check's open left arm needs less air than a
-            // letter would, and it sits slightly off the baseline.
-            padding: EdgeInsets.only(
-              left: fontSize * 0.06,
-              bottom: fontSize * 0.04,
-            ),
-            child: Transform.translate(
-              offset: Offset(travel, 0),
-              child: CustomPaint(
-                size: Size(capHeight * 1.05, capHeight),
-                painter: CheckPainter(check, checkProgress),
+            Padding(
+              // Optical spacing: the check's open left arm needs less air than a
+              // letter would, and it sits slightly off the baseline.
+              padding: EdgeInsets.only(
+                left: fontSize * 0.06,
+                bottom: fontSize * 0.04,
+              ),
+              child: Transform.translate(
+                offset: Offset(travel, 0),
+                child: CustomPaint(
+                  size: Size(capHeight * 1.05, capHeight),
+                  painter: CheckPainter(check, checkProgress),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -193,15 +200,16 @@ class ShieldPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     canvas.scale(size.width / 100, size.height / 115);
 
-    final outer = Path()
-      ..moveTo(50, 5)
-      ..cubicTo(75, 5, 95, 18, 95, 28)
-      ..lineTo(95, 65)
-      ..cubicTo(95, 92, 65, 108, 50, 112)
-      ..cubicTo(35, 108, 5, 92, 5, 65)
-      ..lineTo(5, 28)
-      ..cubicTo(5, 18, 25, 5, 50, 5)
-      ..close();
+    final outer =
+        Path()
+          ..moveTo(50, 5)
+          ..cubicTo(75, 5, 95, 18, 95, 28)
+          ..lineTo(95, 65)
+          ..cubicTo(95, 92, 65, 108, 50, 112)
+          ..cubicTo(35, 108, 5, 92, 5, 65)
+          ..lineTo(5, 28)
+          ..cubicTo(5, 18, 25, 5, 50, 5)
+          ..close();
     canvas.drawPath(
       outer,
       Paint()
@@ -211,15 +219,16 @@ class ShieldPainter extends CustomPainter {
         ..color = color,
     );
 
-    final inner = Path()
-      ..moveTo(50, 14)
-      ..cubicTo(70, 14, 87, 25, 87, 33)
-      ..lineTo(87, 63)
-      ..cubicTo(87, 85, 62, 98, 50, 102)
-      ..cubicTo(38, 98, 13, 85, 13, 63)
-      ..lineTo(13, 33)
-      ..cubicTo(13, 25, 30, 14, 50, 14)
-      ..close();
+    final inner =
+        Path()
+          ..moveTo(50, 14)
+          ..cubicTo(70, 14, 87, 25, 87, 33)
+          ..lineTo(87, 63)
+          ..cubicTo(87, 85, 62, 98, 50, 102)
+          ..cubicTo(38, 98, 13, 85, 13, 63)
+          ..lineTo(13, 33)
+          ..cubicTo(13, 25, 30, 14, 50, 14)
+          ..close();
     canvas.drawPath(inner, Paint()..color = color);
   }
 
@@ -237,15 +246,18 @@ class CheckPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     canvas.scale(size.width / 60, size.height / 60);
 
-    final full = Path()
-      ..moveTo(12, 30)
-      ..lineTo(26, 44)
-      ..lineTo(48, 16);
+    final full =
+        Path()
+          ..moveTo(12, 30)
+          ..lineTo(26, 44)
+          ..lineTo(48, 16);
 
     final drawn = Path();
     for (final m in full.computeMetrics()) {
       drawn.addPath(
-          m.extractPath(0, m.length * progress.clamp(0.0, 1.0)), Offset.zero);
+        m.extractPath(0, m.length * progress.clamp(0.0, 1.0)),
+        Offset.zero,
+      );
     }
 
     canvas.drawPath(

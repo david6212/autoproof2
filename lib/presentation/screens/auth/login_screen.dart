@@ -68,29 +68,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           e.code == 'canceled') {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_socialError(e.code))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_socialError(e.code))));
     } catch (_) {
       if (!mounted) return;
       setState(() => _socialLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ההתחברות נכשלה. נסו שוב.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('ההתחברות נכשלה. נסו שוב.')));
     }
   }
 
   /// Tells the user what actually happened. "Try again" is wrong advice for a
   /// provider that isn't switched on, or for an email already used elsewhere.
   String _socialError(String code) => switch (code) {
-        'operation-not-allowed' =>
-          'שיטת ההתחברות הזו עדיין לא זמינה. נסו עם Google או עם מספר טלפון.',
-        'account-exists-with-different-credential' =>
-          'קיים כבר חשבון עם האימייל הזה. התחברו בשיטה שבה נרשמתם.',
-        'network-request-failed' => 'אין חיבור לאינטרנט. בדקו ונסו שוב.',
-        'too-many-requests' => 'יותר מדי ניסיונות. נסו שוב מאוחר יותר.',
-        _ => 'ההתחברות נכשלה. נסו שוב.',
-      };
+    'operation-not-allowed' =>
+      'שיטת ההתחברות הזו עדיין לא זמינה. נסו עם Google או עם מספר טלפון.',
+    'account-exists-with-different-credential' =>
+      'קיים כבר חשבון עם האימייל הזה. התחברו בשיטה שבה נרשמתם.',
+    'network-request-failed' => 'אין חיבור לאינטרנט. בדקו ונסו שוב.',
+    'too-many-requests' => 'יותר מדי ניסיונות. נסו שוב מאוחר יותר.',
+    _ => 'ההתחברות נכשלה. נסו שוב.',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -120,163 +120,189 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-              const SizedBox(height: 12),
-              // Same mark as the splash screen (shield + car + check).
-              const BrandLogo(size: 132, withWordmark: true),
-              const SizedBox(height: 10),
-              Text(
-                AppStrings.tagline,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: context.colors.tealText2),
-              ),
-              const SizedBox(height: 26),
-              Text(
-                isCodeStep ? 'הזן את הקוד שקיבלת' : 'התחברות',
-                textAlign: TextAlign.center,
-                style: AppText.h2,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                isCodeStep
-                    ? 'שלחנו קוד בן 6 ספרות אל ${state.phoneE164}'
-                    : 'בלחיצה אחת עם חשבון Google, או במספר טלפון.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 13, color: context.colors.textMuted),
-              ),
-              const SizedBox(height: 24),
-
-              // ---- Google first ----
-              //
-              // It is the only route that works today: phone verification is
-              // broken and Apple has no provider behind it. Ordering is the
-              // whole fix here — the SMS field was the first and loudest thing
-              // on the screen, and it is the one that fails.
-              if (!isCodeStep) ...[
-                _SocialButton(
-                  label: 'המשך עם Google',
-                  leading: Image.asset('assets/google_g.png',
-                      width: 22, height: 22),
-                  background: context.colors.surface,
-                  foreground: context.colors.textPrimary,
-                  border: true,
-                  loading: _socialLoading,
-                  onPressed: () => _social(
-                      () => ref.read(authRepositoryProvider).signInWithGoogle()),
-                ),
-                // Apple's mark inverts with the theme, which is both what
-                // Apple's own guidance asks for and the only way this button
-                // stays visible: the old hard-coded #111111 sat on a #101312
-                // page in the dark theme — a contrast ratio of about 1.01,
-                // i.e. an invisible button.
-                if (AppConfig.appleSignInEnabled) ...[
-                  const SizedBox(height: 10),
-                  Builder(builder: (context) {
-                    final onDark =
-                        Theme.of(context).brightness == Brightness.dark;
-                    final bg = onDark
-                        ? context.colors.onBrand
-                        : const Color(0xFF111111);
-                    final fg = onDark
-                        ? const Color(0xFF111111)
-                        : context.colors.onBrand;
-                    return _SocialButton(
-                      label: 'המשך עם Apple',
-                      leading: Icon(Icons.apple, color: fg, size: 22),
-                      background: bg,
-                      foreground: fg,
-                      loading: _socialLoading,
-                      onPressed: () => _social(() =>
-                          ref.read(authRepositoryProvider).signInWithApple()),
-                    );
-                  }),
-                ],
-                const SizedBox(height: 20),
-                const _OrDivider(),
-                const SizedBox(height: 16),
-              ],
-
-              // ---- and the phone route, second ----
-              if (!isCodeStep)
-                _PhoneField(controller: _phoneController)
-              else
-                _CodeField(controller: _codeController),
-
-              if (state.error != null) ...[
-                const SizedBox(height: 16),
-                _ErrorBanner(message: state.error!),
-              ],
-
-              const SizedBox(height: 16),
-              // Outlined rather than filled while it sits below Google: two
-              // buttons of equal weight is not a recommendation, and this is
-              // the route that currently fails.
-              if (isCodeStep)
-                PrimaryButton(
-                  label: 'אמת קוד',
-                  loading: state.loading,
-                  onPressed: () {
-                    FocusScope.of(context).unfocus();
-                    controller.verifyCode(_codeController.text.trim());
-                  },
-                )
-              else
-                SizedBox(
-                  height: 52,
-                  child: OutlinedButton(
-                    // A neutral border, not the theme's brand green. Reordering
-                    // alone did not finish the job: the themed outline was
-                    // louder than Google's grey-bordered white button above it,
-                    // so the eye still landed on the route that fails.
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: context.colors.textPrimary,
-                      side: BorderSide(color: context.colors.cardBorder),
+                    const SizedBox(height: 12),
+                    // Same mark as the splash screen (shield + car + check).
+                    const BrandLogo(size: 132, withWordmark: true),
+                    const SizedBox(height: 10),
+                    Text(
+                      AppStrings.tagline,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: context.colors.tealText2,
+                      ),
                     ),
-                    onPressed: state.loading
-                        ? null
-                        : () {
-                            FocusScope.of(context).unfocus();
-                            controller.sendCode(_phoneController.text.trim());
-                          },
-                    child: Text(state.loading ? 'שולח...' : AppStrings.sendCode),
-                  ),
-                ),
+                    const SizedBox(height: 26),
+                    Text(
+                      isCodeStep ? 'הזן את הקוד שקיבלת' : 'התחברות',
+                      textAlign: TextAlign.center,
+                      style: AppText.h2,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      isCodeStep
+                          ? 'שלחנו קוד בן 6 ספרות אל ${state.phoneE164}'
+                          : 'בלחיצה אחת עם חשבון Google, או במספר טלפון.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: context.colors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
 
-              if (isCodeStep) ...[
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: state.loading
-                      ? null
-                      : () {
-                          _codeController.clear();
-                          controller.reset();
+                    // ---- Google first ----
+                    //
+                    // It is the only route that works today: phone verification is
+                    // broken and Apple has no provider behind it. Ordering is the
+                    // whole fix here — the SMS field was the first and loudest thing
+                    // on the screen, and it is the one that fails.
+                    if (!isCodeStep) ...[
+                      _SocialButton(
+                        label: 'המשך עם Google',
+                        leading: Image.asset(
+                          'assets/google_g.png',
+                          width: 22,
+                          height: 22,
+                        ),
+                        background: context.colors.surface,
+                        foreground: context.colors.textPrimary,
+                        border: true,
+                        loading: _socialLoading,
+                        onPressed:
+                            () => _social(
+                              () =>
+                                  ref
+                                      .read(authRepositoryProvider)
+                                      .signInWithGoogle(),
+                            ),
+                      ),
+                      // Apple's mark inverts with the theme, which is both what
+                      // Apple's own guidance asks for and the only way this button
+                      // stays visible: the old hard-coded #111111 sat on a #101312
+                      // page in the dark theme — a contrast ratio of about 1.01,
+                      // i.e. an invisible button.
+                      if (AppConfig.appleSignInEnabled) ...[
+                        const SizedBox(height: 10),
+                        Builder(
+                          builder: (context) {
+                            final onDark =
+                                Theme.of(context).brightness == Brightness.dark;
+                            final bg =
+                                onDark
+                                    ? context.colors.onBrand
+                                    : const Color(0xFF111111);
+                            final fg =
+                                onDark
+                                    ? const Color(0xFF111111)
+                                    : context.colors.onBrand;
+                            return _SocialButton(
+                              label: 'המשך עם Apple',
+                              leading: Icon(Icons.apple, color: fg, size: 22),
+                              background: bg,
+                              foreground: fg,
+                              loading: _socialLoading,
+                              onPressed:
+                                  () => _social(
+                                    () =>
+                                        ref
+                                            .read(authRepositoryProvider)
+                                            .signInWithApple(),
+                                  ),
+                            );
+                          },
+                        ),
+                      ],
+                      const SizedBox(height: 20),
+                      const _OrDivider(),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // ---- and the phone route, second ----
+                    if (!isCodeStep)
+                      _PhoneField(controller: _phoneController)
+                    else
+                      _CodeField(controller: _codeController),
+
+                    if (state.error != null) ...[
+                      const SizedBox(height: 16),
+                      _ErrorBanner(message: state.error!),
+                    ],
+
+                    const SizedBox(height: 16),
+                    // Outlined rather than filled while it sits below Google: two
+                    // buttons of equal weight is not a recommendation, and this is
+                    // the route that currently fails.
+                    if (isCodeStep)
+                      PrimaryButton(
+                        label: 'אמת קוד',
+                        loading: state.loading,
+                        onPressed: () {
+                          FocusScope.of(context).unfocus();
+                          controller.verifyCode(_codeController.text.trim());
                         },
-                  child: const Text('שנה מספר טלפון'),
-                ),
-              ] else ...[
-                const SizedBox(height: 12),
-                // The arrow used to be the character ←. Heebo does not carry
-                // it, and Flutter's web engine answers a missing glyph by
-                // downloading a Noto fallback from fonts.gstatic.com at
-                // runtime — which is the exact request HALT-5 was closed by
-                // bundling the fonts to stop. A Material icon is drawn from
-                // the bundled icon font.
-                TextButton.icon(
-                  onPressed: () => context.go('/home'),
-                  icon: const Icon(Icons.arrow_back, size: 18),
-                  label: const Text('גלוש בלי להתחבר'),
-                ),
-                // Only shown once the documents actually exist — a consent
-                // line pointing at nothing is worse than no line.
-                if (LegalInfo.isPublished) ...[
-                  const SizedBox(height: 4),
-                  const _ConsentNote(),
-                ],
-              ],
-            ],
+                      )
+                    else
+                      SizedBox(
+                        height: 52,
+                        child: OutlinedButton(
+                          // A neutral border, not the theme's brand green. Reordering
+                          // alone did not finish the job: the themed outline was
+                          // louder than Google's grey-bordered white button above it,
+                          // so the eye still landed on the route that fails.
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: context.colors.textPrimary,
+                            side: BorderSide(color: context.colors.cardBorder),
+                          ),
+                          onPressed:
+                              state.loading
+                                  ? null
+                                  : () {
+                                    FocusScope.of(context).unfocus();
+                                    controller.sendCode(
+                                      _phoneController.text.trim(),
+                                    );
+                                  },
+                          child: Text(
+                            state.loading ? 'שולח...' : AppStrings.sendCode,
+                          ),
+                        ),
+                      ),
+
+                    if (isCodeStep) ...[
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed:
+                            state.loading
+                                ? null
+                                : () {
+                                  _codeController.clear();
+                                  controller.reset();
+                                },
+                        child: const Text('שנה מספר טלפון'),
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 12),
+                      // The arrow used to be the character ←. Heebo does not carry
+                      // it, and Flutter's web engine answers a missing glyph by
+                      // downloading a Noto fallback from fonts.gstatic.com at
+                      // runtime — which is the exact request HALT-5 was closed by
+                      // bundling the fonts to stop. A Material icon is drawn from
+                      // the bundled icon font.
+                      TextButton.icon(
+                        onPressed: () => context.go('/home'),
+                        icon: const Icon(Icons.arrow_back, size: 18),
+                        label: const Text('גלוש בלי להתחבר'),
+                      ),
+                      // Only shown once the documents actually exist — a consent
+                      // line pointing at nothing is worse than no line.
+                      if (LegalInfo.isPublished) ...[
+                        const SizedBox(height: 4),
+                        const _ConsentNote(),
+                      ],
+                    ],
+                  ],
                 ),
               ),
             ),
@@ -365,10 +391,7 @@ class _CodeField extends StatelessWidget {
         FilteringTextInputFormatter.digitsOnly,
         LengthLimitingTextInputFormatter(6),
       ],
-      decoration: const InputDecoration(
-        counterText: '',
-        hintText: '••••••',
-      ),
+      decoration: const InputDecoration(counterText: '', hintText: '••••••'),
     );
   }
 }
@@ -423,20 +446,31 @@ class _SocialButton extends StatelessWidget {
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
-            side: border
-                ? BorderSide(color: context.colors.cardBorder)
-                : BorderSide.none,
+            side:
+                border
+                    ? BorderSide(color: context.colors.cardBorder)
+                    : BorderSide.none,
           ),
         ),
         onPressed: loading ? null : onPressed,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             leading,
             const SizedBox(width: 10),
-            Text(label,
+            // Flexible, so a longer label at a larger text size shortens
+            // instead of running off the end of its own button.
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w600)),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ],
         ),
       ),

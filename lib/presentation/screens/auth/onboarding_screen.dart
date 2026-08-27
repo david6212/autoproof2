@@ -84,29 +84,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   final s = _slides[i];
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Was a single Material glyph in a rounded square —
-                        // the same shape three times, telling the reader
-                        // nothing the heading had not already said.
-                        OnboardingArt(index: i),
-                        const SizedBox(height: 28),
-                        Text(
-                          s.title,
-                          textAlign: TextAlign.center,
-                          style: AppText.display,
+                    // Centred when it fits, scrollable when it does not.
+                    // A slide is a fixed slice of screen with a heading and a
+                    // paragraph in it, and both grow with the reader's font
+                    // setting — at Android's 1.5x this Column stood 302px
+                    // taller than the space it had, and a Column that does not
+                    // fit clips rather than shrinking. The reader who most
+                    // needs the larger text was the one losing the sentence.
+                    child: Center(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Was a single Material glyph in a rounded square —
+                            // the same shape three times, telling the reader
+                            // nothing the heading had not already said.
+                            OnboardingArt(index: i),
+                            const SizedBox(height: 28),
+                            Text(
+                              s.title,
+                              textAlign: TextAlign.center,
+                              style: AppText.display,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              s.body,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: context.colors.textMuted,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          s.body,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: context.colors.textMuted,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   );
                 },
@@ -122,7 +134,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   width: active ? 22 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: active ? context.colors.teal : context.colors.cardBorder,
+                    color:
+                        active
+                            ? context.colors.teal
+                            : context.colors.cardBorder,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 );
@@ -136,7 +151,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 AppStrings.entryDisclaimer,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 11.5, height: 1.4, color: context.colors.textSubtle),
+                  fontSize: 11.5,
+                  height: 1.4,
+                  color: context.colors.textSubtle,
+                ),
               ),
             ),
             Padding(
