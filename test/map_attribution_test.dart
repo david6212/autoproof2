@@ -23,7 +23,7 @@ void main() {
     ));
     await tester.pump();
 
-    expect(find.text('© OpenStreetMap contributors'), findsOneWidget);
+    expect(find.text('© OpenStreetMap · OpenFreeMap'), findsOneWidget);
   });
 
   test('every map in the app draws its tiles through the credited layer', () {
@@ -32,7 +32,12 @@ void main() {
     final offenders = <String>[];
     for (final entity in Directory('lib').listSync(recursive: true)) {
       if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      // Two sanctioned homes for a tile layer, and only two: the credit
+      // widget itself, and the basemap that the credited screens embed.
+      // `map_basemap.dart` keeps a raster fallback for the moment before the
+      // vector style is parsed, and for the case where it cannot be.
       if (entity.path.endsWith('map_attribution.dart')) continue;
+      if (entity.path.endsWith('map_basemap.dart')) continue;
       final lines = entity.readAsLinesSync();
       for (var i = 0; i < lines.length; i++) {
         final line = lines[i];
@@ -45,7 +50,30 @@ void main() {
         }
       }
     }
-    expect(offenders, isEmpty, reason: 'use osmTileLayer() from map_attribution.dart');
+    expect(offenders, isEmpty,
+        reason: 'embed BasemapLayer() from map_basemap.dart');
+  });
+
+  test('both map screens draw the same basemap, and nothing else', () {
+    // The point of centralising: a screen that built its own layer would get
+    // neither the house style nor the credit, and would look almost right.
+    for (final path in const [
+      'lib/presentation/screens/buyer/fuel_stations_screen.dart',
+      'lib/presentation/screens/buyer/inspectors_screen.dart',
+    ]) {
+      expect(File(path).readAsStringSync(), contains('BasemapLayer()'),
+          reason: '$path must draw the shared basemap');
+    }
+  });
+
+  test('the vector style credits OpenStreetMap and the tile host', () {
+    // The tiles are OSM data under ODbL, served by OpenFreeMap. Both want
+    // naming, and the credit is rendered by the app rather than by the style,
+    // so nothing in the style file can be relied on to carry it.
+    final credit =
+        File('lib/presentation/widgets/map_attribution.dart').readAsStringSync();
+    expect(credit, contains('OpenStreetMap'));
+    expect(credit, contains('OpenFreeMap'));
   });
 
   test('a map screen shows the credit', () {

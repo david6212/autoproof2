@@ -14,6 +14,7 @@ import '../../providers/gov_api_provider.dart';
 import '../../widgets/app_bar_action.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/map_attribution.dart';
+import '../../widgets/map_basemap.dart';
 import '../../widgets/map_sheet.dart';
 import '../../widgets/fuel_report_sheet.dart';
 import '../../widgets/map_cluster.dart';
@@ -226,7 +227,7 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
             },
           ),
           children: [
-            osmTileLayer(),
+            const BasemapLayer(),
             MarkerLayer(
               markers: [
                 for (final cluster in clusters)

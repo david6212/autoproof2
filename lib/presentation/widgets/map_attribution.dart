@@ -46,7 +46,12 @@ class MapAttribution extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Text(
-              '© OpenStreetMap contributors',
+              // Both are named. The map data is OpenStreetMap's under ODbL,
+              // which requires the credit; the tiles are served by
+              // OpenFreeMap, whose terms ask for the same. Neither is
+              // optional, and the line is short enough that being exact
+              // costs nothing.
+              '© OpenStreetMap · OpenFreeMap',
               style: TextStyle(fontSize: 11.5, color: Color(0xFF1A202C)),
             ),
           ),

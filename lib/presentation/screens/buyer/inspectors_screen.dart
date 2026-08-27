@@ -14,6 +14,7 @@ import '../../../data/models/inspection_center.dart';
 import '../../widgets/app_bar_action.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/map_attribution.dart';
+import '../../widgets/map_basemap.dart';
 import '../../widgets/map_sheet.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/gov_api_provider.dart';
@@ -353,7 +354,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             },
           ),
           children: [
-            osmTileLayer(),
+            const BasemapLayer(),
             MarkerLayer(
               markers: [
                 for (final cluster in clusters)
