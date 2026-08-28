@@ -14,6 +14,7 @@ import '../../../data/models/vehicle_document.dart';
 import '../../../data/models/vehicle_reminder.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/add_reminder_sheet.dart';
+import '../../widgets/vehicle/car_assistant_card.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/plate_text.dart';
 import '../../widgets/documented_progress_meter.dart';
@@ -723,6 +724,10 @@ class _Overview extends ConsumerWidget {
         // The garages this car has been to, then the washes anybody can add.
         // Two separate groups with their own headings, never mixed: "somewhere
         // you have been" and "somewhere that exists" are different claims.
+        // Ask-your-car, above the garages: it answers from everything already
+        // on this screen, so it belongs where the reader has just been reading.
+        CarAssistantCard(vehicle: vehicle),
+        const SizedBox(height: AppSpace.xl),
         MyGaragesSection(
           vehicleId: vehicle.id,
           services: ref.watch(vehicleServicesProvider(vehicle.id)).valueOrNull ??
