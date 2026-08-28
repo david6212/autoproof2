@@ -276,6 +276,27 @@ final carByIdProvider =
   return ref.watch(carRepositoryProvider).getCarById(id);
 });
 
+/// Which of this plate's earlier listings are still on the market.
+///
+/// Keyed by the listing ids that `plateHistorySnapshot` already carries, so no
+/// plate is needed to ask — which matters, because a buyer has not got one.
+///
+/// One read per earlier listing, and there are rarely more than two or three.
+/// Capped anyway: on the Spark plan an unbounded fan-out on a screen everybody
+/// opens is how a daily quota disappears in an afternoon.
+final concurrentListingsProvider =
+    FutureProvider.autoDispose.family<Set<String>, List<String>>(
+        (ref, carIds) async {
+  if (carIds.isEmpty) return const <String>{};
+  final repo = ref.watch(carRepositoryProvider);
+  final ids = carIds.take(5).toList();
+  final found = await Future.wait(ids.map(repo.getCarById));
+  return {
+    for (final car in found)
+      if (car != null && car.status == CarStatus.active) car.id,
+  };
+});
+
 /// The current user's active listing (null if none or not signed in).
 final myActiveListingProvider = Provider<AsyncValue<CarModel?>>((ref) {
   final user = ref.watch(authStateProvider).valueOrNull;

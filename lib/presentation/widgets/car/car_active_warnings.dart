@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/odometer_check.dart';
+import '../../../core/utils/relisting_check.dart';
 import '../../../data/models/plate_snapshot_model.dart';
 import '../../../data/models/car_model.dart';
 import '../../../data/models/gov_data_model.dart';
+import '../../providers/cars_provider.dart';
 import '../../providers/gov_api_provider.dart';
 import 'active_warnings_section.dart';
 
@@ -71,6 +73,44 @@ class CarActiveWarnings extends ConsumerWidget {
         pastKm: higher.km,
         currentKm: car.km,
         pastDate: DateFormatter.format(higher.createdAt),
+      ));
+    }
+
+    // --- this plate's other listings ---
+    //
+    // The history has been on the listing since the rollback check was built;
+    // nothing was asking it who else has had the car on the market. Two
+    // separate questions, and only the first is a warning.
+    final earlier = RelistingCheck.previous(
+      currentCarId: car.id,
+      history: history,
+      activeCarIds:
+          ref.watch(concurrentListingsProvider([for (final s in history) s.carId]))
+                  .valueOrNull ??
+              const <String>{},
+    );
+
+    final live = RelistingCheck.concurrent(earlier);
+    if (live.isNotEmpty) {
+      warnings.add(ActiveWarning.alsoListedNow(
+        count: live.length,
+        otherPrice: RelistingCheck.shekels(live.first.snapshot.price),
+        otherArea: live.first.snapshot.area,
+      ));
+    }
+
+    // Informational rather than accusatory: buying a car and reselling it is a
+    // legal business, and what the buyer gains here is the earlier number.
+    final flip = RelistingCheck.recentSellerChange(
+      previous: earlier,
+      currentSellerType: car.sellerType,
+      now: DateTime.now(),
+    );
+    if (flip != null) {
+      warnings.add(ActiveWarning.soldOnRecently(
+        pastSeller: flip.snapshot.sellerType.label,
+        pastPrice: RelistingCheck.shekels(flip.snapshot.price),
+        pastDate: DateFormatter.format(flip.snapshot.createdAt),
       ));
     }
 

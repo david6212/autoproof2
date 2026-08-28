@@ -97,6 +97,43 @@ class ActiveWarning {
         detail: 'התיקון מבוצע ללא עלות בסוכנות מורשית.',
       );
 
+  /// The same plate is on the market in more than one listing right now.
+  ///
+  /// Deliberately does not say which one is wrong, because the app cannot
+  /// know. A seller who forgot to take an old listing down and a seller
+  /// running two at once produce an identical record.
+  factory ActiveWarning.alsoListedNow({
+    required int count,
+    required String otherPrice,
+    required String otherArea,
+  }) =>
+      ActiveWarning(
+        id: 'also_listed_now',
+        severity: WarningSeverity.high,
+        title: count == 1
+            ? 'הרכב מפורסם גם במודעה נוספת'
+            : 'הרכב מפורסם גם ב-$count מודעות נוספות',
+        detail: 'מודעה פעילה נוספת על אותה לוחית מציינת '
+            '‎₪$otherPrice‏, $otherArea. כדאי לברר מול המוכר אילו מהן עדכנית.',
+      );
+
+  /// The same plate ran recently under a different kind of seller.
+  ///
+  /// Informational, not a warning about the seller: buying a car and reselling
+  /// it is a legal business. What a buyer gains is the earlier number.
+  factory ActiveWarning.soldOnRecently({
+    required String pastSeller,
+    required String pastPrice,
+    required String pastDate,
+  }) =>
+      ActiveWarning(
+        id: 'sold_on_recently',
+        severity: WarningSeverity.medium,
+        title: 'הרכב פורסם לאחרונה על ידי מוכר אחר',
+        detail: 'ב-$pastDate הוא פורסם על ידי $pastSeller '
+            'ב-‎₪$pastPrice‏.',
+      );
+
   /// The vehicle's registration was cancelled.
   factory ActiveWarning.offRoad() => const ActiveWarning(
         id: 'off_road',
