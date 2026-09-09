@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +9,9 @@ import '../../core/theme/app_palette.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cars_provider.dart';
 import '../../core/theme/app_text.dart';
+import '../../core/utils/insurance_renewal.dart';
 import 'app_card.dart';
+import 'gear_shift_overlay.dart';
 import 'common/collapsible_section.dart';
 import 'login_required_sheet.dart';
 
@@ -155,8 +159,24 @@ class BuyerJourneyCard extends ConsumerWidget {
     ),
     _JourneyStep(
       title: 'סגירת הקנייה',
-      subtitle: 'תשלום, העברת בעלות ומסירת הרכב',
-      official: [_ownershipTransfer, _insuranceCompare],
+      subtitle: 'תשלום והעברת בעלות',
+      official: [_ownershipTransfer],
+    ),
+    // Insurance was the fifth thing inside "closing the purchase", and the one
+    // with a criminal consequence if it is skipped. Buried in a list it gets
+    // ticked along with everything else, after the keys have already changed
+    // hands — which is exactly when it stops mattering.
+    //
+    // **The keys moved here with it.** The warning below has always said to
+    // close insurance before taking them, so leaving handover in the previous
+    // step would have made the stages contradict the app's own sentence.
+    _JourneyStep(
+      title: 'ביטוח, ואז המפתחות',
+      // Says what the step is and in what order. The warning below carries
+      // the reason, and repeating its sentence here would put the same words
+      // on the card twice.
+      subtitle: 'סוגרים ביטוח, ורק אז לוקחים את המפתחות',
+      official: [_insuranceCompare],
       // There is no insurance partner. This line used to say the reminder
       // arrived "דרך השותף שלנו", which was simply untrue — an app whose whole
       // argument is that official facts and commercial claims are different
@@ -172,7 +192,8 @@ class BuyerJourneyCard extends ConsumerWidget {
     'התחל בבדיקה',
     'סימנתי — בדקתי את הרכב',
     'סימנתי — הבדיקה עברה',
-    'קניתי את הרכב',
+    'שילמתי והעברתי בעלות',
+    'סגרתי ביטוח — קיבלתי את המפתחות',
   ];
 
   @override
@@ -202,17 +223,53 @@ class BuyerJourneyCard extends ConsumerWidget {
               color: context.colors.tealLight,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.celebration_outlined,
-                    size: 17, color: context.colors.teal),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('השלמת את מסע הקנייה — בהצלחה עם הרכב החדש!',
-                      style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: context.colors.tealText)),
+                Row(
+                  children: [
+                    Icon(Icons.celebration_outlined,
+                        size: 17, color: context.colors.teal),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text('השלמת את מסע הקנייה — בהצלחה עם הרכב החדש!',
+                          style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: context.colors.tealText)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                // The moment the renewal date is worth asking for: they have
+                // just closed a policy, so they know when it ends, and they now
+                // hold the licence the plate comes from.
+                //
+                // It offers the garage rather than a reminder, because a
+                // reminder needs a vehicle to live on and the car they just
+                // bought is not in theirs yet. `InsurancePrompt` is waiting on
+                // the vehicle screen and asks for the date there — a handoff,
+                // not a second question.
+                Text(
+                  'הוסיפו את הרכב למוסך שלכם, ונזכיר לכם לחדש את הביטוח '
+                  '${InsuranceRenewal.leadDays} יום מראש.',
+                  style: TextStyle(
+                      fontSize: 12, color: context.colors.tealText2),
+                ),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(
+                    onPressed: () => context.push('/garage/add'),
+                    icon: const Icon(Icons.add_circle_outline, size: 16),
+                    label: const Text('הוספת הרכב למוסך'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      visualDensity: VisualDensity.compact,
+                      foregroundColor: context.colors.tealText2,
+                      textStyle: const TextStyle(
+                          fontSize: 12.5, fontWeight: FontWeight.w700),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -263,6 +320,16 @@ class BuyerJourneyCard extends ConsumerWidget {
       return;
     }
     ref.read(setJourneyStageProvider).call(carId, fromIndex + 1);
+
+    // Five stages, five gears. The write above is what matters and happens
+    // first; the shift is a reward for it, so a failure to draw one can never
+    // cost somebody their progress.
+    GearShiftOverlay.show(
+      context,
+      from: fromIndex + 1,
+      to: (fromIndex + 2).clamp(1, _steps.length),
+      stepTitle: _steps[math.min(fromIndex + 1, _steps.length - 1)].title,
+    );
   }
 }
 
