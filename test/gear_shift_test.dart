@@ -104,6 +104,31 @@ void main() {
     expect(card.contains("subtitle: 'תשלום, העברת בעלות ומסירת הרכב'"), isFalse);
   });
 
+  test('the gear equals the stages completed, not one ahead', () {
+    // The journey opens on gear 1 — reading the registry happens simply by
+    // opening the listing — so ticking the step at index i moves from i to
+    // i+1. The first version animated i+1 to i+2 and showed the wrong gear on
+    // every single shift, which is invisible in a test that only checks the
+    // overlay appears.
+    expect(card, contains('from: fromIndex, to: fromIndex + 1'));
+    expect(card.contains('from: fromIndex + 1, to: fromIndex + 2'), isFalse);
+  });
+
+  test('a stage can be un-ticked, one at a time', () {
+    // Somebody who mis-tapped wants the tap undone, not the journey erased.
+    // This replaced an "אפס" that only appeared once the journey was finished
+    // and threw all of it away.
+    expect(card, contains('_stepBack('));
+    expect(card, contains('חזרה שלב'));
+    expect(card.contains("child: const Text('אפס'"), isFalse);
+    // And going back is guarded the same way going forward is.
+    final back = card.indexOf('void _stepBack(');
+    final guard = card.indexOf('showLoginRequired', back);
+    final write = card.indexOf('setJourneyStageProvider', back);
+    expect(guard, lessThan(write),
+        reason: 'a guest is asked to sign in before anything is written');
+  });
+
   test('finishing offers the garage, because a reminder needs a vehicle', () {
     // The renewal reminder lives on a car in the owner's garage, and the car
     // they have just bought is not in theirs yet. Offering the reminder here

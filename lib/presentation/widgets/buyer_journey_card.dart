@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -290,14 +288,19 @@ class BuyerJourneyCard extends ConsumerWidget {
     return AppSectionCard(
       icon: Icons.route_outlined,
       title: 'מסע הקנייה',
-      trailing: completed
-          ? TextButton(
-              onPressed: () => ref.read(setJourneyStageProvider).call(carId, 1),
+      // Replaces the old "אפס", which only appeared once the journey was
+      // finished and threw the whole thing away. Undoing one stage is what
+      // somebody who mis-tapped actually wants, and it is available the whole
+      // way through rather than only at the end.
+      trailing: currentStage > 1
+          ? TextButton.icon(
+              onPressed: () => _stepBack(context, ref, currentStage),
+              icon: const Icon(Icons.undo_rounded, size: 15),
               style: TextButton.styleFrom(
                   foregroundColor: context.colors.textMuted,
                   minimumSize: const Size(0, 0),
                   padding: const EdgeInsets.symmetric(horizontal: 6)),
-              child: const Text('אפס', style: TextStyle(fontSize: 12.5)),
+              label: const Text('חזרה שלב', style: TextStyle(fontSize: 12.5)),
             )
           : null,
       child: steps,
@@ -324,11 +327,40 @@ class BuyerJourneyCard extends ConsumerWidget {
     // Five stages, five gears. The write above is what matters and happens
     // first; the shift is a reward for it, so a failure to draw one can never
     // cost somebody their progress.
+    //
+    // The gear IS the number of stages completed, and the journey opens on
+    // gear 1 because reading the registry happens simply by opening the
+    // listing. So ticking the step at `fromIndex` moves from `fromIndex` to
+    // `fromIndex + 1` — an easy off-by-one, and one that showed the wrong
+    // gear on every single shift.
+    _shift(context, from: fromIndex, to: fromIndex + 1, title: _steps[fromIndex].title);
+  }
+
+  /// Un-ticks the last stage. A downshift, in every sense.
+  ///
+  /// One stage at a time rather than a jump back to the start: somebody who
+  /// mis-tapped wants the tap undone, not their whole journey erased, and
+  /// stepping back repeatedly reaches the beginning anyway.
+  void _stepBack(BuildContext context, WidgetRef ref, int currentStage) {
+    final isGuest = ref.read(authStateProvider).valueOrNull == null;
+    if (isGuest) {
+      showLoginRequired(context, action: 'לעקוב אחר מסע הקנייה');
+      return;
+    }
+    final to = (currentStage - 1).clamp(1, _steps.length);
+    if (to == currentStage) return;
+
+    ref.read(setJourneyStageProvider).call(carId, to);
+    _shift(context, from: currentStage, to: to, title: _steps[to].title);
+  }
+
+  void _shift(BuildContext context,
+      {required int from, required int to, required String title}) {
     GearShiftOverlay.show(
       context,
-      from: fromIndex + 1,
-      to: (fromIndex + 2).clamp(1, _steps.length),
-      stepTitle: _steps[math.min(fromIndex + 1, _steps.length - 1)].title,
+      from: from.clamp(1, _steps.length),
+      to: to.clamp(1, _steps.length),
+      stepTitle: title,
     );
   }
 }
