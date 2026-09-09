@@ -143,7 +143,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Text(
                       isCodeStep
                           ? 'שלחנו קוד בן 6 ספרות אל ${state.phoneE164}'
-                          : 'בלחיצה אחת עם חשבון Google, או במספר טלפון.',
+                          : AppConfig.phoneAuthEnabled
+                              ? 'בלחיצה אחת עם חשבון Google, או במספר טלפון.'
+                              : 'בלחיצה אחת, עם חשבון Google.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
@@ -214,15 +216,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           },
                         ),
                       ],
-                      const SizedBox(height: 20),
-                      const _OrDivider(),
-                      const SizedBox(height: 16),
+                      // Nothing to divide Google from when the phone route is
+                      // off, and a lone divider under a single button reads as
+                      // something failing to load.
+                      if (AppConfig.phoneAuthEnabled) ...[
+                        const SizedBox(height: 20),
+                        const _OrDivider(),
+                        const SizedBox(height: 16),
+                      ],
                     ],
 
                     // ---- and the phone route, second ----
-                    if (!isCodeStep)
+                    if (AppConfig.phoneAuthEnabled && !isCodeStep)
                       _PhoneField(controller: _phoneController)
-                    else
+                    else if (isCodeStep)
                       _CodeField(controller: _codeController),
 
                     if (state.error != null) ...[
@@ -243,7 +250,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           controller.verifyCode(_codeController.text.trim());
                         },
                       )
-                    else
+                    else if (AppConfig.phoneAuthEnabled)
                       SizedBox(
                         height: 52,
                         child: OutlinedButton(

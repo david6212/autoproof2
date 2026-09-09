@@ -126,6 +126,125 @@ void main() {
     });
   });
 
+  group('a seller relisting their own car is not a finding', () {
+    // The false-positive side, which is where a duplicate detector does its
+    // damage. A car being on the market more than once over its life is the
+    // ordinary case, not a signal — most cars are sold more than once — and a
+    // finding that fires on it teaches buyers to ignore the panel entirely,
+    // which costs them the odometer rollback next to it.
+
+    test('three earlier listings, all ended, are worth nothing to report', () {
+      // The same owner listing the same plate in 2024, 2025 and again now.
+      // Nothing here is evidence of anything, and the app must say nothing
+      // rather than count history at the reader.
+      final earlier = RelistingCheck.previous(
+        currentCarId: 'now',
+        history: [
+          snap(carId: 'first', at: DateTime(2024, 3, 1), price: 96000),
+          snap(carId: 'second', at: DateTime(2025, 4, 1), price: 88000),
+          snap(carId: 'third', at: DateTime(2026, 5, 1), price: 82000),
+        ],
+        activeCarIds: const {},
+      );
+
+      expect(RelistingCheck.concurrent(earlier), isEmpty);
+      expect(
+        RelistingCheck.recentSellerChange(
+          previous: earlier,
+          currentSellerType: SellerType.private,
+          now: now,
+        ),
+        isNull,
+      );
+    });
+
+    test('the finding counts live listings, not history', () {
+      // One forgotten listing among three past ones is one finding. The count
+      // goes into the buyer's sentence — "also advertised in 3 other ads"
+      // where there is one is an accusation the records do not support.
+      final earlier = RelistingCheck.previous(
+        currentCarId: 'now',
+        history: [
+          snap(carId: 'first', at: DateTime(2024, 3, 1)),
+          snap(carId: 'second', at: DateTime(2025, 4, 1)),
+          snap(carId: 'stale', at: DateTime(2026, 5, 1)),
+        ],
+        activeCarIds: {'stale'},
+      );
+
+      final live = RelistingCheck.concurrent(earlier);
+      expect(live, hasLength(1));
+      expect(live.single.snapshot.carId, 'stale');
+    });
+
+    test('a listing is identified by its id, so an edit cannot duplicate it',
+        () {
+      // Everything in a plate's history is the same plate by construction —
+      // the collection is keyed by it. What separates "the car has been listed
+      // twice" from "this listing was written down twice" is the listing id,
+      // and it is the only thing that can: the snapshot carries no seller.
+      final earlier = RelistingCheck.previous(
+        currentCarId: 'now',
+        history: [
+          snap(carId: 'now', at: DateTime(2026, 8, 1), price: 84000),
+          snap(carId: 'now', at: DateTime(2026, 8, 20), price: 82000),
+        ],
+        activeCarIds: {'now'},
+      );
+
+      expect(earlier, isEmpty,
+          reason: 'a seller who corrected their own price is not two sellers');
+    });
+
+    test('only publishing a listing writes to a plate history', () {
+      // The rule behind the test above, where it is enforced. A snapshot
+      // written when a seller edits a price would put a second entry in their
+      // own car's history, and the next reader of that history would be shown
+      // their correction as a second listing of the car.
+      final callers = Directory('lib')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.dart'))
+          .where((f) =>
+              f.readAsStringSync().contains('recordPlateSnapshot(') &&
+              !f.path.contains('car_repository.dart'))
+          .toList();
+
+      expect(callers, isNotEmpty, reason: 'somebody has to record them');
+      for (final f in callers) {
+        final src = f.readAsStringSync();
+        expect(
+          src.contains('createListing(') || src.contains('publishFromVehicle('),
+          isTrue,
+          reason: '${f.path} records a plate snapshot without publishing',
+        );
+      }
+    });
+
+    test('a plate snapshot names no person and no plate', () {
+      // It is copied verbatim onto `cars/{id}`, which is world-readable. The
+      // obvious way to make this feature cleverer is to put the seller id in
+      // the snapshot — then "same seller relisting" could be told from "two
+      // strangers with one car", which is exactly the distinction the checks
+      // above have to work around. It would also hand every buyer a map of
+      // which listings belong to the same person, keyed by a car's history,
+      // and that is not ours to publish. The awkwardness is the price.
+      final stored = PlateSnapshot(
+        id: 's1',
+        carId: 'c1',
+        km: 90000,
+        price: 82000,
+        sellerType: SellerType.private,
+        area: 'תל אביב',
+        createdAt: now,
+      ).toMap();
+
+      for (final leak in const ['sellerId', 'uid', 'ownerId', 'plate', 'name']) {
+        expect(stored.containsKey(leak), isFalse, reason: leak);
+      }
+    });
+  });
+
   test('prices are written the way the rest of the app writes them', () {
     expect(RelistingCheck.shekels(98000), '98,000');
     expect(RelistingCheck.shekels(7500.4), '7,500');

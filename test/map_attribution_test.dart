@@ -23,7 +23,9 @@ void main() {
     ));
     await tester.pump();
 
-    expect(find.text('© OpenStreetMap · OpenFreeMap'), findsOneWidget);
+    expect(
+        find.text('© OpenStreetMap contributors · OpenFreeMap © OpenMapTiles'),
+        findsOneWidget);
   });
 
   test('every map in the app draws its tiles through the credited layer', () {
@@ -74,6 +76,12 @@ void main() {
         File('lib/presentation/widgets/map_attribution.dart').readAsStringSync();
     expect(credit, contains('OpenStreetMap'));
     expect(credit, contains('OpenFreeMap'));
+    // The word OSMF actually asks for. It was present until 0.9.0 and was
+    // dropped when the vector basemap replaced the raster tiles — a
+    // regression that no test could see, because nothing pinned the word.
+    expect(credit, contains('OpenStreetMap contributors'));
+    // The tile schema, credited nowhere in the app until 09/09.
+    expect(credit, contains('OpenMapTiles'));
   });
 
   test('a map screen shows the credit', () {

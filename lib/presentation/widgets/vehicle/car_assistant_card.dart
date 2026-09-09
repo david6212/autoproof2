@@ -5,7 +5,9 @@ import '../../../core/assistant/car_assistant.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../data/models/expense.dart';
 import '../../../data/models/gov_data_model.dart';
+import '../../../data/models/service_record.dart';
 import '../../../data/models/vehicle.dart';
 import '../../providers/vehicle_provider.dart';
 import '../app_card.dart';
@@ -49,14 +51,37 @@ class _CarAssistantCardState extends ConsumerState<CarAssistantCard> {
     super.dispose();
   }
 
-  void _ask(String question) {
-    final services =
-        ref.read(vehicleServicesProvider(widget.vehicle.id)).valueOrNull ??
-            const [];
-    final expenses =
-        ref.read(vehicleExpensesProvider(widget.vehicle.id)).valueOrNull ??
-            const [];
+  /// Answers from state the caller has already **watched**, never from a
+  /// `ref.read` taken here.
+  ///
+  /// Both lists arrive as `AsyncValue` rather than as lists, so that "still
+  /// loading" survives the trip. Flattening them with `?? const []` was how
+  /// this card came to tell owners they had recorded no expenses this year:
+  /// the overview tab never subscribed to the expense stream, so the first
+  /// question anybody asked was answered from an empty list that only meant
+  /// "not here yet". `_ask` runs once per question and never re-runs, so that
+  /// answer stayed on screen.
+  void _ask(
+    String question, {
+    required AsyncValue<List<ServiceRecord>> services,
+    required AsyncValue<List<Expense>> expenses,
+  }) {
     final snapshot = widget.vehicle.govSnapshot;
+    final vehicle = widget.vehicle;
+    final gov = snapshot == null ? null : GovData.fromSnapshot(snapshot);
+
+    // Two places record what we know about recalls, and they are not
+    // interchangeable. `lastRecallCheckAt` is the daily check the app runs and
+    // is what the red banner above this card is drawn from, so when it has run
+    // it wins — otherwise the card and the banner could disagree about the
+    // same car on the same screen. Failing that, the snapshot taken when the
+    // vehicle was added still knows whether the recall endpoint answered, and
+    // an endpoint that answered and listed nothing is a real answer.
+    //
+    // Neither source present means no check ever ran, which is not the same
+    // fact as a register that came back clean.
+    final checkedLive = vehicle.lastRecallCheckAt != null;
+    final snapshotAnswered = gov?.answered(GovDataset.recalls) ?? false;
 
     setState(() {
       _asked = true;
@@ -66,10 +91,13 @@ class _CarAssistantCardState extends ConsumerState<CarAssistantCard> {
           // The snapshot was copied when the vehicle was added, so this answers
           // from the same record the rest of the screen shows. If it is absent
           // the assistant says it has nothing rather than pretending.
-          gov: snapshot == null ? null : GovData.fromSnapshot(snapshot),
-          govReachable: snapshot != null,
-          services: services,
-          expenses: expenses,
+          gov: gov,
+          openRecalls:
+              checkedLive ? vehicle.openRecallCount : (gov?.recalls.length ?? 0),
+          recallsChecked: checkedLive || snapshotAnswered,
+          recordsLoaded: services.hasValue && expenses.hasValue,
+          services: services.valueOrNull ?? const [],
+          expenses: expenses.valueOrNull ?? const [],
           now: DateTime.now(),
         ),
       );
@@ -80,39 +108,37 @@ class _CarAssistantCardState extends ConsumerState<CarAssistantCard> {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return AppCard(
+    // Watched, not read. The overview tab does not subscribe to the expense
+    // stream on its own, so reading it cold inside the callback returned
+    // `AsyncLoading` and the answer was built from nothing.
+    final services = ref.watch(vehicleServicesProvider(widget.vehicle.id));
+    final expenses = ref.watch(vehicleExpensesProvider(widget.vehicle.id));
+    void ask(String question) =>
+        _ask(question, services: services, expenses: expenses);
+
+    return AppSectionCard(
+      icon: Icons.chat_bubble_outline_rounded,
+      title: 'שאלו על הרכב',
+      subtitle:
+          'התשובות מגיעות מהנתונים שכבר יש כאן. שום שאלה לא נשלחת לשום מקום.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.chat_bubble_outline_rounded,
-                  size: 18, color: colors.tealText2),
-              const SizedBox(width: AppSpace.sm),
-              const Text('שאלו על הרכב', style: AppText.subtitle),
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'התשובות מגיעות מהנתונים שכבר יש כאן. שום שאלה לא נשלחת לשום מקום.',
-            style: context.text.micro,
-          ),
-          const SizedBox(height: AppSpace.md),
-
           TextField(
             controller: _controller,
             textInputAction: TextInputAction.search,
-            onSubmitted: _ask,
+            onSubmitted: ask,
             decoration: InputDecoration(
               hintText: 'למשל: מתי הטסט הבא?',
               isDense: true,
               suffixIcon: IconButton(
-                icon: const Icon(Icons.arrow_back, size: 20),
+                // Not `Icons.arrow_back`: it is `matchTextDirection`, so in
+                // RTL it mirrors into a right-pointing arrow — the glyph this
+                // app uses for "back" on every other screen. `Icons.send` is
+                // what the chat composer already uses to mean send.
+                icon: const Icon(Icons.send, size: 20),
                 tooltip: 'שאל',
-                onPressed: () => _ask(_controller.text),
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                onPressed: () => ask(_controller.text),
               ),
             ),
           ),
@@ -127,7 +153,7 @@ class _CarAssistantCardState extends ConsumerState<CarAssistantCard> {
                   label: Text(s, style: context.text.caption),
                   onPressed: () {
                     _controller.text = s;
-                    _ask(s);
+                    ask(s);
                   },
                 ),
             ],
@@ -146,15 +172,25 @@ class _CarAssistantCardState extends ConsumerState<CarAssistantCard> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppSpace.md),
+                // Neutral, deliberately. `tealLight` is not a neutral in this
+                // app — three screens pair it against `warnBg` as an explicit
+                // good/bad ternary — so "תוקף הרישיון פג לפני 42 ימים" was
+                // being delivered in the reassurance colour.
+                //
+                // And the fix is not to switch the fill on sentiment: colour
+                // is a claim too, and an assistant that tints its answers is
+                // appraising the car, which the class above forbids in words.
+                // The box holds an answer and says nothing about it.
                 decoration: BoxDecoration(
-                  color: colors.tealLight,
+                  color: colors.background,
+                  border: Border.all(color: colors.cardBorder),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_answer!.text,
-                        style: AppText.body.copyWith(color: colors.tealText)),
+                        style: AppText.body.copyWith(color: colors.textPrimary)),
                     const SizedBox(height: AppSpace.xs),
                     // Every answer carries its origin. The app shows its work
                     // rather than asking to be believed.

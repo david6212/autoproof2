@@ -276,6 +276,15 @@ final carByIdProvider =
   return ref.watch(carRepositoryProvider).getCarById(id);
 });
 
+/// The cache key for [concurrentListingsProvider].
+///
+/// Exists so a caller cannot pass a raw list, which is the whole bug this
+/// solves. Sorted and de-duplicated, so two screens asking about the same
+/// listings in a different order share one answer rather than each paying for
+/// it.
+String concurrentListingsKey(Iterable<String> carIds) =>
+    (carIds.toSet().toList()..sort()).join(',');
+
 /// Which of this plate's earlier listings are still on the market.
 ///
 /// Keyed by the listing ids that `plateHistorySnapshot` already carries, so no
@@ -284,12 +293,25 @@ final carByIdProvider =
 /// One read per earlier listing, and there are rarely more than two or three.
 /// Capped anyway: on the Spark plan an unbounded fan-out on a screen everybody
 /// opens is how a daily quota disappears in an afternoon.
+///
+/// ## Why the key is a String and not a List
+///
+/// Riverpod caches a family by `argument ==`, and **Dart lists compare by
+/// identity** — `['a'] == ['a']` is false. A key built inside `build()` is a
+/// new object every frame, so every frame missed the cache, refetched,
+/// completed, notified, and rebuilt: an unbounded loop for as long as the page
+/// was open. `[] == []` is false too, so it looped even with nothing to fetch.
+///
+/// The cost was the smaller half of it. Because the future never had a frame
+/// in which to settle, the data state was never reached — **the duplicate
+/// listing warning this provider exists to raise never appeared at all.** A
+/// feature can pass its own unit tests, ship, and simply not exist on screen.
 final concurrentListingsProvider =
-    FutureProvider.autoDispose.family<Set<String>, List<String>>(
-        (ref, carIds) async {
-  if (carIds.isEmpty) return const <String>{};
+    FutureProvider.autoDispose.family<Set<String>, String>(
+        (ref, carIdsKey) async {
+  if (carIdsKey.isEmpty) return const <String>{};
   final repo = ref.watch(carRepositoryProvider);
-  final ids = carIds.take(5).toList();
+  final ids = carIdsKey.split(',').take(5).toList();
   final found = await Future.wait(ids.map(repo.getCarById));
   return {
     for (final car in found)

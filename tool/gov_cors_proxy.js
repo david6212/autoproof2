@@ -46,6 +46,17 @@ function allowed(origin) {
   return ALLOWED_ORIGINS.includes(origin) || DEV_ORIGIN.test(origin);
 }
 
+// What the app sends from a phone, where there is no Origin header to check.
+//
+// Not a secret, and not pretending to be one — a value shipped in a build is
+// public the moment somebody unzips it. It is a name on the request, and that
+// is enough for the thing it has to do: a Worker that answers anything is a
+// proxy operated for third parties, which Cloudflare's terms prohibit
+// (§2.2.1(j)), and one that answers only requests claiming to be this app is a
+// CORS shim for this app. The difference is not how hard it is to forge; it is
+// what the service is.
+const CLIENT_HEADER = 'X-BonnetCheck-Client';
+
 function corsHeaders(origin) {
   const headers = {
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -77,11 +88,22 @@ export default {
     // Refuse before spending an upstream request. An unlisted origin gets no
     // allow-header anyway, so answering it would only burn the free tier.
     //
-    // A request with NO Origin at all is let through: that is curl, or the
-    // Worker URL typed into a tab, i.e. exactly how somebody checks the thing
-    // is alive. It is not a hole worth closing either, since anything that can
-    // omit the header can equally well forge one.
-    if (origin && !allowed(origin)) {
+    // Two ways to be recognised, because the two clients are not alike:
+    //
+    // - **A browser** sends an Origin, and it has to be on the list.
+    // - **A phone** sends none. Dart's HTTP client is not subject to CORS and
+    //   there is no Origin to inspect, so the app names itself in a header
+    //   instead. This route matters: the phone calls data.gov.il directly and
+    //   only falls back here when that fails, so refusing an Origin-less
+    //   request would quietly delete the fallback rather than tighten it.
+    //
+    // Anything that is neither — a bare curl, the URL pasted into a tab — is
+    // refused now. It used to be allowed on the grounds that whatever can omit
+    // a header can forge one, which is true and beside the point: the question
+    // Cloudflare's terms ask is whether we run a proxy for other people, and
+    // with that door open we did.
+    const named = request.headers.get(CLIENT_HEADER) !== null;
+    if (origin ? !allowed(origin) : !named) {
       return new Response('Forbidden', { status: 403 });
     }
 

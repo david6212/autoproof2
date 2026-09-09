@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 
 import '../../../core/constants/api_constants.dart';
 
@@ -94,7 +94,19 @@ class GovApiService {
     String url,
     Map<String, dynamic> queryParameters,
   ) =>
-      _dio.get(url, queryParameters: queryParameters).timeout(
+      _dio
+          .get(
+            url,
+            queryParameters: queryParameters,
+            // Names the app to the Cloudflare Worker, which has no Origin to
+            // check on a phone. Sent only off the web: in a browser the Origin
+            // header already identifies us, and a custom header there would
+            // turn every lookup into a CORS preflight for nothing.
+            options: kIsWeb
+                ? null
+                : Options(headers: const {'X-BonnetCheck-Client': 'app'}),
+          )
+          .timeout(
         requestDeadline,
         // Raised as a Dio timeout so all eight call sites keep the error
         // handling and the Hebrew wording they already have.

@@ -13,22 +13,47 @@ class AssistantContext {
     this.gov,
     this.services = const [],
     this.expenses = const [],
-    this.openRecalls = 0,
-    this.govReachable = true,
+    required this.openRecalls,
+    required this.recallsChecked,
+    required this.recordsLoaded,
     required this.now,
   });
 
-  /// The registry's record, or null if it was never fetched or failed.
+  /// The registry's **stored** record, or null if this vehicle has none.
+  ///
+  /// A copy kept when the car was added, not a live lookup — the assistant
+  /// makes no network call of any kind. So nothing here may be described to
+  /// the reader as happening *now*: null means we never kept an answer for
+  /// this car, never that a request failed a moment ago. The difference
+  /// matters, because "just now" invites a retry that would change nothing.
   final GovData? gov;
 
   final List<ServiceRecord> services;
   final List<Expense> expenses;
-  final int openRecalls;
 
-  /// Whether the registry answered at all. **Not the same as zero findings** —
-  /// "we could not check" and "we checked and found nothing" are different
-  /// answers and the assistant must never collapse them.
-  final bool govReachable;
+  /// How many open recalls the last check found, and whether a check ever ran.
+  ///
+  /// **Both required, neither with a default, and that is the entire point.**
+  /// `openRecalls` used to default to 0, and the one caller in the app forgot
+  /// to pass it — so every car in production was told it had no open recalls,
+  /// on a screen that painted a red recall banner forty lines above. An
+  /// optional parameter with a plausible default is invisible at the call
+  /// site; a required one cannot be forgotten, because the analyzer says so.
+  ///
+  /// `recallsChecked` false means the check never ran. It never means the
+  /// register was clean. A recall is a free safety repair at the importer, and
+  /// a reader told there is none does not go and get it — which makes this the
+  /// most expensive sentence the app can get wrong.
+  final int openRecalls;
+  final bool recallsChecked;
+
+  /// Whether the owner's own service and expense records have finished loading.
+  ///
+  /// The same rule on a second surface. An empty list because a stream has not
+  /// delivered yet is not the same fact as an empty list because nothing was
+  /// ever recorded, and the reader's next move differs: one is "wait", the
+  /// other is "start writing things down".
+  final bool recordsLoaded;
 
   /// Injected so every answer involving a date is testable.
   final DateTime now;
@@ -71,6 +96,13 @@ class CarAssistant {
   static const sourceRegistry = 'לפי מרשם הרכב';
   static const sourceRecords = 'לפי רשומות הטיפול שלכם';
   static const sourceExpenses = 'לפי ההוצאות שרשמתם';
+
+  /// Said instead of an answer while the owner's records are still arriving.
+  /// Never an empty total: a zero the reader believes is worse than a wait.
+  static const _recordsLoading = AssistantAnswer(
+    text: 'הרשומות שלכם עדיין נטענות, אז אין לנו תשובה. נסו שוב בעוד רגע.',
+    source: 'אין נתונים',
+  );
 
   static AssistantAnswer? answer(String question, AssistantContext ctx) {
     final q = _normalise(question);
@@ -116,13 +148,15 @@ class CarAssistant {
   // ---------------------------------------------------------------- intents --
 
   static AssistantAnswer? _test(String q, AssistantContext ctx) {
-    if (!ctx.govReachable) {
+    final gov = ctx.gov;
+    if (gov == null) {
       return const AssistantAnswer(
-        text: 'לא הצלחנו להגיע למרשם הרכב כרגע, אז אין לנו תשובה על תוקף הרישיון.',
+        text: 'אין לנו עותק שמור של נתוני המרשם לרכב הזה, '
+            'ולכן אין לנו תשובה על תוקף הרישיון.',
         source: 'אין נתונים',
       );
     }
-    final expiry = ctx.gov?.licenseExpiry;
+    final expiry = gov.licenseExpiry;
     if (expiry == null) return null;
 
     final days = expiry.difference(ctx.now).inDays;
@@ -142,31 +176,41 @@ class CarAssistant {
   }
 
   static AssistantAnswer? _recall(String q, AssistantContext ctx) {
-    if (!ctx.govReachable) {
+    if (!ctx.recallsChecked) {
       return const AssistantAnswer(
-        text: 'מאגר קריאות השירות לא היה זמין, כך שלא בדקנו. '
+        text: 'לא בדקנו את מאגר קריאות השירות לרכב הזה, ולכן אין לנו תשובה. '
             'זה לא אומר שאין.',
-        source: 'אין נתונים',
+        source: 'לא נבדק',
       );
     }
     if (ctx.openRecalls == 0) {
-      // Careful wording: what we can say is that the dataset listed none, not
-      // that the car has none and certainly not that it is sound.
+      // Careful wording: what we can say is that the dataset listed none when
+      // it was last read, not that the car has none and certainly not that it
+      // is sound.
       return const AssistantAnswer(
-        text: 'במאגר קריאות השירות לא רשומות קריאות פתוחות על הרכב.',
+        text: 'בבדיקה האחרונה מול מאגר קריאות השירות '
+            'לא נרשמו קריאות פתוחות על הרכב.',
         source: sourceRegistry,
       );
     }
+    // What the dataset records is that a recall is open. It does not record
+    // who pays, on what terms, or whether this importer honours it on a car of
+    // this age — so the app names where the repair happens and stops there.
+    //
+    // Not "כדאי לברר": the assistant reports records and does not advise, and
+    // the guarantees suite bans the word for that reason. Saying where to go
+    // is a fact; saying what the reader should do about it is a verdict.
+    const terms = 'קריאת שירות מטופלת מול היבואן, לפי התנאים שהוא קובע.';
     return AssistantAnswer(
       text: ctx.openRecalls == 1
-          ? 'רשומה קריאת שירות פתוחה אחת. התיקון מבוצע ללא עלות בסוכנות מורשית.'
-          : 'רשומות ${ctx.openRecalls} קריאות שירות פתוחות. '
-              'התיקון מבוצע ללא עלות בסוכנות מורשית.',
+          ? 'רשומה קריאת שירות פתוחה אחת. $terms'
+          : 'רשומות ${ctx.openRecalls} קריאות שירות פתוחות. $terms',
       source: sourceRegistry,
     );
   }
 
   static AssistantAnswer? _spent(String q, AssistantContext ctx) {
+    if (!ctx.recordsLoaded) return _recordsLoading;
     final thisYear = q.contains('השנה');
     bool inRange(DateTime d) => !thisYear || d.year == ctx.now.year;
 
@@ -192,6 +236,7 @@ class CarAssistant {
   }
 
   static AssistantAnswer? _lastService(String q, AssistantContext ctx) {
+    if (!ctx.recordsLoaded) return _recordsLoading;
     final type = _typeFor(q);
     final matching = ctx.services
         .where((s) => type == null || s.type == type)
@@ -217,6 +262,7 @@ class CarAssistant {
   }
 
   static AssistantAnswer? _mileage(String q, AssistantContext ctx) {
+    if (!ctx.recordsLoaded) return _recordsLoading;
     final readings = <int>[
       for (final s in ctx.services) s.km,
       for (final e in ctx.expenses)

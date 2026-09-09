@@ -67,10 +67,14 @@ void main() {
     expect(find.text('להציג את המסמך לקונים?'), findsOneWidget);
     expect(result, isNull, reason: 'nothing may be shared before confirming');
 
-    // Turning the switch back off hides the document but cannot revoke a link
-    // somebody already copied — a Storage download URL carries its own token.
-    // The moment of the decision is when that has to be said.
-    expect(find.textContaining('רק מחיקת הקובץ מבטלת גישה'),
+    // The moment of the decision is when the consequence has to be said —
+    // that part has not changed. What it says has: the bytes live in
+    // Firestore now, where every read is evaluated against the rules, so
+    // unsharing genuinely revokes. While they were in Cloud Storage a
+    // download URL carried its own token and kept working, and the dialog
+    // said so; repeating that today would frighten owners away from a
+    // control that works.
+    expect(find.textContaining('ביטול השיתוף מפסיק את הגישה מיד'),
         findsOneWidget);
 
     await tester.tap(find.text('ביטול'));
@@ -136,10 +140,12 @@ void main() {
     expect(result, isFalse);
   });
 
-  testWidgets('deleting says plainly that it is the only real revocation',
+  testWidgets('deleting says what it does, and claims nothing more',
       (tester) async {
-    // A Storage download URL keeps working after unsharing, so the dialog has
-    // to be honest about what deletion is for.
+    // It used to be sold as the only real way to revoke access, which was
+    // true of Cloud Storage download URLs and stopped being true when the
+    // bytes moved into Firestore. Deletion is permanent; that is the whole
+    // claim it is entitled to make.
     await tester.pumpWidget(host(
       DocumentList(vehicleId: 'v1', documents: [doc()], onDelete: (_) {}),
     ));
@@ -147,7 +153,9 @@ void main() {
     await tester.tap(find.byIcon(Icons.delete_outline));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('הדרך היחידה לבטל גישה'), findsOneWidget);
+    expect(find.textContaining('לא ניתן לשחזר'), findsOneWidget);
+    expect(find.textContaining('הדרך היחידה לבטל גישה'), findsNothing,
+        reason: 'unsharing revokes on its own now');
   });
 
   testWidgets('the buyer view can open a document but not change anything',

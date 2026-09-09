@@ -37,6 +37,38 @@ void main() {
     expect(hits(needle), isEmpty, reason: '"$needle" — $why');
   }
 
+  /// Sentences about the open-recall register that only a file which knows
+  /// whether the register answered is entitled to write.
+  ///
+  /// The recall list is one of five endpoints and any of them can fail on its
+  /// own; `GovData.missingDatasets` records which did, and `answered()` is how
+  /// a reader asks. A file that holds the registry record — the ones naming
+  /// [GovData] or the assistant's context — has that answer available and must
+  /// use it before speaking for the register. A file that is merely handed a
+  /// count cannot invent a recall and is not the one deciding;
+  /// `active_warnings_section.dart` is that case, and the check lives in
+  /// `car_active_warnings.dart`, which reads the record.
+  void bannedWithoutRecallCheck(String needle, String why) {
+    final offenders = <String>[];
+    for (final file in dartFiles) {
+      final src = file.readAsStringSync();
+      if (!src.contains(needle)) continue;
+      final holdsTheRecord =
+          src.contains('GovData') || src.contains('AssistantContext');
+      if (!holdsTheRecord) continue;
+      // Either guard counts. `answered(GovDataset.recalls)` asks whether the
+      // dataset replied during a lookup; `recallsChecked` asks whether a
+      // lookup ever ran for this vehicle. Both distinguish silence from a
+      // clean register, which is the only thing this rule is about.
+      if (src.contains('answered(GovDataset.recalls)') ||
+          src.contains('recallsChecked')) {
+        continue;
+      }
+      offenders.add(file.path);
+    }
+    expect(offenders, isEmpty, reason: '"$needle" — $why');
+  }
+
   group('§6.1 — no manufactured urgency', () {
     test('nothing counts down, crowds, or runs out', () {
       // Phrases, not words. "נותרו" on its own is honest arithmetic — the
@@ -124,6 +156,34 @@ void main() {
       banned('הרכב נבדק ואושר', 'we approve nothing');
       banned('מאושר על ידינו', 'we approve nothing');
       banned('רכב מאומת', 'we verify records, never vehicles');
+    });
+
+    test('an empty recall register is not reported as an empty register', () {
+      // "No open recalls are listed" is a statement about a dataset. Written
+      // by code that never asked whether that dataset answered, it becomes a
+      // statement about a car — and the one the reader hears is "there is
+      // nothing wrong with it". Silence from a server and a clean register
+      // look identical from here, and only the file holding the record can
+      // tell them apart.
+      // Both phrasings. The first was the wording on 27/08 and is kept so a
+      // revert is caught; the second is what the app says today. A rule that
+      // tracks one exact sentence stops guarding the moment someone rewords
+      // the sentence, which is not the same as fixing it.
+      bannedWithoutRecallCheck('לא רשומות קריאות פתוחות',
+          'absence of an answer presented as an answer of absence');
+      bannedWithoutRecallCheck('לא נרשמו קריאות פתוחות',
+          'absence of an answer presented as an answer of absence');
+    });
+
+    test('a free repair is only promised where a recall was actually found',
+        () {
+      // The sentence is true of a real open recall and meaningless without
+      // one, so it can only be written off the back of a count that came from
+      // a register that answered. Reached any other way it is the app telling
+      // an owner what a manufacturer owes them, on a check it did not run.
+      bannedWithoutRecallCheck('התיקון מבוצע ללא עלות',
+          'a promise about a recall the register may never have been asked '
+              'about');
     });
   });
 }

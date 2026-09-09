@@ -1,3 +1,5 @@
+import '../../core/utils/insurance_renewal.dart';
+
 enum ReminderType { test, insurance, timingBelt, serviceKm, custom }
 
 extension ReminderTypeX on ReminderType {
@@ -59,12 +61,21 @@ class VehicleReminder {
 
   bool get isOverdue => !isDone && (daysUntilDue ?? 1) < 0;
 
-  /// Whether this should surface in the garage banner: due within three weeks,
-  /// or already overdue.
+  /// Whether this should surface in the garage banner: inside its own notice
+  /// period, or already overdue.
+  ///
+  /// Three weeks for most things, and **[InsuranceRenewal.leadDays] for
+  /// insurance**. A test is an appointment you book; insurance renewal is a
+  /// market you shop, and knowing early is only worth anything if there is time
+  /// to compare before the policy rolls over at whatever the insurer chose.
+  /// Three weeks is enough notice to comply and not enough to negotiate.
   bool get isDueSoon {
     if (isDone) return false;
     final days = daysUntilDue;
-    return days != null && days <= 21;
+    if (days == null) return false;
+    final lead =
+        type == ReminderType.insurance ? InsuranceRenewal.leadDays : 21;
+    return days <= lead;
   }
 
   factory VehicleReminder.fromFirestore(Map<String, dynamic> data, String id) {

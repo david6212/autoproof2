@@ -49,7 +49,34 @@ service cloud.firestore {
              && exists(/databases/$(database)/documents/transfers/$(request.resource.data.claimedVia))
              && transferData(request.resource.data.claimedVia).status == 'pending'
              && transferData(request.resource.data.claimedVia).vehicleId == vehicleId
-             && transferData(request.resource.data.claimedVia).expiresAt > request.time;
+             && transferData(request.resource.data.claimedVia).expiresAt > request.time
+             // The code must have been minted by the person who owns the car
+             // RIGHT NOW. Without this line the whole model is decorative: a
+             // stranger reads `vehicleId` off any public listing, mints a
+             // transfer naming that vehicle with themselves as `fromUserId`,
+             // and claims a passport they never owned — three writes, no app.
+             && transferData(request.resource.data.claimedVia).fromUserId
+                == resource.data.ownerId;
+    }
+
+    // ---- Account erasure ----
+    //
+    // Signals that this person is deleting their account, not editing their
+    // data: `AccountDeletionRepository` removes `users/{uid}` FIRST, then
+    // works through everything the account owns.
+    //
+    // This exists because two deliberate designs collided. Service history is
+    // append-only so a seller cannot erase an inconvenient record while a
+    // buyer is reading it; the right to erasure says a person may take their
+    // data with them when they leave. Both are right, and the difference
+    // between them is exactly whether the account still exists.
+    //
+    // It cannot be used to launder a history: reaching this state costs the
+    // attacker their entire account, which is a far higher price than the
+    // record they wanted gone.
+    function isErasingAccount() {
+      return isSignedIn()
+             && !exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
     function transferData(claimCode) {
@@ -194,9 +221,31 @@ service cloud.firestore {
     // time (`plateHistorySnapshot`), which identifies nobody.
     //
     // Snapshots hold NO seller identity.
+    // Every field is checked, because nothing here can be taken back: there
+    // is no update and no delete, and a snapshot is copied verbatim onto a
+    // world-readable listing at publish time. An unvalidated create let anyone
+    // who could read a plate off a windscreen plant a past for that car —
+    // and since 27/08 a forged record raises THREE findings on the victim's
+    // own page, one of which drags a real third party's listing into it.
+    //
+    // The `get()` on the listing is the load-bearing clause: it binds a
+    // snapshot to a car the writer actually published. Safe to require —
+    // `create_listing_provider` writes the listing before the snapshot, so the
+    // document is already there. `createdAt` is pinned to server time because
+    // a backdated snapshot is what invents a "dealer flip".
     match /plate_history/{plate}/snapshots/{snapshotId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn();
+      allow create: if isSignedIn()
+                    && request.resource.data.createdAt == request.time
+                    && request.resource.data.km is int
+                    && request.resource.data.km >= 0
+                    && request.resource.data.km <= 2000000
+                    && request.resource.data.price is number
+                    && request.resource.data.price > 0
+                    && request.resource.data.sellerType in ['private', 'agent', 'dealer']
+                    && request.resource.data.carId is string
+                    && carSellerId(request.resource.data.carId) == request.auth.uid;
+      allow update, delete: if false;
     }
 
     // ---- Vehicle passports (private garage) ----
@@ -231,9 +280,15 @@ service cloud.firestore {
       // Only an empty passport can be deleted. Once one record exists,
       // "delete and re-add" would be an eraser, and append-only would mean
       // nothing.
+      //
+      // The exception is account erasure. Without it this gate silently won
+      // the argument: "delete my account" ran a plain `.delete()`, Firestore
+      // refused it on any documented vehicle, and the licence scan, the
+      // service history and the plate all stayed behind — while the privacy
+      // policy told the user they were gone.
       allow delete: if isSignedIn()
                     && resource.data.ownerId == request.auth.uid
-                    && resource.data.serviceCount == 0;
+                    && (resource.data.serviceCount == 0 || isErasingAccount());
 
       // ---- Service records: append-only, no exceptions ----
       // Readable by the owner always, and by anyone while the car is listed —
@@ -265,7 +320,12 @@ service cloud.firestore {
                       && request.resource.data.addedByOwnerId == resource.data.addedByOwnerId
                       && request.resource.data.createdAt == resource.data.createdAt
                       && request.resource.data.editedAt is timestamp;
-        allow delete: if false; // never
+        // Never while the account exists — see `isErasingAccount()`. A record
+        // that could vanish while a buyer was reading it would make the whole
+        // history worthless; a record that outlives the person who wrote it
+        // makes "delete my account" a lie. This is the only gap between them.
+        allow delete: if isErasingAccount()
+                      && vehicleData(vehicleId).ownerId == request.auth.uid;
       }
 
       match /reminders/{reminderId} {
@@ -286,8 +346,18 @@ service cloud.firestore {
       // A vehicle licence carries an ID number and a home address. Nothing
       // here reaches a buyer until the owner turns sharing on for that one
       // document, and only while the car is actually listed.
+      //
+      // **And never to a signed-out stranger.** The rest of the marketplace is
+      // deliberately browsable without an account — `services` short-circuits
+      // for a guest on purpose. This is the one place that exception must not
+      // reach: a shared licence read anonymously is an Israeli ID number and a
+      // home address published to the open internet, which Google Play forbids
+      // outright, with no exception for the owner having consented. Requiring
+      // a sign-in does not make the document private, but it stops it being
+      // *public*, and that word is what the rule turns on.
       match /documents/{documentId} {
-        allow read: if (resource.data.isSharedWithBuyers == true
+        allow read: if (isSignedIn()
+                        && resource.data.isSharedWithBuyers == true
                         && vehicleData(vehicleId).isListed == true)
                     || (isSignedIn()
                         && vehicleData(vehicleId).ownerId == request.auth.uid);
@@ -315,7 +385,8 @@ service cloud.firestore {
         // token, so turning sharing off closes the door on anyone who has not
         // already saved the image to their own device.
         match /file/{fileId} {
-          allow read: if (attachedDocument(vehicleId, documentId).isSharedWithBuyers == true
+          allow read: if (isSignedIn()
+                          && attachedDocument(vehicleId, documentId).isSharedWithBuyers == true
                           && vehicleData(vehicleId).isListed == true)
                       || (isSignedIn()
                           && vehicleData(vehicleId).ownerId == request.auth.uid);
@@ -338,10 +409,19 @@ service cloud.firestore {
       allow get: if isSignedIn();
       allow list: if false;
 
+      // `fromUserId == uid` says who is handing the car over; it does NOT say
+      // the car is theirs. The `get()` does. And `expiresAt` is written by the
+      // client, so it is bounded here too — an unbounded expiry turns a
+      // handover code into a permanent key. The slack over `validFor` (14d)
+      // absorbs a client clock that runs fast.
       allow create: if isSignedIn()
                     && request.resource.data.fromUserId == request.auth.uid
                     && request.resource.data.status == 'pending'
-                    && request.resource.data.toUserId == null;
+                    && request.resource.data.toUserId == null
+                    && vehicleData(request.resource.data.vehicleId).ownerId
+                       == request.auth.uid
+                    && request.resource.data.expiresAt
+                       <= request.time + duration.value(15, 'd');
 
       allow update: if isSignedIn()
                     && resource.data.status == 'pending'

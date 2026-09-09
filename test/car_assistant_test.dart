@@ -37,12 +37,14 @@ void main() {
   AssistantContext ctx({
     List<ServiceRecord> services = const [],
     int openRecalls = 0,
-    bool govReachable = true,
+    bool recallsChecked = true,
+    bool recordsLoaded = true,
   }) =>
       AssistantContext(
         services: services,
         openRecalls: openRecalls,
-        govReachable: govReachable,
+        recallsChecked: recallsChecked,
+        recordsLoaded: recordsLoaded,
         now: now,
       );
 
@@ -129,7 +131,11 @@ void main() {
     test('an open recall is reported with what to do', () {
       final a = CarAssistant.answer('יש ריקול?', ctx(openRecalls: 2));
       expect(a!.text, contains('2'));
-      expect(a.text, contains('ללא עלות'));
+      // Where to go, not what it will cost. The register records that a recall
+      // is open; it does not record who pays or on what terms, so the answer
+      // points at the importer instead of promising on their behalf.
+      expect(a.text, contains('היבואן'));
+      expect(a.text.contains('ללא עלות'), isFalse);
     });
 
     test('none found is worded as the dataset being empty, not as safety', () {
@@ -137,7 +143,7 @@ void main() {
       // is a fact about a dataset; "the car is fine" is a claim about a car,
       // and the app is not entitled to make it.
       final a = CarAssistant.answer('יש ריקול?', ctx());
-      expect(a!.text, contains('לא רשומות'));
+      expect(a!.text, contains('לא נרשמו'));
       for (final forbidden in const ['תקין', 'בסדר', 'בטוח', 'אין בעיה']) {
         expect(a.text.contains(forbidden), isFalse, reason: forbidden);
       }
@@ -147,7 +153,7 @@ void main() {
       // "We could not check" and "we checked and found nothing" are different
       // answers, and collapsing them is how an app starts lying by accident.
       final a =
-          CarAssistant.answer('יש ריקול?', ctx(govReachable: false));
+          CarAssistant.answer('יש ריקול?', ctx(recallsChecked: false));
       expect(a!.text, contains('לא בדקנו'));
       expect(a.text, contains('זה לא אומר שאין'));
     });

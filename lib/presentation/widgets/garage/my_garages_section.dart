@@ -41,7 +41,9 @@ class MyGaragesSection extends ConsumerWidget {
     final ids = _usedPlaceIds;
     if (ids.isEmpty) return const SizedBox.shrink();
 
-    final placesAsync = ref.watch(placesByIdsProvider(ids));
+    // `placesByIdsKey`, not the list itself — a family keyed on a list
+    // rebuilds and refetches on every frame.
+    final placesAsync = ref.watch(placesByIdsProvider(placesByIdsKey(ids)));
     final places = placesAsync.valueOrNull ?? const <Place>[];
     // Silent while loading and silent on failure: this is a convenience
     // shortcut to pages reachable from the timeline anyway, and a spinner or

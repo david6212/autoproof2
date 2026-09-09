@@ -36,10 +36,25 @@ class CarActiveWarnings extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ActiveWarningsSection(warnings: _collect(ref));
+    return ActiveWarningsSection(
+      warnings: collect(ref, car, onShowOdometerSource: onShowOdometerSource),
+    );
   }
 
-  List<ActiveWarning> _collect(WidgetRef ref) {
+  /// Every finding for [car], for anyone who needs to know whether there are
+  /// any.
+  ///
+  /// Public because `_ChecksPerformedNote` further down the page has to
+  /// suppress itself when this list is non-empty, and it used to answer that
+  /// question by re-deriving four of the rules for itself. Two copies of the
+  /// same rule drift, and this pair drifted the day the relisting checks
+  /// landed: the note went on saying the registry came back clean underneath
+  /// a finding, which reads as an argument with it.
+  static List<ActiveWarning> collect(
+    WidgetRef ref,
+    CarModel car, {
+    VoidCallback? onShowOdometerSource,
+  }) {
     final gov = listingGov(ref, car).valueOrNull;
     final history =
         [
@@ -84,10 +99,14 @@ class CarActiveWarnings extends ConsumerWidget {
     final earlier = RelistingCheck.previous(
       currentCarId: car.id,
       history: history,
-      activeCarIds:
-          ref.watch(concurrentListingsProvider([for (final s in history) s.carId]))
-                  .valueOrNull ??
-              const <String>{},
+      // The key is built by `concurrentListingsKey`, never inline: a list
+      // literal here is a new object on every build, and a Riverpod family
+      // keyed on one refetches forever without ever reaching its data.
+      activeCarIds: ref
+              .watch(concurrentListingsProvider(
+                  concurrentListingsKey([for (final s in history) s.carId])))
+              .valueOrNull ??
+          const <String>{},
     );
 
     final live = RelistingCheck.concurrent(earlier);
@@ -99,8 +118,9 @@ class CarActiveWarnings extends ConsumerWidget {
       ));
     }
 
-    // Informational rather than accusatory: buying a car and reselling it is a
-    // legal business, and what the buyer gains here is the earlier number.
+    // Informational rather than accusatory: buying a car and reselling it is
+    // a legal business. It renders under its own quiet heading, and carries
+    // no price — see `ActiveWarning.soldOnRecently`.
     final flip = RelistingCheck.recentSellerChange(
       previous: earlier,
       currentSellerType: car.sellerType,
@@ -109,7 +129,6 @@ class CarActiveWarnings extends ConsumerWidget {
     if (flip != null) {
       warnings.add(ActiveWarning.soldOnRecently(
         pastSeller: flip.snapshot.sellerType.label,
-        pastPrice: RelistingCheck.shekels(flip.snapshot.price),
         pastDate: DateFormatter.format(flip.snapshot.createdAt),
       ));
     }

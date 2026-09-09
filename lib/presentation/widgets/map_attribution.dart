@@ -46,12 +46,19 @@ class MapAttribution extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Text(
-              // Both are named. The map data is OpenStreetMap's under ODbL,
-              // which requires the credit; the tiles are served by
-              // OpenFreeMap, whose terms ask for the same. Neither is
-              // optional, and the line is short enough that being exact
-              // costs nothing.
-              '© OpenStreetMap · OpenFreeMap',
+              // Three parties, and all three are required.
+              //
+              // OSMF asks for the word **contributors** specifically — "© OpenStreetMap
+              // contributors" — and the app shipped that correctly until the vector
+              // basemap landed in 0.9.0, when the word was dropped. This was a
+              // regression, not an omission: the store screenshot taken on 25/08 shows
+              // the compliant string.
+              //
+              // OpenFreeMap serves the tiles and asks to be credited alongside
+              // **OpenMapTiles**, whose schema the style is built on, and OpenMapTiles
+              // was never named at all. Commercial use and unlimited views are
+              // expressly granted, so attribution is the whole of the bargain.
+              '© OpenStreetMap contributors · OpenFreeMap © OpenMapTiles',
               style: TextStyle(fontSize: 11.5, color: Color(0xFF1A202C)),
             ),
           ),

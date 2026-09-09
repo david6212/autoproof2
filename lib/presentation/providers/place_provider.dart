@@ -113,12 +113,21 @@ class PlaceReviewActions {
 final placeReviewActionsProvider =
     Provider<PlaceReviewActions>(PlaceReviewActions.new);
 
+/// The cache key for [placesByIdsProvider]. Order is preserved on purpose —
+/// the caller lists garages in the order they were used, and the results come
+/// back in the order asked for.
+String placesByIdsKey(Iterable<String> ids) => ids.join(',');
+
 /// Several places at once, for a screen that already knows which ids it needs.
 ///
 /// Keyed by the joined ids so two screens asking for the same set share one
-/// result rather than each paying for it.
+/// result rather than each paying for it — and, more importantly, so the key
+/// compares by **value**. A `List` key compares by identity, so a list built
+/// in `build()` missed the cache every frame and re-read every place, forever.
+/// See [concurrentListingsProvider] for the same bug written up in full.
 final placesByIdsProvider =
-    FutureProvider.autoDispose.family<List<Place>, List<String>>((ref, ids) {
+    FutureProvider.autoDispose.family<List<Place>, String>((ref, idsKey) {
+  final ids = idsKey.isEmpty ? const <String>[] : idsKey.split(',');
   return ref.watch(placeRepositoryProvider).byIds(ids);
 });
 

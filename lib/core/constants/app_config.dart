@@ -45,6 +45,23 @@ class AppConfig {
   /// its own logo artwork — drawing an approximation is a guideline breach.
   static const appleSignInEnabled = false;
 
+  /// Whether the phone / SMS sign-in route is offered at all.
+  ///
+  /// **Off, because it cannot succeed.** Firebase phone auth needs the Blaze
+  /// plan; on Spark every send fails with `BILLING_NOT_ENABLED`. The failure
+  /// is handled honestly — `auth_repository` maps it to a message that blames
+  /// the operator rather than the user — but a route that always fails is
+  /// still a route that always fails, and Play reviewers test sign-in.
+  ///
+  /// Same rule as [appleSignInEnabled] and [storageEnabled], applied to the
+  /// third and last failing route: a button that always fails is worse than a
+  /// button that is not there.
+  ///
+  /// **To turn it on:** enable Blaze, confirm Phone is on as a Firebase Auth
+  /// provider, and flip this. The whole flow — `sendCode`, `verifyCode`, the
+  /// resend timer, the code field — is written and waiting behind it.
+  static const phoneAuthEnabled = false;
+
   /// The one sentence shown wherever a file could have been attached.
   static const uploadsUnavailable =
       'צירוף קבצים אינו זמין כרגע. שאר הפרטים נשמרים כרגיל.';

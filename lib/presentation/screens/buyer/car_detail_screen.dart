@@ -12,10 +12,10 @@ import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/chat_provider.dart';
-import '../../../core/utils/odometer_check.dart';
 import '../../../data/models/gov_data_model.dart';
 import '../../providers/gov_api_provider.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/car/active_warnings_section.dart';
 import '../../widgets/car/car_active_warnings.dart';
 import '../../widgets/car/demo_listing_notice.dart';
 import '../../widgets/common/collapsible_section.dart';
@@ -793,6 +793,15 @@ class _RegistryAsOf extends StatelessWidget {
 /// Renders nothing until the registry answers, and nothing at all when there
 /// are findings: they are already at the top of the page, and a line about
 /// what was clean underneath them would read as an argument with them.
+///
+/// "Are there findings" is asked of [CarActiveWarnings.collect] rather than
+/// worked out here. This note used to re-derive the registry rules for itself,
+/// which held until the relisting checks were added to one copy and not the
+/// other — and then a listing whose only finding was a duplicate advert
+/// rendered the finding at the top and a clean bill of health below it.
+///
+/// Context-tier records do not count. They are not findings and nothing about
+/// them contradicts a clean registry check.
 class _ChecksPerformedNote extends ConsumerWidget {
   const _ChecksPerformedNote({required this.car});
 
@@ -803,12 +812,8 @@ class _ChecksPerformedNote extends ConsumerWidget {
     final gov = listingGov(ref, car).valueOrNull;
     if (gov == null) return const SizedBox.shrink();
 
-    final officialKm = OdometerCheck.officialReading(gov.lastTestKm);
-    final anyFinding = gov.offRoad ||
-        gov.structuralChange ||
-        gov.recalls.isNotEmpty ||
-        OdometerCheck.belowOfficial(
-            officialKm: officialKm, currentKm: car.km);
+    final anyFinding = CarActiveWarnings.collect(ref, car)
+        .any((w) => w.severity != WarningSeverity.info);
     if (anyFinding) return const SizedBox.shrink();
 
     // Name only the datasets that actually answered. Any endpoint can fail on

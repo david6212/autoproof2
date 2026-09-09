@@ -16,11 +16,30 @@ import 'primary_button_widget.dart';
 /// enter. Shipping a table of "recommended" intervals would mean the app
 /// asserting something about their particular car that we have no source for.
 class AddReminderSheet extends ConsumerStatefulWidget {
-  const AddReminderSheet({super.key, required this.vehicleId});
+  const AddReminderSheet({
+    super.key,
+    required this.vehicleId,
+    this.initialType,
+    this.initialDate,
+  });
+
+  /// Which kind to open on, when the sheet was opened from somewhere that
+  /// already knows — the insurance prompt does.
+  final ReminderType? initialType;
+
+  /// A date to start from. Only ever a **suggestion the owner can change**:
+  /// the app has no way to know when a private insurance contract ends, and a
+  /// pre-filled date that is silently wrong is worse than an empty one.
+  final DateTime? initialDate;
 
   final String vehicleId;
 
-  static Future<void> show(BuildContext context, String vehicleId) {
+  static Future<void> show(
+    BuildContext context,
+    String vehicleId, {
+    ReminderType? initialType,
+    DateTime? initialDate,
+  }) {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -28,7 +47,11 @@ class AddReminderSheet extends ConsumerStatefulWidget {
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: AddReminderSheet(vehicleId: vehicleId),
+        child: AddReminderSheet(
+          vehicleId: vehicleId,
+          initialType: initialType,
+          initialDate: initialDate,
+        ),
       ),
     );
   }
@@ -38,10 +61,10 @@ class AddReminderSheet extends ConsumerStatefulWidget {
 }
 
 class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
-  ReminderType _type = ReminderType.timingBelt;
+  late ReminderType _type = widget.initialType ?? ReminderType.timingBelt;
   final _title = TextEditingController();
   final _km = TextEditingController();
-  DateTime? _date;
+  late DateTime? _date = widget.initialDate;
   bool _saving = false;
 
   /// Mileage reminders make no sense as a date, and vice versa. The sheet

@@ -115,6 +115,14 @@ void main() {
       // 3:1 is the floor for the small, secondary text these are used for.
       expect(ratio(dark.textSubtle, dark.surface), greaterThan(3.0));
       expect(ratio(dark.tealText, dark.tealLight), greaterThan(3.0));
+
+      // The high-severity finding tile. Its title was `errorRed` on `errorBg`
+      // — 2.98:1 in light, under the floor, which made the loudest thing on
+      // the car page its least readable line in the default theme. The title
+      // is `textPrimary` now and the red is carried by the fill and border,
+      // so this is the pair that has to hold.
+      expect(ratio(light.textPrimary, light.errorBg), greaterThan(4.5));
+      expect(ratio(dark.textPrimary, dark.errorBg), greaterThan(4.5));
       expect(ratio(dark.textMuted, dark.surface), greaterThan(4.5));
     });
 
