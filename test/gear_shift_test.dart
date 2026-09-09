@@ -1,8 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:bonnetcheck/app/theme.dart';
+import 'package:bonnetcheck/presentation/providers/cars_provider.dart';
+import 'package:bonnetcheck/presentation/widgets/buyer_journey_card.dart';
 import 'package:bonnetcheck/presentation/widgets/gear_shift_overlay.dart';
 
 /// The gear-shift that plays when a stage of the purchase is ticked.
@@ -114,12 +118,54 @@ void main() {
     expect(card.contains('from: fromIndex + 1, to: fromIndex + 2'), isFalse);
   });
 
+  testWidgets('the undo is visible the way the app actually renders the card',
+      (tester) async {
+    // **The test that was missing, and it cost a shipped build.** The control
+    // spent one release in `AppSectionCard`'s header — and the only call site
+    // in the app passes `collapsible: true`, so that whole branch is dead code.
+    // The compiler dropped the button's label string from the binary entirely.
+    //
+    // A source scan cannot see this: the code is right there in the file. Only
+    // rendering it the way the app does can.
+    tester.view.physicalSize = const Size(1080, 2340);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        // Stage 3, because at stage 1 there is correctly nothing to undo —
+        // reading the registry happens by opening the listing, and it is not
+        // something the reader did.
+        journeyStageProvider('c1').overrideWith((ref) => Stream.value(3)),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.light,
+        home: const Directionality(
+          textDirection: TextDirection.rtl,
+          child: Scaffold(
+            body: SingleChildScrollView(
+              child: BuyerJourneyCard(carId: 'c1', collapsible: true),
+            ),
+          ),
+        ),
+      ),
+    ));
+    await tester.pump();
+
+    // The card is a fold and opens closed, so open it the way a reader does.
+    await tester.tap(find.text('מסע הקנייה'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('חזרה שלב אחורה'), findsOneWidget,
+        reason: 'a rendered control, not one in a branch nobody reaches');
+  });
+
   test('a stage can be un-ticked, one at a time', () {
     // Somebody who mis-tapped wants the tap undone, not the journey erased.
     // This replaced an "אפס" that only appeared once the journey was finished
     // and threw all of it away.
     expect(card, contains('_stepBack('));
-    expect(card, contains('חזרה שלב'));
+    expect(card, contains('חזרה שלב אחורה'));
     expect(card.contains("child: const Text('אפס'"), isFalse);
     // And going back is guarded the same way going forward is.
     final back = card.indexOf('void _stepBack(');

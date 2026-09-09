@@ -213,6 +213,30 @@ class BuyerJourneyCard extends ConsumerWidget {
             actionLabel: i == currentStage ? _actionLabels[i] : null,
             onAction: i == currentStage ? () => _advance(context, ref, i) : null,
           ),
+        // In the shared content, NOT in the AppSectionCard header.
+        //
+        // It lived in that header for one build and could not be seen at all:
+        // the only call site passes `collapsible: true`, so the card always
+        // renders as a CollapsibleSection and the whole AppSectionCard branch
+        // is dead code — the compiler even dropped the button's label string
+        // from the binary. Here it renders whichever shell is used, and it sits
+        // beside the steps it undoes rather than in a title bar.
+        if (currentStage > 1)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              onPressed: () => _stepBack(context, ref, currentStage),
+              icon: const Icon(Icons.undo_rounded, size: 15),
+              style: TextButton.styleFrom(
+                foregroundColor: context.colors.textMuted,
+                minimumSize: const Size(0, 0),
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+              ),
+              label: const Text('חזרה שלב אחורה',
+                  style: TextStyle(fontSize: 12.5)),
+            ),
+          ),
         if (completed)
           Container(
             margin: const EdgeInsets.only(top: 4),
@@ -288,21 +312,7 @@ class BuyerJourneyCard extends ConsumerWidget {
     return AppSectionCard(
       icon: Icons.route_outlined,
       title: 'מסע הקנייה',
-      // Replaces the old "אפס", which only appeared once the journey was
-      // finished and threw the whole thing away. Undoing one stage is what
-      // somebody who mis-tapped actually wants, and it is available the whole
-      // way through rather than only at the end.
-      trailing: currentStage > 1
-          ? TextButton.icon(
-              onPressed: () => _stepBack(context, ref, currentStage),
-              icon: const Icon(Icons.undo_rounded, size: 15),
-              style: TextButton.styleFrom(
-                  foregroundColor: context.colors.textMuted,
-                  minimumSize: const Size(0, 0),
-                  padding: const EdgeInsets.symmetric(horizontal: 6)),
-              label: const Text('חזרה שלב', style: TextStyle(fontSize: 12.5)),
-            )
-          : null,
+      trailing: null,
       child: steps,
     );
   }
