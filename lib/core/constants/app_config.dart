@@ -73,5 +73,20 @@ class AppConfig {
   /// string. `app_version_test` reads pubspec and fails if the two drift — a
   /// version number that lies is worse than none, since it sends support
   /// looking at the wrong build.
-  static const appVersion = '0.9.4+18';
+  /// The one account that may read incoming correction requests and note
+  /// reports, and mark them handled.
+  ///
+  /// **An email rather than a uid**, because a uid is not knowable without
+  /// signing in as the operator, and this has to be written into
+  /// `firestore.rules` where only the token's claims are available. The
+  /// address is already in the author line of every commit in a public
+  /// repository, so naming it here exposes nothing new — and the rule pairs it
+  /// with `email_verified`, because an unverified email in a token is a claim
+  /// the account made about itself.
+  ///
+  /// If this ever changes, `firestore.rules` changes with it. `inbox_test`
+  /// fails if the two drift.
+  static const operatorEmail = 'davidmalede@gmail.com';
+
+  static const appVersion = '0.9.5+19';
 }

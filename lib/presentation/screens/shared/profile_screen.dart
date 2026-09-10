@@ -10,6 +10,7 @@ import '../../providers/auth_provider.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/constants/app_config.dart';
 import '../../widgets/analytics_consent_gate.dart';
+import '../../widgets/operator_inbox_card.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/guest_prompt_view.dart';
 import '../../../core/theme/app_text.dart';
@@ -51,6 +52,7 @@ class ProfileScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpace.xl),
               _MenuGroup(rows: [
+                const OperatorInboxCard(),
                 const AnalyticsConsentTile(),
                 _MenuRow(
                   icon: Icons.info_outline,

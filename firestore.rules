@@ -4,6 +4,15 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ---- Helpers ----
+    // The operator. Paired with email_verified on purpose: an unverified
+    // email in a token is a claim the account made about itself, and this
+    // grants read access to other people's complaints.
+    function isOperator() {
+      return request.auth != null
+             && request.auth.token.email_verified == true
+             && request.auth.token.email == 'davidmalede@gmail.com';
+    }
+
     function isSignedIn() {
       return request.auth != null;
     }
@@ -437,19 +446,34 @@ service cloud.firestore {
     }
 
     // ---- Note reports (flags for admin review; no client reads) ----
+    // Readable by the operator, and by nobody else. It used to be readable by
+    // no one at all — including the person whose published complaints
+    // procedure promises an answer within 14 days. A report of a defamatory
+    // note landed here and waited for somebody to remember to open a console.
     match /note_reports/{reportId} {
-      allow read: if false;
+      allow read: if isOperator();
       allow create: if isSignedIn()
                     && request.resource.data.reporterUid == request.auth.uid;
+      // Marking one handled writes a timestamp and nothing else: the report
+      // itself is the record of what was said, and an operator who can edit
+      // complaints about their own product can edit the evidence.
+      allow update: if isOperator()
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['handledAt']);
+      allow delete: if false;
     }
 
     // ---- Correction requests ("this information is wrong") ----
     // Admin-review only. Anyone signed in may ask for a correction — including
     // a seller challenging community reports about their own listing.
     match /data_corrections/{requestId} {
-      allow read: if false;
+      allow read: if isOperator();
       allow create: if isSignedIn()
                     && request.resource.data.reporterUid == request.auth.uid;
+      allow update: if isOperator()
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['handledAt']);
+      allow delete: if false;
     }
 
     // ---- Garages and car washes ----
