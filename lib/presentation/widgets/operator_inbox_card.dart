@@ -7,6 +7,7 @@ import '../../core/theme/app_text.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../data/repositories/operator_inbox_repository.dart';
 import '../providers/operator_inbox_provider.dart';
+import '../providers/place_provider.dart';
 import 'app_card.dart';
 
 /// The requests the operator has fourteen days to answer.
@@ -154,15 +155,44 @@ class _Row extends ConsumerWidget {
             ],
           ),
         ),
-        TextButton(
-          onPressed: () =>
-              ref.read(operatorInboxRepositoryProvider).markHandled(item),
-          style: TextButton.styleFrom(
-            foregroundColor: colors.tealText2,
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm),
-          ),
-          child: const Text('טופל', style: TextStyle(fontSize: 12.5)),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            // A review report can be acted on from here, without hunting for
+            // the garage: hide the review, and close the report, in one tap.
+            // Hiding never deletes — the words stay, so a report that turns
+            // out to be wrong is undone from the garage's page.
+            if (item.kind == InboxKind.reviewReport &&
+                item.placeId != null &&
+                item.reviewUid != null)
+              TextButton(
+                onPressed: () async {
+                  await ref.read(placeRepositoryProvider).hideReview(
+                        placeId: item.placeId!,
+                        reviewUid: item.reviewUid!,
+                      );
+                  await ref
+                      .read(operatorInboxRepositoryProvider)
+                      .markHandled(item);
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: colors.errorRed,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm),
+                ),
+                child: const Text('הסתר וסגור', style: TextStyle(fontSize: 12.5)),
+              ),
+            TextButton(
+              onPressed: () =>
+                  ref.read(operatorInboxRepositoryProvider).markHandled(item),
+              style: TextButton.styleFrom(
+                foregroundColor: colors.tealText2,
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm),
+              ),
+              child: const Text('טופל', style: TextStyle(fontSize: 12.5)),
+            ),
+          ],
         ),
       ],
     );

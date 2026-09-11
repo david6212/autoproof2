@@ -18,8 +18,7 @@ final isOperatorProvider = Provider<bool>((ref) {
   final user = ref.watch(authStateProvider).valueOrNull;
   if (user == null) return false;
   return user.emailVerified &&
-      (user.email ?? '').toLowerCase() ==
-          AppConfig.operatorEmail.toLowerCase();
+      (user.email ?? '').toLowerCase() == AppConfig.operatorEmail.toLowerCase();
 });
 
 /// Every unanswered request, both kinds, oldest first.
@@ -31,13 +30,15 @@ final operatorInboxProvider = StreamProvider<List<InboxItem>>((ref) {
   final repo = ref.watch(operatorInboxRepositoryProvider);
 
   return repo.watch(InboxKind.correction).asyncExpand((corrections) {
-    return repo.watch(InboxKind.noteReport).map((reports) {
-      final all = [...corrections, ...reports]..sort((a, b) {
+    return repo.watch(InboxKind.noteReport).asyncExpand((notes) {
+      return repo.watch(InboxKind.reviewReport).map((reviews) {
+        final all = [...corrections, ...notes, ...reviews]..sort((a, b) {
           final x = a.createdAt, y = b.createdAt;
           if (x == null || y == null) return 0;
           return x.compareTo(y);
         });
-      return all;
+        return all;
+      });
     });
   });
 });

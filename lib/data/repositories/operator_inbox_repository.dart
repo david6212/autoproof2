@@ -1,17 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Which published promise a request falls under.
-enum InboxKind { correction, noteReport }
+enum InboxKind { correction, noteReport, reviewReport }
 
 extension InboxKindX on InboxKind {
   String get label => switch (this) {
         InboxKind.correction => 'בקשת תיקון',
         InboxKind.noteReport => 'דיווח על הערה',
+        InboxKind.reviewReport => 'דיווח על ביקורת',
       };
 
   String get collection => switch (this) {
         InboxKind.correction => 'data_corrections',
         InboxKind.noteReport => 'note_reports',
+        InboxKind.reviewReport => 'review_reports',
       };
 }
 
@@ -24,6 +26,8 @@ class InboxItem {
     this.carId,
     this.note,
     this.subKind,
+    this.placeId,
+    this.reviewUid,
   });
 
   final String id;
@@ -37,6 +41,11 @@ class InboxItem {
 
   /// The `kind` field a correction request carries — which promise it is under.
   final String? subKind;
+
+  /// Set on a review report: which review, on which place, so the inbox can
+  /// act on it directly rather than send the operator hunting for it.
+  final String? placeId;
+  final String? reviewUid;
 
   /// How long the person has been waiting. Null until the timestamp lands.
   int? daysWaiting(DateTime now) {
@@ -64,6 +73,8 @@ class InboxItem {
       carId: d['carId'] as String?,
       note: d['note'] as String?,
       subKind: d['kind'] as String?,
+      placeId: d['placeId'] as String?,
+      reviewUid: d['reviewUid'] as String?,
     );
   }
 }

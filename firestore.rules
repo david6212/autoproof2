@@ -463,6 +463,26 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ---- Review reports ("this review is false or defamatory") ----
+    //
+    // Top level, beside note_reports and data_corrections, rather than under
+    // the place: the operator reads all three from one inbox, and a nested
+    // collection would need a collection-group query and a recursive rule to
+    // do the same.
+    //
+    // One per person per review. The id ends in the reporter's uid, so a
+    // second report from the same account is an update, and is refused.
+    match /review_reports/{reportId} {
+      allow read: if isOperator();
+      allow create: if isSignedIn()
+                    && request.resource.data.reporterUid == request.auth.uid
+                    && reportId.matches('.*__' + request.auth.uid);
+      allow update: if isOperator()
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['handledAt']);
+      allow delete: if false;
+    }
+
     // ---- Correction requests ("this information is wrong") ----
     // Admin-review only. Anyone signed in may ask for a correction — including
     // a seller challenging community reports about their own listing.
@@ -511,10 +531,29 @@ service cloud.firestore {
                     && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['ratingCount', 'ratingSum', 'ratingAvg',
                                    'lastReviewAt', 'isHidden'])
-                    && request.resource.data.ratingCount >= resource.data.ratingCount
                     && request.resource.data.ratingCount <= resource.data.ratingCount + 1
+                    && request.resource.data.ratingCount >= 0
                     && request.resource.data.ratingSum >= resource.data.ratingSum - 5
                     && request.resource.data.ratingSum <= resource.data.ratingSum + 5
+                    // The count may fall by one, and only on a path entitled
+                    // to it.
+                    //
+                    // It used to be forbidden outright, which quietly broke
+                    // deleteReview: that batch lowers the count, the rule
+                    // refused the place update, and a batch is atomic — so the
+                    // review delete was refused with it. Nobody could withdraw
+                    // a review they had written, which is also their right to
+                    // erasure.
+                    //
+                    // Simply allowing -1 would have let any signed-in account
+                    // lower a competitor's rating one write at a time. So a
+                    // decrement is allowed only when the caller's OWN review is
+                    // being deleted in this same batch, or by the operator
+                    // hiding a reported one.
+                    && (request.resource.data.ratingCount >= resource.data.ratingCount
+                        || (exists(/databases/$(database)/documents/places/$(placeId)/reviews/$(request.auth.uid))
+                            && !existsAfter(/databases/$(database)/documents/places/$(placeId)/reviews/$(request.auth.uid)))
+                        || isOperator())
                     // Hiding is one-way. An entry three people said does not
                     // exist cannot be un-hidden by the fourth.
                     && (resource.data.isHidden == false
@@ -526,17 +565,44 @@ service cloud.firestore {
       // One review per person, keyed by their uid so the database enforces it.
       match /reviews/{reviewUid} {
         allow read: if true;
-        allow create, update: if isSignedIn()
-                              && request.auth.uid == reviewUid
-                              && request.resource.data.rating is int
-                              && request.resource.data.rating >= 1
-                              && request.resource.data.rating <= 5
-                              && (!('text' in request.resource.data)
-                                  || request.resource.data.text.size() <= 500);
-        // Yours to withdraw. Unlike a service record, a review is an opinion
-        // about somebody else's business and nobody is owed its permanence.
+
+        allow create: if isSignedIn()
+                      && request.auth.uid == reviewUid
+                      && request.resource.data.rating is int
+                      && request.resource.data.rating >= 1
+                      && request.resource.data.rating <= 5
+                      && (!('text' in request.resource.data)
+                          || request.resource.data.text.size() <= 500)
+                      // Nobody arrives pre-hidden, and nobody hides their own.
+                      && !('hiddenByOperator' in request.resource.data);
+
+        // The author may edit — but not a review the operator has hidden.
+        // saveReview writes the whole document, so without this an edit to a
+        // hidden review would silently drop the flag and put it back on
+        // screen: the very review somebody reported, restored by its author.
+        allow update: if isSignedIn()
+                      && request.auth.uid == reviewUid
+                      && resource.data.get('hiddenByOperator', false) != true
+                      && !('hiddenByOperator' in request.resource.data)
+                      && request.resource.data.rating is int
+                      && request.resource.data.rating >= 1
+                      && request.resource.data.rating <= 5
+                      && (!('text' in request.resource.data)
+                          || request.resource.data.text.size() <= 500);
+
+        // The operator may hide or restore, and change nothing else. The words
+        // stay exactly as written, so a report that turns out to be wrong can
+        // be undone with what the review actually said still intact.
+        allow update: if isOperator()
+                      && request.resource.data.diff(resource.data).affectedKeys()
+                           .hasOnly(['hiddenByOperator', 'hiddenAt']);
+
+        // Yours to withdraw, hidden or not: an opinion about somebody else's
+        // business, nobody is owed its permanence, and erasing it is the
+        // author's right.
         allow delete: if isSignedIn() && request.auth.uid == reviewUid;
       }
+
     }
 
     // ---- "This place does not exist" ----

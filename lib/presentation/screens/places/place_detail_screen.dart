@@ -11,6 +11,7 @@ import '../../../data/models/place.dart';
 import '../../../data/models/place_review.dart';
 import '../../../data/models/service_record.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/operator_inbox_provider.dart';
 import '../../providers/place_provider.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/app_card.dart';
@@ -443,22 +444,31 @@ class _Reviews extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final r in mine) _ReviewTile(review: r, isMine: true),
-        for (final r in others) _ReviewTile(review: r, isMine: false),
+        for (final r in mine)
+          _ReviewTile(placeId: place.id, review: r, isMine: true),
+        for (final r in others)
+          _ReviewTile(placeId: place.id, review: r, isMine: false),
       ],
     );
   }
 }
 
-class _ReviewTile extends StatelessWidget {
-  const _ReviewTile({required this.review, required this.isMine});
+class _ReviewTile extends ConsumerWidget {
+  const _ReviewTile({
+    required this.placeId,
+    required this.review,
+    required this.isMine,
+  });
 
+  final String placeId;
   final PlaceReview review;
   final bool isMine;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
+    final isOperator = ref.watch(isOperatorProvider);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpace.md),
       child: AppCard(
@@ -466,6 +476,23 @@ class _ReviewTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Only the operator is ever sent a hidden review, so this marker is
+            // only ever seen by the one person who can restore it.
+            if (review.hiddenByOperator) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.sm, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colors.warnBg,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Text(
+                  'מוסתרת — לא מוצגת לאף אחד',
+                  style: context.text.micro.copyWith(color: colors.warnText),
+                ),
+              ),
+              const SizedBox(height: AppSpace.sm),
+            ],
             Row(
               children: [
                 Expanded(
@@ -510,10 +537,111 @@ class _ReviewTile extends StatelessWidget {
               Text('עודכנה ב-${DateFormatter.format(review.editedAt!)}',
                   style: context.text.micro),
             ],
+            if (!isMine || isOperator)
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: isOperator
+                    ? TextButton(
+                        onPressed: () => _toggleHidden(ref),
+                        style: _quiet(colors),
+                        child: Text(
+                          review.hiddenByOperator ? 'החזר לתצוגה' : 'הסתר',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      )
+                    : TextButton(
+                        onPressed: () => _report(context, ref),
+                        style: _quiet(colors),
+                        child: const Text('דווח על הביקורת',
+                            style: TextStyle(fontSize: 12)),
+                      ),
+              ),
           ],
         ),
       ),
     );
+  }
+
+  ButtonStyle _quiet(AppPalette colors) => TextButton.styleFrom(
+        foregroundColor: colors.textSubtle,
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm),
+      );
+
+  Future<void> _toggleHidden(WidgetRef ref) {
+    final repo = ref.read(placeRepositoryProvider);
+    return review.hiddenByOperator
+        ? repo.restoreReview(placeId: placeId, reviewUid: review.uid)
+        : repo.hideReview(placeId: placeId, reviewUid: review.uid);
+  }
+
+  /// The route for somebody who thinks a review is false or defamatory.
+  ///
+  /// Before this there was none. The only report on the screen was "this place
+  /// does not exist", so a garage owner who found a review calling them
+  /// thieves had no way to say so inside the app — and a platform's exposure
+  /// in defamation tends to grow once it has been told and has not acted. A
+  /// report lands in the operator's inbox under the same fourteen days the
+  /// published documents promise.
+  Future<void> _report(BuildContext context, WidgetRef ref) async {
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (uid == null) {
+      showLoginRequired(context, action: 'לדווח על ביקורת');
+      return;
+    }
+    final reason = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('לדווח על הביקורת?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'נבדוק את הדיווח ונחזור אליכם תוך 14 יום. '
+              'ביקורת שנמצאת פוגענית או שקרית מוסתרת — היא לא נמחקת.',
+              style: AppText.bodySm,
+            ),
+            const SizedBox(height: AppSpace.md),
+            TextField(
+              controller: reason,
+              maxLength: 300,
+              maxLines: 3,
+              decoration: const InputDecoration(labelText: 'מה לא בסדר בה? (לא חובה)'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(c).pop(false),
+              child: const Text('ביטול')),
+          TextButton(
+              onPressed: () => Navigator.of(c).pop(true),
+              child: const Text('דווח')),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final filed = await ref.read(placeRepositoryProvider).reportReview(
+            placeId: placeId,
+            reviewUid: review.uid,
+            reporterUid: uid,
+            reason: reason.text,
+          );
+      messenger.showSnackBar(SnackBar(
+        // A second report is said to be a second report, not pretended to be
+        // a new one.
+        content: Text(filed ? 'הדיווח התקבל. נחזור אליכם תוך 14 יום.' : 'כבר דיווחתם על הביקורת הזאת.'),
+      ));
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('לא הצלחנו לשלוח את הדיווח. נסו שוב.')),
+      );
+    }
   }
 }
 

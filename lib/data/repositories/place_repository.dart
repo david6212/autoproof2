@@ -102,11 +102,14 @@ class PlaceRepository {
   }
 
   /// The reviews on a place, newest first.
-  Stream<List<PlaceReview>> watchReviews(String placeId) =>
+  /// [includeHidden] is for the operator, who has to see a hidden review to be
+  /// able to restore it. Everyone else never receives one in the list.
+  Stream<List<PlaceReview>> watchReviews(String placeId,
+          {bool includeHidden = false}) =>
       _places.doc(placeId).collection('reviews').snapshots().map((snap) {
         final list = [
           for (final d in snap.docs) PlaceReview.fromFirestore(d.data(), d.id),
-        ];
+        ]..removeWhere((r) => r.hiddenByOperator && !includeHidden);
         // Sorted here rather than in the query so no composite index is
         // needed, and so the order is identical for everyone reading it.
         list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -182,6 +185,14 @@ class PlaceRepository {
     if (data == null) return;
     final rating = (data['rating'] as num?)?.toInt() ?? 0;
 
+    // A hidden review's rating was taken out of the aggregate when it was
+    // hidden. Taking it out a second time would lower the garage's score for a
+    // review that no longer counts — so a hidden review is simply deleted.
+    if (data['hiddenByOperator'] == true) {
+      await reviewRef.delete();
+      return;
+    }
+
     final placeSnap = await placeRef.get();
     final placeData = placeSnap.data() ?? const <String, dynamic>{};
     final count = ((placeData['ratingCount'] as num?)?.toInt() ?? 1) - 1;
@@ -189,6 +200,90 @@ class PlaceRepository {
 
     final batch = _db.batch();
     batch.delete(reviewRef);
+    batch.update(placeRef, {
+      'ratingCount': count < 0 ? 0 : count,
+      'ratingSum': sum < 0 ? 0 : sum,
+      'ratingAvg': count <= 0 ? 0 : sum / count,
+    });
+    await batch.commit();
+  }
+
+  /// "This review is false or defamatory."
+  ///
+  /// The document id ends in the reporter's uid, so the rules can refuse a
+  /// second report from the same account: it arrives as an update, and only
+  /// the operator may update a report. Returns false when this person has
+  /// already reported this review, so the screen can say so rather than
+  /// pretend a duplicate was filed.
+  Future<bool> reportReview({
+    required String placeId,
+    required String reviewUid,
+    required String reporterUid,
+    String reason = '',
+  }) async {
+    final ref = _db
+        .collection('review_reports')
+        .doc('${placeId}__${reviewUid}__$reporterUid');
+    if ((await ref.get()).exists) return false;
+    await ref.set({
+      'placeId': placeId,
+      'reviewUid': reviewUid,
+      'reporterUid': reporterUid,
+      'note': reason.trim(),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return true;
+  }
+
+  /// Hides a reported review — **hides, not deletes**.
+  ///
+  /// The words stay exactly as written. If the report turns out to be wrong,
+  /// the review comes back intact; if it turns out to be defamatory, the text
+  /// is still there as the record of what was published. Deleting would
+  /// destroy the one thing both outcomes need.
+  ///
+  /// Its rating leaves the aggregate in the same batch. A report usually says
+  /// the review is not legitimate, and a hidden one-star that still drags the
+  /// garage's score down would be moderation in name only.
+  Future<void> hideReview({
+    required String placeId,
+    required String reviewUid,
+  }) =>
+      _setHidden(placeId: placeId, reviewUid: reviewUid, hidden: true);
+
+  /// Restores a hidden review, and puts its rating back.
+  Future<void> restoreReview({
+    required String placeId,
+    required String reviewUid,
+  }) =>
+      _setHidden(placeId: placeId, reviewUid: reviewUid, hidden: false);
+
+  Future<void> _setHidden({
+    required String placeId,
+    required String reviewUid,
+    required bool hidden,
+  }) async {
+    final placeRef = _places.doc(placeId);
+    final reviewRef = placeRef.collection('reviews').doc(reviewUid);
+
+    final review = (await reviewRef.get()).data();
+    if (review == null) return;
+    // Already in the state asked for: do nothing, rather than move the
+    // aggregate a second time.
+    if ((review['hiddenByOperator'] == true) == hidden) return;
+    final rating = (review['rating'] as num?)?.toInt() ?? 0;
+
+    final place = (await placeRef.get()).data() ?? const <String, dynamic>{};
+    final oldCount = (place['ratingCount'] as num?)?.toInt() ?? 0;
+    final oldSum = (place['ratingSum'] as num?)?.toInt() ?? 0;
+    final count = hidden ? oldCount - 1 : oldCount + 1;
+    final sum = hidden ? oldSum - rating : oldSum + rating;
+
+    final batch = _db.batch();
+    batch.update(reviewRef, {
+      'hiddenByOperator': hidden,
+      'hiddenAt': hidden ? FieldValue.serverTimestamp() : null,
+    });
     batch.update(placeRef, {
       'ratingCount': count < 0 ? 0 : count,
       'ratingSum': sum < 0 ? 0 : sum,

@@ -6,6 +6,7 @@ import '../../data/models/place.dart';
 import '../../data/models/place_review.dart';
 import '../../data/repositories/place_repository.dart';
 import 'auth_provider.dart';
+import 'operator_inbox_provider.dart';
 
 final placeRepositoryProvider =
     Provider<PlaceRepository>((ref) => PlaceRepository());
@@ -41,7 +42,12 @@ final placeByIdProvider =
 /// The reviews on one place, live.
 final placeReviewsProvider =
     StreamProvider.autoDispose.family<List<PlaceReview>, String>((ref, placeId) {
-  return ref.watch(placeRepositoryProvider).watchReviews(placeId);
+  // The operator receives hidden reviews too — a review that cannot be seen
+  // cannot be restored. Nobody else is sent one at all.
+  return ref.watch(placeRepositoryProvider).watchReviews(
+        placeId,
+        includeHidden: ref.watch(isOperatorProvider),
+      );
 });
 
 /// The current user's own review of a place, or null.

@@ -35,6 +35,11 @@ class PlaceReview {
   final DateTime createdAt;
   final DateTime? editedAt;
 
+  /// Hidden by the operator after a report. **Read here, never written by
+  /// [toFirestore]** — the rules refuse an author write that carries it, so a
+  /// review cannot arrive hidden and nobody can hide or un-hide their own.
+  final bool hiddenByOperator;
+
   const PlaceReview({
     required this.uid,
     required this.rating,
@@ -47,6 +52,7 @@ class PlaceReview {
     required this.authorName,
     required this.createdAt,
     this.editedAt,
+    this.hiddenByOperator = false,
   });
 
   /// The longest a review may be. Enforced in the form, in the model and in
@@ -74,6 +80,9 @@ class PlaceReview {
     return PlaceReview(
       uid: uid,
       rating: (data['rating'] as num?)?.toInt() ?? 0,
+      // Absent means shown. A review written before moderation existed was
+      // never hidden, and must not become so by being read.
+      hiddenByOperator: data['hiddenByOperator'] == true,
       text: data['text'] ?? '',
       serviceType: data['serviceType'] ?? '',
       costPaid: asIntOrNull(data['costPaid']),
