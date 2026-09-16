@@ -1,0 +1,236 @@
+<meta charset="utf-8">
+<title>BonnetCheck לפגישה עם עו"ד</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=Frank+Ruhl+Libre:wght@500;700&display=swap">
+<style>
+  :root{
+    --page:#EEF1EF; --paper:#FFFFFF; --ink:#1B211E; --muted:#56605A; --subtle:#6C746F;
+    --line:#DDE3DF; --brand:#1E6B45; --brand-wash:#E6F0EA;
+    --ok:#1E6B45; --ok-bg:#E3F1E8;
+    --part:#8A5A00; --part-bg:#FBF0D9;
+    --open:#A0302A; --open-bg:#FBE7E5;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --page:#0C0F0D; --paper:#161A18; --ink:#E6EAE7; --muted:#A6B0AA; --subtle:#8E9892;
+      --line:#2A312D; --brand:#7FC39C; --brand-wash:#1B2A21;
+      --ok:#8FD1AB; --ok-bg:#183024; --part:#E7BE6A; --part-bg:#33280F; --open:#F0A19A; --open-bg:#3A1C1A;
+    }
+  }
+  :root[data-theme="dark"]{
+    --page:#0C0F0D; --paper:#161A18; --ink:#E6EAE7; --muted:#A6B0AA; --subtle:#8E9892;
+    --line:#2A312D; --brand:#7FC39C; --brand-wash:#1B2A21;
+    --ok:#8FD1AB; --ok-bg:#183024; --part:#E7BE6A; --part-bg:#33280F; --open:#F0A19A; --open-bg:#3A1C1A;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--page); color:var(--ink); direction:rtl;
+    font-family:'Heebo',system-ui,'Segoe UI',Arial,sans-serif; font-size:15px; line-height:1.65;
+    -webkit-font-smoothing:antialiased}
+  .paper{max-width:860px; margin:28px auto 60px; background:var(--paper); border:1px solid var(--line);
+    border-radius:6px; padding:56px 64px}
+  @media (max-width:700px){ .paper{margin:0; border-radius:0; padding:32px 20px} }
+
+  h1,h2{font-family:'Frank Ruhl Libre','Heebo',Georgia,serif; font-weight:700; text-wrap:balance; margin:0}
+  h1{font-size:34px; line-height:1.2}
+  h2{font-size:22px; margin:44px 0 12px; padding-top:18px; border-top:1px solid var(--line)}
+  .cover + h2{border-top:0; padding-top:0; margin-top:30px}
+  h3{font-size:16px; margin:22px 0 6px; font-weight:700}
+  p{margin:0 0 10px; max-width:70ch}
+  .muted{color:var(--muted)}
+  .small{font-size:13px}
+  ul{margin:0 0 10px; padding:0 20px 0 0}
+  li{margin-bottom:5px}
+
+  .cover{border-bottom:3px solid var(--brand); padding-bottom:22px; margin-bottom:8px}
+  .eyebrow{font-size:12px; letter-spacing:.08em; font-weight:700; color:var(--brand); margin:0 0 10px}
+  .meta{display:grid; grid-template-columns:auto 1fr; gap:4px 18px; margin-top:18px; font-size:14px}
+  .meta dt{color:var(--subtle)}
+  .meta dd{margin:0}
+
+  .goal{background:var(--brand-wash); border-radius:8px; padding:16px 20px; margin:22px 0 0}
+  .goal h3{margin-top:0}
+
+  .tbl{overflow-x:auto; margin:10px 0 14px}
+  table{border-collapse:collapse; width:100%; font-size:13.5px}
+  th,td{text-align:right; vertical-align:top; padding:8px 10px; border-bottom:1px solid var(--line)}
+  th{font-size:12px; color:var(--subtle); font-weight:700; background:transparent}
+  td:first-child{font-weight:700}
+
+  .chip{display:inline-block; white-space:nowrap; font-size:12px; font-weight:700; border-radius:999px; padding:1px 10px}
+  .ok{color:var(--ok); background:var(--ok-bg)}
+  .part{color:var(--part); background:var(--part-bg)}
+  .open{color:var(--open); background:var(--open-bg)}
+
+  ol.q{padding:0 22px 0 0; margin:6px 0 0}
+  ol.q > li{margin-bottom:14px; padding-right:4px}
+  ol.q > li::marker{font-weight:800; color:var(--brand)}
+  .q b{display:block}
+  .why{color:var(--muted); font-size:13.5px; display:block; margin-top:2px}
+
+  .note{border-inline-start:3px solid var(--line); padding:4px 14px; color:var(--muted); font-size:13.5px; margin:12px 0}
+  a{color:var(--brand)}
+  .foot{margin-top:40px; padding-top:14px; border-top:1px solid var(--line); font-size:12.5px; color:var(--subtle)}
+
+  @media print{
+    body{background:#fff}
+    .paper{border:0; margin:0; padding:0; max-width:none}
+    h2{break-after:avoid}
+    table, .goal, ol.q > li{break-inside:avoid}
+    @page{size:A4; margin:16mm 16mm 18mm}
+  }
+</style>
+
+<main class="paper">
+
+<header class="cover">
+  <p class="eyebrow">סיכום לפגישת ייעוץ משפטי</p>
+  <h1>BonnetCheck: הרעיון, מה נבנה, ומה צריך לבדוק משפטית</h1>
+  <dl class="meta">
+    <dt>מגיש</dt><dd>דוד מלדה, מפתח ומפעיל האפליקציה</dd>
+    <dt>תאריך</dt><dd>17/09/2026</dd>
+    <dt>אתר ומסמכים</dt><dd>bonnetcheck.web.app · support@bonnetcheck.com</dd>
+    <dt>שלב</dt><dd>גרסת בטא (0.9.9), נבדקת אצל חברים. עוד לא פורסמה ב-Google Play, אין הכנסות.</dd>
+  </dl>
+
+  <div class="goal">
+    <h3>מה אני רוצה לצאת איתו מהפגישה</h3>
+    <ul>
+      <li>תמונת מצב: מה בסדר, מה חסר, ומה חייב להיסגר לפני השקה ציבורית.</li>
+      <li>החלטה על מבנה: להמשיך כאדם פרטי, עוסק, או להקים חברה בע"מ.</li>
+      <li>דרך מותרת להרוויח משיתופי פעולה (ביטוח, דוחות רכב) בלי להיחשב מתווך.</li>
+    </ul>
+  </div>
+</header>
+
+<h2>1. הרעיון בקצרה</h2>
+<p>
+  BonnetCheck היא אפליקציה לקונים ומוכרים של רכבים יד שנייה בישראל. כשמפרסמים מודעה,
+  האפליקציה מושכת את הנתונים הרשמיים של הרכב לפי מספר הרישוי ממאגרי משרד התחבורה הפתוחים
+  (data.gov.il), ומציגה אותם לצד המודעה: שנת ייצור, סוג בעלות, מועד הטסט, קריאות ריקול ועוד.
+  המטרה היא שקונה יראה מה המרשם אומר על הרכב, ולא רק מה המוכר כתב.
+</p>
+<p>סביב זה נבנו כלים לקונה ולבעל הרכב: מדריך שלבים לקנייה, תיק רכב דיגיטלי, מפת תחנות דלק ומכוני בדיקה, ומדריך מוסכים.</p>
+
+<h3>מה האפליקציה לא עושה, וזה מנוסח כך גם בתנאי השימוש</h3>
+<ul>
+  <li>לא צד לעסקה: לא קונה, לא מוכרת, לא גובה עמלה ולא מחזיקה כסף של אף אחד.</li>
+  <li>לא בודקת את הרכב ולא ממליצה עליו. היא מדווחת מה המרשם אמר ומתי, ולעולם לא קובעת שרכב תקין.</li>
+  <li>לא מאמתת זהות או בעלות של המוכר. הבדיקה היחידה היא שמספר הרישוי קיים במרשם, וזה כתוב במפורש ליד כל מודעה.</li>
+  <li>לא שמאי, מוסך, מכון בדיקה, סוכן ביטוח או יועץ משפטי.</li>
+</ul>
+
+<h2>2. מה יש באפליקציה היום</h2>
+<div class="tbl"><table>
+  <thead><tr><th>חלק</th><th>מה המשתמש רואה</th><th>נקודת מגע משפטית</th></tr></thead>
+  <tbody>
+    <tr><td>מודעות רכב</td><td>מודעה עם תמונות ומחיר, ולידה נתוני המרשם. מספר הרישוי מוסתר בכוכביות לציבור.</td><td>אחריות לתוכן מודעה, זכויות בתמונות</td></tr>
+    <tr><td>נתונים רשמיים</td><td>נתוני רישוי, דגם וריקולים ממשרד התחבורה, עם ציון מקור.</td><td>תנאי רישיון data.gov.il, טעויות במידע ממשלתי</td></tr>
+    <tr><td>היסטוריה לפי מספר רישוי</td><td>סיכום של מודעות עבר: כמה פעמים פורסם, כיוון המחיר והקילומטראז'. בלי שמות.</td><td>הצלבת מידע (ראו שאלה 5)</td></tr>
+    <tr><td>הערות קהילה על רכב</td><td>בחירה מתוך רשימה סגורה של ממצאים עובדתיים. אין טקסט חופשי שמוצג.</td><td>לשון הרע, זכות תגובה</td></tr>
+    <tr><td>ביקורות על מוסכים</td><td>דירוג וטקסט חופשי עד 500 תווים על עסק בשם. אפשר לדווח; המפעיל יכול להסתיר.</td><td>לשון הרע כלפי עסק מזוהה</td></tr>
+    <tr><td>צ'אט</td><td>התכתבות בין קונה למוכר. לא מוצפן מקצה לקצה, וזה כתוב במדיניות.</td><td>פרטיות</td></tr>
+    <tr><td>תיק רכב</td><td>טיפולים, הוצאות, תזכורות (טסט, ביטוח) ומסמכים סרוקים. מסמכים פרטיים כברירת מחדל, ואפשר לשתף עם קונה.</td><td>מסמכים שכוללים ת"ז וכתובת (ראו שאלה 4)</td></tr>
+    <tr><td>העברת תיק לקונה</td><td>קוד מסירה שמעביר את תיק הרכב לבעלים החדש.</td><td>העברת מידע אישי בין אנשים</td></tr>
+    <tr><td>מדריך קנייה</td><td>5 שלבים עם קישורים לדוח בלקר, לחמש חברות ביטוח ולשירות העברת הבעלות של gov.il. היום אין תמורה על אף הפניה.</td><td>שיתופי פעולה עתידיים (שאלות 2–3)</td></tr>
+    <tr><td>דלק ומכוני בדיקה</td><td>מפה של תחנות ומכונים ממאגרים ממשלתיים, ודיווחי מחיר סולר של משתמשים.</td><td>ייחוס מקורות, מפות OpenStreetMap</td></tr>
+    <tr><td>מדידת שימוש</td><td>Firebase Analytics, פועל רק אחרי הסכמה, וניתן לבטל בפרופיל.</td><td>הסכמה, העברה לחו"ל</td></tr>
+  </tbody>
+</table></div>
+
+<h2>3. מאיפה מגיע המידע</h2>
+<div class="tbl"><table>
+  <thead><tr><th>מקור</th><th>מה לוקחים</th><th>רישיון ומה עשינו</th></tr></thead>
+  <tbody>
+    <tr><td>data.gov.il: משרד התחבורה</td><td>מרשם רכב, מפרט דגם, ריקולים, מכוני בדיקה, מוסכים</td><td>הרישיון מתיר שימוש מסחרי ומחייב ציון מקור. אסור לרמוז על חסות המדינה, ואסור שימוש שפוגע בפרטיות "לרבות על ידי הצלבת המידע". המקור מצוין, ויש הבהרה שאין קשר למשרד.</td></tr>
+    <tr><td>data.gov.il: משרד האנרגיה</td><td>רשימת תחנות דלק, מחיר סולר סיטונאי</td><td>אותו רישיון. מצוין שזה מחיר סיטונאי ולא מחיר המשאבה.</td></tr>
+    <tr><td>OpenStreetMap / OpenFreeMap</td><td>המפה עצמה</td><td>רישיון ODbL מחייב קרדיט גלוי. מוצג על המפה עם קישור.</td></tr>
+    <tr><td>משתמשים</td><td>מודעות, תמונות, הערות, ביקורות, דיווחי מחיר</td><td>תנאי שימוש: המשתמש מצהיר שיש לו זכות בתוכן ואחראי לו.</td></tr>
+  </tbody>
+</table></div>
+<p class="note">תנאי הרישיון נבדקו ביולי 2026, מול הנוסח שעודכן ב-30/08/2025. המדינה רשאית לשנות אותם, ולכן כדאי לוודא מול הנוסח העדכני.</p>
+
+<h2>4. מידע אישי: מה נאסף, איפה נשמר ומי רואה</h2>
+<div class="tbl"><table>
+  <thead><tr><th>מידע</th><th>למה</th><th>מי רואה</th></tr></thead>
+  <tbody>
+    <tr><td>אימייל, שם ותמונה מחשבון Google</td><td>התחברות</td><td>המשתמש בלבד</td></tr>
+    <tr><td>מספר טלפון</td><td>חובה לפני פרסום מודעה, כדי שלמודעה יהיה אדם שאפשר לאתר</td><td>המשתמש בלבד</td></tr>
+    <tr><td>פרטי מודעה ותמונות</td><td>המודעה עצמה</td><td>כולם, גם אורחים</td></tr>
+    <tr><td>הודעות צ'אט</td><td>קשר בין קונה למוכר</td><td>שני הצדדים; טכנית גם המפעיל</td></tr>
+    <tr><td>מסמכי רכב סרוקים</td><td>תיק הרכב. רישיון רכב כולל לרוב ת"ז וכתובת; יש כלי טשטוש לפני שמירה</td><td>הבעלים, וקונה רק אם שותף במפורש ובזמן שהמודעה פעילה</td></tr>
+    <tr><td>היסטוריה לפי מספר רישוי</td><td>זיהוי גלגול מד אוץ ומודעות מטעות</td><td>כולם, בלי שם ובלי קישור לחשבון; נשמרת גם אחרי הסרת מודעה</td></tr>
+    <tr><td>מיקום</td><td>הצגת תחנות ומכונים קרובים</td><td>לא נשלח לשרת ולא נשמר</td></tr>
+  </tbody>
+</table></div>
+<ul class="small muted">
+  <li>אחסון: Google Firebase, מסד הנתונים באזור האיחוד האירופי (eur3). Analytics מעובד גם בארה"ב. בקשות מרשם מהאתר עוברות דרך שרת ביניים ב-Cloudflare.</li>
+  <li>מחיקת חשבון: מתוך האפליקציה, מיידית, כולל תיקי רכב ומסמכים. נשארות רק הערות על רכבים של אחרים והתכתבויות עם צד שני, בלי קישור לחשבון.</li>
+  <li>מודעות לא פעילות מוסתרות אחרי 24 חודשים (הסתרה בלבד; מחיקה אוטומטית דורשת שדרוג שרת).</li>
+  <li>אין תשלומים, אין פרסומות ואין מכירת מידע.</li>
+</ul>
+
+<h2>5. מה כבר נעשה כדי להקטין סיכון</h2>
+<ul>
+  <li><b>חמישה מסמכים משפטיים פורסמו</b> באפליקציה ובכתובת ציבורית: תנאי שימוש, מדיניות פרטיות, עוגיות, מדיניות הסרת תוכן ונוהל תלונות. נכתבו לפי מה שהאפליקציה עושה בפועל, בלי תבנית. <a href="https://bonnetcheck.web.app/legal/">bonnetcheck.web.app/legal</a></li>
+  <li><b>ניסוח שמתאר בדיקה ולא אדם:</b> "נתונים ממרשם הרכב" במקום "מוכר מאומת"; "נמצאה אי-התאמה בקילומטראז'" במקום "חשד לגלגול"; "צ'אט פרטי" במקום "צ'אט מאובטח".</li>
+  <li><b>הערות על רכבים מרשימה סגורה.</b> אי אפשר לכתוב "המוכר נוכל". טקסט חופשי נשמר כממתין ולא מוצג.</li>
+  <li><b>דיווחי קהילה כאחוזים ומיוחסים למדווחים</b> ("X% מהמדווחים ציינו…"), רק מ-3 דיווחים ומעלה, עם תאריך עדכון.</li>
+  <li><b>הפרדה ויזואלית</b> בין "מידע רשמי" (כחול) ל"מידע קהילתי" (כתום).</li>
+  <li><b>כפתור דיווח ליד כל תוכן קהילתי</b>, ותיבת פניות אצל המפעיל עם סימון אדום אחרי שבוע, כדי לעמוד בהתחייבות לענות תוך 14 יום.</li>
+  <li><b>ביקורות על מוסכים:</b> דיווח, והסתרה על ידי המפעיל. ביקורת מוסתרת נשמרת כתיעוד ולא נמחקת, והדירוג שלה יוצא מהממוצע.</li>
+  <li><b>מספר הרישוי לא נשלח לכלי האנליטיקה</b>, ומוסתר בכוכביות במודעות.</li>
+  <li><b>גילוי נאות על הפניות:</b> כתוב שהיום אין תמורה, ושאם תהיה, זה יצוין במקום ההפניה.</li>
+</ul>
+
+<h2>6. איפה אני עומד, לפי תחום</h2>
+<p class="muted small">ההערכה שלי, לאישור או תיקון בפגישה.</p>
+<div class="tbl"><table>
+  <thead><tr><th>תחום</th><th>מצב</th><th>מה חסר</th></tr></thead>
+  <tbody>
+    <tr><td>מסמכים משפטיים</td><td><span class="chip part">כתובים, לא נבדקו</span></td><td>מעבר של עו"ד על הניסוח, בעיקר הגבלת אחריות ותוכן משתמשים</td></tr>
+    <tr><td>מבנה משפטי</td><td><span class="chip open">פתוח</span></td><td>השירות מופעל על ידי אדם פרטי. אין חברה, אין עוסק ואין ביטוח אחריות</td></tr>
+    <tr><td>פרטיות: תיקון 13</td><td><span class="chip part">חלקי</span></td><td>המדיניות מצטטת את החוק המקורי מ-1981; לבדוק חובת הודעה, רישום מאגר ואבטחה לפי הנוסח המעודכן</td></tr>
+    <tr><td>מסמכים עם ת"ז</td><td><span class="chip part">חלקי</span></td><td>פרטיים ועם כלי טשטוש; לבדוק אם זה "מידע בעל רגישות מיוחדת" ומה נדרש</td></tr>
+    <tr><td>לשון הרע</td><td><span class="chip ok">מטופל ברובו</span></td><td>לאשר שמנגנון הדיווח וההסתרה מספיק, ומה זמן תגובה סביר</td></tr>
+    <tr><td>רישיון data.gov.il</td><td><span class="chip part">כמעט</span></td><td>שאלת הצלבת המידע (שאלה 5)</td></tr>
+    <tr><td>תיווך רכב</td><td><span class="chip ok">כנראה בסדר היום</span></td><td>ישתנה אם תהיה עמלה על עסקה</td></tr>
+    <tr><td>שיתוף פעולה עם מבטחים</td><td><span class="chip open">פתוח</span></td><td>מה מותר בלי רישיון סוכן ביטוח</td></tr>
+    <tr><td>זכויות בתמונות ולוגואים</td><td><span class="chip part">חלקי</span></td><td>לוגואים של חברות ביטוח לא מוצגים (רק שמות); תמונות מודעות הדגמה</td></tr>
+  </tbody>
+</table></div>
+
+<h2>7. השאלות לפגישה</h2>
+<p class="muted small">מסודרות מהדחוף ביותר.</p>
+<ol class="q">
+  <li><b>מבנה משפטי: אדם פרטי, עוסק או חברה בע"מ?</b>
+    <span class="why">היום המסמכים אומרים שהשירות מופעל על ידי באופן אישי. אם יתבעו על תוכן שמשתמש כתב, התביעה אליי. מתי נכון לפתוח חברה, והאם חברה אכן מגנה עליי אישית במקרה כזה?</span></li>
+  <li><b>הכנסה משיתוף פעולה עם חברות ביטוח: מה מותר בלי רישיון סוכן?</b>
+    <span class="why">הכיוון שלי: קוד הנחה, חסות בסכום קבוע או תוכן, ולא עמלה לפי פוליסה או לפי ליד. האם זה נחשב שיווק או תיווך ביטוח לפי חוק הפיקוח על שירותים פיננסיים?</span></li>
+  <li><b>מודלי הכנסה ומעמד "פלטפורמה"</b>
+    <span class="why">עמלת הפניה לדוח בלקר, פיצ'רים בתשלום, קידום מודעות. מה מהם עלול להפוך אותי ל"מתווך" לפי חוק רישוי שירותים ומקצועות בענף הרכב?</span></li>
+  <li><b>תיקון 13 לחוק הגנת הפרטיות</b>
+    <span class="why">האם חלה עליי חובת רישום מאגר? מה צריך להשתנות במדיניות ובהודעה בזמן האיסוף? האם מסמכים סרוקים עם ת"ז וכתובת הם מידע רגיש שמחייב אבטחה או נוהל מיוחד? האם צריך ממונה על הגנת הפרטיות?</span></li>
+  <li><b>הצלבת מידע ממשלתי</b>
+    <span class="why">רישיון data.gov.il אוסר שימוש שפוגע בפרטיות "לרבות על ידי הצלבת המידע עם מקורות אחרים". אני מצליב נתוני רכב לפי מספר רישוי עם היסטוריית מודעות ודיווחי משתמשים, בלי שמות. האם זה בסדר, ואיפה הגבול?</span></li>
+  <li><b>אחריות על תוכן משתמשים</b>
+    <span class="why">הערות מרשימה סגורה, ביקורות מוסכים בטקסט חופשי עם דיווח והסתרה, ודיווחי קהילה באחוזים. האם זה מספיק מול חוק איסור לשון הרע? תוך כמה זמן חייבים לפעול אחרי דיווח? האם כדאי לבדוק ביקורות לפני פרסום?</span></li>
+  <li><b>טעות בנתון ממשלתי</b>
+    <span class="why">אם הצגתי נתון שגוי מהמרשם וקונה הסתמך עליו, מה החשיפה שלי? האם סעיפי ההבהרה בתנאי השימוש מספיקים מול חוק הגנת הצרכן?</span></li>
+  <li><b>ביטוח אחריות מקצועית / סייבר</b>
+    <span class="why">האם כדאי לפני השקה ציבורית, ואיזה סוג?</span></li>
+  <li><b>מעבר על המסמכים</b>
+    <span class="why">מה עלות ולוח זמנים לעבור על חמשת המסמכים ולעדכן אותם לתיקון 13?</span></li>
+</ol>
+
+<h2>8. מה אפשר לבדוק אחרי הפגישה</h2>
+<ul>
+  <li>המסמכים המשפטיים המלאים: <a href="https://bonnetcheck.web.app/legal/">bonnetcheck.web.app/legal</a></li>
+  <li>האפליקציה עצמה: <a href="https://bonnetcheck.web.app/app/">bonnetcheck.web.app/app</a> (אפשר לגלוש כאורח, ויש שתי מודעות הדגמה)</li>
+  <li>יצירת קשר: support@bonnetcheck.com</li>
+</ul>
+
+<p class="foot">
+  המסמך הוכן בעזרת כלי AI על בסיס הקוד והמסמכים של האפליקציה. הוא מתאר את המצב בפועל ואת השאלות, ואינו ייעוץ משפטי.
+  כל הערכה משפטית במסמך היא לבדיקה ואישור של עורך דין.
+</p>
+</main>
