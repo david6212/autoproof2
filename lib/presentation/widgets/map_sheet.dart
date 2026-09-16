@@ -45,6 +45,7 @@ class MapSheet extends StatelessWidget {
     // Frosted, so the map carries on under the panel instead of stopping at
     // its edge. The rows inside stay solid cards: that is where the reading is.
     return Glass(
+      tone: GlassTone.panel,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(radius)),
       child: Column(
         children: [const _Grabber(), Expanded(child: child)],

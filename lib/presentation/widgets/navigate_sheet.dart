@@ -97,6 +97,7 @@ class NavigateSheet extends StatelessWidget {
       backgroundColor: Colors.transparent,
       elevation: 0,
       builder: (_) => Glass(
+        tone: GlassTone.panel,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         child: NavigateSheet._(
           destination: resolved.destination,

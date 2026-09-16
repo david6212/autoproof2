@@ -11,36 +11,51 @@ double navClearance(BuildContext context) =>
     MediaQuery.paddingOf(context).bottom;
 
 /// An app bar for a screen whose content runs underneath it — a map, or a
-/// listing. Pair it with `extendBodyBehindAppBar: true` and pad the top of the
-/// content with `MediaQuery.paddingOf(context).top`.
+/// listing: a rounded glass bar floating just below the status bar. Pair it
+/// with `extendBodyBehindAppBar: true` and pad the top of the content with
+/// `MediaQuery.paddingOf(context).top`, read from inside the Scaffold.
 AppBar glassAppBar(
   BuildContext context, {
   Widget? title,
   Widget? leading,
   List<Widget>? actions,
 }) {
+  final top = MediaQuery.paddingOf(context).top;
   return AppBar(
     title: title,
-    leading: leading,
-    actions: actions,
+    leading: leading == null
+        ? null
+        : Padding(padding: const EdgeInsetsDirectional.only(start: 6), child: leading),
+    actions: [...?actions, const SizedBox(width: 6)],
+    toolbarHeight: kToolbarHeight + 12,
     backgroundColor: Colors.transparent,
     surfaceTintColor: Colors.transparent,
+    foregroundColor: context.colors.textPrimary,
     elevation: 0,
     scrolledUnderElevation: 0,
-    shape: Border(
-      bottom: BorderSide(
-        color: context.colors.cardBorder.withValues(alpha: 0.6),
+    // No hairline: the bar floats, and its rim is the edge.
+    shape: const Border(),
+    flexibleSpace: Padding(
+      padding: EdgeInsets.fromLTRB(10, top + 6, 10, 6),
+      child: Glass(
+        borderRadius: BorderRadius.circular(20),
+        child: const SizedBox.expand(),
       ),
     ),
-    flexibleSpace: const Glass(border: false, child: SizedBox.expand()),
   );
 }
 
 /// What sits behind a [Glass] surface, which decides what it is made of.
 enum GlassTone {
-  /// The app's own surface, frosted: bars and panels that float over the page,
-  /// a list, or a map. Carries dark ink in light mode and light ink in dark.
+  /// A bar floating over content: the navigation, the title bar, the action
+  /// bar. The most see-through — and so only full-strength ink on it
+  /// (`textPrimary`, or white on a filled button), never grey or green ink.
   surface,
+
+  /// A panel that carries running text in its own right — the sheet over a
+  /// map, the navigate sheet. Frosted more heavily, so grey secondary text on
+  /// it stays readable.
+  panel,
 
   /// Smoked: controls that sit on a photograph. Always dark with white ink,
   /// because the photograph can be any colour — including a white car.
@@ -80,17 +95,21 @@ class Glass extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final bool border;
 
-  /// How much of the surface colour covers what is behind. Light mode needs
-  /// more than dark: grey ink on frosted white over a black photo loses
-  /// contrast faster than light ink on frosted black over a white one.
-  static const surfaceAlphaLight = 0.86;
-  static const surfaceAlphaDark = 0.87;
+  /// How much of the surface colour covers what is behind, for bars. The
+  /// lowest at which `textPrimary` stays above 4.5:1 over the worst thing that
+  /// can pass beneath (black under light glass, white under dark).
+  static const surfaceAlphaLight = 0.58;
+  static const surfaceAlphaDark = 0.68;
+
+  /// For panels, where grey text (`textMuted`) and green ink sit on the glass.
+  static const panelAlphaLight = 0.86;
+  static const panelAlphaDark = 0.87;
 
   /// Photographs keep the scrim [PhotoChip] was measured at: glass adds the
   /// blur and the rim, never less darkness.
   static const smokeAlpha = PhotoChip.scrimAlpha;
 
-  static const blurSigma = 18.0;
+  static const blurSigma = 22.0;
 
   /// Whether this device should get real glass.
   static bool enabledFor(BuildContext context) =>
@@ -112,6 +131,12 @@ class Glass extends StatelessWidget {
             : colors.surface.withValues(
               alpha: dark ? surfaceAlphaDark : surfaceAlphaLight,
             ),
+      GlassTone.panel =>
+        solid
+            ? colors.surface
+            : colors.surface.withValues(
+              alpha: dark ? panelAlphaDark : panelAlphaLight,
+            ),
       GlassTone.smoke => PhotoChip.scrim(smokeAlpha),
     };
   }
@@ -122,7 +147,7 @@ class Glass extends StatelessWidget {
     final dark = Theme.of(context).brightness == Brightness.dark;
 
     final rim = switch (tone) {
-      GlassTone.surface =>
+      GlassTone.surface || GlassTone.panel =>
         dark
             ? Colors.white.withValues(alpha: 0.08)
             : Colors.white.withValues(alpha: 0.7),
@@ -148,7 +173,7 @@ class Glass extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: borderRadius,
           gradient:
-              real && tone == GlassTone.surface
+              real && tone != GlassTone.smoke
                   ? LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,

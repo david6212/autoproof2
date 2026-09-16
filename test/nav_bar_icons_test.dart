@@ -102,7 +102,14 @@ void main() {
     final home = t.widget<Text>(find.text('בית'));
     expect(fuel.style?.fontWeight, FontWeight.bold);
     expect(home.style?.fontWeight, isNot(FontWeight.bold));
-    expect(fuel.style?.color, isNot(home.style?.color));
+    // And a filled pill behind the selected icon. The labels share one ink
+    // now: the bar is glass, and only full-strength ink is readable on it.
+    final pills = t
+        .widgetList<AnimatedContainer>(find.byType(AnimatedContainer))
+        .map((c) => (c.decoration as BoxDecoration?)?.color)
+        .where((c) => c != null && c != Colors.transparent)
+        .toList();
+    expect(pills, hasLength(1), reason: 'exactly one tab is marked');
   });
 
   testWidgets('both label inks are readable on the bar, in both themes',

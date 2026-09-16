@@ -38,22 +38,37 @@ void main() {
     // Light glass is worst over black (a dark car photo), dark glass over
     // white. Blur only averages what is there; a large enough black area is
     // still black after it.
-    for (final (name, palette, alpha, worst) in [
-      ('light', AppPalette.light, Glass.surfaceAlphaLight, Colors.black),
-      ('dark', AppPalette.dark, Glass.surfaceAlphaDark, Colors.white),
+    for (final (name, palette, bar, panel, worst) in [
+      ('light', AppPalette.light, Glass.surfaceAlphaLight,
+          Glass.panelAlphaLight, Colors.black),
+      ('dark', AppPalette.dark, Glass.surfaceAlphaDark, Glass.panelAlphaDark,
+          Colors.white),
     ]) {
-      final ground = over(palette.surface.withValues(alpha: alpha), worst);
+      final barGround = over(palette.surface.withValues(alpha: bar), worst);
+      final panelGround = over(palette.surface.withValues(alpha: panel), worst);
 
-      test('$name: an unselected tab label (textMuted)', () {
-        expect(contrast(palette.textMuted, ground), greaterThanOrEqualTo(4.5));
+      test('$name bar: labels and titles (textPrimary)', () {
+        expect(contrast(palette.textPrimary, barGround),
+            greaterThanOrEqualTo(4.5));
       });
-      test('$name: the selected tab label (tealText2)', () {
-        expect(contrast(palette.tealText2, ground), greaterThanOrEqualTo(4.5));
+      test('$name bar: grey or green ink would NOT be readable', () {
+        // Why the bars use textPrimary only. If this ever passes, the bar
+        // has become opaque enough that it is no longer really glass.
+        expect(contrast(palette.textMuted, barGround), lessThan(4.5));
       });
-      test('$name: a title (textPrimary)', () {
-        expect(contrast(palette.textPrimary, ground), greaterThanOrEqualTo(4.5));
+      test('$name panel: secondary text (textMuted) and green ink', () {
+        expect(contrast(palette.textMuted, panelGround),
+            greaterThanOrEqualTo(4.5));
+        expect(contrast(palette.tealText2, panelGround),
+            greaterThanOrEqualTo(4.5));
       });
     }
+
+    test('the selected tab: white icon on its filled pill', () {
+      for (final p in [AppPalette.light, AppPalette.dark]) {
+        expect(contrast(p.onBrand, p.tealFill), greaterThanOrEqualTo(4.5));
+      }
+    });
 
     test('smoked glass on a photo is no lighter than the chip it replaced', () {
       // PhotoChip's scrim was measured at 5.7:1 over a white photo. Glass may

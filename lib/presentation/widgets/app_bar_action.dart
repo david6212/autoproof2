@@ -24,16 +24,22 @@ class AppBarAction extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.onGlass = false,
   });
+
+  /// On a see-through glass bar: full-strength ink. Green ink needs a solid
+  /// surface under it to hold 4.5:1, and glass does not promise one.
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+  final bool onGlass;
 
   @override
   Widget build(BuildContext context) {
     final style = TextButton.styleFrom(
-      foregroundColor: context.colors.tealText2,
+      foregroundColor:
+          onGlass ? context.colors.textPrimary : context.colors.tealText2,
       minimumSize: const Size(48, 48),
     );
 

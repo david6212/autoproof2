@@ -172,6 +172,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
           AppBarAction(
             label: 'מפה מלאה',
             icon: Icons.open_in_full,
+            onGlass: true,
             onPressed: () => _moveSheet(kSheetMin),
           ),
         ],

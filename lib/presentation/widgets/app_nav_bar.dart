@@ -120,7 +120,13 @@ class _NavItem extends StatelessWidget {
     // Inactive is `textMuted` (6.14 / 7.12). The reference used its lightest
     // grey there, about 2.5 — fine as a mood, not as a label a person has to
     // read to know where they are.
-    final fg = selected ? context.colors.tealText2 : context.colors.textMuted;
+    // On a see-through bar only full-strength ink holds 4.5:1 whatever
+    // scrolls beneath, so every label is `textPrimary`. The selected tab is
+    // told apart by a filled green pill with a white icon, and by weight —
+    // two cues, neither of them colour alone.
+    final fg = context.colors.textPrimary;
+    final iconFg = selected ? context.colors.onBrand : fg;
+    final pill = context.colors.tealFill;
 
     return Semantics(
       selected: selected,
@@ -145,20 +151,20 @@ class _NavItem extends StatelessWidget {
                 decoration: BoxDecoration(
                   color:
                       selected
-                          ? context.colors.tealText2.withValues(alpha: 0.13)
+                          ? pill
                           : Colors.transparent,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child:
                     tab.iconBuilder?.call(
                       selected,
-                      fg,
-                      context.colors.surface,
+                      iconFg,
+                      selected ? pill : context.colors.surface,
                     ) ??
                     Icon(
                       selected ? tab.activeIcon : tab.icon,
                       size: 22,
-                      color: fg,
+                      color: iconFg,
                     ),
               ),
               const SizedBox(height: AppSpace.xs - 1),
