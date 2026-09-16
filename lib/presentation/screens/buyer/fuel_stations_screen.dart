@@ -19,6 +19,7 @@ import '../../widgets/map_sheet.dart';
 import '../../widgets/fuel_report_sheet.dart';
 import '../../widgets/map_cluster.dart';
 import '../../widgets/skeleton.dart';
+import '../../widgets/glass.dart';
 import 'inspectors_screen.dart' show userLocationProvider;
 
 const _israelCenter = LatLng(31.7, 34.9);
@@ -134,7 +135,11 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(
+      // The map runs under a glass title bar, and under the shell's glass
+      // navigation below.
+      extendBodyBehindAppBar: true,
+      appBar: glassAppBar(
+        context,
         title: const Text('תחנות דלק'),
         actions: [
           AppBarAction(
@@ -288,8 +293,8 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
       // The sheet's controller, not one of ours — this is what links a scroll
       // at the top of the list into a drag of the whole sheet.
       controller: scrollController,
-      padding: const EdgeInsets.fromLTRB(
-          AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.xl),
+      padding: EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg,
+          AppSpace.xl + navClearance(context)),
       itemCount: sorted.length + 1,
       separatorBuilder: (_, __) => const SizedBox(height: AppSpace.md),
       itemBuilder: (_, i) {

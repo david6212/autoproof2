@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_palette.dart';
+import 'glass.dart';
 
 /// The draggable panel over a map, shared by the two screens built on one:
 /// fuel stations and inspection centres.
@@ -41,21 +42,10 @@ class MapSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.colors.background,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(radius),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 24,
-            offset: const Offset(0, -8),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
+    // Frosted, so the map carries on under the panel instead of stopping at
+    // its edge. The rows inside stay solid cards: that is where the reading is.
+    return Glass(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(radius)),
       child: Column(
         children: [const _Grabber(), Expanded(child: child)],
       ),

@@ -22,6 +22,7 @@ import '../../widgets/brand_logo.dart';
 import '../../widgets/search_filter_sheet.dart';
 import '../../widgets/saved_check_icon.dart';
 import '../../widgets/skeleton.dart';
+import '../../widgets/glass.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -57,8 +58,17 @@ class HomeScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      floatingActionButton: const PublishFab(),
+      // Lifted by hand: under a shell that extends its body behind the nav
+      // bar, a nested Scaffold places its button at the very bottom — behind
+      // the glass, where nobody can see or press it.
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: navClearance(context)),
+        child: const PublishFab(),
+      ),
+      // Not the bottom: the listings run on under the shell's glass bar, and
+      // the list pads itself clear of it.
       body: SafeArea(
+        bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -71,17 +81,23 @@ class HomeScreen extends ConsumerWidget {
             Expanded(
               child: carsAsync.when(
                 loading: () => const CarListSkeleton(),
-                error: (e, _) => _ErrorState(
-                  onRetry: () => ref.invalidate(activeCarsProvider),
+                error: (e, _) => Padding(
+                  padding: EdgeInsets.only(bottom: navClearance(context)),
+                  child: _ErrorState(
+                    onRetry: () => ref.invalidate(activeCarsProvider),
+                  ),
                 ),
                 data: (cars) => cars.isEmpty
-                    ? _EmptyState(
+                    ? Padding(
+                        padding: EdgeInsets.only(bottom: navClearance(context)),
+                        child: _EmptyState(
                         filtering: filtering,
                         onClear: () {
                           ref.read(carFiltersProvider.notifier).state =
                               const CarFilters();
                           ref.read(carSearchProvider.notifier).state = '';
                         },
+                      ),
                       )
                     : _CarList(cars: cars, savedIds: savedIds),
               ),

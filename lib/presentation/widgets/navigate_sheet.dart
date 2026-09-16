@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
+import 'glass.dart';
 
 /// "Take me there" — for a fuel station, an inspection centre, a garage.
 ///
@@ -91,10 +92,17 @@ class NavigateSheet extends StatelessWidget {
 
     return showModalBottomSheet<void>(
       context: context,
-      builder: (_) => NavigateSheet._(
-        destination: resolved.destination,
-        isCoords: resolved.isCoords,
-        label: label,
+      // Frosted: it opens over a map or a place page, and a short list of
+      // three apps is exactly the kind of floating panel glass is for.
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      builder: (_) => Glass(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: NavigateSheet._(
+          destination: resolved.destination,
+          isCoords: resolved.isCoords,
+          label: label,
+        ),
       ),
     );
   }

@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_palette.dart';
+import 'glass.dart';
 
 /// One destination in [AppNavBar].
 class NavTab {
-  const NavTab(this.path, this.icon, this.activeIcon, this.label,
-      {this.iconBuilder});
+  const NavTab(
+    this.path,
+    this.icon,
+    this.activeIcon,
+    this.label, {
+    this.iconBuilder,
+  });
 
   final String path;
   final IconData icon;
@@ -19,14 +25,19 @@ class NavTab {
   final Widget Function(bool selected, Color fg, Color bg)? iconBuilder;
 }
 
-/// The app's bottom navigation: a flat bar on the page's own surface, with a
-/// hairline above it and every destination named.
+/// The app's bottom navigation: a frosted bar floating just above the bottom
+/// edge, with every destination named.
 ///
-/// It used to be a floating pill where **only the selected tab showed its
-/// label**, because five Hebrew labels laid out beside their icons do not fit a
-/// narrow phone. Stacking each label under its icon at 10.5px removes that
-/// constraint — five labels fit a 320px screen with room to spare — so every
-/// destination can say what it is instead of three of five being a bare glyph.
+/// It floats, and it is glass, because the list runs underneath it — the shell
+/// extends its body behind the bar — so the page does not stop at a hard line
+/// above the tabs. Screens under it keep their last row reachable by padding
+/// their scroll views with `MediaQuery.paddingOf(context).bottom`, which the
+/// shell sets to this bar's height.
+///
+/// It was once a floating pill where **only the selected tab showed its
+/// label**, because five Hebrew labels beside their icons do not fit a narrow
+/// phone. Labels stacked under icons at 10.5px fit a 320px screen, so every
+/// destination still says what it is.
 ///
 /// Shared by the buyer and seller shells so the two can't drift apart.
 class AppNavBar extends StatelessWidget {
@@ -41,17 +52,27 @@ class AppNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onSelected;
 
+  /// Gap between the bar and the screen's sides and bottom edge.
+  static const inset = AppSpace.sm + 2;
+
+  static const radius = 24.0;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        border: Border(top: BorderSide(color: context.colors.cardBorder)),
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        inset,
+        0,
+        inset,
+        // On a phone with a gesture bar the bar sits above it rather than
+        // adding the inset on top of it.
+        safeBottom > inset ? safeBottom : inset,
       ),
-      child: SafeArea(
-        top: false,
+      child: Glass(
+        borderRadius: BorderRadius.circular(radius),
         child: Padding(
-          padding: const EdgeInsets.only(top: AppSpace.sm + 1),
+          padding: const EdgeInsets.symmetric(vertical: AppSpace.xs),
           child: Row(
             children: [
               for (var i = 0; i < tabs.length; i++)
@@ -99,8 +120,7 @@ class _NavItem extends StatelessWidget {
     // Inactive is `textMuted` (6.14 / 7.12). The reference used its lightest
     // grey there, about 2.5 — fine as a mood, not as a label a person has to
     // read to know where they are.
-    final fg =
-        selected ? context.colors.tealText2 : context.colors.textMuted;
+    final fg = selected ? context.colors.tealText2 : context.colors.textMuted;
 
     return Semantics(
       selected: selected,
@@ -108,14 +128,39 @@ class _NavItem extends StatelessWidget {
       label: tab.label,
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(AppNavBar.radius - 6),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
+          padding: const EdgeInsets.symmetric(vertical: AppSpace.xs + 2),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              tab.iconBuilder?.call(selected, fg, context.colors.surface) ??
-                  Icon(selected ? tab.activeIcon : tab.icon,
-                      size: 22, color: fg),
+              // The selected tab's icon sits in a soft green pill: on glass,
+              // colour and weight alone read weaker than on a flat surface.
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      selected
+                          ? context.colors.tealText2.withValues(alpha: 0.13)
+                          : Colors.transparent,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child:
+                    tab.iconBuilder?.call(
+                      selected,
+                      fg,
+                      context.colors.surface,
+                    ) ??
+                    Icon(
+                      selected ? tab.activeIcon : tab.icon,
+                      size: 22,
+                      color: fg,
+                    ),
+              ),
               const SizedBox(height: AppSpace.xs - 1),
               Text(
                 tab.label,

@@ -35,6 +35,7 @@ import '../../widgets/spec_tile.dart';
 import '../../widgets/documented_history_card.dart';
 import '../../widgets/market_price_band.dart';
 import '../../widgets/error_retry.dart';
+import '../../widgets/glass.dart';
 
 class CarDetailScreen extends ConsumerWidget {
   const CarDetailScreen({super.key, required this.carId});
@@ -130,7 +131,12 @@ class _ContentState extends ConsumerState<_Content> {
       // The photo used to be the top of the screen and carried the back arrow
       // with it. It now sits below the findings, so the navigation moved into
       // a real app bar — a back arrow half a screen down is not a back arrow.
-      appBar: AppBar(
+      // The page runs under a glass bar at the top and a floating glass
+      // action bar at the bottom.
+      extendBodyBehindAppBar: true,
+      extendBody: true,
+      appBar: glassAppBar(
+        context,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           tooltip: 'חזרה',
@@ -140,9 +146,19 @@ class _ContentState extends ConsumerState<_Content> {
       ),
       bottomNavigationBar: _ActionBar(car: car, isSaved: isSaved),
       body: SafeArea(
-        child: ListView(
+        top: false,
+        bottom: false,
+        // A Builder, because the bars' heights are handed to the body — this
+        // State's own context sits above the Scaffold and would read zero,
+        // leaving the top of the page under the glass title bar.
+        child: Builder(builder: (context) => ListView(
           controller: _scroll,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            8 + MediaQuery.paddingOf(context).top,
+            16,
+            16 + MediaQuery.paddingOf(context).bottom,
+          ),
           children: [
             // ---- LEVEL 1 · could stop a purchase --------------------------
             //
@@ -257,7 +273,7 @@ class _ContentState extends ConsumerState<_Content> {
               ),
             ),
           ],
-        ),
+        )),
       ),
     );
 
@@ -639,14 +655,12 @@ class _ActionBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: context.colors.surface,
-          border: Border(top: BorderSide(color: context.colors.cardBorder)),
-        ),
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(10, 0, 10, safeBottom > 10 ? safeBottom : 10),
+      child: Glass(
+        borderRadius: BorderRadius.circular(22),
+        padding: const EdgeInsets.all(9),
         child: Row(
           children: [
             Expanded(

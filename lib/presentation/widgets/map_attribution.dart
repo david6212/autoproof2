@@ -34,7 +34,10 @@ class MapAttribution extends StatelessWidget {
       // Verified on the live site, not assumed.
       alignment: AlignmentDirectional.topStart,
       child: Padding(
-        padding: const EdgeInsets.all(6),
+        // Clear of a glass app bar the map runs under: the credit has to be
+        // visible, not behind the title.
+        padding: EdgeInsets.fromLTRB(
+            6, 6 + MediaQuery.paddingOf(context).top, 6, 6),
         child: GestureDetector(
           onTap: () => launchUrl(_copyright, mode: LaunchMode.externalApplication),
           child: Container(

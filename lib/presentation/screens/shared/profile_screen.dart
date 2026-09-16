@@ -17,6 +17,7 @@ import '../../../core/theme/app_text.dart';
 import '../../widgets/saved_check_icon.dart';
 import '../../widgets/error_retry.dart';
 import '../../widgets/support_contact.dart';
+import '../../widgets/glass.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -38,10 +39,12 @@ class ProfileScreen extends ConsumerWidget {
       // signed up.
       return Scaffold(
         appBar: AppBar(title: const Text('פרופיל')),
+        // Not the bottom: the menu runs on under the shell's glass bar.
         body: SafeArea(
+          bottom: false,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-                AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xxl),
+            padding: EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg,
+                AppSpace.xxl + navClearance(context)),
             children: [
               const SizedBox(height: AppSpace.xl),
               const GuestPromptView(
@@ -77,6 +80,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('פרופיל')),
       body: SafeArea(
+        bottom: false,
         child: userAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (_, __) => ErrorRetry(
@@ -168,8 +172,8 @@ class _Content extends StatelessWidget {
     final verified = user?.verified ?? false;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-          AppSpace.lg, AppSpace.lg, AppSpace.lg, AppSpace.xl),
+      padding: EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg,
+          AppSpace.xl + navClearance(context)),
       children: [
         Center(
           child: Column(

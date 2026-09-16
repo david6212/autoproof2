@@ -55,6 +55,10 @@ class BuyerShell extends StatelessWidget {
     final current = indexForLocation(location);
 
     return Scaffold(
+      // The page runs on under the floating glass bar. The Scaffold hands the
+      // bar's height to the body as bottom padding, which the tab screens add
+      // to their scroll views so the last row can still scroll clear of it.
+      extendBody: true,
       body: child,
       bottomNavigationBar: AppNavBar(
         tabs: _tabs,

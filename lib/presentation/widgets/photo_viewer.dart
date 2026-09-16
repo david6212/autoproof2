@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
+import 'glass.dart';
 
 /// Chrome that floats over a photo.
 ///
@@ -34,12 +35,11 @@ class PhotoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    // Smoked glass: the same scrim, with the photo behind it blurred.
+    return Glass(
+      tone: GlassTone.smoke,
       padding: padding,
-      decoration: BoxDecoration(
-        color: scrim(scrimAlpha),
-        borderRadius: BorderRadius.circular(AppRadius.pill),
-      ),
+      borderRadius: BorderRadius.circular(AppRadius.pill),
       child: DefaultTextStyle.merge(
         // Size from the scale, colour from the palette: `onBrand` is white in
         // both themes because the scrim under it is dark in both.

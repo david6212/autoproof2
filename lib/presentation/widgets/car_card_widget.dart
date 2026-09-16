@@ -1,4 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 // `intl` exports its own TextDirection, which shadows Flutter's and turns any
 // use of the real one into a confusing "getter 'ltr' isn't defined". Only
@@ -9,6 +11,7 @@ import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_palette.dart';
 import '../../data/models/car_model.dart';
 import '../../core/theme/app_text.dart';
+import 'glass.dart';
 import 'app_card.dart';
 import 'fact_chip.dart';
 import 'responsive_frame.dart';
@@ -58,7 +61,8 @@ class CarListView extends StatelessWidget {
                 padding.left,
                 header == null ? padding.top : 0,
                 padding.right,
-                padding.bottom,
+                // Under the floating nav bar on Home; nothing on Saved.
+                padding.bottom + navClearance(context),
               ),
               sliver: isGrid ? _grid(context) : _column(),
             ),
@@ -366,7 +370,8 @@ class CarCard extends StatelessWidget {
             // it fills with the brand green. White reads on both (6.47:1 on
             // the fill), so the tick stays legible either way and the only
             // thing that moves is the disc behind it.
-            child: AnimatedContainer(
+            child: _Frosted(
+              child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               curve: Curves.easeOut,
               decoration: BoxDecoration(
@@ -374,6 +379,8 @@ class CarCard extends StatelessWidget {
                     ? context.colors.tealFill
                     : Colors.black.withValues(alpha: 0.40),
                 shape: BoxShape.circle,
+                border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.18), width: 0.8),
               ),
               child: SizedBox(
                 width: 40,
@@ -390,6 +397,7 @@ class CarCard extends StatelessWidget {
                   onPressed: onToggleSave,
                 ),
               ),
+            ),
             ),
           ),
         if (car.reviewCount > 0)
@@ -418,6 +426,25 @@ class CarCard extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Blurs the photo behind a round control. The scrim on the control does the
+/// work of keeping it legible; this only makes it read as glass.
+class _Frosted extends StatelessWidget {
+  const _Frosted({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!Glass.enabledFor(context)) return child;
+    return ClipOval(
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: child,
+      ),
     );
   }
 }

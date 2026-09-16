@@ -13,6 +13,7 @@ import '../../widgets/app_card.dart';
 import '../../widgets/guest_prompt_view.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/error_retry.dart';
+import '../../widgets/glass.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
@@ -29,27 +30,37 @@ class ChatListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('צ\'אטים')),
+      // Not the bottom: the list runs on under the shell's glass bar.
       body: SafeArea(
+        bottom: false,
         child: isGuest
-            ? const GuestPromptView(
-                icon: Icons.chat_bubble_outline,
-                title: 'שוחח עם המוכרים',
-                body: 'התחבר כדי לפתוח שיחות עם בעלי הרכבים.',
+            ? Padding(
+                padding: EdgeInsets.only(bottom: navClearance(context)),
+                child: const GuestPromptView(
+                  icon: Icons.chat_bubble_outline,
+                  title: 'שוחח עם המוכרים',
+                  body: 'התחבר כדי לפתוח שיחות עם בעלי הרכבים.',
+                ),
               )
             : chatsAsync.when(
           loading: () => const ChatListSkeleton(),
-          error: (_, __) => ErrorRetry(
-            message: 'לא הצלחנו לטעון את השיחות',
-            onRetry: () => ref.invalidate(userChatsProvider),
+          error: (_, __) => Padding(
+            padding: EdgeInsets.only(bottom: navClearance(context)),
+            child: ErrorRetry(
+              message: 'לא הצלחנו לטעון את השיחות',
+              onRetry: () => ref.invalidate(userChatsProvider),
+            ),
           ),
           data: (chats) {
-            if (chats.isEmpty) return const _EmptyChats();
+            if (chats.isEmpty) {
+              return Padding(padding: EdgeInsets.only(bottom: navClearance(context)), child: const _EmptyChats());
+            }
             // Cards with their own margin, not divided list tiles — the rest
             // of the app puts content on cards over the page colour, and a
             // full-bleed white list was the last surface that did not.
             return ListView.builder(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpace.lg, AppSpace.md, AppSpace.lg, AppSpace.xl),
+              padding: EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.md,
+                  AppSpace.lg, AppSpace.xl + navClearance(context)),
               itemCount: chats.length,
               itemBuilder: (context, i) => _ChatTile(
                 chat: chats[i],

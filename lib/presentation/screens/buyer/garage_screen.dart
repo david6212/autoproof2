@@ -18,6 +18,7 @@ import '../../widgets/error_retry.dart';
 import '../../widgets/guest_garage_intro.dart';
 import '../../widgets/primary_button_widget.dart';
 import '../../widgets/skeleton.dart';
+import '../../widgets/glass.dart';
 
 /// "הרכב שלי" — the owner's garage.
 ///
@@ -77,17 +78,23 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
           ],
         ],
       ),
+      // Not the bottom: the list runs on under the shell's glass bar. The
+      // states that do not scroll are lifted clear of it instead.
       body: SafeArea(
+        bottom: false,
         child: isGuest
-            ? const GuestGarageIntro()
+            ? Padding(padding: EdgeInsets.only(bottom: navClearance(context)), child: const GuestGarageIntro())
             : vehiclesAsync.when(
                 loading: () => const _GarageSkeleton(),
-                error: (_, __) => ErrorRetry(
-                  message: 'לא הצלחנו לטעון את הרכבים',
-                  onRetry: () => ref.invalidate(myVehiclesProvider),
+                error: (_, __) => Padding(
+                  padding: EdgeInsets.only(bottom: navClearance(context)),
+                  child: ErrorRetry(
+                    message: 'לא הצלחנו לטעון את הרכבים',
+                    onRetry: () => ref.invalidate(myVehiclesProvider),
+                  ),
                 ),
                 data: (vehicles) => vehicles.isEmpty
-                    ? const _EmptyGarage()
+                    ? Padding(padding: EdgeInsets.only(bottom: navClearance(context)), child: const _EmptyGarage())
                     : _VehicleList(vehicles: vehicles),
               ),
       ),
@@ -103,7 +110,8 @@ class _VehicleList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.all(AppSpace.lg),
+      padding: EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.lg, AppSpace.lg,
+          AppSpace.lg + navClearance(context)),
       itemCount: vehicles.length,
       separatorBuilder: (_, __) => const SizedBox(height: AppSpace.md),
       itemBuilder: (_, i) => _VehicleCard(vehicle: vehicles[i]),

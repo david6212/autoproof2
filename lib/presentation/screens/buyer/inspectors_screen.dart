@@ -20,6 +20,7 @@ import '../../widgets/map_sheet.dart';
 import '../../providers/cars_provider.dart';
 import '../../providers/gov_api_provider.dart';
 import '../../../core/theme/app_text.dart';
+import '../../widgets/glass.dart';
 
 /// The user's current position, or null if unavailable / permission denied.
 /// Used to center the map and find the nearest inspection center.
@@ -163,7 +164,9 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(
+      extendBodyBehindAppBar: true,
+      appBar: glassAppBar(
+        context,
         title: const Text('מכוני בדיקת רכב'),
         actions: [
           AppBarAction(
@@ -173,7 +176,9 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
           ),
         ],
       ),
+      // Not the top: the map runs up under the glass bar.
       body: SafeArea(
+        top: false,
         child: centersAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (_, __) => const _Message(
