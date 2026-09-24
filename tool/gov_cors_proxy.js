@@ -57,6 +57,9 @@ function allowed(origin) {
 // what the service is.
 const CLIENT_HEADER = 'X-BonnetCheck-Client';
 
+/// The largest `limit` the app itself asks for: the fuel-station list.
+const MAX_LIMIT = 2000;
+
 function corsHeaders(origin) {
   const headers = {
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -105,6 +108,15 @@ export default {
     const named = request.headers.get(CLIENT_HEADER) !== null;
     if (origin ? !allowed(origin) : !named) {
       return new Response('Forbidden', { status: 403 });
+    }
+
+    // A relay is also a volume problem: one unbounded `limit` pulls half a
+    // megabyte per request through a free account. 2000 is the largest the app
+    // itself asks for (the fuel-station list) — capping lower would break that
+    // screen on the web, which is the whole reason this Worker exists.
+    const limit = Number(url.searchParams.get('limit'));
+    if (Number.isFinite(limit) && limit > MAX_LIMIT) {
+      return new Response('Bad Request', { status: 400 });
     }
 
     const upstream = new URL(UPSTREAM + url.pathname + url.search);
