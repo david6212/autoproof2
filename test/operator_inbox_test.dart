@@ -106,10 +106,17 @@ void main() {
     // Oldest first because the oldest is the one closest to breaking the
     // fourteen days, and the query is bounded because this runs on a plan with
     // 50,000 reads a day for the whole app.
+    //
+    // This test used to also assert the source contained
+    // `where('handledAt', isNull: true)`. That clause was the bug (SEC-05):
+    // no writer wrote the field, Firestore does not index a document for a
+    // field it does not have, and the inbox returned nothing for its whole
+    // life while this test stayed green. Asserting the sentence that caused
+    // the bug is how it survived 97 test files, so the unanswered half is now
+    // asserted as behaviour in `operator_inbox_delivery_test.dart` instead.
     final repo =
         File('lib/data/repositories/operator_inbox_repository.dart')
             .readAsStringSync();
-    expect(repo, contains("where('handledAt', isNull: true)"));
     expect(repo, contains("orderBy('createdAt')"));
     expect(repo, contains('.limit('));
   });

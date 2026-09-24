@@ -61,12 +61,27 @@ import '../presentation/widgets/primary_button_widget.dart';
 /// look their own car up in the registry and offers to keep the result,
 /// which is the invitation. It is the actions underneath that need the
 /// account.
+///
+/// Nor are `/saved`, `/notifications` and the `/seller` flow, all of which do
+/// need an account for their content. Each asks for one itself, in place and
+/// with the reason visible: the first two show a `GuestPromptView`, and a
+/// guest may walk the entire publish flow on purpose — the account is
+/// required at the end, by `CreateListingController.publish`, where what it
+/// is for is obvious. A redirect would be the worse version of a question
+/// those screens already ask better.
+///
+/// `/chat/` is different, and is here: `ChatScreen` has no guest branch at
+/// all. It reads the uid as an empty string and streams the thread anyway,
+/// `chats` requires `isSignedIn()`, and the visitor is left with a permission
+/// error under a retry button that can never succeed. The trailing slash
+/// matters — `/chats`, the tab, stays open.
 bool needsAccount(String location) {
   const gated = [
     '/garage/add',
     '/garage/claim',
     '/vehicle/',
     '/profile/past-vehicles',
+    '/chat/',
   ];
   return gated.any(location.startsWith);
 }

@@ -89,7 +89,13 @@ class Place {
 
   final int ratingCount;
   final int ratingSum;
-  final double ratingAvg;
+  /// Derived, never read from the document.
+  ///
+  /// It is stored too — old installs still render the stored field, and the
+  /// repository keeps writing it — but a stored average is a number any
+  /// signed-in account could write, and this app displays it as a score for a
+  /// named business. Computing it here means a forged value shows nothing.
+  double get ratingAvg => ratingCount <= 0 ? 0 : ratingSum / ratingCount;
   final DateTime? lastReviewAt;
   final DateTime createdAt;
 
@@ -108,7 +114,6 @@ class Place {
     this.isHidden = false,
     this.ratingCount = 0,
     this.ratingSum = 0,
-    this.ratingAvg = 0,
     this.lastReviewAt,
     required this.createdAt,
   });
@@ -140,7 +145,6 @@ class Place {
       isHidden: data['isHidden'] == true,
       ratingCount: asInt(data['ratingCount']),
       ratingSum: asInt(data['ratingSum']),
-      ratingAvg: (data['ratingAvg'] as num?)?.toDouble() ?? 0,
       lastReviewAt: (data['lastReviewAt'] as dynamic)?.toDate(),
       createdAt: (data['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
     );

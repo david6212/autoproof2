@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Nothing leaves the device, by either route.
+
+  From Android 12 this file, not android:allowBackup, decides what a backup
+  and what a device-to-device transfer may take. allowBackup="false" in the
+  manifest stops the cloud half on every version; it does not stop a transfer
+  to a new handset, and a transfer carries the app's private data directory —
+  where Firebase Auth keeps the refresh token that is a signed-in session.
+
+  So both sections exclude everything. There is nothing here worth carrying
+  across: the account, the passport, the listings and the chats are in
+  Firestore and return on the next sign-in. What would survive a transfer is
+  only the parts that should not — a session, and the analytics-consent answer
+  this person gave on a device that may no longer be theirs.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>

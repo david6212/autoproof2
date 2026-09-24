@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/car_model.dart';
 import '../models/car_note_model.dart';
 import '../models/plate_snapshot_model.dart';
+import 'operator_inbox_repository.dart';
 
 /// All reads/writes for the cars collection and per-user saved cars.
 class CarRepository {
@@ -27,6 +28,22 @@ class CarRepository {
   /// Cut-off date: anything created before this is expired.
   static DateTime get expiredBefore => DateTime.now().subtract(retention);
 
+  /// Whether a listing is still inside the 24-month window.
+  ///
+  /// **One decision, three read paths.** The cutoff used to live inline in
+  /// `streamActiveCars` alone, so the list hid an expired listing while a
+  /// direct `/car/:id` link and the saved list both still opened it — with its
+  /// photos, its description and its seller's uid, for anyone who kept the
+  /// URL. "מוסתרות מהשירות" is not what a shared link was doing.
+  ///
+  /// The boundary day counts as expired, matching what `streamActiveCars`
+  /// already did, so the paths cannot drift apart by a day.
+  ///
+  /// [cutoff] lets a caller filter a whole batch against one instant rather
+  /// than re-reading the clock per listing.
+  static bool withinRetention(DateTime createdAt, [DateTime? cutoff]) =>
+      createdAt.isAfter(cutoff ?? expiredBefore);
+
   /// Stream of active listings, newest first, excluding expired ones.
   Stream<List<CarModel>> streamActiveCars() {
     // Sort client-side to avoid needing a composite (status + createdAt) index.
@@ -37,7 +54,7 @@ class CarRepository {
       final cutoff = expiredBefore;
       final cars = snap.docs
           .map((d) => CarModel.fromFirestore(d.data(), d.id))
-          .where((c) => c.createdAt.isAfter(cutoff))
+          .where((c) => withinRetention(c.createdAt, cutoff))
           .toList();
       cars.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return cars;
@@ -53,10 +70,27 @@ class CarRepository {
     return [for (final d in snap.docs) d.id];
   }
 
+  /// One listing, or null when there is nothing to show.
+  ///
+  /// Null also for an expired one: this is the path a shared `/car/:id` link
+  /// takes, and the saved list fetches through it too, so the retention
+  /// promise is kept here rather than only in the browse list. The router
+  /// already renders null as "this page does not exist".
   Future<CarModel?> getCarById(String id) async {
     final snap = await _cars.doc(id).get();
     if (!snap.exists || snap.data() == null) return null;
-    return CarModel.fromFirestore(snap.data()!, snap.id);
+    return visibleCar(snap.data()!, snap.id);
+  }
+
+  /// The listing as a reader may see it, or null when they may not.
+  ///
+  /// Split out of [getCarById] so the retention decision can be run against a
+  /// real document without a Firestore: the classes a fake would have to
+  /// implement are sealed, and the alternative was to test this by reading
+  /// the source, which is how SEC-05 stayed hidden.
+  static CarModel? visibleCar(Map<String, dynamic> data, String id) {
+    final car = CarModel.fromFirestore(data, id);
+    return withinRetention(car.createdAt) ? car : null;
   }
 
   /// RULE 2 — a seller may have at most one active listing.
@@ -241,12 +275,12 @@ class CarRepository {
     required String noteId,
     required String reporterUid,
   }) {
-    return _db.collection('note_reports').add({
+    return _db.collection('note_reports').add(unansweredReport({
       'carId': carId,
       'noteId': noteId,
       'reporterUid': reporterUid,
       'createdAt': FieldValue.serverTimestamp(),
-    });
+    }));
   }
 
   /// One channel for every "this is wrong" and "delete my data" request, so a
@@ -257,13 +291,13 @@ class CarRepository {
     String carId = '',
     String note = '',
   }) {
-    return _db.collection('data_corrections').add({
+    return _db.collection('data_corrections').add(unansweredReport({
       'kind': kind,
       'carId': carId,
       'reporterUid': reporterUid,
       'note': note,
       'createdAt': FieldValue.serverTimestamp(),
-    });
+    }));
   }
 
   // ---- Buyer journey progress (private, per buyer + car) ----

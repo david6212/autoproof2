@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart' show User;
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bonnetcheck/app/router.dart';
+import 'package:bonnetcheck/app/theme.dart';
 import 'package:bonnetcheck/presentation/providers/auth_provider.dart';
 
 /// The only way to get a [Ref] to hand to [AuthRefresh] outside the app.
@@ -26,6 +28,18 @@ void main() {
       expect(needsAccount('/vehicle/abc123/publish'), isTrue);
       expect(needsAccount('/vehicle/abc123/sell'), isTrue);
       expect(needsAccount('/profile/past-vehicles'), isTrue);
+    });
+
+    test('a shared chat link too', () {
+      // The one route that genuinely dead-ends. ChatScreen has no guest
+      // branch — it reads the uid as '' and streams the thread anyway, and
+      // `chats` requires isSignedIn(), so a visitor following a link gets a
+      // Firestore permission error dressed as "we couldn't load this", under
+      // a retry button that can never succeed. That is precisely the failure
+      // this guard exists to prevent.
+      expect(needsAccount('/chat/abc123'), isTrue);
+      expect(needsAccount('/chats'), isFalse,
+          reason: 'the list is a tab, and it shows a guest prompt');
     });
   });
 
@@ -53,6 +67,25 @@ void main() {
       ]) {
         expect(needsAccount(open), isFalse, reason: '$open must stay open');
       }
+    });
+
+    test('a screen that asks for an account itself is not bounced', () {
+      // These three need an account for their *content*, and a security scan
+      // read that as four missing entries in the gated list. They are not.
+      // Each already answers a guest in place, and the invitation it shows is
+      // better than a redirect: SavedScreen and NotificationsScreen render a
+      // GuestPromptView that says what signing in would get you, and the
+      // whole seller flow is open to guests on purpose —
+      // `create_listing_provider.dart` says so where it refuses to publish:
+      // "A guest may walk the whole flow — that is the point of it". The
+      // account is asked for at the end, when the reason for it is visible.
+      //
+      // Gating them would undo that. `/seller` in particular would put back
+      // the bounce that three screens were deleted to remove.
+      expect(needsAccount('/saved'), isFalse);
+      expect(needsAccount('/notifications'), isFalse);
+      expect(needsAccount('/seller'), isFalse);
+      expect(needsAccount('/seller/create'), isFalse);
     });
 
     test('a car listing is not mistaken for a vehicle passport', () {
@@ -125,6 +158,42 @@ void main() {
 
       expect(notified, greaterThan(0),
           reason: 'the router has to be told the answer arrived');
+    });
+  });
+
+  group('and the real router does it', () {
+    testWidgets('a cold link to a chat lands on the login screen',
+        (tester) async {
+      // Everything above tests functions. This tests the app: the actual
+      // `routerProvider`, its actual redirect, its actual AuthRefresh, driven
+      // the way a shared link drives it — a cold start where the auth answer
+      // is still loading when the location arrives.
+      //
+      // The guard's whole history is of being present in source and absent in
+      // production, so a list that contains '/chat/' proves nothing on its
+      // own. This is the part that could not be faked.
+      final container = ProviderContainer(overrides: [
+        authStateProvider.overrideWith((ref) => Stream<User?>.value(null)),
+      ]);
+      addTearDown(container.dispose);
+
+      final router = container.read(routerProvider);
+
+      await tester.pumpWidget(UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(
+          theme: AppTheme.light,
+          routerConfig: router,
+        ),
+      ));
+
+      router.go('/chat/abc123');
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+
+      expect(router.routerDelegate.currentConfiguration.uri.path, '/login',
+          reason: 'the visitor was left on a chat that can never load');
     });
   });
 }

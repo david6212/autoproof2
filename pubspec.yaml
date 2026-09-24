@@ -2,7 +2,7 @@ name: bonnetcheck
 description: "BonnetCheck — trusted marketplace for buying used cars in Israel."
 publish_to: 'none'
 
-version: 0.9.9+23
+version: 0.9.10+24
 
 environment:
   sdk: ^3.7.2
@@ -43,7 +43,13 @@ dependencies:
 
   # Utils
   intl: ^0.19.0
-  flutter_secure_storage: ^9.0.0
+  # flutter_secure_storage was declared here from the first pubspec and never
+  # imported by a single line — while pulling a Keystore / Keychain /
+  # libsecret / DPAPI implementation and five platform plugins into every
+  # build, and appearing in the generated plugin registrants. A dependency
+  # nobody imports is a dependency nobody upgrades and nobody notices a CVE
+  # in. If secure storage is wanted later, it comes back at 11.x with
+  # something actually using it.
   url_launcher: ^6.3.2
   flutter_map: ^8.3.1
   # Renders MapLibre vector styles as a flutter_map layer. Needed because the

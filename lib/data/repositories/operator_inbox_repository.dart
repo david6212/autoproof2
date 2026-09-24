@@ -61,15 +61,15 @@ class InboxItem {
   /// answered late.
   bool isUrgent(DateTime now) => (daysWaiting(now) ?? 0) >= 7;
 
-  static InboxItem fromDoc(
+  static InboxItem fromData(
     InboxKind kind,
-    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+    String id,
+    Map<String, Object?> d,
   ) {
-    final d = doc.data();
     return InboxItem(
-      id: doc.id,
+      id: id,
       kind: kind,
-      createdAt: (d['createdAt'] as Timestamp?)?.toDate(),
+      createdAt: _asDate(d['createdAt']),
       carId: d['carId'] as String?,
       note: d['note'] as String?,
       subKind: d['kind'] as String?,
@@ -77,7 +77,30 @@ class InboxItem {
       reviewUid: d['reviewUid'] as String?,
     );
   }
+
+  /// A server timestamp arrives as a `Timestamp`, and is null for the moment
+  /// between the local write and the server's answer.
+  static DateTime? _asDate(Object? v) =>
+      v is Timestamp ? v.toDate() : v as DateTime?;
 }
+
+/// Writes a report with `handledAt: null` spelled out.
+///
+/// **An absent key is not the same as a null value.** Firestore does not index
+/// a document for a field it does not have, so a report written without
+/// `handledAt` is not returned by a query for `handledAt == null` — it is not
+/// in that index at all. All three writers omitted the field and the inbox
+/// asked the server exactly that question, so the inbox was empty for its
+/// whole life while the reports sat there, readable and unseen.
+///
+/// The query no longer asks the server, so this is belt and braces. It stays
+/// because a report that says in its own document that nobody has answered it
+/// is also simply true, and because the next reader of these collections will
+/// expect the field to be there.
+Map<String, Object?> unansweredReport(Map<String, Object?> fields) => {
+      ...fields,
+      'handledAt': null,
+    };
 
 /// The requests the operator has promised to answer.
 ///
@@ -100,14 +123,37 @@ class OperatorInboxRepository {
 
   /// Unanswered requests of one kind, oldest first — because the oldest is the
   /// one closest to breaking the fourteen days.
+  ///
+  /// **The unanswered half is decided here, not by the server.** It used to be
+  /// `where('handledAt', isNull: true)`, which returns nothing for a document
+  /// that has no such field — and no writer wrote one. Every report filed
+  /// before this fix is still in that state, so asking the server would keep
+  /// hiding them even now that new reports carry the field. Reading fifty and
+  /// filtering costs a few documents and cannot silently empty itself again.
   Stream<List<InboxItem>> watch(InboxKind kind) {
     return _db
         .collection(kind.collection)
-        .where('handledAt', isNull: true)
         .orderBy('createdAt')
         .limit(50)
         .snapshots()
-        .map((s) => [for (final d in s.docs) InboxItem.fromDoc(kind, d)]);
+        .map((s) => openOnly(kind, {for (final d in s.docs) d.id: d.data()}));
+  }
+
+  /// The reports nobody has answered yet, in the order they arrived.
+  ///
+  /// A document with no `handledAt` key and one with `handledAt: null` mean
+  /// the same thing: open. That equivalence is the whole fix, so it is tested
+  /// directly rather than inferred from the query's source text.
+  static List<InboxItem> openOnly(
+    InboxKind kind,
+    Map<String, Map<String, Object?>> docs,
+  ) {
+    final open = <InboxItem>[];
+    docs.forEach((id, data) {
+      if (data['handledAt'] != null) return;
+      open.add(InboxItem.fromData(kind, id, data));
+    });
+    return open;
   }
 
   /// Marks one answered. Writes a timestamp and nothing else — the rules allow

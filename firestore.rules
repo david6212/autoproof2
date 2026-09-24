@@ -515,6 +515,24 @@ service cloud.firestore {
                     && request.resource.data.ratingSum == 0
                     && request.resource.data.isHidden == false;
 
+      // The caller's own review, as it stands AFTER this write. Every move
+      // of the aggregates has to be backed by one: without this, the bounds
+      // below only slowed a forger down — one write per star — and `ratingAvg`
+      // was not bounded at all, so a single write set any garage to 5.0.
+      //
+      // `saveReview` writes the review and this update in one batch, so the
+      // installed 0.9.9 client satisfies it. Nothing else does.
+      function ownReviewAfter(placeId) {
+        return existsAfter(/databases/$(database)/documents/places/$(placeId)/reviews/$(request.auth.uid));
+      }
+
+      // The caller filed a report on this place. `reportDoesNotExist` writes
+      // that document before it hides, so again the installed client passes
+      // and a bare hide does not.
+      function ownReport(placeId) {
+        return exists(/databases/$(database)/documents/places/$(placeId)/reports/$(request.auth.uid));
+      }
+
       // Only the aggregates and the hidden flag, and only within bounds.
       //
       // **Spark has no Cloud Functions, so the counters are maintained by the
@@ -524,9 +542,11 @@ service cloud.firestore {
       // damage: a rating is 1..5, so a single update may move the count by at
       // most one and the sum by at most five.
       //
-      // What this does NOT prevent is somebody looping. That is the reason the
-      // app must never present a community rating as a verdict, and why the
-      // average stays hidden below three reviews.
+      // Looping used to be the residual risk, and the clause below closes it:
+      // a move of the score now has to come with the caller's own review. One
+      // account can still add its own honest star, which is what a review is.
+      // The average still stays hidden below three reviews, because a couple
+      // of opinions is not a score.
       allow update: if isSignedIn()
                     && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['ratingCount', 'ratingSum', 'ratingAvg',
@@ -535,6 +555,24 @@ service cloud.firestore {
                     && request.resource.data.ratingCount >= 0
                     && request.resource.data.ratingSum >= resource.data.ratingSum - 5
                     && request.resource.data.ratingSum <= resource.data.ratingSum + 5
+                    // A move of the score has to come with the review that
+                    // justifies it — the caller's own, present after this
+                    // write. A withdrawal is the same rule seen from the other
+                    // side and is handled by the decrement clause below.
+                    && (!request.resource.data.diff(resource.data).affectedKeys()
+                          .hasAny(['ratingCount', 'ratingSum', 'ratingAvg'])
+                        || ownReviewAfter(placeId)
+                        || isOperator()
+                        || (exists(/databases/$(database)/documents/places/$(placeId)/reviews/$(request.auth.uid))
+                            && !existsAfter(/databases/$(database)/documents/places/$(placeId)/reviews/$(request.auth.uid))))
+                    // Hiding is what removes a business from the directory, so
+                    // it takes a report in the caller's name — the client counts
+                    // three of them before it hides, and the rules can at least
+                    // demand that this caller is one of them.
+                    && (!request.resource.data.diff(resource.data).affectedKeys()
+                          .hasAny(['isHidden'])
+                        || isOperator()
+                        || ownReport(placeId))
                     // The count may fall by one, and only on a path entitled
                     // to it.
                     //
@@ -557,7 +595,11 @@ service cloud.firestore {
                     // Hiding is one-way. An entry three people said does not
                     // exist cannot be un-hidden by the fourth.
                     && (resource.data.isHidden == false
-                        || request.resource.data.isHidden == true);
+                        || request.resource.data.isHidden == true
+                        // ...except for the operator, who is the only way back
+                        // from a hide that turns out to be wrong. Without this
+                        // a mistaken removal was permanent, console-only.
+                        || isOperator());
 
       // Never. A place with reviews on it is a record other people wrote.
       allow delete: if false;

@@ -28,9 +28,29 @@
         tools:node="remove"/>
     <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID"
         tools:node="remove"/>
+    <!-- Backup, off deliberately.
+
+         Unset, android:allowBackup defaults to true. Firebase Auth keeps its
+         refresh token in the app's private data directory and SharedPreferences
+         holds the analytics-consent choice and the price watches, so the
+         default copies a signed-in session into the user's Google account and
+         restores it onto a new device — hardware the user may no longer
+         control. minSdk is 23, so it also reaches Android 6 phones where
+         `adb backup` can pull the same directory over USB.
+
+         Nothing on the device is worth restoring: everything real is in
+         Firestore and comes back on the next sign-in.
+
+         allowBackup="false" is not the whole answer. For an app targeting
+         Android 12 or higher — targetSdk is 36 — it stops the cloud backup
+         but not a device-to-device transfer, which is governed separately by
+         dataExtractionRules. Both halves are named here. -->
     <application
         android:label="BonnetCheck"
         android:name="${applicationName}"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

@@ -1,13 +1,23 @@
 import java.util.Properties
 
 // Release signing details live outside the repo, in android/key.properties.
-// Absent (a fresh clone, CI, another machine) the build falls back to the
-// debug key so nothing breaks — it just can't produce a distributable APK.
+// Absent (a fresh clone, CI, another machine) a release build used to fall
+// back to the debug key and say nothing about it. See the release block below:
+// it now stops instead.
 val keystoreProperties = Properties().apply {
     val f = rootProject.file("key.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
 val hasReleaseKey = keystoreProperties.getProperty("storeFile") != null
+
+// Whether this invocation is actually producing a release artefact.
+//
+// `buildTypes { release { } }` is configured on every Gradle run, `flutter
+// run` included, so a guard that throws there unconditionally would stop
+// anyone without key.properties from even starting the app. The guard has to
+// know what is being built.
+val buildingRelease =
+    gradle.startParameter.taskNames.any { it.contains("Release") }
 
 plugins {
     id("com.android.application")
@@ -68,9 +78,30 @@ android {
             // signature is the app's identity, and an update signed with a
             // different key is refused by Android. Losing this keystore means
             // never being able to update the installed app.
-            signingConfig = signingConfigs.getByName(
-                if (hasReleaseKey) "release" else "debug"
-            )
+            //
+            // The substitution this used to make was the dangerous part. A
+            // machine without key.properties produced a file named
+            // app-...-release.apk, signed with the debug key, that installs,
+            // runs, and can never update an installed BonnetCheck — and the
+            // build log said nothing. This project has already paid for a
+            // debug-signed release once: phone auth and Google Sign-In were
+            // dead in it for weeks, and nobody could tell from the artefact.
+            if (hasReleaseKey) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                if (buildingRelease && !project.hasProperty("allowDebugSigning")) {
+                    throw GradleException(
+                        "No android/key.properties, so this release would be " +
+                        "signed with the DEBUG key. Android refuses an update " +
+                        "signed with a different key, so the APK would install " +
+                        "but could never update an installed BonnetCheck. " +
+                        "Restore android/key.properties, or pass " +
+                        "-PallowDebugSigning=true for a throwaway build that " +
+                        "must never be published."
+                    )
+                }
+                signingConfig = signingConfigs.getByName("debug")
+            }
         }
     }
 }

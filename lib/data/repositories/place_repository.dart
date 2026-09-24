@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/place.dart';
 import '../models/place_review.dart';
+import 'operator_inbox_repository.dart';
 
 /// Garages and car washes: the directory the app did not have.
 ///
@@ -225,13 +226,13 @@ class PlaceRepository {
         .collection('review_reports')
         .doc('${placeId}__${reviewUid}__$reporterUid');
     if ((await ref.get()).exists) return false;
-    await ref.set({
+    await ref.set(unansweredReport({
       'placeId': placeId,
       'reviewUid': reviewUid,
       'reporterUid': reporterUid,
       'note': reason.trim(),
       'createdAt': FieldValue.serverTimestamp(),
-    });
+    }));
     return true;
   }
 
