@@ -27,6 +27,26 @@ class AppConfig {
   /// tested and waiting.
   static const storageEnabled = false;
 
+  /// Whether "ליווי מקצועי לבדיקה" is offered at all — the directory of people
+  /// who will come with a buyer to look at a car, for a price they set.
+  ///
+  /// **Off, and waiting for a lawyer's answer, not for code.** The screens,
+  /// the model, the repository and the rules are written and tested. What is
+  /// not settled is whether paid accompaniment makes this app a broker or an
+  /// inspection institute under the vehicle-trade licensing law, and what the
+  /// operator's exposure is to a professional's opinion. Both questions are in
+  /// `docs/legal-meeting/2026-09-17-lawyer-brief` as questions 10 and 11.
+  ///
+  /// Same rule as the three flags above: a route that cannot honestly run is
+  /// better absent than present. Here the reason is legal rather than
+  /// technical, which makes it a stronger reason, not a weaker one.
+  ///
+  /// **To turn it on:** get the answer, apply whatever wording it requires,
+  /// deploy the rules (`firebase deploy --only firestore:rules`) and flip
+  /// this. The rules ship deployed either way — a collection with no rules is
+  /// a collection with no protection the day somebody flips a flag.
+  static const escortEnabled = false;
+
   /// Whether "המשך עם Apple" can actually sign anyone in.
   ///
   /// **It cannot.** The button needs the Apple provider enabled in the Firebase

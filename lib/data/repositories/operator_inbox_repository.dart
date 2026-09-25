@@ -1,19 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Which published promise a request falls under.
-enum InboxKind { correction, noteReport, reviewReport }
+enum InboxKind { correction, noteReport, reviewReport, proApplication }
 
 extension InboxKindX on InboxKind {
   String get label => switch (this) {
         InboxKind.correction => 'בקשת תיקון',
         InboxKind.noteReport => 'דיווח על הערה',
         InboxKind.reviewReport => 'דיווח על ביקורת',
+        InboxKind.proApplication => 'בקשה להצטרף כבעל מקצוע',
       };
 
   String get collection => switch (this) {
         InboxKind.correction => 'data_corrections',
         InboxKind.noteReport => 'note_reports',
         InboxKind.reviewReport => 'review_reports',
+        InboxKind.proApplication => 'pro_applications',
       };
 }
 
@@ -27,6 +29,8 @@ class InboxItem {
     this.note,
     this.subKind,
     this.placeId,
+    this.proId,
+    this.claimedLicence,
     this.reviewUid,
   });
 
@@ -46,6 +50,12 @@ class InboxItem {
   /// act on it directly rather than send the operator hunting for it.
   final String? placeId;
   final String? reviewUid;
+
+  /// An escort application: whose profile it is, and the licence number they
+  /// typed. The number is a claim — the operator's screen looks it up live
+  /// rather than trusting what was stored.
+  final String? proId;
+  final String? claimedLicence;
 
   /// How long the person has been waiting. Null until the timestamp lands.
   int? daysWaiting(DateTime now) {
@@ -75,6 +85,8 @@ class InboxItem {
       subKind: d['kind'] as String?,
       placeId: d['placeId'] as String?,
       reviewUid: d['reviewUid'] as String?,
+      proId: d['proId'] as String?,
+      claimedLicence: d['claimedLicence'] as String?,
     );
   }
 

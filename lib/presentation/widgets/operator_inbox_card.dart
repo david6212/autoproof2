@@ -8,6 +8,7 @@ import '../../core/utils/date_formatter.dart';
 import '../../data/repositories/operator_inbox_repository.dart';
 import '../providers/operator_inbox_provider.dart';
 import '../providers/place_provider.dart';
+import '../providers/escort_provider.dart';
 import 'app_card.dart';
 
 /// The requests the operator has fourteen days to answer.
@@ -184,6 +185,21 @@ class _Row extends ConsumerWidget {
                 ),
                 child: const Text('הסתר וסגור', style: TextStyle(fontSize: 12.5)),
               ),
+            // A professional's application: look the claimed licence number up
+            // against the register, in front of the person deciding, and write
+            // the verdict. The fields it writes are the ones the rules refuse
+            // from everybody else — this is the only path to them.
+            if (item.kind == InboxKind.proApplication && item.proId != null)
+              TextButton(
+                onPressed: () => _decideApplication(context, ref, item),
+                style: TextButton.styleFrom(
+                  foregroundColor: colors.tealText2,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm),
+                ),
+                child:
+                    const Text('בדיקה ואישור', style: TextStyle(fontSize: 12.5)),
+              ),
             TextButton(
               onPressed: () =>
                   ref.read(operatorInboxRepositoryProvider).markHandled(item),
@@ -199,4 +215,72 @@ class _Row extends ConsumerWidget {
       ],
     );
   }
+}
+
+/// Shows what the Ministry's register answers about the number the applicant
+/// typed, and writes the decision.
+///
+/// The lookup happens here, at the moment of deciding, rather than at apply
+/// time: a number checked a week ago and stored by the applicant's own client
+/// is not a check, it is a claim with a timestamp.
+Future<void> _decideApplication(
+  BuildContext context,
+  WidgetRef ref,
+  InboxItem item,
+) async {
+  final repo = ref.read(escortRepositoryProvider);
+  final licence = item.claimedLicence ?? '';
+
+  final garage = licence.isEmpty ? null : await repo.lookupLicence(licence);
+  if (!context.mounted) return;
+
+  final approved = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(item.note ?? 'בקשה להצטרף'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (licence.isEmpty)
+            const Text('לא נמסר מספר רישיון מוסך.', style: AppText.bodySm)
+          else if (garage == null)
+            Text('מספר רישיון $licence לא נמצא במרשם המוסכים.',
+                style: AppText.bodySm)
+          else
+            Text(
+              'נמצא במרשם: ${garage.name}'
+              '${garage.town.isEmpty ? '' : ', ${garage.town}'}'
+              '${garage.rawProfession.isEmpty ? '' : ' · ${garage.rawProfession}'}',
+              style: AppText.bodySm,
+            ),
+          const SizedBox(height: AppSpace.sm),
+          Text(
+            'אישור מציג "תעודה נבדקה" עם התאריך, ואם נמצא רישיון — גם '
+            '"רשום במרשם המוסכים". דחייה משאירה את הפרופיל כהצהרה בלבד.',
+            style: context.text.micro,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('דחייה'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('אישור'),
+        ),
+      ],
+    ),
+  );
+
+  if (approved == null) return;
+
+  await repo.decide(
+    proId: item.proId!,
+    certificateApproved: approved,
+    garage: approved ? garage : null,
+  );
+  await ref.read(operatorInboxRepositoryProvider).markHandled(item);
 }

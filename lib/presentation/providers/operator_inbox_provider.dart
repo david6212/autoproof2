@@ -29,16 +29,28 @@ final operatorInboxProvider = StreamProvider<List<InboxItem>>((ref) {
   if (!ref.watch(isOperatorProvider)) return Stream.value(const []);
   final repo = ref.watch(operatorInboxRepositoryProvider);
 
+  // The escort applications queue is only watched when that feature is on.
+  // Opening a stream on a collection no screen can write to would spend a
+  // read to be told, every time, that nobody applied.
   return repo.watch(InboxKind.correction).asyncExpand((corrections) {
     return repo.watch(InboxKind.noteReport).asyncExpand((notes) {
-      return repo.watch(InboxKind.reviewReport).map((reviews) {
-        final all = [...corrections, ...notes, ...reviews]..sort((a, b) {
-          final x = a.createdAt, y = b.createdAt;
-          if (x == null || y == null) return 0;
-          return x.compareTo(y);
-        });
-        return all;
+      return repo.watch(InboxKind.reviewReport).asyncExpand((reviews) {
+        final head = [...corrections, ...notes, ...reviews];
+        if (!AppConfig.escortEnabled) return Stream.value(_oldestFirst(head));
+        return repo
+            .watch(InboxKind.proApplication)
+            .map((pros) => _oldestFirst([...head, ...pros]));
       });
     });
   });
 });
+
+/// The oldest request first: it is the one closest to breaking the fourteen
+/// days, which is the only ordering this list has a reason to use.
+List<InboxItem> _oldestFirst(List<InboxItem> items) {
+  return [...items]..sort((a, b) {
+      final x = a.createdAt, y = b.createdAt;
+      if (x == null || y == null) return 0;
+      return x.compareTo(y);
+    });
+}

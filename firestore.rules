@@ -472,6 +472,83 @@ service cloud.firestore {
     //
     // One per person per review. The id ends in the reporter's uid, so a
     // second report from the same account is an update, and is refused.
+    // ---- Professional escorts: people who will look at a car with a buyer ----
+    //
+    // The feature ships OFF (`AppConfig.escortEnabled`), and these rules ship
+    // with it: a collection with no rules is a collection with no protection
+    // the day somebody flips a flag.
+    //
+    // **The trust fields are operator-only, and that is the whole design.**
+    // There is no server here, so a rule cannot ask the Ministry whether a
+    // licence number is real. An applicant writes what they claim; the
+    // operator looks the number up and writes what was found. If a client
+    // could write `garageLicence`, every applicant would arrive wearing the
+    // register's badge.
+    match /escort_pros/{proId} {
+      // Readable by anyone: a buyer choosing who to bring to a viewing is
+      // browsing, and browsing does not need an account here any more than the
+      // listings do. What is readable is a display name, an area and a price —
+      // the phone number is not in this document.
+      allow read: if true;
+
+      allow create: if isSignedIn()
+                    && proId == request.auth.uid
+                    && request.resource.data.keys().hasOnly([
+                         'displayName', 'town', 'areas', 'priceIls', 'about',
+                         'yearsExperience', 'declaresInsurance',
+                         'claimedLicence', 'certStatus', 'createdAt'])
+                    && request.resource.data.displayName is string
+                    && request.resource.data.displayName.size() > 1
+                    && request.resource.data.priceIls is int
+                    && request.resource.data.priceIls >= 0
+                    && request.resource.data.priceIls <= 5000
+                    // A new profile may only declare a certificate pending or
+                    // absent. "approved" is the operator's word.
+                    && request.resource.data.certStatus in ['none', 'pending'];
+
+      // The owner edits their own details. Everything a buyer trusts —
+      // the registry trio, the certificate's verdict and date, the hidden
+      // flag, the rating aggregates — is missing from this list on purpose.
+      allow update: if isSignedIn()
+                    && proId == request.auth.uid
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['displayName', 'town', 'areas', 'priceIls',
+                                   'about', 'yearsExperience',
+                                   'declaresInsurance', 'claimedLicence',
+                                   'certStatus'])
+                    && request.resource.data.priceIls is int
+                    && request.resource.data.priceIls >= 0
+                    && request.resource.data.priceIls <= 5000
+                    // An owner may withdraw a certificate or resubmit one;
+                    // they may not approve it.
+                    && request.resource.data.certStatus in ['none', 'pending']
+                    && resource.data.certStatus != 'approved';
+
+      // The operator writes the verdict, and may hide a profile after a
+      // complaint. Hiding, never deleting: the record of what was published
+      // is what a complaint is judged against.
+      allow update: if isOperator()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['certStatus', 'certCheckedAt',
+                                   'garageLicence', 'garageName', 'garageTown',
+                                   'isHidden', 'hiddenAt']);
+
+      allow delete: if false;
+    }
+
+    // The applications queue, under the same fourteen-day promise as every
+    // other inbox collection — same shape, same `handledAt`, same locks.
+    match /pro_applications/{applicationId} {
+      allow read: if isOperator();
+      allow create: if isSignedIn()
+                    && applicationId == request.auth.uid
+                    && request.resource.data.reporterUid == request.auth.uid;
+      allow update: if isOperator()
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['handledAt']);
+      allow delete: if false;
+    }
+
     match /review_reports/{reportId} {
       allow read: if isOperator();
       allow create: if isSignedIn()

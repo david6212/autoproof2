@@ -37,6 +37,7 @@ import '../../widgets/documented_history_card.dart';
 import '../../widgets/market_price_band.dart';
 import '../../widgets/error_retry.dart';
 import '../../widgets/glass.dart';
+import '../../widgets/escort_invite_card.dart';
 
 class CarDetailScreen extends ConsumerWidget {
   const CarDetailScreen({super.key, required this.carId});
@@ -221,6 +222,10 @@ class _ContentState extends ConsumerState<_Content> {
             // passport. Renders nothing otherwise — most listings do not, and
             // saying so would read as an accusation rather than an absence.
             DocumentedHistoryCard(car: car),
+            // Bring somebody who knows engines. Off until the legal question
+            // is answered, and then on every listing rather than only the
+            // ones carrying a finding — see the card's own note.
+            const EscortInviteCard(),
             // The evidence behind the odometer finding above, which links
             // here rather than repeating itself.
             KeyedSubtree(

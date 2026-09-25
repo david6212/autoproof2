@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../presentation/providers/auth_provider.dart';
+import '../core/constants/app_config.dart';
 import '../presentation/providers/analytics_provider.dart';
 
 // Auth
@@ -21,6 +22,9 @@ import '../presentation/screens/buyer/car_detail_screen.dart';
 import '../presentation/screens/buyer/vehicle_history_screen.dart';
 import '../presentation/screens/buyer/fuel_stations_screen.dart';
 import '../presentation/screens/buyer/inspectors_screen.dart';
+import '../presentation/screens/escort/escort_join_screen.dart';
+import '../presentation/screens/escort/escort_list_screen.dart';
+import '../presentation/screens/escort/escort_profile_screen.dart';
 import '../presentation/screens/buyer/saved_screen.dart';
 import '../presentation/screens/buyer/garage_screen.dart';
 import '../presentation/screens/buyer/add_vehicle_screen.dart';
@@ -318,6 +322,23 @@ final routerProvider = Provider<GoRouter>((ref) {
               builder: (c, s) => const ListingRemovedScreen()),
         ],
       ),
+
+      // Professional escorts — registered only when the feature is on.
+      //
+      // Not a guard that redirects: the routes are absent. A `/escort/x` link
+      // shared while the feature was on would otherwise reach a screen after
+      // it was turned off, and the flag is a legal hold (see
+      // `AppConfig.escortEnabled`) rather than a preference.
+      if (AppConfig.escortEnabled) ...[
+        GoRoute(path: '/escort', builder: (c, s) => const EscortListScreen()),
+        GoRoute(
+            path: '/escort/join', builder: (c, s) => const EscortJoinScreen()),
+        GoRoute(
+          path: '/escort/:proId',
+          builder: (c, s) =>
+              EscortProfileScreen(proId: s.pathParameters['proId']!),
+        ),
+      ],
 
       // Shared
       GoRoute(path: '/about', builder: (c, s) => const AboutScreen()),
