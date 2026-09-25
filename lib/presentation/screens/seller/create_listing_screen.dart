@@ -21,6 +21,7 @@ import '../../widgets/primary_button_widget.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/step_progress_widget.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/constants/app_strings.dart';
 
 class CreateListingScreen extends ConsumerWidget {
   const CreateListingScreen({super.key});
@@ -734,7 +735,7 @@ class _ReadOnlyCarCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${car.year} · ${car.fuelType} · אומת מול משרד התחבורה',
+                  '${car.year} · ${car.fuelType} · ${AppStrings.verifiedSellerBadge}',
                   style:
                       TextStyle(fontSize: 12.5, color: context.colors.tealText2),
                 ),

@@ -156,6 +156,13 @@ void main() {
       banned('הרכב נבדק ואושר', 'we approve nothing');
       banned('מאושר על ידינו', 'we approve nothing');
       banned('רכב מאומת', 'we verify records, never vehicles');
+      // Found 24/09 by reading the app's Hebrew as text rather than as code:
+      // one survivor of the claims audit, on the screen a seller sees while
+      // publishing. We compare a plate to the register; the Ministry verifies
+      // nothing for us, and saying it did is the exact claim this file exists
+      // to keep out. The canonical phrasing is AppStrings.verifiedSellerBadge.
+      banned('אומת מול משרד התחבורה', 'the Ministry verifies nothing for us');
+      banned('אומת מול המרשם', 'a comparison is not a verification');
     });
 
     test('an empty recall register is not reported as an empty register', () {
