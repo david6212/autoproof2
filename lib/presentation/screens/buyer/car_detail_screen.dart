@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/money_formatter.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../data/models/car_model.dart';
@@ -96,8 +97,6 @@ class _Content extends ConsumerStatefulWidget {
 }
 
 class _ContentState extends ConsumerState<_Content> {
-  static final _priceFmt = NumberFormat('#,###', 'en');
-
   final _scroll = ScrollController();
 
   /// Marks the odometer panel so the finding at the top can send the reader to
@@ -179,7 +178,7 @@ class _ContentState extends ConsumerState<_Content> {
               children: [
                 Expanded(child: Text(car.title, style: AppText.h1)),
                 Text(
-                  '₪${_priceFmt.format(car.price)}',
+                  MoneyFormatter.format(car.price),
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -261,7 +260,7 @@ class _ContentState extends ConsumerState<_Content> {
                   Center(
                     child: TextButton.icon(
                       icon: const Icon(Icons.flag_outlined, size: 18),
-                      label: const Text('דווח על המודעה'),
+                      label: const Text('דווחו על המודעה'),
                       style: TextButton.styleFrom(
                         foregroundColor: context.colors.textMuted,
                       ),
@@ -670,7 +669,7 @@ class _ActionBar extends ConsumerWidget {
                   minimumSize: const Size.fromHeight(50),
                 ),
                 icon: const Icon(Icons.chat_bubble_outline),
-                label: const Text('שלח הודעה'),
+                label: const Text('שלחו הודעה'),
                 onPressed: () async {
                   // Guests can't open a chat — invite them to sign in.
                   final isGuest =
@@ -694,7 +693,7 @@ class _ActionBar extends ConsumerWidget {
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text('לא ניתן לפתוח צ׳אט כרגע. נסה שוב.')),
+                          content: Text('לא ניתן לפתוח צ\'אט כרגע. נסו שוב.')),
                     );
                   }
                 },

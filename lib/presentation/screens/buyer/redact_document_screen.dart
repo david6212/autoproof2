@@ -184,7 +184,9 @@ class _RedactDocumentScreenState extends State<RedactDocumentScreen> {
                       Text(
                         _boxes.isEmpty
                             ? 'לא סומן דבר'
-                            : 'סומנו ${_boxes.length} אזורים',
+                            : _boxes.length == 1
+                                ? 'סומן אזור אחד'
+                                : 'סומנו ${_boxes.length} אזורים',
                         style: context.text.caption,
                       ),
                       const Spacer(),
@@ -192,13 +194,13 @@ class _RedactDocumentScreenState extends State<RedactDocumentScreen> {
                         TextButton(
                           onPressed:
                               _saving ? null : () => setState(_boxes.removeLast),
-                          child: const Text('בטל סימון אחרון'),
+                          child: const Text('בטלו סימון אחרון'),
                         ),
                     ],
                   ),
                   const SizedBox(height: AppSpace.sm),
                   PrimaryButton(
-                    label: _boxes.isEmpty ? 'שמור בלי סימון' : 'שמור',
+                    label: _boxes.isEmpty ? 'שמרו בלי סימון' : 'שמרו',
                     loading: _saving,
                     onPressed: _save,
                   ),

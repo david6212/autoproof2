@@ -179,7 +179,7 @@ class _PublishFromVehicleScreenState
                 const SizedBox(height: AppSpace.lg),
                 OutlinedButton(
                   onPressed: () => context.push('/car/${vehicle.activeCarId}'),
-                  child: const Text('פתח את המודעה'),
+                  child: const Text('פתחו את המודעה'),
                 ),
               ],
             ],
@@ -266,7 +266,7 @@ class _PublishFromVehicleScreenState
         ],
         const SizedBox(height: AppSpace.xl),
         PrimaryButton(
-          label: 'פרסם למכירה',
+          label: 'פרסמו למכירה',
           loading: _publishing,
           onPressed: () => _publish(vehicle),
         ),

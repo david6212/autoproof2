@@ -91,7 +91,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               child: const Text('ביטול')),
           TextButton(
               onPressed: () => Navigator.of(c).pop(true),
-              child: const Text('הוסף')),
+              child: const Text('הוסיפו')),
         ],
       ),
     );
@@ -210,7 +210,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
             const SizedBox(height: AppSpace.xl),
 
             PrimaryButton(
-              label: 'הוסף לרשימה',
+              label: 'הוסיפו לרשימה',
               loading: _saving,
               onPressed: _save,
             ),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
+import '../../core/utils/money_formatter.dart';
 import '../../data/models/fuel_report.dart';
 import '../../data/models/fuel_station.dart';
 import '../providers/auth_provider.dart';
@@ -80,7 +81,7 @@ class _SheetState extends ConsumerState<_Sheet> {
     }
     if (!FuelReport.isPlausible(agorot)) {
       setState(() => _error =
-          'מחיר לליטר בין ${FuelReport.minAgorot ~/ 100} ל-${FuelReport.maxAgorot ~/ 100} ₪');
+          'מחיר לליטר בין ${FuelReport.minAgorot ~/ 100} ל-${MoneyFormatter.format(FuelReport.maxAgorot ~/ 100)}');
       return;
     }
 
@@ -184,14 +185,14 @@ class _SheetState extends ConsumerState<_Sheet> {
               child: Text(_saving
                   ? 'שומר…'
                   : widget.current == null
-                      ? 'שלח דיווח'
-                      : 'עדכן דיווח'),
+                      ? 'שלחו דיווח'
+                      : 'עדכנו דיווח'),
             ),
             if (widget.current != null) ...[
               const SizedBox(height: AppSpace.sm),
               TextButton(
                 onPressed: _saving ? null : _remove,
-                child: Text('מחק את הדיווח שלי',
+                child: Text('מחקו את הדיווח שלי',
                     style: TextStyle(color: context.colors.errorRed)),
               ),
             ],

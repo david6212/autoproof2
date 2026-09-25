@@ -12,7 +12,7 @@ import 'package:bonnetcheck/data/sources/remote/gov_api_service.dart';
 void main() {
   group('why a lookup failed', () {
     test('a plate the registry has never heard of is an answer', () {
-      final e = GovApiException('המספר לא נמצא. בדוק את מספר הרישוי.',
+      final e = GovApiException('המספר לא נמצא. בדקו את מספר הרישוי.',
           kind: GovApiErrorKind.notFound);
 
       expect(e.isNotFound, isTrue);
@@ -22,7 +22,7 @@ void main() {
       // Anything we did not hear back from defaults to unreachable, so a new
       // failure path added later errs towards saying "we could not check"
       // rather than towards silence.
-      final e = GovApiException('הבקשה ארכה מדי. בדוק את החיבור לאינטרנט.');
+      final e = GovApiException('הבקשה נמשכה זמן רב מדי. בדקו את החיבור לאינטרנט.');
 
       expect(e.kind, GovApiErrorKind.unreachable);
       expect(e.isNotFound, isFalse);
@@ -39,8 +39,8 @@ void main() {
     test('the message still reads on its own', () {
       // It reaches users, so it stays a sentence rather than a code.
       expect(
-        GovApiException('שגיאת רשת. נסה שוב.').toString(),
-        'שגיאת רשת. נסה שוב.',
+        GovApiException('שגיאת רשת. נסו שוב.').toString(),
+        'שגיאת רשת. נסו שוב.',
       );
     });
   });

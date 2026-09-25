@@ -116,7 +116,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
       ],
       const SizedBox(height: AppSpace.xl),
       PrimaryButton(
-        label: 'חפש רכב',
+        label: 'חפשו רכב',
         loading: _searching,
         onPressed: _search,
       ),
@@ -191,7 +191,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
       ],
       const SizedBox(height: AppSpace.xl),
       PrimaryButton(
-        label: 'הוסף לרכבים שלי',
+        label: 'הוסיפו לרכבים שלי',
         loading: saving,
         onPressed: _save,
       ),
@@ -214,7 +214,7 @@ class _OwnedAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) => TextButton(
         onPressed: () => context.pushReplacement('/vehicle/$vehicleId'),
-        child: const Text('פתח את הרכב'),
+        child: const Text('פתחו את הרכב'),
       );
 }
 

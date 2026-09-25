@@ -95,7 +95,7 @@ void main() {
 
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('הצג בכל זאת'));
+    await tester.tap(find.text('הציגו בכל זאת'));
     await tester.pumpAndSettle();
 
     expect(result, isTrue);
@@ -172,6 +172,6 @@ void main() {
 
     expect(find.byType(Switch), findsNothing);
     expect(find.byIcon(Icons.delete_outline), findsNothing);
-    expect(find.text('פתח'), findsOneWidget);
+    expect(find.text('פתחו'), findsOneWidget);
   });
 }

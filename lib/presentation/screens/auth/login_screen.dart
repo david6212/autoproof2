@@ -8,6 +8,7 @@ import '../../../core/theme/app_palette.dart';
 import '../../../core/constants/app_config.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/legal_info.dart';
+import '../../../core/utils/phone_formatter.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/seller_verification_provider.dart';
@@ -135,14 +136,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 26),
                     Text(
-                      isCodeStep ? 'הזן את הקוד שקיבלת' : 'התחברות',
+                      isCodeStep ? 'הזינו את הקוד שקיבלתם' : 'התחברות',
                       textAlign: TextAlign.center,
                       style: AppText.h2,
                     ),
                     const SizedBox(height: 6),
                     Text(
                       isCodeStep
-                          ? 'שלחנו קוד בן 6 ספרות אל ${state.phoneE164}'
+                          ? 'שלחנו קוד בן 6 ספרות אל '
+                              '${PhoneFormatter.local(state.phoneE164)}'
                           : AppConfig.phoneAuthEnabled
                               ? 'בלחיצה אחת עם חשבון Google, או במספר טלפון.'
                               : 'בלחיצה אחת, עם חשבון Google.',
@@ -162,7 +164,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     // on the screen, and it is the one that fails.
                     if (!isCodeStep) ...[
                       _SocialButton(
-                        label: 'המשך עם Google',
+                        label: 'המשיכו עם Google',
                         leading: Image.asset(
                           'assets/google_g.png',
                           width: 22,
@@ -200,7 +202,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     ? const Color(0xFF111111)
                                     : context.colors.onBrand;
                             return _SocialButton(
-                              label: 'המשך עם Apple',
+                              label: 'המשיכו עם Apple',
                               leading: Icon(Icons.apple, color: fg, size: 22),
                               background: bg,
                               foreground: fg,
@@ -272,7 +274,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     );
                                   },
                           child: Text(
-                            state.loading ? 'שולח...' : AppStrings.sendCode,
+                            state.loading ? 'שולח…' : AppStrings.sendCode,
                           ),
                         ),
                       ),
@@ -300,7 +302,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       TextButton.icon(
                         onPressed: () => context.go('/home'),
                         icon: const Icon(Icons.arrow_back, size: 18),
-                        label: const Text('גלוש בלי להתחבר'),
+                        label: const Text('גלשו בלי להתחבר'),
                       ),
                       // Only shown once the documents actually exist — a consent
                       // line pointing at nothing is worse than no line.
@@ -369,7 +371,7 @@ class _PhoneField extends StatelessWidget {
       ],
       decoration: const InputDecoration(
         labelText: 'מספר טלפון',
-        hintText: '050-1234567',
+        hintText: '50-1234567',
         hintTextDirection: TextDirection.ltr,
         prefixText: '+972 ',
       ),

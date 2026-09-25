@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// **They used to run on every single launch.** The splash routed anyone
 /// without an account to `/onboarding`, and a guest never has an account — so
 /// somebody browsing without signing up met the same three slides, then the
-/// login screen, then had to tap "גלוש בלי להתחבר", every time they opened the
+/// login screen, then had to tap "גלשו בלי להתחבר", every time they opened the
 /// app. Five steps to reach a listing, forever.
 ///
 /// A guest is not a lesser user here: reading the registry for any car is a

@@ -7,6 +7,7 @@ import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/place.dart';
 import '../../../data/models/place_review.dart';
 import '../../../data/models/service_record.dart';
@@ -98,7 +99,7 @@ class _Body extends ConsumerWidget {
           child: OutlinedButton.icon(
             icon: Icon(mine == null ? Icons.star_outline_rounded
                 : Icons.edit_outlined, size: 18),
-            label: Text(mine == null ? 'כתוב ביקורת' : 'ערוך את הביקורת שלך'),
+            label: Text(mine == null ? 'כתבו ביקורת' : 'ערכו את הביקורת שלכם'),
             onPressed: () {
               if (ref.read(authStateProvider).valueOrNull == null) {
                 showLoginRequired(context, action: 'לכתוב ביקורת');
@@ -194,9 +195,9 @@ class _Header extends StatelessWidget {
         else
           Text(
             place.ratingCount == 0
-                ? 'עדיין אין ביקורות. היה הראשון לדרג.'
-                : 'יש ${place.ratingCount} ביקורות. נציג ממוצע מ-'
-                    '${Place.minRatingsToShow} ומעלה.',
+                ? 'עדיין אין ביקורות. היו הראשונים לדרג.'
+                : '${place.ratingCount == 1 ? 'יש ביקורת אחת' : 'יש ${place.ratingCount} ביקורות'}. '
+                    'נציג ממוצע מ-${Place.minRatingsToShow} ומעלה.',
             style: context.text.bodyMuted,
           ),
       ],
@@ -247,7 +248,7 @@ class _Actions extends StatelessWidget {
           Expanded(
             child: OutlinedButton.icon(
               icon: const Icon(Icons.call_outlined, size: 18),
-              label: const Text('התקשר'),
+              label: const Text('התקשרו'),
               onPressed: () => _open(Uri.parse('tel:${place.phone}')),
             ),
           ),
@@ -261,7 +262,7 @@ class _Actions extends StatelessWidget {
         Expanded(
           child: OutlinedButton.icon(
             icon: const Icon(Icons.navigation_outlined, size: 18),
-            label: const Text('נווט'),
+            label: const Text('נווטו'),
             onPressed: () => NavigateSheet.show(
               context,
               lat: place.lat,
@@ -313,7 +314,7 @@ class _ReportRow extends ConsumerWidget {
               child: const Text('ביטול')),
           TextButton(
               onPressed: () => Navigator.of(c).pop(true),
-              child: const Text('דווח')),
+              child: const Text('דווחו')),
         ],
       ),
     );
@@ -401,8 +402,8 @@ class _UsedHere extends ConsumerWidget {
                 const SizedBox(width: AppSpace.sm),
                 Text(
                   records.length == 1
-                      ? 'היית כאן פעם אחת'
-                      : 'היית כאן ${records.length} פעמים',
+                      ? 'הייתם כאן פעם אחת'
+                      : 'הייתם כאן ${records.length} פעמים',
                   style: AppText.subtitle,
                 ),
               ],
@@ -497,7 +498,7 @@ class _ReviewTile extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    isMine ? 'הביקורת שלך' : review.displayName,
+                    isMine ? 'הביקורת שלכם' : review.displayName,
                     style: AppText.subtitle,
                   ),
                 ),
@@ -522,7 +523,8 @@ class _ReviewTile extends ConsumerWidget {
                   for (final tag in [
                     if (review.serviceType.isNotEmpty) review.serviceType,
                     if (review.vehicleModel.isNotEmpty) review.vehicleModel,
-                    if (review.costPaid != null) '₪${review.costPaid}',
+                    if (review.costPaid != null)
+                      MoneyFormatter.format(review.costPaid!),
                   ])
                     _Chip(
                       text: tag,
@@ -552,7 +554,7 @@ class _ReviewTile extends ConsumerWidget {
                     : TextButton(
                         onPressed: () => _report(context, ref),
                         style: _quiet(colors),
-                        child: const Text('דווח על הביקורת',
+                        child: const Text('דווחו על הביקורת',
                             style: TextStyle(fontSize: 12)),
                       ),
               ),
@@ -618,7 +620,7 @@ class _ReviewTile extends ConsumerWidget {
               child: const Text('ביטול')),
           TextButton(
               onPressed: () => Navigator.of(c).pop(true),
-              child: const Text('דווח')),
+              child: const Text('דווחו')),
         ],
       ),
     );

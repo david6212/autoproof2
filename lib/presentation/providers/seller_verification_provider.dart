@@ -62,7 +62,7 @@ class SellerVerificationController extends Notifier<SellerVerificationState> {
         state = state.copyWith(
           loading: false,
           error:
-              'הרכב רשום כ"${data.ownershipType}" ולא כרכב פרטי. אם אינך הבעלים, חזור ובחר "סוכן" או "סוחר".',
+              'הרכב רשום כ"${data.ownershipType}" ולא כרכב פרטי. אם אינכם הבעלים, חזרו ובחרו "סוכן" או "סוחר".',
         );
         return;
       }
@@ -71,7 +71,7 @@ class SellerVerificationController extends Notifier<SellerVerificationState> {
     } on GovApiException catch (e) {
       state = state.copyWith(loading: false, error: e.message);
     } catch (_) {
-      state = state.copyWith(loading: false, error: 'האימות נכשל. נסה שוב.');
+      state = state.copyWith(loading: false, error: 'האימות נכשל. נסו שוב.');
     }
   }
 
@@ -96,7 +96,7 @@ class SellerVerificationController extends Notifier<SellerVerificationState> {
     } catch (e) {
       state = state.copyWith(
         loading: false,
-        error: 'שמירת האימות נכשלה. ודא שאתה מחובר ונסה שוב.',
+        error: 'שמירת האימות נכשלה. ודאו שאתם מחוברים ונסו שוב.',
       );
     }
   }

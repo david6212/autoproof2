@@ -212,7 +212,7 @@ class _EmptyChat extends StatelessWidget {
           Icon(Icons.chat_bubble_outline,
               size: 56, color: context.colors.textSubtle),
           const SizedBox(height: 12),
-          Text('שלח הודעה ראשונה למוכר',
+          Text('שלחו הודעה ראשונה למוכר',
               style: TextStyle(color: context.colors.textMuted)),
         ],
       ),
@@ -241,7 +241,7 @@ class _InputBar extends StatelessWidget {
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => onSend(),
               decoration: InputDecoration(
-                hintText: 'הקלד הודעה...',
+                hintText: 'הקלידו הודעה…',
                 filled: true,
                 fillColor: context.colors.background,
                 contentPadding:

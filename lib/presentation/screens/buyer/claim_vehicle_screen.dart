@@ -131,7 +131,7 @@ class _ClaimVehicleScreenState extends ConsumerState<ClaimVehicleScreen> {
         ],
         const SizedBox(height: AppSpace.xl),
         PrimaryButton(
-          label: 'בדוק קוד',
+          label: 'בדקו קוד',
           loading: _working,
           onPressed: _lookup,
         ),

@@ -38,8 +38,8 @@ class NotificationsScreen extends ConsumerWidget {
         child: isGuest
             ? const GuestPromptView(
                 icon: Icons.notifications_none,
-                title: 'ההתראות שלך',
-                body: 'התחבר כדי לקבל עדכון כשמוכר משיב לך.',
+                title: 'ההתראות שלכם',
+                body: 'התחברו כדי לקבל עדכון כשמוכר ישיב לכם.',
               )
             : ListView(
                 padding: const EdgeInsets.all(AppSpace.md),
@@ -122,8 +122,11 @@ class _MessageTile extends StatelessWidget {
     if (at == null) return '';
     final d = DateTime.now().difference(at);
     if (d.inMinutes < 1) return 'עכשיו';
+    if (d.inMinutes == 1) return 'לפני דקה';
     if (d.inHours < 1) return 'לפני ${d.inMinutes} דק\'';
+    if (d.inHours == 1) return 'לפני שעה';
     if (d.inDays < 1) return 'לפני ${d.inHours} שעות';
+    if (d.inDays == 1) return 'אתמול';
     if (d.inDays < 7) return 'לפני ${d.inDays} ימים';
     return DateFormat('d.M.yy').format(at);
   }
@@ -146,7 +149,7 @@ class _NoNotifications extends StatelessWidget {
             Text('אין התראות חדשות', style: context.text.bodyMuted),
             const SizedBox(height: AppSpace.xs),
             Text(
-              'כשמוכר ישיב להודעה שלך, היא תופיע כאן.',
+              'כשמוכר ישיב להודעה שלכם, היא תופיע כאן.',
               textAlign: TextAlign.center,
               style: context.text.caption,
             ),
@@ -227,7 +230,7 @@ class _AlertsOff extends StatelessWidget {
           const Text('תשובות מהמוכר כבויות', style: AppText.h3),
           const SizedBox(height: AppSpace.sm),
           Text(
-            'ההודעות עצמן ממתינות לכם בלשונית הצ׳אטים.',
+            'ההודעות עצמן ממתינות לכם בלשונית הצ\'אטים.',
             textAlign: TextAlign.center,
             style: context.text.bodyMuted,
           ),

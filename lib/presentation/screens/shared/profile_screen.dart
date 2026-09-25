@@ -49,8 +49,8 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(height: AppSpace.xl),
               const GuestPromptView(
                 icon: Icons.person_outline,
-                title: 'הפרופיל שלך',
-                body: 'התחבר כדי לנהל מודעות, שמורים והתכתבויות.',
+                title: 'הפרופיל שלכם',
+                body: 'התחברו כדי לנהל מודעות, שמורים והתכתבויות.',
                 fillHeight: false,
               ),
               const SizedBox(height: AppSpace.xl),
@@ -260,7 +260,7 @@ class _Content extends StatelessWidget {
           if (SupportContact.isAvailable)
             _MenuRow(
               icon: Icons.support_agent_outlined,
-              label: 'צור קשר',
+              label: 'צרו קשר',
               onTap: () => SupportRow.contact(context),
             ),
           _MenuRow(

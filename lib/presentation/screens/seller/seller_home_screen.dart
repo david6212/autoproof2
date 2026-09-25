@@ -2,10 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_config.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cars_provider.dart';
@@ -40,7 +40,7 @@ class SellerHomeScreen extends ConsumerWidget {
               // by accident.
               error: (_, __) => ErrorRetry(
                 compact: true,
-                message: 'לא הצלחנו לטעון את המודעה שלך',
+                message: 'לא הצלחנו לטעון את המודעה שלכם',
                 onRetry: () => ref.invalidate(activeCarsProvider),
               ),
               data: (car) => car == null
@@ -58,15 +58,15 @@ class SellerHomeScreen extends ConsumerWidget {
             if (AppConfig.storageEnabled)
               const _Tip(
                 icon: Icons.photo_camera_outlined,
-                text: 'העלה לפחות 6 תמונות באור יום — מודעות עם תמונות נצפות פי 3.',
+                text: 'העלו לפחות 6 תמונות באור יום — מודעות עם תמונות נצפות פי 3.',
               ),
             const _Tip(
               icon: Icons.description_outlined,
-              text: 'כתוב למה אתה מוכר ומה טופל לאחרונה — קונים שואלים את זה ראשון.',
+              text: 'כתבו למה אתם מוכרים ומה טופל לאחרונה — קונים שואלים את זה ראשון.',
             ),
             const _Tip(
               icon: Icons.bolt_outlined,
-              text: 'הגב להודעות תוך שעה כדי לא לאבד קונים מתעניינים.',
+              text: 'השיבו להודעות תוך שעה כדי לא לאבד קונים מתעניינים.',
             ),
           ],
         ),
@@ -92,14 +92,14 @@ class _NoListing extends StatelessWidget {
               style: TextStyle(
                   fontWeight: FontWeight.bold, color: context.colors.tealText)),
           const SizedBox(height: 4),
-          Text('פרסם את הרכב שלך ותתחיל לקבל פניות',
+          Text('פרסמו את הרכב שלכם ותתחילו לקבל פניות',
               textAlign: TextAlign.center,
               style: TextStyle(color: context.colors.tealText2, fontSize: 13)),
           const SizedBox(height: 12),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: context.colors.tealFill),
             onPressed: () => context.go('/seller/create'),
-            child: const Text('פרסם מודעה'),
+            child: const Text('פרסמו מודעה'),
           ),
         ],
       ),
@@ -111,7 +111,6 @@ class _ActiveListingCard extends StatelessWidget {
   const _ActiveListingCard({required this.car});
   final CarModel car;
 
-  static final _fmt = NumberFormat('#,###', 'en');
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +138,7 @@ class _ActiveListingCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('המודעה הפעילה שלך',
+                  Text('המודעה הפעילה שלכם',
                       style: TextStyle(
                           fontSize: 12.5, color: context.colors.textSubtle)),
                   const SizedBox(height: 2),
@@ -147,7 +146,7 @@ class _ActiveListingCard extends StatelessWidget {
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: context.colors.textPrimary)),
-                  Text('₪${_fmt.format(car.price)}',
+                  Text(MoneyFormatter.format(car.price),
                       style: TextStyle(color: context.colors.tealText2)),
                 ],
               ),

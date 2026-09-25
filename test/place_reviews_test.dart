@@ -128,7 +128,7 @@ void main() {
 
     test('no average below three reviews', () {
       expect(screen, contains('if (place.hasEnoughRatings)'));
-      expect(screen, contains('היה הראשון לדרג'));
+      expect(screen, contains('היו הראשונים לדרג'));
     });
 
     test('nothing recommends or vouches for a garage', () {

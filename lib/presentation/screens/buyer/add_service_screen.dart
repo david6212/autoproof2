@@ -149,7 +149,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
       builder: (c) => AlertDialog(
         title: const Text('הטיפול נשמר'),
         content: Text(
-          'רוצה לדרג את ${place!.name}? דירוג שלך עוזר למי שמחפש '
+          'רוצים לדרג את ${place!.name}? הדירוג שלכם עוזר למי שמחפש '
           'מוסך אחריך.',
           style: AppText.body,
         ),
@@ -377,10 +377,10 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
             const SizedBox(height: AppSpace.xl),
             PrimaryButton(
               label: _isEdit
-                  ? 'שמור שינויים'
+                  ? 'שמרו שינויים'
                   : _isCorrection
-                      ? 'שמור תיקון'
-                      : 'שמור רשומה',
+                      ? 'שמרו תיקון'
+                      : 'שמרו רשומה',
               loading: _saving,
               onPressed: _save,
             ),
@@ -437,7 +437,7 @@ class _ReceiptPicker extends StatelessWidget {
           const Expanded(child: Text('קבלה מצורפת', style: AppText.bodySm)),
           IconButton(
             icon: const Icon(Icons.close),
-            tooltip: 'הסר',
+            tooltip: 'הסירו',
             onPressed: onClear,
           ),
         ],

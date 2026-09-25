@@ -45,7 +45,7 @@ extension AlertKindX on AlertKind {
         AlertKind.priceDrops =>
           'רכב ששמרתם והמחיר שלו ירד — לא נסמן לכם את ההפרש.',
         AlertKind.chatReplies =>
-          'מוכר שהשיב להודעה שלכם — לא יופיע כאן עד שתיכנסו לצ׳אט.',
+          'מוכר שהשיב להודעה שלכם — לא יופיע כאן עד שתיכנסו לצ\'אט.',
       };
 
   String get _prefsKey => 'alert.$name';

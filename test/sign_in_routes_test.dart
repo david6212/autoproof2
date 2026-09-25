@@ -50,7 +50,7 @@ void main() {
     });
 
     test('Google is never gated — it is the route that works', () {
-      final google = login.indexOf("'המשך עם Google'");
+      final google = login.indexOf("'המשיכו עם Google'");
       expect(google, greaterThan(-1));
       expect(login.substring(0, google).contains('if (AppConfig.phoneAuth'),
           isFalse);

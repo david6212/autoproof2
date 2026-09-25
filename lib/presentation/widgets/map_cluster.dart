@@ -24,11 +24,11 @@ const double kStreetZoom = 12.0;
 const double kCityRadiusPx = 64.0;
 const double kStreetRadiusPx = 78.0;
 
-/// "820 מ׳" under a kilometre, "3.4 ק״מ" above it. Shared by every map that
+/// "820 מ'" under a kilometre, "3.4 ק"מ" above it. Shared by every map that
 /// shows how far away something is.
 String fmtDistance(double meters) => meters < 1000
-    ? '${meters.round()} מ׳'
-    : '${(meters / 1000).toStringAsFixed(1)} ק״מ';
+    ? '${meters.round()} מ\''
+    : '${(meters / 1000).toStringAsFixed(1)} ק"מ';
 
 /// Web-Mercator pixel position of a coordinate at a given integer zoom. Plain
 /// maths on purpose — it is used only to measure on-screen distances, and

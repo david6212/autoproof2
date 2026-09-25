@@ -177,7 +177,7 @@ class _AddReminderSheetState extends ConsumerState<AddReminderSheet> {
             SizedBox(
               width: double.infinity,
               child: PrimaryButton(
-                label: 'שמור תזכורת',
+                label: 'שמרו תזכורת',
                 loading: _saving,
                 onPressed: _save,
               ),

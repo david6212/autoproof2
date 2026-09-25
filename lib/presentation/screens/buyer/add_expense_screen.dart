@@ -213,7 +213,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
             ],
             const SizedBox(height: AppSpace.xl),
             PrimaryButton(
-              label: _isEdit ? 'שמור שינויים' : 'שמור',
+              label: _isEdit ? 'שמרו שינויים' : 'שמרו',
               loading: _saving,
               onPressed: _save,
             ),

@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/app_palette.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/utils/money_formatter.dart';
 import '../../data/models/car_model.dart';
 
 final _priceFmt = NumberFormat('#,###', 'en');
@@ -24,7 +25,7 @@ String listingLink(CarModel car) =>
 /// (BUSINESS_ROADMAP section 10).
 String listingShareText(CarModel car) {
   return '${car.title}\n'
-      '₪${_priceFmt.format(car.price)} · ${car.year} · '
+      '${MoneyFormatter.format(car.price)} · ${car.year} · '
       '${_priceFmt.format(car.km)} ק"מ · ${car.area}\n'
       '${listingLink(car)}';
 }
@@ -68,7 +69,7 @@ class ShareListingButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       icon: Icon(Icons.ios_share, color: color ?? context.colors.textPrimary),
-      tooltip: 'שתף מודעה',
+      tooltip: 'שתפו מודעה',
       onPressed: () => shareListing(context, car),
     );
   }

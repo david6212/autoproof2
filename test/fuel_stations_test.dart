@@ -199,8 +199,10 @@ void main() {
 
   group('distance formatting', () {
     test('metres below a kilometre, kilometres above', () {
-      expect(fmtDistance(820), '820 מ׳');
-      expect(fmtDistance(3400), '3.4 ק״מ');
+      // ASCII apostrophe and straight quote, like the other 41 unit strings
+      // in the app — not the Hebrew geresh/gershayim this used to carry.
+      expect(fmtDistance(820), '820 מ\'');
+      expect(fmtDistance(3400), '3.4 ק"מ');
     });
   });
 }

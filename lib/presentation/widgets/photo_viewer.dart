@@ -225,7 +225,7 @@ class _PhotoViewerState extends State<PhotoViewer> {
                           fit: BoxFit.contain,
                           placeholder: (_, __) => const _ViewerStatus(
                             icon: Icons.image_outlined,
-                            label: 'טוען תמונה...',
+                            label: 'טוען תמונה…',
                           ),
                           errorWidget: (_, __, ___) => const _ViewerStatus(
                             icon: Icons.image_not_supported_outlined,
@@ -245,7 +245,7 @@ class _PhotoViewerState extends State<PhotoViewer> {
                   children: [
                     PhotoIconButton(
                       icon: Icons.close,
-                      tooltip: 'סגור',
+                      tooltip: 'סגרו',
                       onPressed: () => Navigator.of(context).pop(_index),
                     ),
                     const Spacer(),

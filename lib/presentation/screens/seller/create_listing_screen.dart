@@ -10,6 +10,7 @@ import 'package:intl/intl.dart' show NumberFormat;
 import '../../../app/router.dart' show popOrHome;
 import '../../../core/constants/app_config.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/car_model.dart';
 import '../../../data/models/gov_data_model.dart';
 import '../../providers/auth_provider.dart';
@@ -172,7 +173,7 @@ class _StepCarState extends ConsumerState<_StepCar> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('הרכב שלך', style: AppText.h3),
+                const Text('הרכב שלכם', style: AppText.h3),
                 const SizedBox(height: 4),
                 Text(
                   'נמשוך את הפרטים ממרשם הרכב כדי שלא תצטרך להקליד אותם',
@@ -258,7 +259,7 @@ class _StepCarState extends ConsumerState<_StepCar> {
           ),
         ),
         _BottomBar(
-          label: car == null ? 'בדוק במרשם' : 'המשך',
+          label: car == null ? 'בדקו במרשם' : 'המשיכו',
           loading: v.loading,
           onPressed: car == null
               ? (_plate.text.trim().length >= 5 ? _verify : null)
@@ -450,7 +451,7 @@ class _StepPhotos extends ConsumerWidget {
           ),
         ),
         _BottomBar(
-          label: 'המשך',
+          label: 'המשיכו',
           onPressed: !AppConfig.storageEnabled || photos.isNotEmpty
               ? () => notifier.next()
               : null,
@@ -480,7 +481,7 @@ class _AddTile extends StatelessWidget {
           children: [
             Icon(Icons.add_a_photo_outlined, color: context.colors.teal),
             const SizedBox(height: 4),
-            Text('הוסף', style: TextStyle(color: context.colors.tealText2, fontSize: 12.5)),
+            Text('הוסיפו', style: TextStyle(color: context.colors.tealText2, fontSize: 12.5)),
           ],
         ),
       ),
@@ -699,7 +700,7 @@ class _StepDetailsState extends ConsumerState<_StepDetails> {
           ),
         ),
         _BottomBar(
-          label: 'המשך',
+          label: 'המשיכו',
           onPressed: notifier.detailsValid ? () => notifier.next() : null,
         ),
       ],
@@ -787,7 +788,8 @@ class _StepReview extends ConsumerWidget {
                         ('רכב', car.title),
                         ('שנה', '${car.year}'),
                         ('מחיר',
-                            '₪${_fmt.format(double.tryParse(s.price) ?? 0)}'),
+                            MoneyFormatter.format(
+                                double.tryParse(s.price) ?? 0)),
                         ('קילומטראז\'',
                             '${_fmt.format(int.tryParse(s.km) ?? 0)} ק"מ'),
                         ('אזור', s.area),
@@ -820,7 +822,7 @@ class _StepReview extends ConsumerWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'תג "נתונים ממרשם הרכב" והסיווג שבחרת יוצגו במודעה',
+                          'תג "נתונים ממרשם הרכב" והסיווג שבחרתם יוצגו במודעה',
                           style: TextStyle(
                               color: context.colors.tealText2, fontSize: 13),
                         ),
@@ -869,7 +871,7 @@ class _StepReview extends ConsumerWidget {
           // listing; here the reason for it is on the screen above.
           label: !signedIn
               ? 'התחברות ופרסום'
-              : (needsPhone ? 'אימות טלפון ופרסום' : 'פרסם מודעה'),
+              : (needsPhone ? 'אימות טלפון ופרסום' : 'פרסמו מודעה'),
           loading: s.publishing,
           onPressed: () async {
             // Both of these are the same idea as the phone gate: ask at the
@@ -913,7 +915,7 @@ class _StepReview extends ConsumerWidget {
             Text(warning, style: AppText.body),
             const SizedBox(height: 12),
             Text(
-              'ייתכן שזו טעות הקלדה. אם המספר נכון — למשל לאחר החלפת מד-אוץ — '
+              'ייתכן שזו טעות הקלדה. אם המספר נכון — למשל לאחר החלפת מד אוץ — '
               'אפשר להמשיך, וההפרש יוצג לקונים לצד הנתון הרשמי.',
               style: dialogContext.text.bodySmMuted,
             ),
@@ -1004,7 +1006,7 @@ class _PublishedScreenState extends State<_PublishedScreen> {
               const Text('המודעה פורסמה!', style: AppText.h2),
               const SizedBox(height: 8),
               Text(
-                'הרכב שלך זמין כעת לקונים ב-BonnetCheck',
+                'הרכב שלכם זמין כעת לקונים ב-BonnetCheck',
                 textAlign: TextAlign.center,
                 style: context.text.bodySmMuted,
               ),

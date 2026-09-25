@@ -72,7 +72,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('מה רשום על הרכב שלכם?'), findsOneWidget);
-      expect(find.text('הצג את הרכב שלי'), findsOneWidget);
+      expect(find.text('הציגו את הרכב שלי'), findsOneWidget);
       // The wall that used to be here. Its absence is the whole change: an
       // account is no longer the price of looking.
       expect(find.text('התחברות'), findsNothing);
@@ -94,7 +94,7 @@ void main() {
       await tester.pump();
 
       await tester.enterText(find.byType(TextField).first, '88888888');
-      await tester.tap(find.text('הצג את הרכב שלי'));
+      await tester.tap(find.text('הציגו את הרכב שלי'));
       await tester.pumpAndSettle();
 
       expect(gov.askedFor, '88888888');
@@ -110,7 +110,7 @@ void main() {
       await tester.pump();
 
       await tester.enterText(find.byType(TextField).first, '88888888');
-      await tester.tap(find.text('הצג את הרכב שלי'));
+      await tester.tap(find.text('הציגו את הרכב שלי'));
       await tester.pumpAndSettle();
 
       expect(find.text('שמרו את התיק הזה'), findsOneWidget);
@@ -158,7 +158,7 @@ void main() {
       await tester.pump();
 
       await tester.enterText(find.byType(TextField).first, '88888888');
-      await tester.tap(find.text('הצג את הרכב שלי'));
+      await tester.tap(find.text('הציגו את הרכב שלי'));
       await tester.pumpAndSettle();
 
       expect(container.read(vehicleDraftProvider), isNull);

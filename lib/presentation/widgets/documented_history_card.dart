@@ -69,7 +69,7 @@ class DocumentedHistoryCard extends ConsumerWidget {
           services.length == 1
               ? 'רשומה אחת שתועדה על ידי הבעלים'
               : '${services.length} רשומות שתועדו על ידי הבעלים'
-                  '${car.historySpanMonths > 0 ? ' לאורך ${car.historySpanMonths} חודשים' : ''}',
+                  '${car.historySpanMonths == 0 ? '' : car.historySpanMonths == 1 ? ' לאורך חודש' : ' לאורך ${car.historySpanMonths} חודשים'}',
           style: context.text.bodyMuted,
         ),
         const SizedBox(height: AppSpace.md),

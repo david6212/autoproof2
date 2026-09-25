@@ -4,7 +4,7 @@ import 'package:bonnetcheck/data/repositories/auth_repository.dart';
 
 /// What the app says when sign-in or phone verification fails.
 ///
-/// Every failure used to arrive as "האימות נכשל. נסה שוב." — including the one
+/// Every failure used to arrive as "האימות נכשל. נסו שוב." — including the one
 /// that actually happened: the release build's certificate had never been
 /// registered in Firebase, so phone verification could not succeed for any
 /// number, on any attempt. Telling somebody to try again in that situation
@@ -19,7 +19,7 @@ void main() {
       ]) {
         final msg = AuthRepository.messageFor(code);
         expect(msg, contains('תקלה'));
-        expect(msg.contains('נסה שוב'), isFalse,
+        expect(msg.contains('נסו שוב'), isFalse,
             reason: 'retrying cannot fix a certificate that is not registered');
       }
     });
@@ -57,9 +57,9 @@ void main() {
     for (final code in ['billing-not-enabled', 'BILLING_NOT_ENABLED']) {
       final msg = AuthRepository.messageFor(code);
       expect(msg, contains('לא '));
-      expect(msg, contains('במספר שלך'));
+      expect(msg, contains('במספר שלכם'));
       expect(msg, contains('Google'));
-      expect(msg.contains('נסה שוב'), isFalse,
+      expect(msg.contains('נסו שוב'), isFalse,
           reason: 'retrying cannot help until billing is enabled');
     }
   });

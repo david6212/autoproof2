@@ -45,11 +45,11 @@ class AppStrings {
   static const onboard3Body =
       'כל טיפול שתתעדו נשמר עם התאריך, הקילומטראז\' והמוסך. '
       'ביום שתמכרו, זה מה שיש לכם להראות.';
-  static const continueBtn = 'המשך';
-  static const skip = 'דלג';
+  static const continueBtn = 'המשיכו';
+  static const skip = 'דלגו';
 
   // Login
-  static const sendCode = 'שלח קוד אימות';
+  static const sendCode = 'שלחו קוד אימות';
 
   // Verification
   //
@@ -63,8 +63,8 @@ class AppStrings {
   // "נבדק" sounds like an action we performed and vouch for. We only COMPARE
   // the plate against what the registry already publishes, so every string
   // says "הושוו"/"מבוסס על" instead.
-  static const verifyingWithGov = 'משווה למידע הזמין במרשם...';
-  static const plateNotFound = 'המספר לא נמצא. בדוק את מספר הרישוי.';
+  static const verifyingWithGov = 'משווה למידע הזמין במרשם…';
+  static const plateNotFound = 'המספר לא נמצא. בדקו את מספר הרישוי.';
   // No emoji in anything a user reads: the app bundles Heebo and Poppins and
   // nothing else, so the web engine has no font to fall back to and draws an
   // empty box. `note_bank_test` scans for this.
@@ -72,7 +72,7 @@ class AppStrings {
   static const verifiedSuccess = 'ההשוואה הושלמה';
   static const verifiedAsPrivate =
       'נתוני הרכב הושוו למידע הזמין במרשם, והמודעה תסומן לפי הסיווג שבחרת';
-  static const continueToListing = 'המשך לפרסום המודעה';
+  static const continueToListing = 'המשיכו לפרסום המודעה';
 
   /// Exactly what the comparison covers — and what it does not.
   static const checkScopeNote =
@@ -94,9 +94,9 @@ class AppStrings {
       'אישור לבעלות, לזהות המוכר או לתקינות הרכב.';
 
   // Common states
-  static const loading = 'טוען...';
-  static const errorGeneric = 'משהו השתבש. נסה שוב.';
-  static const retry = 'נסה שוב';
+  static const loading = 'טוען…';
+  static const errorGeneric = 'משהו השתבש. נסו שוב.';
+  static const retry = 'נסו שוב';
 
   // Government data disclaimer
   static const govDisclaimer = 'נתונים רשמיים ממשרד התחבורה · data.gov.il';

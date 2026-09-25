@@ -58,8 +58,8 @@ void main() {
       ServiceTimeline(records: [record()], onEdit: (_) {}),
     ));
 
-    expect(find.text('ערוך'), findsOneWidget);
-    expect(find.text('מחק'), findsNothing);
+    expect(find.text('ערכו'), findsOneWidget);
+    expect(find.text('מחקו'), findsNothing);
     expect(find.text('מחיקה'), findsNothing);
     expect(find.byIcon(Icons.delete), findsNothing);
     expect(find.byIcon(Icons.delete_outline), findsNothing);
@@ -72,7 +72,7 @@ void main() {
       ServiceTimeline(records: [record()], onEdit: (r) => asked = r),
     ));
 
-    await tester.tap(find.text('ערוך'));
+    await tester.tap(find.text('ערכו'));
     await tester.pump();
     expect(asked?.id, 's1');
   });
@@ -100,8 +100,8 @@ void main() {
     // onEdit null is the read-only view. A buyer reads the record; they do
     // not get an action that writes to someone else's car.
     await tester.pumpWidget(host(ServiceTimeline(records: [record()])));
-    expect(find.text('ערוך'), findsNothing);
-    expect(find.text('הוסף תיקון'), findsNothing);
+    expect(find.text('ערכו'), findsNothing);
+    expect(find.text('הוסיפו תיקון'), findsNothing);
     expect(find.text('טיפול 60,000'), findsOneWidget);
   });
 

@@ -72,7 +72,7 @@ class _GarageScreenState extends ConsumerState<GarageScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.add),
-              tooltip: 'הוסף רכב',
+              tooltip: 'הוסיפו רכב',
               onPressed: () => context.push('/garage/add'),
             ),
           ],
@@ -228,10 +228,12 @@ class _ReminderStrip extends StatelessWidget {
     return _Strip(
       icon: overdue ? Icons.error_outline : Icons.schedule,
       text: overdue
-          ? '${reminder.title} — עבר התאריך ב-${days.abs()} ימים'
+          ? '${reminder.title} — ${days.abs() == 1 ? 'עבר התאריך ביום אחד' : 'עבר התאריך ב-${days.abs()} ימים'}'
           : days == 0
               ? '${reminder.title} — היום'
-              : '${reminder.title} בעוד $days ימים',
+              : days == 1
+                  ? '${reminder.title} — מחר'
+                  : '${reminder.title} בעוד $days ימים',
       foreground: overdue ? colors.errorRed : colors.warnText,
       background: overdue ? colors.errorBg : colors.warnBg,
     );
@@ -351,7 +353,7 @@ class _EmptyGarage extends StatelessWidget {
             ),
             const SizedBox(height: AppSpace.xl),
             PrimaryButton(
-              label: 'הוסף רכב',
+              label: 'הוסיפו רכב',
               onPressed: () => context.push('/garage/add'),
             ),
             const SizedBox(height: AppSpace.sm),

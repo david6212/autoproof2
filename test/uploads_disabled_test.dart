@@ -66,7 +66,7 @@ void main() {
 
     expect(find.text('מה נעשה'), findsOneWidget);
     expect(find.text('קילומטראז\''), findsOneWidget);
-    expect(find.text('שמור רשומה'), findsOneWidget);
+    expect(find.text('שמרו רשומה'), findsOneWidget);
   });
 
   group('the affordances that lead nowhere are gone, not just labelled', () {
@@ -111,7 +111,7 @@ void main() {
         'lib/presentation/screens/seller/seller_home_screen.dart',
       ).readAsStringSync();
 
-      final tip = src.indexOf('העלה לפחות 6 תמונות');
+      final tip = src.indexOf('העלו לפחות 6 תמונות');
       expect(tip, greaterThan(-1));
       expect(src.substring(0, tip), contains('if (AppConfig.storageEnabled)'));
     });

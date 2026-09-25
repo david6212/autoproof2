@@ -129,7 +129,7 @@ class GovApiService {
   /// Every call below used to pass `q=<plate>` — CKAN's free-text search. On
   /// 19/08/2026 that stopped matching plates: `q=6984370` returns zero records
   /// from the very dataset that returns that car by exact filter. The app
-  /// answered every lookup with "המספר לא נמצא. בדוק את מספר הרישוי." —
+  /// answered every lookup with "המספר לא נמצא. בדקו את מספר הרישוי." —
   /// the one thing that was not true, about a car the registry holds.
   ///
   /// An exact filter is the better query regardless. Free text matched the
@@ -165,7 +165,7 @@ class GovApiService {
 
       final records = (data['result']?['records'] as List?) ?? const [];
       if (records.isEmpty) {
-        throw GovApiException('המספר לא נמצא. בדוק את מספר הרישוי.',
+        throw GovApiException('המספר לא נמצא. בדקו את מספר הרישוי.',
             kind: GovApiErrorKind.notFound);
       }
 
@@ -173,9 +173,9 @@ class GovApiService {
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw GovApiException('הבקשה ארכה מדי. בדוק את החיבור לאינטרנט.');
+        throw GovApiException('הבקשה נמשכה זמן רב מדי. בדקו את החיבור לאינטרנט.');
       }
-      throw GovApiException('שגיאת רשת. נסה שוב.');
+      throw GovApiException('שגיאת רשת. נסו שוב.');
     }
   }
 
@@ -243,9 +243,9 @@ class GovApiService {
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw GovApiException('הבקשה ארכה מדי. בדוק את החיבור לאינטרנט.');
+        throw GovApiException('הבקשה נמשכה זמן רב מדי. בדקו את החיבור לאינטרנט.');
       }
-      throw GovApiException('שגיאת רשת. נסה שוב.');
+      throw GovApiException('שגיאת רשת. נסו שוב.');
     }
   }
 
@@ -270,9 +270,9 @@ class GovApiService {
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw GovApiException('הבקשה ארכה מדי. בדוק את החיבור לאינטרנט.');
+        throw GovApiException('הבקשה נמשכה זמן רב מדי. בדקו את החיבור לאינטרנט.');
       }
-      throw GovApiException('שגיאת רשת. נסה שוב.');
+      throw GovApiException('שגיאת רשת. נסו שוב.');
     }
   }
 
@@ -311,9 +311,9 @@ class GovApiService {
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        throw GovApiException('הבקשה ארכה מדי. בדוק את החיבור לאינטרנט.');
+        throw GovApiException('הבקשה נמשכה זמן רב מדי. בדקו את החיבור לאינטרנט.');
       }
-      throw GovApiException('שגיאת רשת. נסה שוב.');
+      throw GovApiException('שגיאת רשת. נסו שוב.');
     }
   }
 

@@ -156,7 +156,7 @@ class _ReportSheetState extends State<_ReportSheet> {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('שלח דיווח'),
+                  : const Text('שלחו דיווח'),
             ),
           ),
           const SizedBox(height: AppSpace.sm),

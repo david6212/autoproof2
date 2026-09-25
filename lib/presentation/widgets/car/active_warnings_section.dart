@@ -91,9 +91,9 @@ class ActiveWarning {
   factory ActiveWarning.structuralChange() => const ActiveWarning(
     id: 'structural_change',
     severity: WarningSeverity.medium,
-    title: 'שינוי מבני',
+    title: 'שינוי מבנה',
     detail:
-        'במרשם רשום שינוי מבני. '
+        'במרשם רשום שינוי מבנה. '
         'מומלץ לברר את פרטיו במכון בדיקה.',
   );
 
@@ -142,7 +142,7 @@ class ActiveWarning {
     // was also ungrammatical: `אילו` is plural, `עדכנית` singular.)
     detail:
         'מודעה פעילה נוספת על אותה לוחית מציינת '
-        '‎₪$otherPrice‏, $otherArea. '
+        '‎$otherPrice‏, $otherArea. '
         'כדאי לברר מול המוכר את הקשר בין המודעות.',
   );
 

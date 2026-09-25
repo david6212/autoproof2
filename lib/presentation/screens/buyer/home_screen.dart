@@ -7,6 +7,7 @@ import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/alert_prefs_provider.dart';
@@ -356,7 +357,7 @@ class _SearchCard extends ConsumerWidget {
 
     final price = range(f.minPrice, f.maxPrice, CarFilters.priceFloor,
         CarFilters.priceCap,
-        show: (v) => '₪${fmt.format(v.round())}');
+        show: (v) => MoneyFormatter.format(v.round()));
     final year = range(
         f.minYear, f.maxYear, CarFilters.yearFloor, CarFilters.yearCap,
         show: (v) => '${v.round()}');
@@ -519,7 +520,11 @@ class _FilterButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: count > 0 ? 'סינון · $count מסננים פעילים' : 'סינון',
+      label: count == 0
+          ? 'סינון'
+          : count == 1
+              ? 'סינון · מסנן אחד פעיל'
+              : 'סינון · $count מסננים פעילים',
       excludeSemantics: true,
       child: InkResponse(
         onTap: onTap,
@@ -635,8 +640,9 @@ class _CarList extends StatelessWidget {
       // end of the row, where it reads as a fact about the section instead of
       // as the section's name.
       header: SectionHeader(
-        title: 'רכבים בקרבתך',
-        actionLabel: '${cars.length} תוצאות',
+        title: 'רכבים בקרבתכם',
+        actionLabel:
+            cars.length == 1 ? 'תוצאה אחת' : '${cars.length} תוצאות',
         onAction: null,
       ),
       cardBuilder: (car) => Consumer(builder: (context, ref, _) {

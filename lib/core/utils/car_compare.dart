@@ -15,6 +15,7 @@ import 'package:intl/intl.dart';
 import '../../data/models/car_model.dart';
 import '../../data/models/gov_data_model.dart';
 import 'date_formatter.dart';
+import 'money_formatter.dart';
 
 /// Which direction counts as an advantage in a row, if any.
 enum Advantage {
@@ -138,7 +139,7 @@ const int maxCompareCars = 3;
 
 final _num = NumberFormat('#,###', 'en');
 
-String _money(double v) => '₪${_num.format(v.round())}';
+String _money(double v) => MoneyFormatter.format(v.round());
 
 /// Average km per year, the figure the car page shows as a value signal.
 int kmPerYear(CarModel car) {

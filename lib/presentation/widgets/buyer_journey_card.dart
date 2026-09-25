@@ -707,7 +707,7 @@ class _InsurerOptions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'לביטוח מקיף או צד ג׳, אפשר להתחיל מכאן:',
+          'לביטוח מקיף או צד ג\', אפשר להתחיל מכאן:',
           style: TextStyle(fontSize: 12, color: colors.textMuted),
         ),
         const SizedBox(height: 6),

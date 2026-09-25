@@ -62,7 +62,7 @@ class CarNotesSection extends ConsumerWidget {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: Text(
-                      'עדיין אין ממצאים. היה הראשון לשתף מה מצאת בבדיקה.',
+                      'עדיין אין ממצאים. היו הראשונים לשתף מה מצאתם בבדיקה.',
                       style: context.text.bodySmMuted),
                 );
               }
@@ -89,7 +89,7 @@ class CarNotesSection extends ConsumerWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               icon: const Icon(Icons.add_comment_outlined, size: 19),
-              label: const Text('הוסף ממצא מבדיקה'),
+              label: const Text('הוסיפו ממצא מבדיקה'),
               onPressed: () => _onAdd(context, ref),
             ),
           ),
@@ -118,7 +118,7 @@ class CarNotesSection extends ConsumerWidget {
           FilledButton(
               style: FilledButton.styleFrom(backgroundColor: context.colors.tealFill),
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('דווח')),
+              child: const Text('דווחו')),
         ],
       ),
     );
@@ -239,11 +239,18 @@ class _NoteTile extends StatelessWidget {
   static String _timeAgo(DateTime t) {
     final d = DateTime.now().difference(t);
     if (d.inMinutes < 1) return 'עכשיו';
-    if (d.inMinutes < 60) return 'לפני ${d.inMinutes} דק׳';
-    if (d.inHours < 24) return 'לפני ${d.inHours} שע׳';
+    if (d.inMinutes == 1) return 'לפני דקה';
+    if (d.inMinutes < 60) return 'לפני ${d.inMinutes} דק\'';
+    if (d.inHours == 1) return 'לפני שעה';
+    if (d.inHours < 24) return 'לפני ${d.inHours} שע\'';
+    if (d.inDays == 1) return 'אתמול';
     if (d.inDays < 30) return 'לפני ${d.inDays} ימים';
-    if (d.inDays < 365) return 'לפני ${(d.inDays / 30).floor()} חודשים';
-    return 'לפני ${(d.inDays / 365).floor()} שנים';
+    if (d.inDays < 365) {
+      final months = (d.inDays / 30).floor();
+      return months == 1 ? 'לפני חודש' : 'לפני $months חודשים';
+    }
+    final years = (d.inDays / 365).floor();
+    return years == 1 ? 'לפני שנה' : 'לפני $years שנים';
   }
 }
 
@@ -300,7 +307,7 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('שמירת הממצאים נכשלה. נסה שוב.')),
+          const SnackBar(content: Text('שמירת הממצאים נכשלה. נסו שוב.')),
         );
       }
     }
@@ -375,7 +382,9 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
                 Text(
                   _tags.isEmpty
                       ? 'סמנו לפחות דבר אחד'
-                      : 'סומנו ${_tags.length} ממצאים',
+                      : _tags.length == 1
+                          ? 'סומן ממצא אחד'
+                          : 'סומנו ${_tags.length} ממצאים',
                   style: context.text.caption,
                 ),
                 const SizedBox(height: AppSpace.sm),
@@ -391,7 +400,7 @@ class _AddNoteSheetState extends ConsumerState<_AddNoteSheet> {
                           height: 20,
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: context.colors.onBrand))
-                      : const Text('שלח דיווח'),
+                      : const Text('שלחו דיווח'),
                 ),
               ],
             ),

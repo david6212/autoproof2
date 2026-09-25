@@ -109,7 +109,7 @@ class _PastCard extends StatelessWidget {
           _Row(
             icon: Icons.swap_horiz,
             text: 'נמסר ב-${_date(vehicle.soldAt)}'
-                '${months != null && months > 0 ? ' · אחרי $months חודשים' : ''}',
+                '${months == null || months <= 0 ? '' : months == 1 ? ' · אחרי חודש' : ' · אחרי $months חודשים'}',
           ),
         ],
       ),

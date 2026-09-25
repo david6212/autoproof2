@@ -233,11 +233,11 @@ class _CarPhotoGalleryState extends State<CarPhotoGallery> {
     // but not press.
     return Semantics(
       button: true,
-      label: 'פתח את התמונות במסך מלא',
+      label: 'פתחו את התמונות במסך מלא',
       excludeSemantics: true,
       onTap: _openViewer,
       child: Tooltip(
-        message: 'פתח במסך מלא',
+        message: 'פתחו במסך מלא',
         child: InkWell(
           onTap: _openViewer,
           borderRadius: BorderRadius.circular(AppRadius.pill),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/money_formatter.dart';
 import '../../../core/utils/odometer_check.dart';
 import '../../../core/utils/relisting_check.dart';
 import '../../../data/models/plate_snapshot_model.dart';
@@ -74,7 +75,7 @@ class CarActiveWarnings extends ConsumerWidget {
         testDate: gov?.lastTestDate == null
             ? 'הטסט האחרון'
             : DateFormatter.format(gov!.lastTestDate!),
-        actionLabel: onShowOdometerSource == null ? null : 'הצג את המקור',
+        actionLabel: onShowOdometerSource == null ? null : 'הציגו את המקור',
         onAction: onShowOdometerSource,
       ));
     }
@@ -113,7 +114,8 @@ class CarActiveWarnings extends ConsumerWidget {
     if (live.isNotEmpty) {
       warnings.add(ActiveWarning.alsoListedNow(
         count: live.length,
-        otherPrice: RelistingCheck.shekels(live.first.snapshot.price),
+        otherPrice:
+            MoneyFormatter.format(live.first.snapshot.price.round()),
         otherArea: live.first.snapshot.area,
       ));
     }

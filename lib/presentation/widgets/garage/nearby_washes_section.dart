@@ -128,7 +128,7 @@ class _AddCard extends StatelessWidget {
               children: [
                 Icon(Icons.add, color: colors.teal),
                 const SizedBox(height: 4),
-                Text('הוסף שטיפה',
+                Text('הוסיפו שטיפה',
                     style: AppText.bodySm.copyWith(color: colors.tealText2)),
                 Text('שלא ברשימה', style: context.text.micro),
               ],

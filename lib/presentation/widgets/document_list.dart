@@ -93,7 +93,7 @@ class _DocumentRow extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(c).pop(true),
-            child: const Text('הצג בכל זאת'),
+            child: const Text('הציגו בכל זאת'),
           ),
         ],
       ),
@@ -117,7 +117,7 @@ class _DocumentRow extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(c).pop(true),
-            child: const Text('מחק'),
+            child: const Text('מחקו'),
           ),
         ],
       ),
@@ -164,7 +164,7 @@ class _DocumentRow extends StatelessWidget {
                 if (onDelete != null)
                   IconButton(
                     icon: const Icon(Icons.delete_outline),
-                    tooltip: 'מחק',
+                    tooltip: 'מחקו',
                     onPressed: () => _confirmDelete(context),
                   ),
               ],
@@ -174,7 +174,7 @@ class _DocumentRow extends StatelessWidget {
               children: [
                 TextButton.icon(
                   icon: const Icon(Icons.open_in_full, size: 18),
-                  label: const Text('פתח'),
+                  label: const Text('פתחו'),
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => DocumentViewerScreen(

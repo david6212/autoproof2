@@ -252,7 +252,7 @@ class _AddRow extends StatelessWidget {
               child: Text(
                 isOnly
                     ? 'לא מצאנו את "$name". להוסיף אותו לרשימה?'
-                    : 'הוסף את "$name" לרשימה',
+                    : 'הוסיפו את "$name" לרשימה',
                 style: AppText.bodySm.copyWith(color: colors.tealText2),
                 maxLines: 2,
               ),

@@ -39,7 +39,7 @@ class ChatListScreen extends ConsumerWidget {
                 child: const GuestPromptView(
                   icon: Icons.chat_bubble_outline,
                   title: 'שוחח עם המוכרים',
-                  body: 'התחבר כדי לפתוח שיחות עם בעלי הרכבים.',
+                  body: 'התחברו כדי לפתוח שיחות עם בעלי הרכבים.',
                 ),
               )
             : chatsAsync.when(
@@ -107,7 +107,7 @@ Future<void> _confirmHide(
           const SizedBox(height: AppSpace.md),
           ListTile(
             leading: const Icon(Icons.delete_outline),
-            title: const Text('הסר מהרשימה'),
+            title: const Text('הסירו מהרשימה'),
             onTap: () => Navigator.of(c).pop(true),
           ),
           ListTile(

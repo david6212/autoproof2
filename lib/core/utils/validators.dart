@@ -28,7 +28,7 @@ class Validators {
   }) {
     if (enteredKm < 0) return 'קילומטראז\' לא תקין';
     if (lastTestKm != null && enteredKm < lastTestKm) {
-      return 'הקילומטראז\' שהזנת (${_thousands(enteredKm)} ק"מ) נמוך מהקריאה '
+      return 'הקילומטראז\' שהזנתם (${_thousands(enteredKm)} ק"מ) נמוך מהקריאה '
           'הרשומה בטסט האחרון (${_thousands(lastTestKm)} ק"מ).';
     }
     return null;

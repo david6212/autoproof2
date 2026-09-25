@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/fuel_report.dart';
 import '../../../data/models/fuel_station.dart';
 import '../../providers/fuel_report_provider.dart';
@@ -360,9 +361,9 @@ class _FuelStationsScreenState extends ConsumerState<FuelStationsScreen> {
                       // Never "the cheapest diesel" — only what drivers said,
                       // and only for the minority of stations anyone reported.
                       ? 'לפי המחיר הזול ביותר שדיווחו נהגים ב-14 הימים האחרונים · '
-                          '$reported מתוך ${sorted.length} תחנות עם דיווח'
-                      : '${sorted.length} תחנות · מקור: משרד האנרגיה (data.gov.il)'
-                          '${me != null ? ' · ממוינות לפי קרבה אליך' : ''}',
+                          '$reported מתוך ${sorted.length == 1 ? 'תחנה אחת' : '${sorted.length} תחנות'} עם דיווח'
+                      : '${sorted.length == 1 ? 'תחנה אחת' : '${sorted.length} תחנות'} · מקור: משרד האנרגיה (data.gov.il)'
+                          '${me != null ? ' · ממוינות לפי קרבה אליכם' : ''}',
                   style: context.text.captionSubtle,
                 ),
               ],
@@ -399,7 +400,7 @@ class _ReferencePriceCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'סולר לתחבורה — ${ref_.shekelsPerLitre.toStringAsFixed(2)} ₪ לליטר '
+                    'סולר לתחבורה — ${MoneyFormatter.perLitre(ref_.shekelsPerLitre)} '
                     'בשער בית הזיקוק (${ref_.monthLabel})',
                     style: AppText.bodySm.copyWith(
                         color: context.colors.tealText,
@@ -546,7 +547,7 @@ class _StationCard extends ConsumerWidget {
                 IconButton(
                   iconSize: 18,
                   visualDensity: VisualDensity.compact,
-                  tooltip: 'סגור',
+                  tooltip: 'סגרו',
                   icon: Icon(Icons.close, color: context.colors.textSubtle),
                   onPressed: onDismiss,
                 ),
@@ -586,7 +587,7 @@ class _StationCard extends ConsumerWidget {
                     minimumSize: const Size.fromHeight(44),
                   ),
                   icon: const Icon(Icons.local_offer_outlined, size: 18),
-                  label: Text(tally?.myAgorot == null ? 'דווח מחיר' : 'עדכן'),
+                  label: Text(tally?.myAgorot == null ? 'דווחו מחיר' : 'עדכנו'),
                   onPressed: () => showFuelReportSheet(
                     context,
                     ref,

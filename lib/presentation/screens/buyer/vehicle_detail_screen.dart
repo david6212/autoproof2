@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/utils/document_redactor.dart';
+import '../../../core/utils/money_formatter.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../data/models/expense.dart';
@@ -65,7 +66,7 @@ class VehicleDetailScreen extends ConsumerWidget {
                       : '/vehicle/$vehicleId/publish',
                 ),
                 child: Text(
-                  vehicleAsync.value!.isListed ? 'סמן כנמכר' : 'פרסם למכירה',
+                  vehicleAsync.value!.isListed ? 'סמנו כנמכר' : 'פרסמו למכירה',
                 ),
               ),
             if (vehicleAsync.valueOrNull != null)
@@ -124,10 +125,10 @@ class _VehicleMenu extends ConsumerWidget {
         builder: (c) => AlertDialog(
           title: const Text('לא ניתן להסיר את הרכב'),
           content: Text(
-            'לרכב יש ${vehicle.serviceCount} רשומות טיפול, ורשומות טיפול לא '
+            'לרכב יש ${vehicle.serviceCount == 1 ? 'רשומת טיפול אחת' : '${vehicle.serviceCount} רשומות טיפול'}, ורשומות טיפול לא '
             'נמחקות לעולם. אם אפשר היה להסיר רכב ולהוסיף אותו מחדש, זו הייתה '
             'דרך למחוק היסטוריה — וכל התיק היה מאבד את ערכו.\n\n'
-            'אם מכרתם את הרכב, השתמשו ב"סמן כנמכר".',
+            'אם מכרתם את הרכב, השתמשו ב"סמנו כנמכר".',
             style: AppText.body,
           ),
           actions: [
@@ -157,7 +158,7 @@ class _VehicleMenu extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(c).pop(true),
-            child: const Text('הסר'),
+            child: const Text('הסירו'),
           ),
         ],
       ),
@@ -184,7 +185,7 @@ class _VehicleMenu extends ConsumerWidget {
         if (value == 'delete') _delete(context, ref);
       },
       itemBuilder: (_) => const [
-        PopupMenuItem(value: 'delete', child: Text('הסר רכב')),
+        PopupMenuItem(value: 'delete', child: Text('הסירו רכב')),
       ],
     );
   }
@@ -218,7 +219,7 @@ class _ServicesTab extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _add(context),
         icon: const Icon(Icons.add),
-        label: const Text('הוסף טיפול'),
+        label: const Text('הוסיפו טיפול'),
       ),
       body: servicesAsync.when(
         loading: () => const _DetailSkeleton(),
@@ -287,7 +288,7 @@ class _ExpensesTab extends ConsumerWidget {
       builder: (c) => AlertDialog(
         title: const Text('למחוק את ההוצאה?'),
         content: Text(
-          '${expense.displayTitle} · ${expense.amount} ₪',
+          '${expense.displayTitle} · ${MoneyFormatter.format(expense.amount)}',
           style: AppText.body,
         ),
         actions: [
@@ -297,7 +298,7 @@ class _ExpensesTab extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(c).pop(true),
-            child: const Text('מחק'),
+            child: const Text('מחקו'),
           ),
         ],
       ),
@@ -316,7 +317,7 @@ class _ExpensesTab extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _open(context),
         icon: const Icon(Icons.add),
-        label: const Text('הוסף הוצאה'),
+        label: const Text('הוסיפו הוצאה'),
       ),
       body: expensesAsync.when(
         loading: () => const _DetailSkeleton(),
@@ -381,7 +382,7 @@ class _MonthHeader extends StatelessWidget {
                 style: AppText.subtitle,
               ),
             ),
-            Text('${_thousands(month.total)} ₪', style: context.text.caption),
+            Text(MoneyFormatter.format(month.total), style: context.text.caption),
           ],
         ),
       );
@@ -427,17 +428,17 @@ class _ExpenseRow extends StatelessWidget {
                     [
                       '${expense.date.day}/${expense.date.month}',
                       if (perLitre != null)
-                        '${perLitre.toStringAsFixed(2)} ₪ לליטר',
+                        MoneyFormatter.perLitre(perLitre),
                     ].join(' · '),
                     style: context.text.caption,
                   ),
                 ],
               ),
             ),
-            Text('${_thousands(expense.amount)} ₪', style: AppText.bodySm),
+            Text(MoneyFormatter.format(expense.amount), style: AppText.bodySm),
             IconButton(
               icon: const Icon(Icons.delete_outline, size: 20),
-              tooltip: 'מחק',
+              tooltip: 'מחקו',
               onPressed: onDelete,
             ),
           ],
@@ -547,7 +548,7 @@ class _DocumentsTabState extends ConsumerState<_DocumentsTab> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : const Icon(Icons.upload_file),
-        label: Text(_uploading ? 'שומר...' : 'העלה מסמך'),
+        label: Text(_uploading ? 'שומר…' : 'העלו מסמך'),
       ),
       body: docsAsync.when(
         loading: () => const _DetailSkeleton(),
@@ -620,7 +621,7 @@ class _EmptyServices extends StatelessWidget {
               style: context.text.bodyMuted,
             ),
             const SizedBox(height: AppSpace.xl),
-            PrimaryButton(label: 'הוסף טיפול ראשון', onPressed: onAdd),
+            PrimaryButton(label: 'הוסיפו טיפול ראשון', onPressed: onAdd),
           ],
         ),
       ),
@@ -699,7 +700,7 @@ class _Overview extends ConsumerWidget {
             const Expanded(child: Text('תזכורות', style: AppText.subtitle)),
             TextButton.icon(
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('הוסף'),
+              label: const Text('הוסיפו'),
               onPressed: () => AddReminderSheet.show(context, vehicle.id),
             ),
           ],
@@ -818,10 +819,14 @@ class _ReminderRow extends StatelessWidget {
     final subtitle = days == null
         ? (reminder.dueKm != null ? 'ב-${_thousands(reminder.dueKm!)} ק"מ' : '')
         : days < 0
-            ? 'עבר התאריך ב-${days.abs()} ימים'
+            ? (days == -1
+                ? 'עבר התאריך ביום אחד'
+                : 'עבר התאריך ב-${days.abs()} ימים')
             : days == 0
                 ? 'היום'
-                : 'בעוד $days ימים';
+                : days == 1
+                    ? 'מחר'
+                    : 'בעוד $days ימים';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpace.sm),
@@ -862,13 +867,13 @@ class _ReminderRow extends StatelessWidget {
                   size: 20,
                   color: reminder.isDone ? colors.teal : colors.textSubtle,
                 ),
-                tooltip: reminder.isDone ? 'החזר לפתוח' : 'סמן כבוצע',
+                tooltip: reminder.isDone ? 'החזר לפתוח' : 'סמנו כבוצע',
                 onPressed: () => onToggle!(!reminder.isDone),
               ),
             if (onDelete != null)
               IconButton(
                 icon: const Icon(Icons.delete_outline, size: 20),
-                tooltip: 'מחק',
+                tooltip: 'מחקו',
                 onPressed: onDelete,
               ),
           ],

@@ -2,13 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-// `intl` exports its own TextDirection, which shadows Flutter's and turns any
-// use of the real one into a confusing "getter 'ltr' isn't defined". Only
-// NumberFormat is wanted here.
-import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_palette.dart';
+import '../../core/utils/money_formatter.dart';
 import '../../data/models/car_model.dart';
 import '../../core/theme/app_text.dart';
 import 'glass.dart';
@@ -173,7 +170,6 @@ class CarCard extends StatelessWidget {
   /// thing on the card — readable when looked at, not competing when not.
   static const _subtitleStyle = TextStyle(fontSize: 11.5);
 
-  static final _priceFmt = NumberFormat('#,###', 'en');
 
   @override
   Widget build(BuildContext context) {
@@ -210,14 +206,14 @@ class CarCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: AppSpace.sm),
-                      // Pinned LTR: "₪132,000" is a neutral symbol followed by
-                      // digits, and in an RTL paragraph bidi is free to resolve
-                      // that either way. Pinning it means the shekel sign
-                      // cannot wander to the other end of the number.
+                      // Pinned LTR: `₪` is a neutral symbol next to digits, and
+                      // in an RTL paragraph bidi is free to resolve that either
+                      // way. Pinning it means the shekel sign cannot wander to
+                      // the other end of the number.
                       Directionality(
                         textDirection: TextDirection.ltr,
                         child: Text(
-                          '₪${_priceFmt.format(car.price)}',
+                          MoneyFormatter.format(car.price),
                           style: AppText.title,
                         ),
                       ),
@@ -333,7 +329,7 @@ class CarCard extends StatelessWidget {
             bottom: 10,
             end: 10,
             child: FactChip(
-              'ירד ב-₪${_priceFmt.format(priceDrop)}',
+              'ירד ב-${MoneyFormatter.format(priceDrop!)}',
               tone: (context.colors.tealFill, context.colors.onBrand),
             ),
           ),
@@ -388,7 +384,7 @@ class CarCard extends StatelessWidget {
                 child: IconButton(
                   padding: EdgeInsets.zero,
                   iconSize: 20,
-                  tooltip: saved ? 'הסר מהשמורים' : 'שמור',
+                  tooltip: saved ? 'הסירו מהשמורים' : 'שמרו',
                   icon: SavedCheckIcon(
                     size: 20,
                     filled: saved,

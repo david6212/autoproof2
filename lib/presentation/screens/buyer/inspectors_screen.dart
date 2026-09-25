@@ -453,8 +453,8 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
         Padding(
           padding: const EdgeInsets.only(bottom: 10, top: 8),
           child: Text(
-            '${sorted.length} מכונים מורשים · מקור: משרד התחבורה (data.gov.il)'
-            '${me != null ? ' · ממוינים לפי קרבה אליך' : ''}',
+            '${sorted.length == 1 ? 'מכון מורשה אחד' : '${sorted.length} מכונים מורשים'} · מקור: משרד התחבורה (data.gov.il)'
+            '${me != null ? ' · ממוינים לפי קרבה אליכם' : ''}',
             style: TextStyle(fontSize: 12.5, color: context.colors.textSubtle),
           ),
         ),
@@ -473,7 +473,7 @@ class _InspectorsScreenState extends ConsumerState<InspectorsScreen> {
             text: _query.trim().isEmpty
                 ? 'לא נמצאו מכונים.'
                 : 'לא נמצאו מכונים לחיפוש "${_query.trim()}".',
-            actionLabel: _query.trim().isEmpty ? null : 'הצג הכל',
+            actionLabel: _query.trim().isEmpty ? null : 'הציגו הכל',
             onAction: () {
               _searchController.clear();
               setState(() => _query = '');
@@ -746,7 +746,7 @@ class _CenterCard extends StatelessWidget {
                     ),
                     if (center.hasCoords && !center.isExact) ...[
                       const SizedBox(height: 3),
-                      Text('הסיכה במרכז העיר — התקשרו לכתובת המדויקת',
+                      Text('הסיכה במרכז העיר — התקשרו כדי לקבל את הכתובת המדויקת',
                           style: TextStyle(
                               fontSize: 11.5, color: context.colors.textSubtle)),
                     ],
@@ -771,7 +771,7 @@ class _CenterCard extends StatelessWidget {
                 IconButton(
                   iconSize: 18,
                   visualDensity: VisualDensity.compact,
-                  tooltip: 'סגור',
+                  tooltip: 'סגרו',
                   icon: Icon(Icons.close, color: context.colors.textSubtle),
                   onPressed: onDismiss,
                 ),
@@ -787,7 +787,7 @@ class _CenterCard extends StatelessWidget {
                         backgroundColor: context.colors.tealFill,
                         minimumSize: const Size.fromHeight(44)),
                     icon: const Icon(Icons.phone, size: 18),
-                    label: const Text('התקשר'),
+                    label: const Text('התקשרו'),
                     onPressed: () => _launch(
                         context, Uri.parse('tel:${center.phoneDigits}')),
                   ),

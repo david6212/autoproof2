@@ -93,7 +93,7 @@ void main() {
 
     // The price is on its own line now, so it survives a title long enough to
     // have squeezed it out of the old shared row.
-    expect(find.text('₪132,000'), findsOneWidget);
+    expect(find.text('132,000 ₪'), findsOneWidget);
   });
 
   testWidgets('the meta line uses ink that clears 4.5:1 on the card', (t) async {
@@ -151,9 +151,9 @@ void main() {
         car(title: 'מאזדה CX-5 סקייאקטיב פרימיום פלוס ארבע על ארבע'),
         width: 320));
     expect(pendingError(t), isNull);
-    expect(find.text('₪132,000'), findsOneWidget);
+    expect(find.text('132,000 ₪'), findsOneWidget);
 
-    final price = t.getRect(find.text('₪132,000'));
+    final price = t.getRect(find.text('132,000 ₪'));
     expect(price.left, greaterThanOrEqualTo(0));
     expect(price.width, greaterThan(0));
   });

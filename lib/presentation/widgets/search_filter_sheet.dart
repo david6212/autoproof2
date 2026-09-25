@@ -273,7 +273,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                         DropdownMenuItem(
                             value: null,
                             child: Text(_draft.make == null
-                                ? 'בחר יצרן'
+                                ? 'בחרו יצרן'
                                 : 'כל הדגמים')),
                         for (final m in models)
                           DropdownMenuItem(value: m, child: Text(m)),
@@ -444,7 +444,8 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                   ref.read(carFiltersProvider.notifier).state = _draft;
                   Navigator.of(context).pop();
                 },
-                child: Text('הצג תוצאות ($count רכבים)',
+                child: Text(
+                    'הציגו תוצאות (${count == 1 ? 'רכב אחד' : '$count רכבים'})',
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold)),
               ),

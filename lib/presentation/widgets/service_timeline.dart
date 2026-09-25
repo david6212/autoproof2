@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_dimens.dart';
 import '../../core/utils/date_formatter.dart';
+import '../../core/utils/money_formatter.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
 import '../../data/models/service_record.dart';
@@ -109,7 +110,7 @@ class _ServiceRow extends StatelessWidget {
                   ),
                 ),
                 if (record.cost > 0)
-                  Text('${_thousands(record.cost)} ₪',
+                  Text(MoneyFormatter.format(record.cost),
                       style: AppText.bodySm),
               ],
             ),
@@ -212,7 +213,7 @@ class _ServiceRow extends StatelessWidget {
                   if (onEdit != null)
                     TextButton.icon(
                       icon: const Icon(Icons.edit_outlined, size: 17),
-                      label: const Text('ערוך'),
+                      label: const Text('ערכו'),
                       onPressed: () => onEdit!(record),
                     ),
                 ],

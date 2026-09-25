@@ -2,6 +2,7 @@ import '../../data/models/expense.dart';
 import '../../data/models/gov_data_model.dart';
 import '../../data/models/service_record.dart';
 import '../utils/date_formatter.dart';
+import '../utils/money_formatter.dart';
 
 /// Everything the assistant is allowed to answer from.
 ///
@@ -163,14 +164,18 @@ class CarAssistant {
     final date = DateFormatter.format(expiry);
     if (days < 0) {
       return AssistantAnswer(
-        text: 'תוקף הרישיון פג ב-$date, לפני ${-days} ימים.',
+        text: days == -1
+            ? 'תוקף הרישיון פג ב-$date, אתמול.'
+            : 'תוקף הרישיון פג ב-$date, לפני ${-days} ימים.',
         source: sourceRegistry,
       );
     }
     return AssistantAnswer(
       text: days == 0
           ? 'תוקף הרישיון נגמר היום, $date.'
-          : 'תוקף הרישיון עד $date — בעוד $days ימים.',
+          : days == 1
+              ? 'תוקף הרישיון עד $date — בעוד יום אחד.'
+              : 'תוקף הרישיון עד $date — בעוד $days ימים.',
       source: sourceRegistry,
     );
   }
@@ -229,8 +234,8 @@ class CarAssistant {
       );
     }
     return AssistantAnswer(
-      text: '${thisYear ? 'השנה' : 'בסך הכול'} רשומות ${_shekels(total)} ₪ '
-          'על פני $count רשומות.',
+      text: '${thisYear ? 'השנה' : 'בסך הכול'} רשומות ${MoneyFormatter.format(total)} '
+          '${count == 1 ? 'ברשומה אחת' : 'על פני $count רשומות'}.',
       source: sourceExpenses,
     );
   }

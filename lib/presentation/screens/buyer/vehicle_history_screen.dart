@@ -144,7 +144,7 @@ class _PlateLine extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           full
-              ? 'המודעה שלך. קונים רואים כוכביות — הקישו כדי לראות את המספר'
+              ? 'המודעה שלכם. קונים רואים כוכביות — הקישו כדי לראות את המספר'
               : 'מספר הרישוי מוסתר. הנתונים למטה נשלפו ממנו',
           textAlign: TextAlign.center,
           style: context.text.bodySmMuted,

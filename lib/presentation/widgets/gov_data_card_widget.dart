@@ -160,7 +160,8 @@ class _RecallBanner extends StatelessWidget {
             children: [
               Icon(Icons.campaign_outlined, color: context.colors.errorRed),
               const SizedBox(width: 8),
-              Text('ריקול פתוח · ${recalls.length} קריאות שירות שלא בוצעו',
+              Text(
+                  'ריקול פתוח · ${recalls.length == 1 ? 'קריאת שירות אחת שלא בוצעה' : '${recalls.length} קריאות שירות שלא בוצעו'}',
                   style: TextStyle(
                       color: context.colors.errorRed,
                       fontWeight: FontWeight.bold)),
@@ -336,7 +337,11 @@ class _ValidityStrip extends StatelessWidget {
       bg = context.colors.warnBg;
       fg = context.colors.warnText;
       icon = Icons.access_time;
-      label = 'הרישיון פג בעוד $days ימים · $dateStr';
+      label = days == 0
+          ? 'הרישיון פג היום · $dateStr'
+          : days == 1
+              ? 'הרישיון פג מחר · $dateStr'
+              : 'הרישיון פג בעוד $days ימים · $dateStr';
     } else {
       bg = context.colors.tealLight;
       fg = context.colors.tealText;

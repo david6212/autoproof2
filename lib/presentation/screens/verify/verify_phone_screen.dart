@@ -120,7 +120,7 @@ class _VerifyPhoneScreenState extends ConsumerState<VerifyPhoneScreen> {
               const SizedBox(height: 8),
               Text(
                 'המספר משמש לאימות בלבד ולא יוצג במודעה. הוא מקשה על פתיחת '
-                'חשבונות מזויפים ומגן גם עליך וגם על הקונים.',
+                'חשבונות מזויפים ומגן גם עליכם וגם על הקונים.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 13, height: 1.4, color: context.colors.textMuted),
@@ -159,7 +159,7 @@ class _VerifyPhoneScreenState extends ConsumerState<VerifyPhoneScreen> {
               ],
               const SizedBox(height: 24),
               PrimaryButton(
-                label: sent ? 'אמת והמשך' : 'שלח קוד',
+                label: sent ? 'אמתו והמשיכו' : 'שלחו קוד',
                 loading: _busy,
                 onPressed: _busy ? null : (sent ? _confirm : _sendCode),
               ),

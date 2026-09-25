@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
+import '../../core/utils/money_formatter.dart';
 import '../../data/models/expense.dart';
 import '../../data/repositories/expense_repository.dart';
 import 'app_card.dart';
@@ -40,7 +41,7 @@ class ExpenseSummary extends StatelessWidget {
         children: [
           Text('החודש', style: context.text.caption),
           const SizedBox(height: AppSpace.xs),
-          Text('${_thousands(total)} ₪', style: AppText.display),
+          Text(MoneyFormatter.format(total), style: AppText.display),
           if (ordered.isNotEmpty) ...[
             const SizedBox(height: AppSpace.lg),
             _Bar(segments: ordered, total: total),
@@ -156,19 +157,10 @@ class _LegendRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSpace.sm),
           Expanded(child: Text(type.label, style: AppText.bodySm)),
-          Text('${_thousands(amount)} ₪', style: AppText.bodySm),
+          Text(MoneyFormatter.format(amount), style: AppText.bodySm),
         ],
       ),
     );
   }
 }
 
-String _thousands(int n) {
-  final s = n.toString();
-  final buf = StringBuffer();
-  for (var i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
-    buf.write(s[i]);
-  }
-  return buf.toString();
-}

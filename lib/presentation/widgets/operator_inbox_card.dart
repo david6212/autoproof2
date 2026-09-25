@@ -136,7 +136,9 @@ class _Row extends ConsumerWidget {
                         ? 'זה עתה'
                         : days == 0
                             ? 'היום'
-                            : 'לפני $days ימים',
+                            : days == 1
+                                ? 'אתמול'
+                                : 'לפני $days ימים',
                     style: context.text.micro.copyWith(
                         color: urgent ? colors.errorRed : colors.textSubtle),
                   ),

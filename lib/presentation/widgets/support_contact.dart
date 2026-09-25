@@ -94,7 +94,7 @@ class SupportRow {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(c).pop(),
-            child: const Text('סגור'),
+            child: const Text('סגרו'),
           ),
         ],
       ),

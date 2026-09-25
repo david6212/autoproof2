@@ -141,7 +141,7 @@ class CreateListingController extends Notifier<CreateListingState> {
     final price = double.tryParse(state.price) ?? 0;
     final km = int.tryParse(state.km) ?? -1;
     if (price <= 0 || km < 0) {
-      state = state.copyWith(error: 'בדוק את המחיר והקילומטראז\'.');
+      state = state.copyWith(error: 'בדקו את המחיר והקילומטראז\'.');
       return;
     }
 
@@ -162,7 +162,7 @@ class CreateListingController extends Notifier<CreateListingState> {
       final v = ref.read(sellerVerificationControllerProvider);
       if (!v.saved) {
         state = state.copyWith(
-            error: v.error ?? 'שמירת האימות נכשלה. נסה שוב.');
+            error: v.error ?? 'שמירת האימות נכשלה. נסו שוב.');
         return;
       }
     }
@@ -186,7 +186,7 @@ class CreateListingController extends Notifier<CreateListingState> {
       if (await carRepo.hasActiveListing(uid)) {
         state = state.copyWith(
           publishing: false,
-          error: 'כבר יש לך מודעה פעילה. ניתן לפרסם רכב אחד בכל פעם.',
+          error: 'כבר יש לכם מודעה פעילה. ניתן לפרסם רכב אחד בכל פעם.',
         );
         return;
       }
@@ -269,7 +269,7 @@ class CreateListingController extends Notifier<CreateListingState> {
     } catch (e) {
       state = state.copyWith(
         publishing: false,
-        error: 'פרסום המודעה נכשל. נסה שוב.',
+        error: 'פרסום המודעה נכשל. נסו שוב.',
       );
     }
   }

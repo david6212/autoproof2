@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
 import '../../core/utils/market_stats.dart';
+import '../../core/utils/money_formatter.dart';
 import '../../data/models/car_model.dart';
 import '../providers/cars_provider.dart';
 import 'app_card.dart';
@@ -31,7 +31,6 @@ class MarketPriceBand extends ConsumerWidget {
     if (stats == null) return const SizedBox.shrink();
 
     final colors = context.colors;
-    final money = NumberFormat.decimalPattern('he');
     final standing = stats.standingOf(car.price);
     final days = MarketStats.daysOnMarket(car);
 
@@ -54,10 +53,10 @@ class MarketPriceBand extends ConsumerWidget {
           const SizedBox(height: AppSpace.sm),
           Row(
             children: [
-              Text('${money.format(stats.p25.round())} ₪',
+              Text(MoneyFormatter.format(stats.p25.round()),
                   style: context.text.caption),
               const Spacer(),
-              Text('${money.format(stats.p75.round())} ₪',
+              Text(MoneyFormatter.format(stats.p75.round()),
                   style: context.text.caption),
             ],
           ),
@@ -75,8 +74,8 @@ class MarketPriceBand extends ConsumerWidget {
               const SizedBox(width: AppSpace.sm),
               Expanded(
                 child: Text(
-                  'בשוק ${days == 0 ? 'מהיום' : '$days ימים'} · '
-                  'הממוצע לדגם: ${stats.avgDaysOnMarket.round()} ימים',
+                  'בשוק ${days == 0 ? 'מהיום' : days == 1 ? 'יום אחד' : '$days ימים'} · '
+                  'הממוצע לדגם: ${stats.avgDaysOnMarket.round() == 1 ? 'יום אחד' : '${stats.avgDaysOnMarket.round()} ימים'}',
                   style: AppText.bodySm,
                 ),
               ),

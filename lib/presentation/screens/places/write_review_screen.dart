@@ -106,7 +106,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('הביקורת נשמרה. תודה שעזרת לקהילה.')),
+        const SnackBar(content: Text('הביקורת נשמרה. תודה שעזרתם לקהילה.')),
       );
       // Back to the place, never onward to another one. Somebody who just
       // finished writing has not asked to start again.
@@ -127,7 +127,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
       builder: (c) => AlertDialog(
         title: const Text('למחוק את הביקורת?'),
         content: const Text(
-          'הביקורת תוסר, והדירוג שנתת ירד מהממוצע של המקום.',
+          'הביקורת תוסר, והדירוג שנתתם ירד מהממוצע של המקום.',
           style: AppText.body,
         ),
         actions: [
@@ -136,7 +136,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
               child: const Text('ביטול')),
           TextButton(
               onPressed: () => Navigator.of(c).pop(true),
-              child: const Text('מחק')),
+              child: const Text('מחקו')),
         ],
       ),
     );
@@ -166,7 +166,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
       appBar: AppBar(
         title: Text(mineAsync.valueOrNull == null
             ? 'כתיבת ביקורת'
-            : 'עריכת הביקורת שלך'),
+            : 'עריכת הביקורת שלכם'),
       ),
       body: SafeArea(
         child: placeAsync.when(
@@ -217,7 +217,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: const InputDecoration(
-                    labelText: 'כמה שילמת (לא חובה)',
+                    labelText: 'כמה שילמתם (לא חובה)',
                     prefixText: '₪ ',
                   ),
                 ),
@@ -250,7 +250,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                 const SizedBox(height: AppSpace.lg),
 
                 PrimaryButton(
-                  label: 'שמור ביקורת',
+                  label: 'שמרו ביקורת',
                   loading: _saving,
                   onPressed: _save,
                 ),
@@ -261,7 +261,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                       onPressed: _saving ? null : _delete,
                       style: TextButton.styleFrom(
                           foregroundColor: colors.errorRed),
-                      child: const Text('מחק את הביקורת שלי'),
+                      child: const Text('מחקו את הביקורת שלי'),
                     ),
                   ),
                 ],

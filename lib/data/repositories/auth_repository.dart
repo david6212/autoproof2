@@ -181,7 +181,7 @@ class AuthRepository {
   /// A Firebase auth failure, in Hebrew, and never in a way that blames the
   /// reader for our own misconfiguration.
   ///
-  /// The default used to be "האימות נכשל. נסה שוב." for everything. That is
+  /// The default used to be "האימות נכשל. נסו שוב." for everything. That is
   /// what David saw when phone verification broke, and it was worse than
   /// useless: the cause was that the release build's certificate had never
   /// been registered in Firebase, so no number and no amount of retrying
@@ -195,16 +195,16 @@ class AuthRepository {
     switch (code) {
       // ---- the reader can fix these -----------------------------------
       case 'invalid-phone-number':
-        return 'מספר הטלפון שגוי. בדוק ונסה שוב.';
+        return 'מספר הטלפון שגוי. בדקו ונסו שוב.';
       case 'invalid-verification-code':
-        return 'הקוד שגוי. בדוק את הספרות ונסה שוב.';
+        return 'הקוד שגוי. בדקו את הספרות ונסו שוב.';
       case 'session-expired':
       case 'code-expired':
         return 'הקוד פג תוקף. שלח קוד חדש.';
       case 'too-many-requests':
-        return 'יותר מדי ניסיונות מהמספר הזה. נסה שוב בעוד כמה דקות.';
+        return 'יותר מדי ניסיונות מהמספר הזה. נסו שוב בעוד כמה דקות.';
       case 'network-request-failed':
-        return 'אין חיבור לרשת. בדוק את החיבור ונסה שוב.';
+        return 'אין חיבור לרשת. בדקו את החיבור ונסו שוב.';
 
       // ---- the number is fine, the account is the problem --------------
       case 'credential-already-in-use':
@@ -218,11 +218,11 @@ class AuthRepository {
       case 'missing-client-identifier':
       case 'invalid-app-credential':
         return 'הגרסה הזו של האפליקציה אינה מאושרת לאימות טלפון. זו תקלה '
-            'בהגדרות שלנו ולא במספר שהזנת — נתקן ונעדכן.';
+            'בהגדרות שלנו ולא במספר שהזנתם — נתקן ונעדכן.';
       case 'operation-not-allowed':
         return 'אימות טלפון אינו פעיל כרגע בצד שלנו. זו תקלה שלנו.';
       case 'quota-exceeded':
-        return 'מכסת ההודעות שלנו נגמרה להיום. זו תקלה שלנו, לא במספר שלך.';
+        return 'מכסת ההודעות שלנו נגמרה להיום. זו תקלה שלנו, לא במספר שלכם.';
 
       // The one that was actually happening, unnamed until 25/08.
       //
@@ -241,7 +241,7 @@ class AuthRepository {
       case 'billing-not-enabled':
       case 'BILLING_NOT_ENABLED':
         return 'אימות ב-SMS אינו פעיל כרגע — תקלה בהגדרות שלנו, לא '
-            'במספר שלך. אפשר להתחבר עם חשבון Google במקום.';
+            'במספר שלכם. אפשר להתחבר עם חשבון Google במקום.';
 
       default:
         return 'האימות נכשל ($code). אם זה חוזר, שלחו לנו צילום מסך.';

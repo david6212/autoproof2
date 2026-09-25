@@ -99,7 +99,7 @@ void main() {
     await t.pump();
 
     expect(find.text('חיפה'), findsOneWidget);
-    expect(find.text('עד ₪150,000'), findsOneWidget);
+    expect(find.text('עד 150,000 ₪'), findsOneWidget);
     expect(find.text('מ-2018'), findsOneWidget);
     expect(find.text('עד 90,000 ק"מ'), findsOneWidget);
     expect(find.text('כסף'), findsOneWidget);
@@ -119,7 +119,7 @@ void main() {
     await t.pump();
 
     expect(find.text('2018–2022'), findsOneWidget);
-    expect(find.text('₪60,000–₪120,000'), findsOneWidget);
+    expect(find.text('60,000 ₪–120,000 ₪'), findsOneWidget);
   });
 
   testWidgets('one end open says so, instead of inventing the other',

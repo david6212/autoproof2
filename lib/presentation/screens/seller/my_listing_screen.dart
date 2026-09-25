@@ -2,9 +2,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_palette.dart';
+import '../../../core/utils/money_formatter.dart';
 import '../../../data/models/car_model.dart';
 import '../../providers/cars_provider.dart';
 import '../../../core/theme/app_text.dart';
@@ -43,7 +43,6 @@ class _Content extends ConsumerWidget {
   const _Content({required this.car});
   final CarModel car;
 
-  static final _fmt = NumberFormat('#,###', 'en');
 
   int get _daysActive =>
       DateTime.now().difference(car.createdAt).inDays;
@@ -80,7 +79,7 @@ class _Content extends ConsumerWidget {
                       child: Text(car.title,
                           style: AppText.h3),
                     ),
-                    Text('₪${_fmt.format(car.price)}',
+                    Text(MoneyFormatter.format(car.price),
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -111,7 +110,7 @@ class _Content extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 24),
-        Text('מי מתעניין ברכב שלך',
+        Text('מי מתעניין ברכב שלכם',
             style: TextStyle(
                 fontWeight: FontWeight.bold, color: context.colors.textPrimary)),
         const SizedBox(height: 8),
@@ -119,7 +118,7 @@ class _Content extends ConsumerWidget {
           padding: const EdgeInsets.all(20),
           radius: AppRadius.sm,
           child: Center(
-            child: Text('כאן יופיעו קונים שמתעניינים ברכב שלך',
+            child: Text('כאן יופיעו קונים שמתעניינים ברכב שלכם',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: context.colors.textMuted)),
           ),
@@ -133,7 +132,7 @@ class _Content extends ConsumerWidget {
             minimumSize: const Size.fromHeight(48),
           ),
           icon: const Icon(Icons.ios_share),
-          label: const Text('שתף את המודעה'),
+          label: const Text('שתפו את המודעה'),
           onPressed: () => shareListing(context, car),
         ),
         const SizedBox(height: 10),
@@ -218,7 +217,7 @@ class _SellerActions extends ConsumerWidget {
             minimumSize: const Size.fromHeight(48),
           ),
           icon: const Icon(Icons.check_circle_outline),
-          label: const Text('סמן כנמכר'),
+          label: const Text('סמנו כנמכר'),
           onPressed: () async {
             final ok = await _confirm(
               context,
@@ -239,13 +238,13 @@ class _SellerActions extends ConsumerWidget {
         TextButton.icon(
           style: TextButton.styleFrom(foregroundColor: context.colors.errorRed),
           icon: const Icon(Icons.delete_outline),
-          label: const Text('הסר מודעה'),
+          label: const Text('הסירו מודעה'),
           onPressed: () async {
             final ok = await _confirm(
               context,
               title: 'להסיר את המודעה?',
               body: 'המודעה תוסר מהמערכת. פעולה זו אינה הפיכה.',
-              confirmLabel: 'הסר',
+              confirmLabel: 'הסירו',
               confirmColor: context.colors.errorRed,
             );
             if (ok && context.mounted) {
@@ -312,7 +311,7 @@ class _Empty extends StatelessWidget {
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: context.colors.tealFill),
             onPressed: () => context.go('/seller/create'),
-            child: const Text('פרסם מודעה'),
+            child: const Text('פרסמו מודעה'),
           ),
         ],
       ),

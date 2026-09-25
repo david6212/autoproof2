@@ -176,7 +176,7 @@ class AddVehicleController extends AutoDisposeNotifier<AddVehicleState> {
       if (existing != null) {
         state = state.copyWith(
           alreadyOwned: existing,
-          error: 'הרכב הזה כבר נמצא ברשימה שלך',
+          error: 'הרכב הזה כבר נמצא ברשימה שלכם',
         );
         return;
       }

@@ -146,7 +146,7 @@ class _GuestGarageIntroState extends ConsumerState<GuestGarageIntro> {
       ],
       const SizedBox(height: AppSpace.lg),
       PrimaryButton(
-        label: 'הצג את הרכב שלי',
+        label: 'הציגו את הרכב שלי',
         loading: _searching,
         onPressed: _search,
       ),

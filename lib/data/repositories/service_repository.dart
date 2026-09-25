@@ -127,7 +127,7 @@ class ServiceRepository {
 
     if (!record.isCorrection && record.km < currentKm) {
       throw ArgumentError(
-        'הק"מ שהזנת נמוך מהרשומה האחרונה '
+        'הק"מ שהזנתם נמוך מהרשומה האחרונה '
         '(${_thousands(expectedCurrentKm ?? currentKm)} ק"מ)',
       );
     }

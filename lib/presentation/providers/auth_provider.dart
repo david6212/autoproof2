@@ -118,7 +118,7 @@ class PhoneAuthController extends Notifier<PhoneAuthState> {
   Future<void> verifyCode(String smsCode) async {
     final vid = state.verificationId;
     if (vid == null) {
-      state = state.copyWith(error: 'שלח קוד תחילה.');
+      state = state.copyWith(error: 'שלחו קוד תחילה.');
       return;
     }
     state = state.copyWith(loading: true, clearError: true);
@@ -127,11 +127,11 @@ class PhoneAuthController extends Notifier<PhoneAuthState> {
       state = state.copyWith(loading: false, step: PhoneAuthStep.verified);
     } on FirebaseAuthException catch (e) {
       final msg = e.code == 'invalid-verification-code'
-          ? 'הקוד שגוי. בדוק את הספרות ונסה שוב.'
-          : 'האימות נכשל. נסה שוב.';
+          ? 'הקוד שגוי. בדקו את הספרות ונסו שוב.'
+          : 'האימות נכשל. נסו שוב.';
       state = state.copyWith(loading: false, error: msg);
     } catch (_) {
-      state = state.copyWith(loading: false, error: 'האימות נכשל. נסה שוב.');
+      state = state.copyWith(loading: false, error: 'האימות נכשל. נסו שוב.');
     }
   }
 

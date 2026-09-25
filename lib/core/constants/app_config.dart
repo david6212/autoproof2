@@ -88,5 +88,5 @@ class AppConfig {
   /// fails if the two drift.
   static const operatorEmail = 'davidmalede@gmail.com';
 
-  static const appVersion = '0.9.10+24';
+  static const appVersion = '0.9.11+25';
 }

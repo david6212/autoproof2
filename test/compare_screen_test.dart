@@ -119,7 +119,7 @@ void main() {
     await settle(t);
 
     // One price cell per car, none of them dropped off the table.
-    for (final price in ['₪120,000', '₪90,000', '₪105,000']) {
+    for (final price in ['120,000 ₪', '90,000 ₪', '105,000 ₪']) {
       expect(find.text(price), findsOneWidget, reason: price);
     }
   });

@@ -1,3 +1,5 @@
+import 'money_formatter.dart';
+
 import '../../data/models/car_model.dart';
 import '../../data/models/plate_snapshot_model.dart';
 
@@ -89,9 +91,10 @@ class RelistingCheck {
     return null;
   }
 
-  /// Whole shekels, spaced in thousands, for the finding text.
-  static String shekels(double price) => price
-      .round()
-      .toString()
-      .replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
+  /// Whole shekels, spaced in thousands, without the sign.
+  ///
+  /// Delegates to [MoneyFormatter] so the app has one thousands separator and
+  /// one place that decides where the ₪ goes.
+  static String shekels(double price) =>
+      MoneyFormatter.thousands(price.round());
 }

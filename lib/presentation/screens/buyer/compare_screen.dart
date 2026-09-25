@@ -212,7 +212,7 @@ class _HeaderCell extends ConsumerWidget {
                   child: IconButton(
                     iconSize: 16,
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'הסר מההשוואה',
+                    tooltip: 'הסירו מההשוואה',
                     icon: Container(
                       padding: const EdgeInsets.all(2),
                       decoration: BoxDecoration(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/app_palette.dart';
+import '../../core/utils/money_formatter.dart';
 import '../../core/utils/odometer_check.dart';
 import '../../data/models/car_model.dart';
 import '../../data/models/plate_snapshot_model.dart';
@@ -118,7 +119,7 @@ class PlateHistoryCard extends ConsumerWidget {
               context,
               icon: Icons.verified_user,
               // Naming the source is a licence obligation, not just nice-to-have.
-              label: 'מד-אוץ רשמי · משרד התחבורה (טסט אחרון)',
+              label: 'מד אוץ רשמי · משרד התחבורה (בטסט האחרון)',
               km: govKm,
               flagged: govRollback,
               okNote: 'תואם',
@@ -152,7 +153,7 @@ class PlateHistoryCard extends ConsumerWidget {
               alignment: AlignmentDirectional.centerStart,
               child: TextButton.icon(
                 icon: const Icon(Icons.flag_outlined, size: 15),
-                label: const Text('דווח על מידע שגוי',
+                label: const Text('דווחו על מידע שגוי',
                     style: TextStyle(fontSize: 11.5)),
                 style: TextButton.styleFrom(
                   foregroundColor: context.colors.textMuted,
@@ -185,10 +186,10 @@ class PlateHistoryCard extends ConsumerWidget {
     final last = previous.first.price;
     final diff = last - previous.last.price;
     if (previous.length < 2 || diff == 0) return null;
-    final amount = _fmt.format(diff.abs());
+    final amount = MoneyFormatter.format(diff.abs());
     return diff > 0
-        ? 'המחיר המבוקש עלה בכ-₪$amount בין המודעות'
-        : 'המחיר המבוקש ירד בכ-₪$amount בין המודעות';
+        ? 'המחיר המבוקש עלה בכ-$amount בין המודעות'
+        : 'המחיר המבוקש ירד בכ-$amount בין המודעות';
   }
 
   /// Whether the reading moved forward as expected, without listing each one.

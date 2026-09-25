@@ -27,7 +27,7 @@ void main() {
       // Ordering IS the fix. Phone verification is broken, and the SMS field
       // was the first and loudest thing on the screen — so the first thing a
       // newcomer tried was the one thing that could not work.
-      final google = login.indexOf("'המשך עם Google'");
+      final google = login.indexOf("'המשיכו עם Google'");
       final phone = login.indexOf('_PhoneField(controller:');
       expect(google, greaterThan(-1));
       expect(phone, greaterThan(-1));

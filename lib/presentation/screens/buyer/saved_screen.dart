@@ -62,8 +62,8 @@ class SavedScreen extends ConsumerWidget {
                 icon: Icons.check_rounded,
                 iconWidget:
                     SavedCheckIcon(size: 40, color: context.colors.teal),
-                title: 'שמור רכבים שאהבת',
-                body: 'התחבר כדי לשמור רכבים ולחזור אליהם בקלות.',
+                title: 'שמרו רכבים שאהבתם',
+                body: 'התחברו כדי לשמור רכבים ולחזור אליהם בקלות.',
               )
             : savedAsync.when(
                 loading: () =>

@@ -1,3 +1,5 @@
+import '../../core/utils/money_formatter.dart';
+
 /// One driver's report of what diesel actually cost them at one station.
 ///
 /// The whole feature exists because Israel publishes no per-station fuel
@@ -97,10 +99,12 @@ class FuelPriceTally {
     if (t == null) return null;
     final d = DateTime.now().difference(t);
     if (d.inHours < 1) return 'לפני פחות משעה';
+    if (d.inHours == 1) return 'לפני שעה';
     if (d.inHours < 24) return 'לפני ${d.inHours} שעות';
     if (d.inDays == 1) return 'אתמול';
     if (d.inDays < 30) return 'לפני ${d.inDays} ימים';
-    return 'לפני ${(d.inDays / 30).floor()} חודשים';
+    final months = (d.inDays / 30).floor();
+    return months == 1 ? 'לפני חודש' : 'לפני $months חודשים';
   }
 
   /// The single line the card shows. States the source and the age every time,
@@ -113,6 +117,6 @@ class FuelPriceTally {
     if (s == null) return null;
     final n = freshCount;
     final who = n == 1 ? 'דיווח אחד' : '$n דיווחים';
-    return '${s.toStringAsFixed(2)} ₪ לליטר · $who · ${ageLabel ?? ''}'.trim();
+    return '${MoneyFormatter.perLitre(s)} · $who · ${ageLabel ?? ''}'.trim();
   }
 }
