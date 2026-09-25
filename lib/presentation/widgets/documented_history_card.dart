@@ -5,6 +5,7 @@ import '../../core/theme/app_dimens.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
 import '../../data/models/car_model.dart';
+import '../../data/models/vehicle.dart';
 import '../providers/vehicle_provider.dart';
 import 'app_card.dart';
 import 'document_list.dart';
@@ -21,6 +22,18 @@ class DocumentedHistoryCard extends ConsumerWidget {
   const DocumentedHistoryCard({super.key, required this.car});
 
   final CarModel car;
+
+  /// How much the seller documented, in the largest unit that is still true.
+  ///
+  /// It read "לאורך 48 חודשים" before, which nobody hears as four years — and
+  /// four years of receipts is exactly what a buyer is being asked to value.
+  static String _summary(int records, int months) {
+    final count =
+        records == 1 ? 'רשומה אחת שתועדה על ידי הבעלים'
+            : '$records רשומות שתועדו על ידי הבעלים';
+    final span = DocumentedProgress(records: records, months: months).spanLabel;
+    return span.isEmpty ? count : '$count לאורך $span';
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -66,10 +79,7 @@ class DocumentedHistoryCard extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpace.sm),
         Text(
-          services.length == 1
-              ? 'רשומה אחת שתועדה על ידי הבעלים'
-              : '${services.length} רשומות שתועדו על ידי הבעלים'
-                  '${car.historySpanMonths == 0 ? '' : car.historySpanMonths == 1 ? ' לאורך חודש' : ' לאורך ${car.historySpanMonths} חודשים'}',
+          _summary(services.length, car.historySpanMonths),
           style: context.text.bodyMuted,
         ),
         const SizedBox(height: AppSpace.md),

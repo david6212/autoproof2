@@ -238,10 +238,9 @@ class _ServicesTab extends ConsumerWidget {
                   96, // clears the floating button
                 ),
                 children: [
-                  if (!vehicle.hasDocumentedHistory)
-                    DocumentedProgressMeter(
-                      progress: vehicle.documentedProgress,
-                    ),
+                  DocumentedProgressMeter(
+                    progress: vehicle.documentedProgress,
+                  ),
                   ServiceTimeline(
                     records: records,
                     // "הוסף תיקון" is gone from the row: since 25/08 the

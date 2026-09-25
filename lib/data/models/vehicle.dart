@@ -36,6 +36,24 @@ class DocumentedProgress {
   /// an invitation, someone with two needs to know how close they are.
   bool get started => records > 0;
 
+  /// How much is documented, once the badge is earned: the count and how far
+  /// back it reaches. "48 חודשים" is a true sentence nobody reads as four
+  /// years, and an owner who kept a car eight years should see eight years.
+  String get depthLabel {
+    final count = records == 1 ? 'רשומה אחת' : '$records רשומות';
+    final span = spanLabel;
+    return span.isEmpty ? count : '$count · $span';
+  }
+
+  /// The span in the largest unit that is still true: months under a year,
+  /// years above it. Empty when there is nothing to span.
+  String get spanLabel {
+    if (months <= 0) return '';
+    if (months < 12) return months == 1 ? 'חודש' : '$months חודשים';
+    final years = months ~/ 12;
+    return years == 1 ? 'שנה' : '$years שנים';
+  }
+
   /// How far along, 0..1 — the *lesser* of the two halves.
   ///
   /// Taking the minimum rather than an average is what makes the bar honest:

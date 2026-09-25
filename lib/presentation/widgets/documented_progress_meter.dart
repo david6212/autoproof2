@@ -14,6 +14,13 @@ import 'app_card.dart';
 /// the owner already did and reads as a count they can finish. Same two
 /// numbers, and the second is the one people act on.
 ///
+/// **After the badge is earned it does not disappear — it starts counting
+/// depth.** People keep cars for years, and the app wants those years
+/// documented: a meter that vanished at three records taught the owner that
+/// three was the finish line. Earned, it shows what the file actually holds —
+/// "12 רשומות · 4 שנים" — which is also what makes the badge worth more on one
+/// listing than on another.
+///
 /// What it must never do is inflate. Both figures are counted from records
 /// that exist, the bar tracks the half that is further behind, and a car with
 /// nothing logged shows an empty bar rather than a free first step. A buyer's
@@ -34,12 +41,59 @@ class DocumentedProgressMeter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Earned cars wear the badge instead; cars with nothing logged get the
-    // empty state's invitation, which explains what the badge is for. A meter
-    // reading zero would say less than either.
-    if (progress.earned || !progress.started) return const SizedBox.shrink();
+    // Cars with nothing logged get the empty state's invitation, which
+    // explains what the badge is for; a meter reading zero would say less.
+    if (!progress.started) return const SizedBox.shrink();
+
+    if (progress.earned) return _buildEarned(context);
 
     return compact ? _buildCompact(context) : _buildFull(context);
+  }
+
+  /// Earned: the file's depth, and an invitation to keep adding to it.
+  ///
+  /// Deliberately not a bar. A bar implies a ceiling, and there is none — the
+  /// records are unlimited, in the code and in the rules, and a car kept for
+  /// a decade should read as a decade.
+  Widget _buildEarned(BuildContext context) {
+    final colors = context.colors;
+
+    final line = Row(
+      children: [
+        Icon(Icons.workspace_premium, size: 18, color: colors.tealText2),
+        const SizedBox(width: AppSpace.sm),
+        Expanded(
+          child: Text(
+            'תיק מתועד · ${progress.depthLabel}',
+            style: AppText.bodySm.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colors.tealText2,
+            ),
+          ),
+        ),
+      ],
+    );
+
+    if (compact) return line;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.lg),
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpace.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            line,
+            const SizedBox(height: AppSpace.sm),
+            Text(
+              'כל טיפול שתוסיפו נשמר בתיק ומוצג לקונה. אין הגבלה על מספר '
+              'הרשומות, וככל שהתיעוד ארוך יותר הוא שווה יותר.',
+              style: context.text.micro,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildCompact(BuildContext context) {
@@ -83,10 +137,12 @@ class DocumentedProgressMeter extends StatelessWidget {
             const SizedBox(height: AppSpace.md),
             _Half(label: 'רשומות', value: _recordsLabel()),
             const SizedBox(height: AppSpace.xs),
+            const SizedBox(height: AppSpace.xs),
             _Half(label: 'תיעוד לאורך זמן', value: _monthsLabel()),
             const SizedBox(height: AppSpace.sm),
             Text(
-              _remainingSentence(),
+              '${_remainingSentence()}. זה המינימום לתג — אפשר להמשיך לתעד '
+              'כמה שתרצו, וכל רשומה נוספת נשארת בתיק.',
               style: context.text.micro,
             ),
           ],

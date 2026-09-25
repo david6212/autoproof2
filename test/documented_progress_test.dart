@@ -118,14 +118,23 @@ void main() {
       );
     });
 
-    testWidgets('disappears once the badge is earned', (tester) async {
-      // From here the car wears "תיק מתועד" itself; a progress bar pinned at
-      // full beside it would be noise.
+    testWidgets('keeps counting once the badge is earned — 25/09', (tester) async {
+      // This test used to assert the opposite: earned, the meter vanished, on
+      // the grounds that a bar pinned at full beside the badge is noise. The
+      // bar is indeed gone — what replaced it is not a bar but the depth of
+      // the file, because the old behaviour taught an owner that three records
+      // was the finish line. People keep cars for years and the passport is
+      // worth what those years are worth, so earned, it now reads "12 רשומות ·
+      // 4 שנים". `documented_depth_test` owns the new behaviour.
       await tester.pumpWidget(host(DocumentedProgressMeter(
         progress: vehicle(count: 4, spanDays: 400).documentedProgress,
       )));
 
-      expect(tester.getSize(find.byType(DocumentedProgressMeter)).height, 0);
+      expect(find.byType(LinearProgressIndicator), findsNothing,
+          reason: 'no bar: there is no ceiling to draw one against');
+      expect(tester.getSize(find.byType(DocumentedProgressMeter)).height,
+          greaterThan(0));
+      expect(find.textContaining('תיק מתועד'), findsOneWidget);
     });
 
     testWidgets('the compact form fits a garage card without overflowing',

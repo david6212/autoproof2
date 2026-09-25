@@ -175,11 +175,13 @@ class _VehicleCard extends ConsumerWidget {
           // Sits directly under the stats, so an owner who has started logging
           // sees how close the badge is without opening the car. This is the
           // only screen most owners look at between services.
-          // Both halves of the condition, not just the badge: the meter draws
-          // nothing before the first record, and a spacer around a widget that
-          // renders nothing is how the listing page ended up with a hole in it.
-          if (vehicle.documentedProgress.started &&
-              !vehicle.hasDocumentedHistory) ...[
+          // Gated on the first record only: the meter draws nothing before
+          // it, and a spacer around a widget that renders nothing is how the
+          // listing page ended up with a hole in it. What to draw after that
+          // is the widget's decision — under way, or earned and counting
+          // depth. A call site that decided too is how a screen ends up
+          // hiding the half the owner wanted to see.
+          if (vehicle.documentedProgress.started) ...[
             const SizedBox(height: AppSpace.md),
             DocumentedProgressMeter(
               progress: vehicle.documentedProgress,
