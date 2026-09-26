@@ -30,6 +30,7 @@ import '../../widgets/primary_button_widget.dart';
 import '../../widgets/service_timeline.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/spec_tile.dart';
+import '../../widgets/receipt_viewer.dart';
 import 'add_expense_screen.dart';
 import 'add_service_screen.dart';
 
@@ -243,6 +244,17 @@ class _ServicesTab extends ConsumerWidget {
                   ),
                   ServiceTimeline(
                     records: records,
+                    // Owner only: the bytes sit behind a rule that names the
+                    // owner, so this callback is what a buyer's copy of the
+                    // same widget does not get.
+                    onOpenReceipt: (record) => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => ReceiptViewerScreen(
+                          vehicleId: vehicle.id,
+                          record: record,
+                        ),
+                      ),
+                    ),
                     // "הוסף תיקון" is gone from the row: since 25/08 the
                     // owner edits the record itself. The correction path
                     // stays in the model and the repository for the entries

@@ -20,7 +20,6 @@ import '../../data/repositories/vehicle_repository.dart';
 import '../../data/sources/remote/gov_api_service.dart' show GovApiException;
 import 'auth_provider.dart';
 import 'cars_provider.dart' show carRepositoryProvider;
-import 'create_listing_provider.dart' show storageRepositoryProvider;
 import 'gov_api_provider.dart';
 
 final vehicleRepositoryProvider =
@@ -297,23 +296,6 @@ class AddServiceController extends AutoDisposeAsyncNotifier<void> {
       final services = ref.read(serviceRepositoryProvider);
       final id = services.newServiceId(vehicleId);
 
-      String? receiptUrl;
-      if (receiptBytes != null) {
-        // Best-effort: a failed upload must not cost the owner the record they
-        // just typed out. They can add the receipt later as a correction.
-        try {
-          receiptUrl = await ref.read(storageRepositoryProvider).uploadServiceReceipt(
-                uid: uid,
-                vehicleId: vehicleId,
-                serviceId: id,
-                bytes: receiptBytes,
-                contentType: receiptContentType,
-              );
-        } catch (_) {
-          receiptUrl = null;
-        }
-      }
-
       await services.addService(
         vehicleId,
         ServiceRecord(
@@ -326,12 +308,27 @@ class AddServiceController extends AutoDisposeAsyncNotifier<void> {
           garageName: (garageName ?? '').trim().isEmpty ? null : garageName!.trim(),
           placeId: placeId,
           notes: (notes ?? '').trim().isEmpty ? null : notes!.trim(),
-          receiptUrl: receiptUrl,
           addedByOwnerId: uid,
           createdAt: DateTime.now(),
           correctsServiceId: correctsServiceId,
         ),
       );
+
+      // After the record, deliberately. A receipt that fails to save must not
+      // cost the owner the entry they just typed out — they can add it later
+      // as a correction, which is what the old best-effort upload protected
+      // too.
+      if (receiptBytes != null) {
+        try {
+          await services.setReceipt(
+            vehicleId: vehicleId,
+            serviceId: id,
+            bytes: receiptBytes,
+          );
+        } catch (_) {
+          // Left without a receipt; the record stands.
+        }
+      }
     });
 
     state = result;

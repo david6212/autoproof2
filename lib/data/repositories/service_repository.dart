@@ -3,6 +3,9 @@ import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/service_record.dart';
+import 'dart:typed_data';
+
+import '../../core/utils/document_redactor.dart';
 
 /// The service history of a vehicle: add and edit, never delete.
 ///
@@ -34,6 +37,47 @@ class ServiceRepository {
 
   CollectionReference<Map<String, dynamic>> _services(String vehicleId) =>
       _vehicle(vehicleId).collection('services');
+
+  /// The single document holding one receipt's bytes.
+  ///
+  /// A fixed id, one level below the record, for the same two reasons the
+  /// passport's documents use: listing the timeline must not download every
+  /// invoice in it, and the rules can then keep the file to the owner while
+  /// the record above it stays readable to a buyer.
+  DocumentReference<Map<String, dynamic>> _receipt(
+          String vehicleId, String serviceId) =>
+      _services(vehicleId).doc(serviceId).collection('file').doc('blob');
+
+  /// Stores a receipt image for a record, and marks the record as having one.
+  ///
+  /// The bytes are resized and re-encoded by [DocumentRedactor] first — the
+  /// same path a licence scan takes — because a Firestore document is capped
+  /// at 1 MiB and a photo of a printed invoice is usually larger. Nothing is
+  /// truncated: a file that cannot be made to fit is refused.
+  Future<void> setReceipt({
+    required String vehicleId,
+    required String serviceId,
+    required Uint8List bytes,
+  }) async {
+    final prepared = DocumentRedactor.prepare(bytes, const []);
+    if (prepared == null) {
+      throw ArgumentError('לא הצלחנו לשמור את הקבלה');
+    }
+
+    await _receipt(vehicleId, serviceId).set({
+      'bytes': Blob(prepared.bytes),
+      'width': prepared.width,
+      'height': prepared.height,
+    });
+    await _services(vehicleId).doc(serviceId).update({'hasReceipt': true});
+  }
+
+  /// The receipt itself, fetched only when the owner opens it.
+  Future<Uint8List?> receiptBytes(String vehicleId, String serviceId) async {
+    final snap = await _receipt(vehicleId, serviceId).get();
+    final blob = snap.data()?['bytes'];
+    return blob is Blob ? blob.bytes : null;
+  }
 
   /// The timeline, newest first.
   Stream<List<ServiceRecord>> watchServices(String vehicleId) =>

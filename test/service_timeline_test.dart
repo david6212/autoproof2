@@ -32,7 +32,7 @@ void main() {
     int km = 60000,
     int cost = 1200,
     String? corrects,
-    String? receiptUrl,
+    bool hasReceipt = false,
       DateTime? editedAt,
   }) =>
       ServiceRecord(
@@ -45,7 +45,7 @@ void main() {
         addedByOwnerId: 'u1',
         createdAt: DateTime(2026, 3, 4),
         correctsServiceId: corrects,
-        receiptUrl: receiptUrl,
+        hasReceipt: hasReceipt,
         editedAt: editedAt,
       );
 
@@ -146,13 +146,28 @@ void main() {
     expect(find.textContaining('מחיקה אינה אפשרית'), findsNothing);
   });
 
-  testWidgets('a receipt is offered only when one exists', (tester) async {
-    await tester.pumpWidget(host(ServiceTimeline(records: [record()])));
+  testWidgets('a receipt is offered only when one exists — and only to the owner',
+      (tester) async {
+    // Updated 26/09 with SEC-03. The receipt used to be a tokenised Storage
+    // URL on the record, which made it public the moment the car was listed;
+    // the bytes are now owner-only, so the button appears only where a
+    // callback was passed — which the buyer's copy of this widget does not do.
+    await tester.pumpWidget(host(
+      ServiceTimeline(records: [record()], onOpenReceipt: (_) {}),
+    ));
     expect(find.text('קבלה'), findsNothing);
 
     await tester.pumpWidget(host(ServiceTimeline(
-      records: [record(receiptUrl: 'https://example.test/r.jpg')],
+      records: [record(hasReceipt: true)],
+      onOpenReceipt: (_) {},
     )));
     expect(find.text('קבלה'), findsOneWidget);
+
+    // The buyer's view: the record says there is a receipt, and there is no
+    // way to ask for it.
+    await tester.pumpWidget(host(ServiceTimeline(
+      records: [record(hasReceipt: true)],
+    )));
+    expect(find.text('קבלה'), findsNothing);
   });
 }

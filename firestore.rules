@@ -118,12 +118,80 @@ service cloud.firestore {
     // ---- Cars (public marketplace listings) ----
     // Anyone may browse listings (even before signing in). Only the seller
     // who owns a listing may create, edit, or remove it.
+    // What a buyer is asked to trust on a listing — the registry's answer, the
+    // documentation badge, the service count — used to be whatever the seller
+    // wrote. Ownership was the entire validation.
+    //
+    // Two of the three can now be checked against something the seller does
+    // not control: `vehicles/{id}` guards its own `serviceCount` (it may only
+    // hold or rise by one) and its own service dates, so a listing that claims
+    // a documented history has to point at a passport that actually has one.
+    //
+    // `govSnapshot` cannot be checked here at all — a rule cannot call
+    // data.gov.il — so it is frozen after create instead: a seller cannot
+    // publish honestly and then rewrite the registry's answer. Making it
+    // unforgeable in the first place needs the lookup to happen somewhere the
+    // seller is not, which needs a server, which needs Blaze.
+    function vehicleOf(vehicleId) {
+      return get(/databases/$(database)/documents/vehicles/$(vehicleId)).data;
+    }
+
+    // The same rule `Vehicle.hasDocumentedHistory` applies, in the one place
+    // the client cannot edit: three records, spanning at least six months.
+    function documentedByRecord(v) {
+      return v.get('serviceCount', 0) >= 3
+             && 'firstServiceAt' in v
+             && 'lastServiceAt' in v
+             && v.lastServiceAt.toMillis() - v.firstServiceAt.toMillis()
+                >= 15552000000;
+    }
+
+    function claimsMatchThePassport(d) {
+      return !('vehicleId' in d)
+          // No passport behind it: it may not claim one.
+          ? (d.get('hasDocumentedHistory', false) == false
+             && d.get('serviceCount', 0) == 0)
+          : (d.get('serviceCount', 0) == vehicleOf(d.vehicleId).get('serviceCount', 0)
+             && d.get('hasDocumentedHistory', false)
+                == documentedByRecord(vehicleOf(d.vehicleId)));
+    }
+
+    // On update the claims may also simply stay as they are. Freezing rather
+    // than re-proving keeps a price edit on an older listing from being
+    // refused because of data written before this rule existed.
+    function claimsUnchanged(before, after) {
+      return after.get('hasDocumentedHistory', false)
+               == before.get('hasDocumentedHistory', false)
+             && after.get('serviceCount', 0) == before.get('serviceCount', 0)
+             && after.get('historySpanMonths', 0)
+                == before.get('historySpanMonths', 0);
+    }
+
     match /cars/{carId} {
       allow read: if true;
 
       allow create: if isSignedIn()
-                    && request.resource.data.sellerId == request.auth.uid;
-      allow update, delete: if isSignedIn()
+                    && request.resource.data.sellerId == request.auth.uid
+                    && claimsMatchThePassport(request.resource.data)
+                    // A registry answer is stamped when it is taken, and a
+                    // listing published today cannot have been checked
+                    // tomorrow.
+                    && (!('govCheckedAt' in request.resource.data)
+                        || request.resource.data.govCheckedAt <= request.time);
+
+      allow update: if isSignedIn()
+                    && resource.data.sellerId == request.auth.uid
+                    // The listing cannot be handed to somebody else, and its
+                    // age cannot be reset — retention counts from it.
+                    && request.resource.data.sellerId == resource.data.sellerId
+                    && request.resource.data.createdAt == resource.data.createdAt
+                    // The registry's answer is what it was at publication.
+                    && request.resource.data.get('govSnapshot', {})
+                       == resource.data.get('govSnapshot', {})
+                    && (claimsUnchanged(resource.data, request.resource.data)
+                        || claimsMatchThePassport(request.resource.data));
+
+      allow delete: if isSignedIn()
                     && resource.data.sellerId == request.auth.uid;
 
       // ---- The plate ----
@@ -213,9 +281,20 @@ service cloud.firestore {
       match /messages/{messageId} {
         allow read: if isSignedIn()
                     && request.auth.uid in chatParticipants(chatId);
+        // Append-only stays — a marketplace conversation that either side can
+        // rewrite is not evidence of anything. What was missing is a ceiling.
+        //
+        // Without one a participant could write up to Firestore's own 1 MiB
+        // limit per message, and the other side's app streams the whole
+        // conversation on open: a few hundred of those make the thread slow to
+        // load and are a cheap way to spend this project's entire daily read
+        // quota. 2,000 characters is longer than anything anybody types here
+        // and shorter than anything worth abusing.
         allow create: if isSignedIn()
                       && request.auth.uid in chatParticipants(chatId)
-                      && request.resource.data.senderId == request.auth.uid;
+                      && request.resource.data.senderId == request.auth.uid
+                      && request.resource.data.get('text', '') is string
+                      && request.resource.data.get('text', '').size() <= 2000;
       }
     }
 
@@ -302,6 +381,17 @@ service cloud.firestore {
       // ---- Service records: append-only, no exceptions ----
       // Readable by the owner always, and by anyone while the car is listed —
       // a history the buyer cannot read cannot persuade them of anything.
+      // The receipt image itself. **No `isListed` branch, deliberately.** The
+      // record above is readable to a buyer because a service history is what
+      // a passport is for; the invoice behind it carries a name and often an
+      // address, and until 26/09 it was a tokenised Storage URL sitting in
+      // that world-readable record — public, and not revoked by closing the
+      // listing. The bytes live here now, beside the licence scans.
+      match /services/{serviceId}/file/{blobId} {
+        allow read, write: if isSignedIn()
+                           && vehicleData(vehicleId).ownerId == request.auth.uid;
+      }
+
       match /services/{serviceId} {
         // The listed check comes first so it short-circuits for a guest:
         // the marketplace is browsable without an account, and evaluating

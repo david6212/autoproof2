@@ -43,7 +43,15 @@ class ServiceRecord {
   final int cost; // shekels
   final String? garageName;
   final String? notes;
-  final String? receiptUrl; // Firebase Storage
+  /// Whether a receipt image is stored for this record.
+  ///
+  /// **A flag, not a link.** It used to be `receiptUrl`, a tokenised Cloud
+  /// Storage URL written into a document that is world-readable while the car
+  /// is listed — so the invoice behind it was public, and closing the listing
+  /// did not take it back. The bytes now live in a `file` subcollection the
+  /// rules keep to the owner, and this says only that there is something to
+  /// open.
+  final bool hasReceipt;
 
   /// Who entered it. Kept across ownership transfer so a buyer can tell which
   /// records came from which owner, and so a past owner keeps read access to
@@ -87,7 +95,7 @@ class ServiceRecord {
     this.cost = 0,
     this.garageName,
     this.notes,
-    this.receiptUrl,
+    this.hasReceipt = false,
     required this.addedByOwnerId,
     required this.createdAt,
     this.correctsServiceId,
@@ -126,7 +134,7 @@ class ServiceRecord {
         garageName: garageName,
         placeId: placeId,
         notes: notes,
-        receiptUrl: receiptUrl,
+        hasReceipt: hasReceipt,
         addedByOwnerId: addedByOwnerId,
         createdAt: createdAt,
         correctsServiceId: correctsServiceId,
@@ -150,7 +158,7 @@ class ServiceRecord {
           : int.tryParse('${data['cost']}') ?? 0,
       garageName: data['garageName'],
       notes: data['notes'],
-      receiptUrl: data['receiptUrl'],
+      hasReceipt: data['hasReceipt'] == true,
       addedByOwnerId: data['addedByOwnerId'] ?? '',
       createdAt: (data['createdAt'] as dynamic)?.toDate() ?? DateTime.now(),
       correctsServiceId: data['correctsServiceId'],
@@ -167,7 +175,7 @@ class ServiceRecord {
         'cost': cost,
         'garageName': garageName,
         'notes': notes,
-        'receiptUrl': receiptUrl,
+        'hasReceipt': hasReceipt,
         'addedByOwnerId': addedByOwnerId,
         'createdAt': createdAt,
         'correctsServiceId': correctsServiceId,

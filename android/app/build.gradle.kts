@@ -54,8 +54,18 @@ android {
         applicationId = "il.autoproof.autoproof"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // Firebase Auth requires minSdk 23.
-        minSdk = 23
+        // Firebase Auth requires minSdk 23; this is 24 for a second reason.
+        //
+        // **v3 APK signing is on by default only from 24.** Below it the
+        // release carried v1 and v2 only, and v1 (JAR signing) is what
+        // CVE-2017-13156 attacks — which matters precisely because this app is
+        // distributed as a sideloaded file rather than through Play. No v3 also
+        // means the signing key could never be rotated without orphaning every
+        // installed user.
+        //
+        // The cost is Android 6 devices, released 2015. Android 7 is the floor
+        // now.
+        minSdk = 24
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName

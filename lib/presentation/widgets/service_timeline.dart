@@ -8,7 +8,6 @@ import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_text.dart';
 import '../../data/models/service_record.dart';
 import 'app_card.dart';
-import 'photo_viewer.dart';
 
 /// A vehicle's service history, newest first.
 ///
@@ -32,11 +31,19 @@ class ServiceTimeline extends StatelessWidget {
     this.onCorrect,
     this.onEdit,
     this.showFooter = true,
+    this.onOpenReceipt,
   });
 
   final List<ServiceRecord> records;
   final void Function(ServiceRecord record)? onCorrect;
   final void Function(ServiceRecord record)? onEdit;
+
+  /// Opens the receipt image. **Null for a buyer, and that is the security
+  /// half of it**: the bytes live in a `file` subcollection the rules keep to
+  /// the owner, so a button offered to anyone else would open a permission
+  /// error. The record itself stays readable — the history is the point of a
+  /// passport; the invoice, with a name and often an address on it, is not.
+  final void Function(ServiceRecord record)? onOpenReceipt;
 
   /// The line explaining why nothing here can be edited. Shown to owners and
   /// to buyers alike — for the buyer it is the whole reason to trust the list.
@@ -61,6 +68,7 @@ class ServiceTimeline extends StatelessWidget {
             wasCorrected: correctedIds.contains(r.id),
             onCorrect: onCorrect,
             onEdit: onEdit,
+            onOpenReceipt: onOpenReceipt,
           ),
         if (showFooter) ...[
           const SizedBox(height: AppSpace.md),
@@ -81,12 +89,14 @@ class _ServiceRow extends StatelessWidget {
     required this.wasCorrected,
     this.onCorrect,
     this.onEdit,
+    this.onOpenReceipt,
   });
 
   final ServiceRecord record;
   final bool wasCorrected;
   final void Function(ServiceRecord record)? onCorrect;
   final void Function(ServiceRecord record)? onEdit;
+  final void Function(ServiceRecord record)? onOpenReceipt;
 
   @override
   Widget build(BuildContext context) {
@@ -190,24 +200,17 @@ class _ServiceRow extends StatelessWidget {
                 background: colors.background,
               ),
             ],
-            if (record.receiptUrl != null ||
+            if ((record.hasReceipt && onOpenReceipt != null) ||
                 onCorrect != null ||
                 onEdit != null) ...[
               const SizedBox(height: AppSpace.sm),
               Row(
                 children: [
-                  if (record.receiptUrl != null)
+                  if (record.hasReceipt && onOpenReceipt != null)
                     TextButton.icon(
                       icon: const Icon(Icons.receipt_long_outlined, size: 18),
                       label: const Text('קבלה'),
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => PhotoViewer(
-                            photos: [record.receiptUrl!],
-                            initialIndex: 0,
-                          ),
-                        ),
-                      ),
+                      onPressed: () => onOpenReceipt!(record),
                     ),
                   const Spacer(),
                   if (onEdit != null)

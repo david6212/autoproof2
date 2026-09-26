@@ -35,7 +35,10 @@ void main() {
 
     test('and not in the rules', () {
       final rules = File('firestore.rules').readAsStringSync();
-      final services = rules.substring(rules.indexOf('match /services/{serviceId}'));
+      // The record's own rule, not the `file` subcollection that now sits
+      // above it (SEC-03) — `indexOf` on the shorter string finds that one.
+      final services =
+          rules.substring(rules.indexOf('match /services/{serviceId} {'));
       final block = services.substring(0, services.indexOf('\n      }'));
       expect(block.contains('serviceCount <'), isFalse);
       expect(block, contains('allow create'));
