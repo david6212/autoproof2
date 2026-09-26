@@ -143,11 +143,18 @@ void main() {
     });
   });
 
-  test('SEC-16 — the release can carry a v3 signature', () {
-    // v3 is on by default from minSdk 24. Below it the APK was protected by
-    // v1 JAR signing alone on Android 6 — and this app is sideloaded, which is
-    // the exact distribution v1's weakness needs.
+  test('SEC-16 — the release is signed v2 + v3, and not v1', () {
+    // Raising minSdk to 24 was supposed to turn v3 on by itself. It did not:
+    // the published 0.9.13 came back `v3 scheme: false` from
+    // `apksigner verify --verbose`, so the schemes are named explicitly. The
+    // lesson is the general one — verify the artefact, not the documentation.
+    //
+    // v1 is JAR signing, what CVE-2017-13156 attacks, and it matters for a
+    // sideloaded APK; nothing below Android 7 can install this build anyway.
     final gradle = File('android/app/build.gradle.kts').readAsStringSync();
     expect(gradle, contains('minSdk = 24'));
+    expect(gradle, contains('enableV3Signing = true'));
+    expect(gradle, contains('enableV2Signing = true'));
+    expect(gradle, contains('enableV1Signing = false'));
   });
 }

@@ -78,6 +78,22 @@ android {
                 storePassword = keystoreProperties.getProperty("storePassword")
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
+
+                // Spelled out rather than left to the default. Raising minSdk
+                // to 24 was supposed to turn v3 on by itself; the published
+                // 0.9.13 came back `v3 scheme: false`, so the assumption was
+                // wrong and this is the fix — checked against the built file
+                // with `apksigner verify --verbose`, not against the docs.
+                //
+                // v2 covers Android 7 and up. v3 adds key rotation: without
+                // it, changing the signing key later orphans every installed
+                // user, because Android refuses an update signed by a
+                // different key. v1 is deliberately off — it is JAR signing,
+                // the scheme CVE-2017-13156 attacks, and nothing below
+                // Android 7 can install this build anyway.
+                enableV1Signing = false
+                enableV2Signing = true
+                enableV3Signing = true
             }
         }
     }
