@@ -70,6 +70,15 @@ class GovDataCard extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 12.5, color: context.colors.textSubtle),
         ),
+        const SizedBox(height: 6),
+        // Under the figures, not in a policy nobody opens. An open dataset can
+        // be incomplete and is not an official confirmation — a reader who
+        // takes it for one is the reader this app exists to protect.
+        Text(
+          AppStrings.registrySourceNote,
+          textAlign: TextAlign.center,
+          style: context.text.micro,
+        ),
       ],
     );
   }

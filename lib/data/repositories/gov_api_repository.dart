@@ -5,14 +5,60 @@ import '../models/fuel_station.dart';
 import '../models/inspection_center.dart';
 import '../models/licensed_garage.dart';
 import '../models/model_spec.dart';
+import '../sources/local/gov_cache.dart';
 import '../sources/remote/gov_api_service.dart';
 
 /// Turns a raw plate string into a parsed GovData object.
 class GovApiRepository {
-  GovApiRepository({GovApiService? service})
-      : _service = service ?? GovApiService();
+  GovApiRepository({GovApiService? service, GovCache? cache})
+      : _service = service ?? GovApiService(),
+        _cache = cache ?? GovCache();
 
   final GovApiService _service;
+  final GovCache _cache;
+
+  /// Reads a whole dataset, from the device first.
+  ///
+  /// The government asks not to be flooded, and these lists move slowly — so a
+  /// cold start should not re-download every fuel station in the country. The
+  /// order is: fresh copy on the device, else the network, else **a stale copy
+  /// rather than nothing**, because a screen showing yesterday's stations
+  /// beats an empty map when the connection is down.
+  ///
+  /// The plate lookup deliberately does not come through here: caching it
+  /// would leave a list of plates on the device. See [GovCache].
+  Future<List<T>> _dataset<T>({
+    required String key,
+    required Duration ttl,
+    required Future<List<Map<String, dynamic>>> Function() fetch,
+    required List<T> Function(List<Map<String, dynamic>>) parse,
+  }) async {
+    List<Map<String, dynamic>> rowsOf(Object? cached) => [
+          for (final r in (cached as List? ?? const []))
+            Map<String, dynamic>.from(r as Map),
+        ];
+
+    final fresh = await _cache.read(key, ttl);
+    if (fresh != null) return parse(rowsOf(fresh));
+
+    try {
+      final raw = await fetch();
+      await _cache.write(key, raw);
+      return parse(raw);
+    } catch (e) {
+      final stale = await _cache.readStale(key);
+      if (stale != null) return parse(rowsOf(stale));
+      rethrow;
+    }
+  }
+
+  /// When the cached copy of a dataset was taken, so a screen can say so
+  /// rather than implying the figure is live.
+  Future<DateTime?> datasetFetchedAt(String key) => _cache.writtenAt(key);
+
+  static const fuelStationsKey = 'fuel_stations';
+  static const inspectionCentersKey = 'inspection_centers';
+  static const refineryPricesKey = 'refinery_prices';
 
   /// Looks up [rawPlate] (with or without dashes) and returns parsed data.
   /// Throws [GovApiException] with a Hebrew message on failure.
@@ -133,8 +179,14 @@ class GovApiRepository {
 
   /// Licensed pre-purchase inspection centers, cleaned and sorted by city then
   /// name. Drops records with no usable name.
-  Future<List<InspectionCenter>> inspectionCenters() async {
-    final raw = await _service.fetchInspectionCenters();
+  Future<List<InspectionCenter>> inspectionCenters() => _dataset(
+        key: inspectionCentersKey,
+        ttl: GovCache.inspectionCentersTtl,
+        fetch: _service.fetchInspectionCenters,
+        parse: _parseCenters,
+      );
+
+  static List<InspectionCenter> _parseCenters(List<Map<String, dynamic>> raw) {
     final list = raw
         .map(InspectionCenter.fromApi)
         .where((c) => c.name.isNotEmpty)
@@ -152,31 +204,41 @@ class GovApiRepository {
   /// Two of the 1,255 rows ship without coordinates and a stray row could put
   /// a pin in the sea, so anything outside Israel's bounding box is dropped
   /// rather than drawn — [FuelStation.plausible] also catches a lat/lng swap.
-  Future<List<FuelStation>> fuelStations() async {
-    final raw = await _service.fetchFuelStations();
-    final list = raw
-        .map(FuelStation.fromApi)
-        .where((s) => s.name.isNotEmpty && s.plausible)
-        .toList();
-    list.sort((a, b) {
-      final byCity = a.city.compareTo(b.city);
-      return byCity != 0 ? byCity : a.displayName.compareTo(b.displayName);
-    });
-    return list;
-  }
+  Future<List<FuelStation>> fuelStations() => _dataset(
+        key: fuelStationsKey,
+        ttl: GovCache.fuelStationsTtl,
+        fetch: _service.fetchFuelStations,
+        parse: (raw) {
+          final list = raw
+              .map(FuelStation.fromApi)
+              .where((s) => s.name.isNotEmpty && s.plausible)
+              .toList();
+          list.sort((a, b) {
+            final byCity = a.city.compareTo(b.city);
+            return byCity != 0 ? byCity : a.displayName.compareTo(b.displayName);
+          });
+          return list;
+        },
+      );
 
   /// The most recent refinery-gate diesel figure, or null if the dataset has
   /// nothing usable. Deliberately a single number with its month attached —
   /// it is a reference, not a price anyone pays.
   Future<FuelReference?> dieselReference() async {
-    final raw = await _service.fetchRefineryPrices();
-    final diesel = raw
-        .map(FuelReference.fromApi)
-        .where((p) => p.product == ApiConstants.dieselProduct)
-        .where((p) => p.shekelsPerLitre > 0)
-        .toList();
-    if (diesel.isEmpty) return null;
-    diesel.sort((a, b) => b.date.compareTo(a.date));
-    return diesel.first;
+    final list = await _dataset(
+      key: refineryPricesKey,
+      ttl: GovCache.refineryPricesTtl,
+      fetch: _service.fetchRefineryPrices,
+      parse: (raw) {
+        final diesel = raw
+            .map(FuelReference.fromApi)
+            .where((p) => p.product == ApiConstants.dieselProduct)
+            .where((p) => p.shekelsPerLitre > 0)
+            .toList();
+        diesel.sort((a, b) => b.date.compareTo(a.date));
+        return diesel;
+      },
+    );
+    return list.isEmpty ? null : list.first;
   }
 }

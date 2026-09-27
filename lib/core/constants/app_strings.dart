@@ -101,6 +101,19 @@ class AppStrings {
   // Government data disclaimer
   static const govDisclaimer = 'נתונים רשמיים ממשרד התחבורה · data.gov.il';
 
+  /// What the registry data is, and what it is not — shown wherever it is.
+  ///
+  /// **The state says so itself, and so must we.** data.gov.il publishes these
+  /// datasets as open data: they can be incomplete, and they are not updated
+  /// the moment something changes in the real world. An app that reprints a
+  /// government figure without that sentence invites the reader to treat it as
+  /// an official confirmation, which is the one thing it is not — and the only
+  /// person that costs is the buyer who skipped a check because of it.
+  static const registrySourceNote =
+      'המידע נשאב ממאגר ממשלתי פתוח (data.gov.il). ייתכן שהוא חסר או שאינו '
+      'מעודכן לרגע זה, והוא אינו ייעוץ משפטי ואינו אישור רשמי. במקרה של סתירה '
+      'מול פרסום רשמי של המדינה — הפרסום הרשמי גובר.';
+
   /// Liability notice shown wherever official records and user reports appear
   /// together (BUSINESS_ROADMAP 9.11).
   static const liabilityNotice =

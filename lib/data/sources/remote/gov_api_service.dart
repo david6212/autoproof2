@@ -74,10 +74,45 @@ class GovApiService {
   /// deliberately not routed through it normally — see
   /// [ApiConstants.govApiFallback] — but a direct route that has already
   /// failed costs nothing to give up on.
+  /// Requests go out one at a time, with a gap between them.
+  ///
+  /// **Because the other side is a government server that asks not to be
+  /// hammered, and losing access to it would end this product.** A plate
+  /// lookup alone fans out to five datasets, and a screen that opens two of
+  /// those at once used to fire everything in parallel the moment it built.
+  /// Serialising costs a few hundred milliseconds on a cold screen and removes
+  /// the shape of traffic that gets an IP rate-limited.
+  ///
+  /// It is a queue, not a token bucket: simpler, and there is no burst here
+  /// worth allowing.
+  static Future<void> _queue = Future<void>.value();
+
+  /// The floor between two outgoing requests.
+  static const minGap = Duration(milliseconds: 250);
+
+  static DateTime _lastRequestAt = DateTime.fromMillisecondsSinceEpoch(0);
+
   Future<Response<dynamic>> _get(
     String url, {
     required Map<String, dynamic> queryParameters,
-  }) async {
+  }) {
+    // Chain onto whatever is already in flight, so two screens opening at once
+    // do not both leave immediately.
+    final next = _queue.then((_) async {
+      final since = DateTime.now().difference(_lastRequestAt);
+      if (since < minGap) await Future<void>.delayed(minGap - since);
+      _lastRequestAt = DateTime.now();
+    });
+    // The queue advances even when a request fails: a thrown error must not
+    // leave every later call waiting on a future that never completes.
+    _queue = next.catchError((_) {});
+    return next.then((_) => _send(url, queryParameters));
+  }
+
+  Future<Response<dynamic>> _send(
+    String url,
+    Map<String, dynamic> queryParameters,
+  ) async {
     try {
       return await _attempt(url, queryParameters);
     } on DioException {
