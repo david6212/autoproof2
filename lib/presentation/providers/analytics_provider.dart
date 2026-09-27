@@ -55,6 +55,12 @@ class Analytics {
   /// only question we ask of it ("is anyone using lookups?").
   Future<void> vehicleLookup() => _log('vehicle_lookup');
 
+  /// Somebody forwarded a check result. **No argument, like the lookup above**:
+  /// the useful question is whether people share at all, and the plate is not
+  /// ours to put in an analytics event even when the sender chose to put it in
+  /// their own message.
+  Future<void> checkShared() => _log('check_shared');
+
   /// A guest hit a feature that needs an account (save / chat / like).
   Future<void> guestPrompt(String action) =>
       _log('guest_prompt', {'action': action});

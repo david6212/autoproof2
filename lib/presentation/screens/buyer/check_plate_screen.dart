@@ -14,6 +14,7 @@ import '../../providers/gov_api_provider.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/gov_data_card_widget.dart';
 import '../../widgets/primary_button_widget.dart';
+import '../../widgets/share_check_result.dart';
 
 /// Check any car, by its plate. No account, no listing, no ownership claim.
 ///
@@ -161,6 +162,16 @@ class _Result extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             GovDataCard(data: data),
+            const SizedBox(height: AppSpace.lg),
+            // Most people check a car for somebody else — a partner, a
+            // brother, the friend who knows engines. Forwarding the answer is
+            // the natural next move, and the message carries its own source
+            // and its own limits because it travels without this screen.
+            ShareCheckResult(
+              data: data,
+              plate: plate,
+              onShared: () => ref.read(analyticsHelperProvider).checkShared(),
+            ),
             const SizedBox(height: AppSpace.lg),
             // The obvious next step, and the honest one: the app cannot tell
             // whether this car is any good — it can hand the reader the
