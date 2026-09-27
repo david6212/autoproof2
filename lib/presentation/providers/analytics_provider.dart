@@ -26,16 +26,22 @@ final analyticsObserverProvider = Provider<NavigatorObserver>((ref) {
 class Analytics {
   Analytics(this._fa, {required this.allowed});
 
-  final FirebaseAnalytics _fa;
+  /// Null when measurement is off. **Not just unused — not even constructed**:
+  /// reaching `FirebaseAnalytics.instance` initialises the SDK, and a reader
+  /// who declined has no business having it started on their device. It also
+  /// means a widget test can pump a screen that logs an event without a
+  /// Firebase app behind it.
+  final FirebaseAnalytics? _fa;
 
   /// Whether the reader agreed to measurement. Checked at the single choke
   /// point rather than at each call site, so a new event cannot forget.
   final bool allowed;
 
   Future<void> _log(String name, [Map<String, Object>? params]) async {
-    if (!allowed) return;
+    final fa = _fa;
+    if (!allowed || fa == null) return;
     try {
-      await _fa.logEvent(name: name, parameters: params);
+      await fa.logEvent(name: name, parameters: params);
     } catch (_) {
       // Never let analytics failures surface to the user.
     }
@@ -61,8 +67,9 @@ class Analytics {
 }
 
 final analyticsHelperProvider = Provider<Analytics>((ref) {
+  final allowed = ref.watch(analyticsAllowedProvider);
   return Analytics(
-    ref.watch(analyticsProvider),
-    allowed: ref.watch(analyticsAllowedProvider),
+    allowed ? ref.watch(analyticsProvider) : null,
+    allowed: allowed,
   );
 });

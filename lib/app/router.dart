@@ -18,6 +18,7 @@ import '../presentation/screens/auth/login_screen.dart';
 import '../presentation/screens/verify/verify_phone_screen.dart';
 // Buyer
 import '../presentation/screens/buyer/home_screen.dart';
+import '../presentation/screens/buyer/check_plate_screen.dart';
 import '../presentation/screens/buyer/car_detail_screen.dart';
 import '../presentation/screens/buyer/vehicle_history_screen.dart';
 import '../presentation/screens/buyer/fuel_stations_screen.dart';
@@ -222,6 +223,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       // than living in the shell: a back arrow returns to whichever one you
       // came from, where a fixed highlighted tab would be wrong half the time.
       GoRoute(path: '/saved', builder: (c, s) => const SavedScreen()),
+
+      // Check any car by its plate. Open to guests on purpose: it is the one
+      // thing this app can do for somebody who has not signed up, has no
+      // listing in front of them, and is standing next to a stranger's car.
+      GoRoute(
+        path: '/check',
+        builder: (c, s) =>
+            CheckPlateScreen(initialPlate: s.uri.queryParameters['plate']),
+      ),
 
       // Passport screens (no TabBar — pushed, with a back arrow)
       GoRoute(

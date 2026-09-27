@@ -160,6 +160,48 @@ class _Header extends StatelessWidget {
           ),
           const SizedBox(height: AppSpace.md),
           const _SearchCard(),
+          const SizedBox(height: AppSpace.sm + 2),
+          const _CheckPlateRow(),
+        ],
+      ),
+    );
+  }
+}
+
+/// The way in for somebody who already has a car in front of them.
+///
+/// **It sits on Home, above the feed, because the feed is not the point.** The
+/// listings are what this app hopes to have; the registry is what it has. A
+/// buyer looking at a car on another site, or standing in a car park, can get
+/// an answer here without an account and without the car being listed with us.
+class _CheckPlateRow extends StatelessWidget {
+  const _CheckPlateRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return AppCard(
+      onTap: () => context.push('/check'),
+      padding: const EdgeInsets.all(AppSpace.md),
+      child: Row(
+        children: [
+          Icon(Icons.pin_outlined, size: 22, color: colors.teal),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('בדקו רכב לפי מספר רישוי', style: AppText.subtitle),
+                const SizedBox(height: 2),
+                Text(
+                  'גם רכב שראיתם במקום אחר. בלי חשבון, בלי להוסיף אותו אליכם.',
+                  style: context.text.micro,
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_left, size: 20, color: colors.textSubtle),
         ],
       ),
     );
