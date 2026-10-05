@@ -56,3 +56,7 @@ app.*.map.json
 android/key.properties
 *.jks
 *.keystore
+
+# Rules-emulator harness deps. The tests are source; node_modules is not.
+test/rules/node_modules/
+firestore-debug.log

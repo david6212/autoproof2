@@ -132,8 +132,23 @@ service cloud.firestore {
     // publish honestly and then rewrite the registry's answer. Making it
     // unforgeable in the first place needs the lookup to happen somewhere the
     // seller is not, which needs a server, which needs Blaze.
-    function vehicleOf(vehicleId) {
-      return get(/databases/$(database)/documents/vehicles/$(vehicleId)).data;
+    // **`getAfter`, not `get`** — the state the passport will be in once this
+    // write commits.
+    //
+    // This is the whole of SEC-20, and it cost the product its signature
+    // feature for two days. `addService` writes the record, the passport's
+    // counters and the live listing's denormalised copy in ONE batch. `get()`
+    // reads the passport as it was *before* that batch, so it returned the old
+    // `serviceCount` while the listing carried old + 1. The two could never be
+    // equal, the listing write was denied, and because a batch is atomic the
+    // service record went down with it: **an owner could not log a service on
+    // any car that was actually on the market.**
+    //
+    // Safe on create as well as update. `getAfter` on a document the write does
+    // not touch returns exactly what `get` would, it costs the same single
+    // read, and it is cached for the rest of the evaluation.
+    function vehicleAfter(vehicleId) {
+      return getAfter(/databases/$(database)/documents/vehicles/$(vehicleId)).data;
     }
 
     // The same rule `Vehicle.hasDocumentedHistory` applies, in the one place
@@ -151,9 +166,9 @@ service cloud.firestore {
           // No passport behind it: it may not claim one.
           ? (d.get('hasDocumentedHistory', false) == false
              && d.get('serviceCount', 0) == 0)
-          : (d.get('serviceCount', 0) == vehicleOf(d.vehicleId).get('serviceCount', 0)
+          : (d.get('serviceCount', 0) == vehicleAfter(d.vehicleId).get('serviceCount', 0)
              && d.get('hasDocumentedHistory', false)
-                == documentedByRecord(vehicleOf(d.vehicleId)));
+                == documentedByRecord(vehicleAfter(d.vehicleId)));
     }
 
     // On update the claims may also simply stay as they are. Freezing rather
