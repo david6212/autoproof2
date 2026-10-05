@@ -182,9 +182,17 @@ class ServiceRepository {
     final batch = _db.batch();
     batch.set(serviceRef, record.toFirestore());
 
+    // The rules let the count rise only beside the record that earns it, so
+    // the update names that record. `lastServiceAt` is written only when it
+    // actually advances: re-writing the old value would round-trip it through
+    // a Dart DateTime, and the rule compares timestamps exactly.
+    final lastServiceAt = data['lastServiceAt'] as dynamic;
+    final advancesLast =
+        lastServiceAt == null || record.date.isAfter(lastServiceAt.toDate());
     final vehicleUpdate = <String, dynamic>{
       'serviceCount': FieldValue.increment(1),
-      'lastServiceAt': _laterOf(data['lastServiceAt'], record.date),
+      'lastServiceId': serviceRef.id,
+      if (advancesLast) 'lastServiceAt': record.date,
       if (serviceCount == 0 || data['firstServiceAt'] == null)
         'firstServiceAt': record.date,
       // A correction does not advance the odometer: it exists precisely

@@ -157,4 +157,43 @@ void main() {
     expect(gradle, contains('enableV2Signing = true'));
     expect(gradle, contains('enableV1Signing = false'));
   });
+
+  // The badge counters on the passport. The rules behaviour itself is
+  // executed in test/rules/service_count_honest.mjs; this pins the two halves
+  // that must agree, because a client that stops naming its record is locked
+  // out of logging services, and a rule that stops checking it is SEC-06 with
+  // the door open again.
+  group('the service count rises only with the record that earns it', () {
+    final vehicles = slice('match /vehicles/{vehicleId} {', 'match /services/');
+    final repo =
+        File('lib/data/repositories/service_repository.dart').readAsStringSync();
+
+    test('every vehicle update goes through the check', () {
+      expect(vehicles, contains('&& serviceCountedHonestly()'));
+    });
+
+    test('the increment needs a record that is new in this very write', () {
+      final fn = slice('function serviceCountedHonestly', 'allow create');
+      expect(fn, contains('!exists('));
+      expect(fn, contains('existsAfter('));
+      expect(fn, contains('before.serviceCount + 1'));
+    });
+
+    test('while the count holds, the dates cannot move', () {
+      final fn = slice('function serviceCountedHonestly', 'allow create');
+      expect(fn, contains(".hasAny(['firstServiceAt', 'lastServiceAt', 'lastServiceId'])"));
+    });
+
+    test('a passport is born with no dates', () {
+      expect(vehicles, contains("get('firstServiceAt', null) == null"));
+      expect(vehicles, contains("get('lastServiceAt', null) == null"));
+    });
+
+    test('addService names the record it is counting', () {
+      expect(repo, contains("'lastServiceId': serviceRef.id"));
+      // Rewriting an unchanged lastServiceAt would round-trip it through a
+      // DateTime and fail the rule's exact comparison.
+      expect(repo, contains("if (advancesLast) 'lastServiceAt': record.date"));
+    });
+  });
 }

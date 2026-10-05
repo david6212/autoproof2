@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Firestore rules tests that EXECUTE the rules, against the emulator. The Dart suite can only string-match firestore.rules, which is why SEC-20 shipped green.",
   "scripts": {
-    "test": "firebase emulators:exec --only firestore --project bonnetcheck-rules-test \"node service_while_listed.mjs\""
+    "test": "firebase emulators:exec --only firestore --project bonnetcheck-rules-test \"node service_while_listed.mjs && node service_count_honest.mjs\""
   },
   "dependencies": {
     "@firebase/rules-unit-testing": "^4.0.1",

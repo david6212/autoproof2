@@ -362,18 +362,65 @@ service cloud.firestore {
     match /vehicles/{vehicleId} {
       allow read: if isSignedIn() && resource.data.ownerId == request.auth.uid;
 
+      // ---- The counters a "תיק מתועד" badge is computed from ----
+      //
+      // `serviceCount`, `firstServiceAt` and `lastServiceAt` are what
+      // `documentedByRecord` reads, and through `claimsMatchThePassport` what
+      // a listing's badge is checked against. Until 05/10 the rule only said
+      // the count may "hold or rise by one" — per write. Three bare updates
+      // and a back-dated `firstServiceAt` produced a documented passport with
+      // no record behind it, and the listing check then faithfully confirmed
+      // the forgery. A rule that compares a claim to a counter is only as
+      // honest as the counter.
+      //
+      // Now the count may rise only together with the record that justifies
+      // it: the write names the record in `lastServiceId`, the record did not
+      // exist before this write and does after (so one record buys exactly
+      // one increment, never a replay), and the dates are the ones that
+      // record implies. While the count holds, the dates cannot move at all.
+      //
+      // What this cannot check: the record's own `date` is the owner's word.
+      // Every record is on the timeline the buyer reads, so a back-dated
+      // service is at least a visible claim rather than an invisible counter.
+      function newServiceAfter() {
+        return getAfter(/databases/$(database)/documents/vehicles/$(vehicleId)/services/$(request.resource.data.lastServiceId)).data;
+      }
+
+      function serviceCountedHonestly() {
+        let before = resource.data;
+        let after = request.resource.data;
+        let first0 = before.get('firstServiceAt', null);
+        let last0 = before.get('lastServiceAt', null);
+        return after.serviceCount == before.serviceCount
+            ? !after.diff(before).affectedKeys()
+                .hasAny(['firstServiceAt', 'lastServiceAt', 'lastServiceId'])
+            : (after.serviceCount == before.serviceCount + 1
+               && after.get('lastServiceId', null) is string
+               && !exists(/databases/$(database)/documents/vehicles/$(vehicleId)/services/$(after.lastServiceId))
+               && existsAfter(/databases/$(database)/documents/vehicles/$(vehicleId)/services/$(after.lastServiceId))
+               && newServiceAfter().date is timestamp
+               && after.get('lastServiceAt', null)
+                  == ((last0 == null || newServiceAfter().date > last0)
+                      ? newServiceAfter().date : last0)
+               && after.get('firstServiceAt', null)
+                  == ((before.serviceCount == 0 || first0 == null)
+                      ? newServiceAfter().date : first0));
+      }
+
       allow create: if isSignedIn()
                     && request.resource.data.ownerId == request.auth.uid
-                    && request.resource.data.serviceCount == 0;
+                    && request.resource.data.serviceCount == 0
+                    // An empty passport has no history to date.
+                    && request.resource.data.get('firstServiceAt', null) == null
+                    && request.resource.data.get('lastServiceAt', null) == null;
 
       // Two ways a vehicle may change:
       //   1. its owner edits it, and ownership stays put;
       //   2. a buyer claims it with a valid handover code.
-      // `serviceCount` may only hold or rise by one, so nobody can award
-      // themselves a "תיק מתועד" badge without actually writing the records.
+      // `serviceCount` may only hold, or rise by one with the record that
+      // earns it — see `serviceCountedHonestly`.
       allow update: if isSignedIn()
-                    && (request.resource.data.serviceCount == resource.data.serviceCount
-                        || request.resource.data.serviceCount == resource.data.serviceCount + 1)
+                    && serviceCountedHonestly()
                     && (
                       (resource.data.ownerId == request.auth.uid
                        && request.resource.data.ownerId == resource.data.ownerId)

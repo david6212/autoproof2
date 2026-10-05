@@ -107,6 +107,7 @@ function addServiceBatch(db) {
   });
   batch.update(doc(db, 'vehicles', VEHICLE), {
     serviceCount: 3,
+    lastServiceId: 's3',
     lastServiceAt: NEW_SERVICE,
     currentKm: 96000,
   });
