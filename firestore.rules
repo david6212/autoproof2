@@ -742,85 +742,100 @@ service cloud.firestore {
                     && request.resource.data.addedByUid == request.auth.uid
                     && request.resource.data.ratingCount == 0
                     && request.resource.data.ratingSum == 0
-                    && request.resource.data.isHidden == false;
+                    && request.resource.data.isHidden == false
+                    && request.resource.data.get('reportCount', 0) == 0;
 
-      // The caller's own review, as it stands AFTER this write. Every move
-      // of the aggregates has to be backed by one: without this, the bounds
-      // below only slowed a forger down — one write per star — and `ratingAvg`
-      // was not bounded at all, so a single write set any garage to 5.0.
+      // ---- SEC-01: the score is the sum of the reviews, exactly ----
       //
-      // `saveReview` writes the review and this update in one batch, so the
-      // installed 0.9.9 client satisfies it. Nothing else does.
-      function ownReviewAfter(placeId) {
-        return existsAfter(/databases/$(database)/documents/places/$(placeId)/reviews/$(request.auth.uid));
+      // Until 05/10 a move of the aggregates only had to come with the
+      // caller's review EXISTING after the write — existence, not novelty.
+      // One honest review, then N bare updates of +1/+5, each satisfying every
+      // clause, drove any garage to 5.0 (or, holding the count, to 1.0). And
+      // the review document could be created, edited or deleted on its own,
+      // so create-5 / edit-to-1 / delete netted +4 with the count unchanged.
+      //
+      // Now both sides are bound, and the arithmetic is exact:
+      //   * a NEW review (absent before, present after) adds one to the count
+      //     and exactly its rating to the sum;
+      //   * an EDIT keeps the count and moves the sum by new − old;
+      //   * a WITHDRAWAL (present before, absent after) removes one and
+      //     exactly the old rating — unless the operator had hidden it, in
+      //     which case its rating already left and must not leave twice.
+      // The review rules below demand the mirror image, so neither half can
+      // be written without the other. `saveReview` and `deleteReview` already
+      // write both in one batch, so the installed client passes unchanged.
+      //
+      // `ratingAvg` is left unchecked on purpose: the rules' `/` on two ints
+      // is integer division while the client's is a double, and the app never
+      // reads the stored field (`Place.ratingAvg` is computed from sum/count).
+      function aggregatesFollowOwnReview() {
+        let before = resource.data;
+        let after = request.resource.data;
+        let r = /databases/$(database)/documents/places/$(placeId)/reviews/$(request.auth.uid);
+        let had = exists(r);
+        let has = existsAfter(r);
+        return (!had && has)
+            ? (after.ratingCount == before.ratingCount + 1
+               && after.ratingSum == before.ratingSum + getAfter(r).data.rating)
+            : (had && has)
+            ? (get(r).data.get('hiddenByOperator', false) != true
+               && after.ratingCount == before.ratingCount
+               && after.ratingSum
+                  == before.ratingSum + getAfter(r).data.rating - get(r).data.rating)
+            : (had && !has)
+            ? (get(r).data.get('hiddenByOperator', false) != true
+               && after.ratingCount == before.ratingCount - 1
+               && after.ratingSum == before.ratingSum - get(r).data.rating)
+            : false;
       }
 
-      // The caller filed a report on this place. `reportDoesNotExist` writes
-      // that document before it hides, so again the installed client passes
-      // and a bare hide does not.
-      function ownReport(placeId) {
-        return exists(/databases/$(database)/documents/places/$(placeId)/reports/$(request.auth.uid));
+      // ---- SEC-02: three distinct reporters, counted where they can't lie ----
+      //
+      // Until 05/10 hiding needed only a report in the caller's own name —
+      // which the caller writes. Two writes removed any garage, permanently.
+      // The "three strangers" threshold lived only in the client, and a REST
+      // client does not run the client.
+      //
+      // Rules cannot count documents, so the count is a field they CAN check:
+      // `reportCount` rises by exactly one, and only beside a report that did
+      // not exist before this write and does after. Reports are keyed by uid
+      // and can never be withdrawn or rewritten, so each account moves it
+      // once, ever. `isHidden` may turn true only once it reads three.
+      function reportCountFollowsOwnReport() {
+        let rep = /databases/$(database)/documents/places/$(placeId)/reports/$(request.auth.uid);
+        return request.resource.data.reportCount
+                 == resource.data.get('reportCount', 0) + 1
+               && !exists(rep)
+               && existsAfter(rep);
       }
 
-      // Only the aggregates and the hidden flag, and only within bounds.
-      //
-      // **Spark has no Cloud Functions, so the counters are maintained by the
-      // client** — which means the rules, not the code, are the only thing
-      // standing between a rating and whoever wants to move it. They cannot
-      // check the arithmetic, but they can stop one write from doing real
-      // damage: a rating is 1..5, so a single update may move the count by at
-      // most one and the sum by at most five.
-      //
-      // Looping used to be the residual risk, and the clause below closes it:
-      // a move of the score now has to come with the caller's own review. One
-      // account can still add its own honest star, which is what a review is.
-      // The average still stays hidden below three reviews, because a couple
-      // of opinions is not a score.
       allow update: if isSignedIn()
                     && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['ratingCount', 'ratingSum', 'ratingAvg',
-                                   'lastReviewAt', 'isHidden'])
-                    && request.resource.data.ratingCount <= resource.data.ratingCount + 1
+                                   'lastReviewAt', 'isHidden', 'reportCount'])
                     && request.resource.data.ratingCount >= 0
+                    // Coarse bounds that hold for EVERYONE, the operator
+                    // included: one review is one vote of 1..5, so no single
+                    // write moves more than that. The exact arithmetic below
+                    // implies them for a reviewer; they stay because the
+                    // operator path skips it, and a slip there should cost one
+                    // review's worth of score, not a garage.
+                    && request.resource.data.ratingCount <= resource.data.ratingCount + 1
+                    && request.resource.data.ratingCount >= resource.data.ratingCount - 1
                     && request.resource.data.ratingSum >= resource.data.ratingSum - 5
                     && request.resource.data.ratingSum <= resource.data.ratingSum + 5
-                    // A move of the score has to come with the review that
-                    // justifies it — the caller's own, present after this
-                    // write. A withdrawal is the same rule seen from the other
-                    // side and is handled by the decrement clause below.
                     && (!request.resource.data.diff(resource.data).affectedKeys()
-                          .hasAny(['ratingCount', 'ratingSum', 'ratingAvg'])
-                        || ownReviewAfter(placeId)
+                          .hasAny(['ratingCount', 'ratingSum'])
                         || isOperator()
-                        || (exists(/databases/$(database)/documents/places/$(placeId)/reviews/$(request.auth.uid))
-                            && !existsAfter(/databases/$(database)/documents/places/$(placeId)/reviews/$(request.auth.uid))))
-                    // Hiding is what removes a business from the directory, so
-                    // it takes a report in the caller's name — the client counts
-                    // three of them before it hides, and the rules can at least
-                    // demand that this caller is one of them.
+                        || aggregatesFollowOwnReview())
+                    && (!request.resource.data.diff(resource.data).affectedKeys()
+                          .hasAny(['reportCount'])
+                        || reportCountFollowsOwnReport())
                     && (!request.resource.data.diff(resource.data).affectedKeys()
                           .hasAny(['isHidden'])
                         || isOperator()
-                        || ownReport(placeId))
-                    // The count may fall by one, and only on a path entitled
-                    // to it.
-                    //
-                    // It used to be forbidden outright, which quietly broke
-                    // deleteReview: that batch lowers the count, the rule
-                    // refused the place update, and a batch is atomic — so the
-                    // review delete was refused with it. Nobody could withdraw
-                    // a review they had written, which is also their right to
-                    // erasure.
-                    //
-                    // Simply allowing -1 would have let any signed-in account
-                    // lower a competitor's rating one write at a time. So a
-                    // decrement is allowed only when the caller's OWN review is
-                    // being deleted in this same batch, or by the operator
-                    // hiding a reported one.
-                    && (request.resource.data.ratingCount >= resource.data.ratingCount
-                        || (exists(/databases/$(database)/documents/places/$(placeId)/reviews/$(request.auth.uid))
-                            && !existsAfter(/databases/$(database)/documents/places/$(placeId)/reviews/$(request.auth.uid)))
-                        || isOperator())
+                        || (request.resource.data.isHidden == true
+                            && request.resource.data.get('reportCount', 0) >= 3))
                     // Hiding is one-way. An entry three people said does not
                     // exist cannot be un-hidden by the fourth.
                     && (resource.data.isHidden == false
@@ -837,6 +852,17 @@ service cloud.firestore {
       match /reviews/{reviewUid} {
         allow read: if true;
 
+        // The mirror of `aggregatesFollowOwnReview`: a review cannot be
+        // written, changed or withdrawn without the place moving by exactly
+        // what it contributes. Without this half, the review alone could be
+        // created and deleted around a single aggregate write, and each loop
+        // left the score a little further from the truth.
+        function placeMovesBy(countDelta, sumDelta) {
+          let p = /databases/$(database)/documents/places/$(placeId);
+          return getAfter(p).data.ratingCount == get(p).data.ratingCount + countDelta
+                 && getAfter(p).data.ratingSum == get(p).data.ratingSum + sumDelta;
+        }
+
         allow create: if isSignedIn()
                       && request.auth.uid == reviewUid
                       && request.resource.data.rating is int
@@ -845,7 +871,8 @@ service cloud.firestore {
                       && (!('text' in request.resource.data)
                           || request.resource.data.text.size() <= 500)
                       // Nobody arrives pre-hidden, and nobody hides their own.
-                      && !('hiddenByOperator' in request.resource.data);
+                      && !('hiddenByOperator' in request.resource.data)
+                      && placeMovesBy(1, request.resource.data.rating);
 
         // The author may edit — but not a review the operator has hidden.
         // saveReview writes the whole document, so without this an edit to a
@@ -859,7 +886,9 @@ service cloud.firestore {
                       && request.resource.data.rating >= 1
                       && request.resource.data.rating <= 5
                       && (!('text' in request.resource.data)
-                          || request.resource.data.text.size() <= 500);
+                          || request.resource.data.text.size() <= 500)
+                      && placeMovesBy(0, request.resource.data.rating
+                                         - resource.data.rating);
 
         // The operator may hide or restore, and change nothing else. The words
         // stay exactly as written, so a report that turns out to be wrong can
@@ -871,7 +900,12 @@ service cloud.firestore {
         // Yours to withdraw, hidden or not: an opinion about somebody else's
         // business, nobody is owed its permanence, and erasing it is the
         // author's right.
-        allow delete: if isSignedIn() && request.auth.uid == reviewUid;
+        //
+        // A hidden review's rating already left the aggregate when it was
+        // hidden, so it goes alone; any other takes its rating with it.
+        allow delete: if isSignedIn() && request.auth.uid == reviewUid
+                      && (resource.data.get('hiddenByOperator', false) == true
+                          || placeMovesBy(-1, -resource.data.rating));
       }
 
     }
@@ -894,7 +928,12 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isSignedIn()
                     && request.auth.uid == reporterUid
-                    && request.resource.data.reason is string;
+                    && request.resource.data.reason is string
+                    // Filed together with the counter it moves — see
+                    // `reportCountFollowsOwnReport`. A report that does not
+                    // count would let the threshold drift from the reports.
+                    && getAfter(/databases/$(database)/documents/places/$(placeId)).data.get('reportCount', 0)
+                       == get(/databases/$(database)/documents/places/$(placeId)).data.get('reportCount', 0) + 1;
       // A report stands. Withdrawing one after it has hidden a place would
       // leave the place hidden with nothing on record explaining why.
       allow update, delete: if false;

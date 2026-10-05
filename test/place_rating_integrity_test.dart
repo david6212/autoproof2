@@ -26,10 +26,37 @@ void main() {
   }
 
   group('the score cannot be written without the review behind it', () {
+    // The arithmetic is executed in test/rules/place_integrity.mjs; this pins
+    // the shape, so a later edit cannot quietly go back to "a review exists".
     test('every move of the aggregates demands the caller own review', () {
       final place = block('match /places/{placeId} {');
-      expect(place, contains('ownReviewAfter(placeId)'));
-      expect(place, contains("hasAny(['ratingCount', 'ratingSum', 'ratingAvg'])"));
+      expect(place, contains('|| aggregatesFollowOwnReview())'));
+      expect(place, contains("hasAny(['ratingCount', 'ratingSum'])"));
+    });
+
+    test('and a NEW review, adding exactly its own rating', () {
+      // Existence was the 26/09 hole: one review, then any number of +1/+5.
+      final place = block('match /places/{placeId} {');
+      expect(place, contains('(!had && has)'));
+      expect(place, contains('after.ratingCount == before.ratingCount + 1'));
+      expect(place, contains(
+          'after.ratingSum == before.ratingSum + getAfter(r).data.rating'));
+    });
+
+    test('an edit moves the sum by new minus old, never the count', () {
+      final place = block('match /places/{placeId} {');
+      expect(place, contains('(had && has)'));
+      expect(place, contains(
+          'before.ratingSum + getAfter(r).data.rating - get(r).data.rating'));
+    });
+
+    test('the review cannot be written without the place moving with it', () {
+      // Without this half, create-5 / edit-to-1 / delete netted +4.
+      final reviews = block('match /reviews/{reviewUid} {');
+      expect(reviews, contains('function placeMovesBy(countDelta, sumDelta)'));
+      expect(reviews, contains('placeMovesBy(1, request.resource.data.rating)'));
+      expect(reviews, contains('placeMovesBy(0, request.resource.data.rating'));
+      expect(reviews, contains('placeMovesBy(-1, -resource.data.rating)'));
     });
 
     test('and the installed client still passes it', () {
@@ -52,7 +79,12 @@ void main() {
       // erasure, and it was broken once before by a rule that forbade any
       // decrement at all.
       final place = block('match /places/{placeId} {');
-      expect(place, contains('!existsAfter(/databases/'));
+      expect(place, contains('(had && !has)'));
+      expect(place, contains('after.ratingCount == before.ratingCount - 1'));
+      expect(place, contains(
+          'after.ratingSum == before.ratingSum - get(r).data.rating'));
+      // A hidden review already left the aggregate; it must not leave twice.
+      expect(place, contains("get(r).data.get('hiddenByOperator', false) != true"));
     });
   });
 
@@ -87,10 +119,28 @@ void main() {
   });
 
   group('removing a garage from the directory', () {
-    test('takes a report in the caller name, or the operator', () {
+    test('takes three distinct reporters, or the operator', () {
+      // A report in the caller's own name was the 26/09 hole: they write it.
       final place = block('match /places/{placeId} {');
-      expect(place, contains('ownReport(placeId)'));
       expect(place, contains("hasAny(['isHidden'])"));
+      expect(place, contains("request.resource.data.get('reportCount', 0) >= 3"));
+    });
+
+    test('and the count rises only beside a report that is new', () {
+      final place = block('match /places/{placeId} {');
+      expect(place, contains('|| reportCountFollowsOwnReport())'));
+      expect(place, contains('&& !exists(rep)'));
+      expect(place, contains('&& existsAfter(rep)'));
+      expect(place, contains("resource.data.get('reportCount', 0) + 1"));
+      // And nobody creates a place that arrives already reported.
+      expect(place, contains("request.resource.data.get('reportCount', 0) == 0"));
+    });
+
+    test('a report cannot be filed without moving the count', () {
+      final reports = rules.substring(
+          rules.indexOf('match /places/{placeId}/reports/{reporterUid}'));
+      expect(reports.substring(0, reports.indexOf('allow update, delete')),
+          contains(r'getAfter(/databases/$(database)/documents/places/$(placeId))'));
     });
 
     test('and the client still files that report before it hides', () {
@@ -99,9 +149,13 @@ void main() {
       final report =
           repo.substring(repo.indexOf('Future<void> reportDoesNotExist('));
       final body = report.substring(0, report.indexOf('\n  }\n'));
-      expect(body.indexOf('reportRef.set('),
-          lessThan(body.indexOf("update({'isHidden': true})")),
-          reason: 'the report must exist before the hide, or the rule refuses');
+      // One batch: the report, the counter and the hide stand or fall
+      // together, which is the only shape the rules accept.
+      expect(body, contains('final batch = _db.batch();'));
+      expect(body, contains('batch.set(reportRef,'));
+      expect(body, contains("'reportCount': reportCount,"));
+      expect(body, contains("if (reportCount >= 3) 'isHidden': true,"));
+      expect(body, contains('await batch.commit();'));
     });
 
     test('the operator can undo a hide that was wrong', () {

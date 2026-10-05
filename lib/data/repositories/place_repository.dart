@@ -337,18 +337,33 @@ class PlaceRepository {
     final placeRef = _places.doc(placeId);
     final reportRef = placeRef.collection('reports').doc(uid);
 
-    await reportRef.set({
+    // A report stands and cannot be rewritten; a second one from the same
+    // account would arrive as an update, which the rules refuse.
+    if ((await reportRef.get()).exists) return;
+
+    final place = (await placeRef.get()).data();
+    if (place == null) throw StateError('המקום לא נמצא');
+
+    // The rules count reports in `reportCount`, not by listing documents —
+    // they cannot list, and a client-side count is one a REST client skips.
+    // The report, the counter and (at three) the hide go in ONE batch: the
+    // rules refuse a report that does not move the counter, a counter that
+    // moves without a new report, and a hide below three.
+    final reportCount = ((place['reportCount'] as num?)?.toInt() ?? 0) + 1;
+
+    final batch = _db.batch();
+    batch.set(reportRef, {
       'reason': reason,
       'reporterUid': uid,
       'createdAt': FieldValue.serverTimestamp(),
     });
-
-    // Counted after the write, so the reporter's own report is included and
-    // the third person to file is the one who acts on it.
-    final reports = await placeRef.collection('reports').get();
-    if (reports.docs.length >= 3) {
-      await placeRef.update({'isHidden': true});
-    }
+    batch.update(placeRef, {
+      'reportCount': reportCount,
+      // The reporter's own report is included, so the third person to file is
+      // the one who acts on it.
+      if (reportCount >= 3) 'isHidden': true,
+    });
+    await batch.commit();
   }
 
   /// Adds a place somebody typed in. Returns its new id.

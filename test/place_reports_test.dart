@@ -42,16 +42,15 @@ void main() {
     test('the count includes the report just filed', () {
       // Counted after the write, so the third person to file is the one who
       // hides it — not the fourth.
+      // The new count is the stored one plus this report, so the third
+      // person to file is the one who hides it — not the fourth.
       final method = repo.substring(repo.indexOf('reportDoesNotExist'));
-      final write = method.indexOf('reportRef.set');
-      final count = method.indexOf("collection('reports').get()");
-      expect(write, greaterThan(-1));
-      expect(count, greaterThan(write), reason: 'write first, then count');
+      expect(method, contains("(place['reportCount'] as num?)?.toInt() ?? 0) + 1"));
     });
 
     test('three hides it', () {
-      expect(repo, contains('reports.docs.length >= 3'));
-      expect(repo, contains("update({'isHidden': true})"));
+      expect(repo, contains("if (reportCount >= 3) 'isHidden': true,"));
+      expect(rules, contains("request.resource.data.get('reportCount', 0) >= 3"));
     });
 
     test('hiding is one-way in the rules', () {

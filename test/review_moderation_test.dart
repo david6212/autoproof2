@@ -49,9 +49,14 @@ void main() {
       // a garage's rating down one write at a time. The decrement is allowed
       // only when the caller's own review disappears in the same batch, or
       // for the operator.
+      //
+      // Since 05/10 the decrement is also exact: one, and exactly the rating
+      // of the review that is going (test/rules/place_integrity.mjs runs it).
       final place = block('match /places/{placeId} {');
-      expect(place, contains('exists(/databases/'));
-      expect(place, contains('!existsAfter(/databases/'));
+      expect(place, contains('let had = exists(r);'));
+      expect(place, contains('let has = existsAfter(r);'));
+      expect(place, contains('(had && !has)'));
+      expect(place, contains('after.ratingCount == before.ratingCount - 1'));
       expect(place, contains('|| isOperator()'));
     });
   });
