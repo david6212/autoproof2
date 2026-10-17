@@ -463,13 +463,14 @@ final deleteNoteProvider =
       ref.read(carRepositoryProvider).deleteNote(carId, noteId);
 });
 
-/// Reports a note for review. No-op if not signed in.
+/// Reports a note for review. False when not signed in, or when this person
+/// already has a report on it waiting for an answer.
 final reportNoteProvider =
-    Provider<Future<void> Function(String carId, String noteId)>((ref) {
+    Provider<Future<bool> Function(String carId, String noteId)>((ref) {
   return (carId, noteId) async {
     final user = ref.read(authStateProvider).valueOrNull;
-    if (user == null) return;
-    await ref.read(carRepositoryProvider).reportNote(
+    if (user == null) return false;
+    return ref.read(carRepositoryProvider).reportNote(
           carId: carId,
           noteId: noteId,
           reporterUid: user.uid,
@@ -477,25 +478,28 @@ final reportNoteProvider =
   };
 });
 
-/// Submits any correction or data-deletion request. No-op if not signed in.
-final submitCorrectionProvider =
-    Provider<Future<void> Function({required String kind, String carId, String note})>(
-        (ref) {
-  return ({required kind, carId = '', note = ''}) async {
+/// Submits a correction request about a listing. False when not signed in, or
+/// when this person already has one of this kind open on this listing.
+final submitCorrectionProvider = Provider<
+    Future<bool> Function(
+        {required String kind, required String carId, String note})>((ref) {
+  return ({required kind, required carId, note = ''}) async {
     final user = ref.read(authStateProvider).valueOrNull;
-    if (user == null) return;
-    await ref.read(carRepositoryProvider).submitCorrection(
+    if (user == null) return false;
+    final filed = await ref.read(carRepositoryProvider).submitCorrection(
           kind: kind,
           carId: carId,
           note: note,
           reporterUid: user.uid,
         );
+    // Nothing new was filed, so there is nothing new to mail either.
+    if (!filed) return false;
 
     // And then out to a human.
     //
-    // `data_corrections` is `allow read: if false` — no client can read it,
-    // by design, because the free-text field would otherwise be a public
-    // noticeboard. The consequence nobody had drawn: every request landed
+    // `data_corrections` is readable by the operator alone (`isOperator()`),
+    // and a reporter may fetch only their own request by its id — by design,
+    // because the free-text field would otherwise be a public noticeboard. The consequence nobody had drawn: every request landed
     // somewhere that is only visible by opening the Firebase console, while
     // the published policy promises an answer within 14 days. A promise whose
     // only mechanism is somebody remembering to look is not a mechanism.
@@ -511,5 +515,6 @@ final submitCorrectionProvider =
         if (note.isNotEmpty) 'פירוט: $note',
       ].join('\n'),
     );
+    return true;
   };
 });

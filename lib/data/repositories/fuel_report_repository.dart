@@ -13,8 +13,14 @@ class FuelReportRepository {
 
   final FirebaseFirestore _db;
 
+  /// `prices`, not `reports` (renamed 10/2026, SEC-26). Under the old name
+  /// the price-sorting query below could never be permitted: a
+  /// collection-group query needs a recursive rule, and a recursive rule on
+  /// `reports` would also have opened `places/*/reports` and every future
+  /// subcollection anyone named that. Reports under the old name were fresh
+  /// for hours and are not migrated.
   CollectionReference<Map<String, dynamic>> _reports(String stationId) =>
-      _db.collection('fuel_reports').doc(stationId).collection('reports');
+      _db.collection('fuel_reports').doc(stationId).collection('prices');
 
   /// Live tally for one station.
   Stream<FuelPriceTally> streamTally(String stationId, String? myUid) {
@@ -47,7 +53,7 @@ class FuelReportRepository {
   Future<Map<String, int>> recentMedians() async {
     final cutoff = DateTime.now().subtract(FuelPriceTally.freshness);
     final snap = await _db
-        .collectionGroup('reports')
+        .collectionGroup('prices')
         .where('at', isGreaterThan: Timestamp.fromDate(cutoff))
         .get();
 
@@ -55,7 +61,7 @@ class FuelReportRepository {
     for (final doc in snap.docs) {
       final agorot = (doc.data()['agorot'] as num?)?.toInt();
       if (agorot == null || !FuelReport.isPlausible(agorot)) continue;
-      // .../fuel_reports/{stationId}/reports/{uid}
+      // .../fuel_reports/{stationId}/prices/{uid}
       final stationId = doc.reference.parent.parent?.id;
       if (stationId == null) continue;
       byStation.putIfAbsent(stationId, () => []).add(agorot);
@@ -84,6 +90,8 @@ class FuelReportRepository {
       throw ArgumentError('price out of range');
     }
     return _reports(stationId).doc(uid).set({
+      // Repeats the document id so "delete my account" can find it.
+      'uid': uid,
       'agorot': agorot,
       'at': FieldValue.serverTimestamp(),
     });

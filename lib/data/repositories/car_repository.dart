@@ -274,34 +274,47 @@ class CarRepository {
   }
 
   /// Flags a note for admin review (e.g. defamatory / off-topic content).
-  Future<void> reportNote({
+  ///
+  /// Returns false when this person already has an unanswered report on this
+  /// note, so the screen can say so rather than pretend a second was filed.
+  Future<bool> reportNote({
     required String carId,
     required String noteId,
     required String reporterUid,
   }) {
-    return _db.collection('note_reports').add(unansweredReport({
-      'carId': carId,
-      'noteId': noteId,
-      'reporterUid': reporterUid,
-      'createdAt': FieldValue.serverTimestamp(),
-    }));
+    return fileOnce(
+      _db.collection('note_reports').doc(reportId([carId, noteId], reporterUid)),
+      {
+        'carId': carId,
+        'noteId': noteId,
+        'reporterUid': reporterUid,
+        'createdAt': FieldValue.serverTimestamp(),
+      },
+    );
   }
 
   /// One channel for every "this is wrong" and "delete my data" request, so a
   /// user never has to hunt for how to challenge something.
-  Future<void> submitCorrection({
+  ///
+  /// One open request per person, per kind, per listing — see [fileOnce].
+  Future<bool> submitCorrection({
     required String kind,
     required String reporterUid,
-    String carId = '',
+    required String carId,
     String note = '',
   }) {
-    return _db.collection('data_corrections').add(unansweredReport({
-      'kind': kind,
-      'carId': carId,
-      'reporterUid': reporterUid,
-      'note': note,
-      'createdAt': FieldValue.serverTimestamp(),
-    }));
+    return fileOnce(
+      _db
+          .collection('data_corrections')
+          .doc(reportId([kind, carId], reporterUid)),
+      {
+        'kind': kind,
+        'carId': carId,
+        'reporterUid': reporterUid,
+        'note': note,
+        'createdAt': FieldValue.serverTimestamp(),
+      },
+    );
   }
 
   // ---- Buyer journey progress (private, per buyer + car) ----

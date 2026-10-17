@@ -114,6 +114,32 @@ Map<String, Object?> unansweredReport(Map<String, Object?> fields) => {
       'handledAt': null,
     };
 
+/// The id of a report: its subject, then the reporter — `carId__noteId__uid`.
+///
+/// **This is the inbox's defence against being buried (SEC-23).** With
+/// auto-ids one account could file unlimited reports, and the inbox reads the
+/// oldest fifty per collection, so fifty junk rows hid every real request —
+/// including the data-subject requests the policy promises to answer within
+/// 14 days. The rules now accept only this exact id, built from the report's
+/// own fields, for a subject that exists: one open slot per person per subject.
+String reportId(List<String> subject, String reporterUid) =>
+    [...subject, reporterUid].join('__');
+
+/// Files [fields] at [ref] unless this person already has it open there.
+///
+/// Returns false for a report still waiting for an answer. One that has been
+/// handled may be filed again — the same thing can go wrong twice — and the
+/// rules allow exactly that reopening (`reopensOwnHandledReport`).
+Future<bool> fileOnce(
+  DocumentReference<Map<String, dynamic>> ref,
+  Map<String, Object?> fields,
+) async {
+  final existing = (await ref.get()).data();
+  if (existing != null && existing['handledAt'] == null) return false;
+  await ref.set(unansweredReport(fields));
+  return true;
+}
+
 /// The requests the operator has promised to answer.
 ///
 /// **This exists because the promise had no delivery.** The privacy policy, the

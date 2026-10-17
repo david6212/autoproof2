@@ -73,31 +73,45 @@ class EscortRepository {
     required EscortPro profile,
     bool certificateUploaded = false,
   }) async {
+    final proRef = _pros.doc(uid);
+    final appRef = _db.collection(InboxKind.proApplication.collection).doc(uid);
+    final isFirst = !(await proRef.get()).exists;
+    final application = (await appRef.get()).data();
+
     final batch = _db.batch();
 
     batch.set(
-      _pros.doc(uid),
+      proRef,
       {
         ...profile.toFirestore(),
         'certStatus': certificateUploaded
             ? CertificateStatus.pending.id
             : CertificateStatus.none.id,
-        'createdAt': FieldValue.serverTimestamp(),
+        // Only on the first application. A fresh timestamp on an edit is a
+        // changed field the owner may not write — the rule freezes it so the
+        // profile's age cannot be reset — and it took the whole batch down
+        // with it: no edit, and no word to the operator (SEC-28).
+        if (isFirst) 'createdAt': FieldValue.serverTimestamp(),
       },
       SetOptions(merge: true),
     );
 
-    batch.set(
-      _db.collection(InboxKind.proApplication.collection).doc(uid),
-      unansweredReport({
-        'reporterUid': uid,
-        'proId': uid,
-        'note': profile.displayName,
-        'claimedLicence': profile.claimedLicence ?? '',
-        'certificateUploaded': certificateUploaded,
-        'createdAt': FieldValue.serverTimestamp(),
-      }),
-    );
+    // A request still waiting already tells the operator to look; a second
+    // one would be a duplicate the rules refuse. One that has been answered is
+    // filed again, because an edited profile needs a fresh look.
+    if (application == null || application['handledAt'] != null) {
+      batch.set(
+        appRef,
+        unansweredReport({
+          'reporterUid': uid,
+          'proId': uid,
+          'note': profile.displayName,
+          'claimedLicence': profile.claimedLicence ?? '',
+          'certificateUploaded': certificateUploaded,
+          'createdAt': FieldValue.serverTimestamp(),
+        }),
+      );
+    }
 
     await batch.commit();
   }

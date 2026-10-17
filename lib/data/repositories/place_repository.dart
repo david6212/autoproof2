@@ -222,18 +222,18 @@ class PlaceRepository {
     required String reporterUid,
     String reason = '',
   }) async {
-    final ref = _db
-        .collection('review_reports')
-        .doc('${placeId}__${reviewUid}__$reporterUid');
-    if ((await ref.get()).exists) return false;
-    await ref.set(unansweredReport({
-      'placeId': placeId,
-      'reviewUid': reviewUid,
-      'reporterUid': reporterUid,
-      'note': reason.trim(),
-      'createdAt': FieldValue.serverTimestamp(),
-    }));
-    return true;
+    return fileOnce(
+      _db
+          .collection('review_reports')
+          .doc(reportId([placeId, reviewUid], reporterUid)),
+      {
+        'placeId': placeId,
+        'reviewUid': reviewUid,
+        'reporterUid': reporterUid,
+        'note': reason.trim(),
+        'createdAt': FieldValue.serverTimestamp(),
+      },
+    );
   }
 
   /// Hides a reported review — **hides, not deletes**.

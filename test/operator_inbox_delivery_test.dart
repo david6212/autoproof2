@@ -82,8 +82,12 @@ void main() {
           .readAsStringSync();
       final place = File('lib/data/repositories/place_repository.dart')
           .readAsStringSync();
-      expect("$car$place".split('unansweredReport(').length - 1, 3,
+      // Since SEC-23 all three go through `fileOnce`, which wraps them.
+      expect("$car$place".split('fileOnce(').length - 1, 3,
           reason: 'note_reports, data_corrections and review_reports');
+      final inbox = File('lib/data/repositories/operator_inbox_repository.dart')
+          .readAsStringSync();
+      expect(inbox, contains('await ref.set(unansweredReport(fields));'));
     });
   });
 

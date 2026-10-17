@@ -75,6 +75,10 @@ void main() {
       'hiddenByOperator': true,
     });
     await db.doc('places/p1/reports/$me').set({'reporterUid': me});
+    await db.doc('fuel_reports/st1/prices/$me').set({'uid': me, 'agorot': 700});
+    await db.doc('fuel_reports/st1/prices/$other').set({'uid': other, 'agorot': 710});
+    await db.doc('escort_pros/$me').set({'displayName': 'דוד', 'town': 'חיפה'});
+    await db.doc('pro_applications/$me').set({'reporterUid': me, 'claimedLicence': '123'});
     await db.doc('places/p1/reports/$other').set({'reporterUid': other});
 
     await repo.deleteEverything();
@@ -118,6 +122,15 @@ void main() {
     test('a "does not exist" report', () async {
       expect(await exists('places/p1/reports/$me'), isFalse);
     });
+
+    test('a fuel price report', () async {
+      expect(await exists('fuel_reports/st1/prices/$me'), isFalse);
+    });
+
+    test('a professional profile and its application (SEC-27)', () async {
+      expect(await exists('escort_pros/$me'), isFalse);
+      expect(await exists('pro_applications/$me'), isFalse);
+    });
   });
 
   group('what was somebody else\'s is untouched', () {
@@ -125,6 +138,10 @@ void main() {
       expect(await exists('cars/theirs'), isTrue);
       expect(await exists('cars/theirs/notes/n-theirs'), isTrue);
       expect(await exists('cars/theirs/buyer_likes/$other'), isTrue);
+    });
+
+    test('their fuel price', () async {
+      expect(await exists('fuel_reports/st1/prices/$other'), isTrue);
     });
 
     test('their review and their report', () async {

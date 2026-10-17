@@ -100,8 +100,12 @@ void main() {
       expect(operatorUpdate, contains("'isHidden'"));
     });
 
-    test('a profile is never deleted, only hidden', () {
-      expect(pros, contains('allow delete: if false'));
+    test('a profile is never deleted by a live account, only hidden', () {
+      // The one exception is leaving altogether (SEC-27): a public profile
+      // must not outlive the person. Executed in inbox_fuel_escort.mjs.
+      expect(pros, contains('allow delete: if isSignedIn() && proId == request.auth.uid'));
+      expect(pros, contains('&& isErasingAccount();'));
+      expect(pros, isNot(contains('allow delete: if true')));
     });
 
     test('the application lands in the fourteen-day inbox', () {
@@ -110,7 +114,10 @@ void main() {
       final apps = block('match /pro_applications/{applicationId} {');
       expect(apps, contains('allow read: if isOperator()'));
       expect(apps, contains("hasOnly(['handledAt'])"));
-      expect(apps, contains('allow delete: if false'));
+      // Resubmitting only after an answer, and deletion only on leaving.
+      expect(apps, contains('&& reopensOwnHandledReport();'));
+      expect(apps, contains('&& isErasingAccount();'));
+      expect(apps, isNot(contains('allow delete: if isSignedIn();')));
     });
   });
 

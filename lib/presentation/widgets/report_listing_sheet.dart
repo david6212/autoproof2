@@ -36,10 +36,10 @@ String reportNote(ReportReason reason, String detail) {
 /// Reports a whole listing.
 ///
 /// Goes to the same `data_corrections` collection as every other "this is
-/// wrong" request, so there is one queue and no new rules. Unlike a visitor
-/// note, a report is never shown to anyone — that collection denies all
-/// client reads — which is why the free-text box here is unrestricted where
-/// note text is not.
+/// wrong" request, so there is one queue. Unlike a visitor
+/// note, a report is never shown to anyone but the operator — and its own
+/// author, by its id — which is why the free-text box here is freer than
+/// note text.
 Future<void> showReportListing(
   BuildContext context,
   WidgetRef ref, {
@@ -61,13 +61,13 @@ Future<void> showReportListing(
     builder: (_) => _ReportSheet(carId: carId, ref: ref),
   );
 
-  if (sent == true && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('הדיווח נשלח. נבדוק אותו ונטפל בהתאם.'),
-      ),
-    );
-  }
+  // null is a sheet closed without sending.
+  if (sent == null || !context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: Text(sent
+        ? 'הדיווח נשלח. נבדוק אותו ונטפל בהתאם.'
+        : 'כבר דיווחתם על המודעה הזו, והדיווח ממתין לבדיקה.'),
+  ));
 }
 
 class _ReportSheet extends StatefulWidget {
@@ -96,13 +96,14 @@ class _ReportSheetState extends State<_ReportSheet> {
     setState(() => _sending = true);
 
     final detail = _detail.text.trim();
-    await widget.ref.read(submitCorrectionProvider).call(
+    final filed = await widget.ref.read(submitCorrectionProvider).call(
           kind: 'listing_report',
           carId: widget.carId,
           note: reportNote(_reason!, detail),
         );
 
-    if (mounted) Navigator.pop(context, true);
+    // true: filed. false: this person already has one open on this listing.
+    if (mounted) Navigator.pop(context, filed);
   }
 
   @override

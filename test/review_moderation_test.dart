@@ -71,16 +71,31 @@ void main() {
     test('one report per person per review', () {
       // The id ends in the reporter's uid; a second report is an update, and
       // only the operator may update a report.
+      //
+      // Since SEC-23 the id must be EXACTLY place__review__reporter, rebuilt
+      // from the report's own fields — the old `.*__uid` accepted any prefix.
       final r = block('match /review_reports/{reportId}');
-      expect(r, contains("reportId.matches('.*__' + request.auth.uid)"));
+      expect(r, contains('reviewReportShape(reportId)'));
+      expect(rules, contains(
+          "reportId == d.placeId + '__' + d.reviewUid + '__' + request.auth.uid"));
+      expect(r, isNot(contains(".matches('.*__'")));
       expect(r, contains('allow read: if isOperator()'));
       expect(r, contains('allow delete: if false'));
-      expect(repo, contains(r"'${placeId}__${reviewUid}__$reporterUid'"));
+      expect(repo, contains('.doc(reportId([placeId, reviewUid], reporterUid))'));
     });
 
     test('a duplicate is said to be a duplicate', () {
       // Not pretended to be a fresh report.
-      expect(repo, contains('if ((await ref.get()).exists) return false;'));
+      // The check goes through `fileOnce`, and the rules now let a reporter
+      // make it (`isOwnReportId`) — before SEC-23 only the operator could, so
+      // the duplicate test itself was refused for everyone else.
+      expect(repo, contains('return fileOnce('));
+      final inbox = File('lib/data/repositories/operator_inbox_repository.dart')
+          .readAsStringSync();
+      expect(inbox, contains(
+          "if (existing != null && existing['handledAt'] == null) return false;"));
+      expect(block('match /review_reports/{reportId}'),
+          contains('allow get: if isOwnReportId(reportId);'));
     });
 
     test('lands in the operator inbox under the same fourteen days', () {

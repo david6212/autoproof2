@@ -124,11 +124,13 @@ class CarNotesSection extends ConsumerWidget {
       ),
     );
     if (confirm != true) return;
-    await ref.read(reportNoteProvider).call(carId, noteId);
+    final filed = await ref.read(reportNoteProvider).call(carId, noteId);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('תודה — הדיווח נשלח לבדיקה.')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(filed
+            ? 'תודה — הדיווח נשלח לבדיקה.'
+            : 'כבר דיווחתם על ההערה הזו, והדיווח ממתין לבדיקה.'),
+      ));
     }
   }
 

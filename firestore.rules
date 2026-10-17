@@ -28,6 +28,66 @@ service cloud.firestore {
       return name is string && name.matches('[^ ]{1,30}( [^ ][.])?');
     }
 
+    // ---- The operator inbox: one open slot per person per subject ----
+    //
+    // Until 10/2026 `note_reports` and `data_corrections` took auto-ids, and
+    // `review_reports` checked its id with an unanchored `.*__uid`. One
+    // account could file unlimited rows, and the inbox reads the oldest fifty
+    // per collection — so fifty junk rows hid every real request, including
+    // the data-subject requests the policy promises to answer in 14 days
+    // (SEC-23). Now the id must be EXACTLY subject__reporter, built from the
+    // report's own fields, for a subject that exists.
+    function isPlainId(s) {
+      return s is string && s.matches('[A-Za-z0-9-]{1,64}');
+    }
+
+    // A reporter may read their own report by its id — which is how the
+    // client knows a second one would be a duplicate. Works for a document
+    // that does not exist yet, because it asks only the id.
+    function isOwnReportId(reportId) {
+      return isSignedIn()
+             && reportId.split('__').size() == 3
+             && reportId.split('__')[2] == request.auth.uid;
+    }
+
+    // Once the operator has answered, the reporter may file the same thing
+    // again in the same slot: the same thing can go wrong twice. An unanswered
+    // one stays exactly as it is.
+    function reopensOwnHandledReport() {
+      return isSignedIn()
+             && resource.data.reporterUid == request.auth.uid
+             && resource.data.get('handledAt', null) != null
+             && request.resource.data.get('handledAt', null) == null
+             && request.resource.data.createdAt == request.time;
+    }
+
+    function noteReportShape(reportId) {
+      let d = request.resource.data;
+      return d.reporterUid == request.auth.uid
+             && isPlainId(d.carId) && isPlainId(d.noteId)
+             && reportId == d.carId + '__' + d.noteId + '__' + request.auth.uid
+             && exists(/databases/$(database)/documents/cars/$(d.carId)/notes/$(d.noteId));
+    }
+
+    function reviewReportShape(reportId) {
+      let d = request.resource.data;
+      return d.reporterUid == request.auth.uid
+             && isPlainId(d.placeId) && isPlainId(d.reviewUid)
+             && reportId == d.placeId + '__' + d.reviewUid + '__' + request.auth.uid
+             && d.get('note', '') is string && d.get('note', '').size() <= 1000
+             && exists(/databases/$(database)/documents/places/$(d.placeId)/reviews/$(d.reviewUid));
+    }
+
+    function correctionShape(requestId) {
+      let d = request.resource.data;
+      return d.reporterUid == request.auth.uid
+             && d.kind in ['plate_history', 'listing_report']
+             && isPlainId(d.carId)
+             && requestId == d.kind + '__' + d.carId + '__' + request.auth.uid
+             && d.get('note', '') is string && d.get('note', '').size() <= 1000
+             && exists(/databases/$(database)/documents/cars/$(d.carId));
+    }
+
     // ---- Finding what an account wrote on other people's things ----
     //
     // "Delete my account" has to reach notes, likes, journeys, reviews and
@@ -50,6 +110,12 @@ service cloud.firestore {
     }
     match /{path=**}/reviews/{reviewId} {
       allow read: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+    // Fuel prices are public one station at a time already; this lets the
+    // map sort every station by price in one query. Safe as `if true` only
+    // because nothing else is, or may ever be, called `prices`.
+    match /{path=**}/prices/{priceId} {
+      allow read: if true;
     }
     match /{path=**}/reports/{reportId} {
       allow read: if isSignedIn() && resource.data.reporterUid == request.auth.uid;
@@ -313,10 +379,15 @@ service cloud.firestore {
     // The price bounds are enforced HERE and not only in the client: a client
     // check stops a typo, a rules check stops someone posting 0.01 ₪ to make a
     // station look cheap. 300–1500 agorot is 3–15 ₪ a litre.
-    match /fuel_reports/{stationId}/reports/{uid} {
+    //
+    // `prices`, not `reports` (SEC-26): the price-sorting query is a
+    // collection group, which needs the recursive rule below, and a recursive
+    // rule on `reports` would reach `places/*/reports` too.
+    match /fuel_reports/{stationId}/prices/{uid} {
       allow read: if true;
       allow write: if isSignedIn()
                    && request.auth.uid == uid
+                   && request.resource.data.uid == uid
                    && request.resource.data.agorot is int
                    && request.resource.data.agorot >= 300
                    && request.resource.data.agorot <= 1500
@@ -662,8 +733,9 @@ service cloud.firestore {
     // note landed here and waited for somebody to remember to open a console.
     match /note_reports/{reportId} {
       allow read: if isOperator();
-      allow create: if isSignedIn()
-                    && request.resource.data.reporterUid == request.auth.uid;
+      allow get: if isOwnReportId(reportId);
+      allow create: if isSignedIn() && noteReportShape(reportId);
+      allow update: if reopensOwnHandledReport() && noteReportShape(reportId);
       // Marking one handled writes a timestamp and nothing else: the report
       // itself is the record of what was said, and an operator who can edit
       // complaints about their own product can edit the evidence.
@@ -743,27 +815,39 @@ service cloud.firestore {
                                    'garageLicence', 'garageName', 'garageTown',
                                    'isHidden', 'hiddenAt']);
 
-      allow delete: if false;
+      // Never by a live account — the record of what was published is what a
+      // complaint is judged against. But a public profile with a display name
+      // and an area must not outlive the person who leaves (SEC-27): the same
+      // erasure exception the passport makes.
+      allow delete: if isSignedIn() && proId == request.auth.uid
+                    && isErasingAccount();
     }
 
     // The applications queue, under the same fourteen-day promise as every
     // other inbox collection — same shape, same `handledAt`, same locks.
     match /pro_applications/{applicationId} {
       allow read: if isOperator();
+      // The applicant reads their own, to know whether one is still waiting.
+      allow get: if isSignedIn() && applicationId == request.auth.uid;
       allow create: if isSignedIn()
                     && applicationId == request.auth.uid
                     && request.resource.data.reporterUid == request.auth.uid;
+      // Resubmitting after an answer (SEC-28); never while one is waiting.
+      allow update: if applicationId == request.auth.uid
+                    && reopensOwnHandledReport();
       allow update: if isOperator()
                     && request.resource.data.diff(resource.data)
                          .affectedKeys().hasOnly(['handledAt']);
-      allow delete: if false;
+      // It carries the licence number they typed; it leaves with them.
+      allow delete: if isSignedIn() && applicationId == request.auth.uid
+                    && isErasingAccount();
     }
 
     match /review_reports/{reportId} {
       allow read: if isOperator();
-      allow create: if isSignedIn()
-                    && request.resource.data.reporterUid == request.auth.uid
-                    && reportId.matches('.*__' + request.auth.uid);
+      allow get: if isOwnReportId(reportId);
+      allow create: if isSignedIn() && reviewReportShape(reportId);
+      allow update: if reopensOwnHandledReport() && reviewReportShape(reportId);
       allow update: if isOperator()
                     && request.resource.data.diff(resource.data)
                          .affectedKeys().hasOnly(['handledAt']);
@@ -775,8 +859,9 @@ service cloud.firestore {
     // a seller challenging community reports about their own listing.
     match /data_corrections/{requestId} {
       allow read: if isOperator();
-      allow create: if isSignedIn()
-                    && request.resource.data.reporterUid == request.auth.uid;
+      allow get: if isOwnReportId(requestId);
+      allow create: if isSignedIn() && correctionShape(requestId);
+      allow update: if reopensOwnHandledReport() && correctionShape(requestId);
       allow update: if isOperator()
                     && request.resource.data.diff(resource.data)
                          .affectedKeys().hasOnly(['handledAt']);

@@ -170,13 +170,15 @@ class PlateHistoryCard extends ConsumerWidget {
   }
 
   Future<void> _reportWrong(BuildContext context, WidgetRef ref) async {
-    await ref
+    final filed = await ref
         .read(submitCorrectionProvider)
         .call(kind: 'plate_history', carId: car.id);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('הבקשה נשלחה לבדיקה. תודה.')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(filed
+            ? 'הבקשה נשלחה לבדיקה. תודה.'
+            : 'כבר שלחתם בקשה על המודעה הזו, והיא ממתינה לבדיקה.'),
+      ));
     }
   }
 

@@ -58,8 +58,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 ///
 /// ## What it still does not reach
 ///
-/// - Documents written **before** the uid field existed (likes and journeys
-///   before 10/2026): the query cannot see them. None carries a name.
+/// - Documents written **before** the uid field existed (likes, journeys and
+///   fuel prices before 10/2026): the query cannot see them. None carries a
+///   name, and fuel reports under their old `reports` name expire anyway.
 /// - A `seller_likes` entry another seller wrote about this buyer: it is that
 ///   seller's record, keyed by this uid, and only they may delete it.
 /// - Complaints filed to the operator (`note_reports`, `review_reports`,
@@ -167,6 +168,9 @@ class AccountDeletionRepository {
     await _deleteAll(_firestore
         .collectionGroup('journeys')
         .where('uid', isEqualTo: uid));
+    await _deleteAll(_firestore
+        .collectionGroup('prices')
+        .where('uid', isEqualTo: uid));
     // A "this place does not exist" report. The place's `reportCount` stays
     // where it is: a hide is one-way, and recounting downwards would let an
     // account file, hide, delete itself and leave a place hidden with fewer
@@ -175,6 +179,12 @@ class AccountDeletionRepository {
         .collectionGroup('reports')
         .where('reporterUid', isEqualTo: uid));
     await _withdrawReviews(uid);
+
+    // A professional's public profile — a display name, an area and a price —
+    // and the application behind it, which carries the licence number they
+    // typed (SEC-27). Both keyed by uid.
+    await _firestore.collection('escort_pros').doc(uid).delete();
+    await _firestore.collection('pro_applications').doc(uid).delete();
 
     // 6. The credential itself.
     try {
