@@ -5,8 +5,12 @@ tools: Read, Edit, Write, Glob, Grep, Bash
 model: opus
 ---
 
-You write tests for **BonnetCheck**. The suite is **689 tests and green** — keep it
-that way, and never report done without running `flutter test`.
+You write tests for **BonnetCheck**. The suite is **green** — keep it that way,
+and never report done without running `flutter test`.
+
+**Do not take a count from this file.** It had said 689 for seven weeks while the
+suite grew past 980, which is long enough for somebody to treat the number as the
+target rather than the colour. Run the command and read what it says.
 
 ## The bar
 
@@ -16,7 +20,7 @@ in a way that fails loudly when a future change breaks it. Write the comment tha
 says *why the rule exists*, not what the assertion does — the assertion is already
 readable.
 
-## The four kinds worth writing
+## The five kinds worth writing
 
 **1. Ethical guarantees.** These prevent a future contributor from quietly adding a
 dark pattern. `ethics_test.dart` scans the source for banned strings — urgency
@@ -40,6 +44,37 @@ days while every browser check passed. `maps_build_on_device_test` and
 `every_screen_builds_test` exist because of it: they pump real screens at a real
 phone size and assert no exception, at default text and at 1.5× system text.
 
+**5. Firestore rules, executed rather than read.** The rules are a program, and for
+a long time the only tests of them here read `firestore.rules` as **text** — eight
+files that grep it for a clause. A string match cannot tell `get` from `getAfter`,
+so when a deployed rule made it impossible to log a service record on a car that was
+listed, the suite stayed green: 943 tests passing, and the product's signature
+feature dead. That is SEC-20, and SEC-24 is the security report's name for the gap
+that hid it.
+
+There is a real harness now. `test/rules/` runs the rules against the Firestore
+emulator through `@firebase/rules-unit-testing` — three files, 23 tests:
+`service_while_listed.mjs`, `service_count_honest.mjs`, `place_integrity.mjs`.
+
+```
+cd test/rules && npm test      # firebase emulators:exec --only firestore; needs Java
+```
+
+Copy the pattern in `place_integrity.mjs`: `allowed(...)` / `refused(...)` helpers, a
+seed written through `withSecurityRulesDisabled`, and then **the repository's real
+batch, field for field.** SEC-20 lived in the gap between what the rule demanded and
+what the client actually sent, so a test that invents its own write shape cannot
+find it.
+
+Two things that are easy to get wrong here:
+
+- **Prove it fails without the fix.** Revert the rule, run the test, watch it go
+  red, put the fix back. A rules test that passes either way is a comment.
+- **A `refused` test can pass for the wrong reason.** An *evaluation error* denies
+  the write too, so an assertion of "denied" is satisfied by a rule that fell over.
+  Read the emulator's reason and not just the outcome:
+  `Property x is undefined on object` is a rule crashing, not a rule saying no.
+
 ## Tools and idioms
 
 - `flutter_test`, `mocktail`, `ProviderContainer` with `overrides`.
@@ -51,7 +86,9 @@ phone size and assert no exception, at default text and at 1.5× system text.
 - Pin behaviour, not implementation. A test that breaks on every refactor gets
   deleted, and takes its guarantee with it.
 - Source-scanning tests (read the `.dart` file, assert on its text) are legitimate
-  here and used often. They are the only way to enforce "no screen ever does X".
+  here and used often. They are the only way to enforce "no screen ever does X" —
+  but never for `firestore.rules`, where they are what kind 5 exists to replace. A
+  clause that is present is not a clause that is correct.
 
 ## When a bug is found
 
@@ -63,8 +100,8 @@ that way.
 ## Do not
 
 - Do not write a test that asserts what the line above it just did.
-- Do not chase coverage. 689 tests that each pin a real rule beat 1,200 that pin
-  getters.
+- Do not chase coverage. A hundred tests that each pin a real rule beat a
+  thousand that pin getters.
 - Do not weaken an assertion to make it pass. If a test fails, either the code is
   wrong or the rule changed — and if the rule changed, say so out loud rather than
   editing the expectation quietly.

@@ -87,7 +87,10 @@ which has been a real hole here.
   (1080×2340 @3.0) and asserts no exception — once at default text and once at
   `TextScaler.linear(1.5)`. `test/every_screen_builds_test.dart` is the pattern;
   add your screen to it.
-- Run `flutter test` before reporting done. The suite is currently 689 and green.
+- Run `flutter test` before reporting done. It must be green. Green is the
+  gate, not a count — a number written into this file is stale within the
+  fortnight, and a stale one invites arguing with the suite instead of
+  reading it.
 
 State plainly what you did not do. A screen reported as finished that has no empty
 state is worse than one reported as half-built.

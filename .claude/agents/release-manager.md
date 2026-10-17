@@ -25,7 +25,7 @@ downgrade.
 
 ```
 flutter analyze          # must be clean
-flutter test             # 689 and green
+flutter test             # must be green
 git status --short       # must be empty
 git rev-list --left-right --count HEAD...origin/main   # must be 0 0
 ```
