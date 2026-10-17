@@ -47,14 +47,24 @@ import 'package:firebase_auth/firebase_auth.dart';
 /// deleting the credential first would strand the data it was meant to take
 /// with it.
 ///
-/// ## What this deliberately does not reach
+/// ## What it reaches in other people's collections
 ///
-/// Documents this user wrote inside **other people's** collections that are
-/// keyed by uid — a fuel-price report, a garage review, a like or a journey on
-/// somebody else's listing. Finding them needs a `collectionGroup` query per
-/// collection, an index for each, and `list` permission the rules do not grant.
-/// None of them carries a name, an address or a plate. They are a known
-/// residue, recorded here rather than quietly left out.
+/// Since 10/2026, step 5 also finds what this account wrote on somebody
+/// else's listing or place — notes, likes, journeys, garage reviews and
+/// "does not exist" reports — through collection-group queries. Each needs a
+/// field that repeats the uid, a recursive rule granting the author `list`,
+/// and a collection-group index (`firestore.indexes.json`). The old residue
+/// note claimed none of it carried a name; a note and a review both did.
+///
+/// ## What it still does not reach
+///
+/// - Documents written **before** the uid field existed (likes and journeys
+///   before 10/2026): the query cannot see them. None carries a name.
+/// - A `seller_likes` entry another seller wrote about this buyer: it is that
+///   seller's record, keyed by this uid, and only they may delete it.
+/// - Complaints filed to the operator (`note_reports`, `review_reports`,
+///   `data_corrections`): kept as the record of how a complaint was handled.
+/// - Chat messages: a conversation has a second party.
 class AccountDeletionRepository {
   AccountDeletionRepository({FirebaseAuth? auth, FirebaseFirestore? firestore})
       : _auth = auth ?? FirebaseAuth.instance,
@@ -102,7 +112,17 @@ class AccountDeletionRepository {
         await _deleteAll(document.reference.collection('file'));
         await document.reference.delete();
       }
-      for (final sub in const ['services', 'reminders', 'expenses']) {
+      // The same descent for service records: since 26/09 an invoice image
+      // lives at `services/{id}/file/blob`, one level below its record. A flat
+      // sweep of `services` left every one of them behind, and unreachable —
+      // its rule asks the vehicle above it, which is gone a moment later
+      // (SEC-17).
+      final services = await vehicle.reference.collection('services').get();
+      for (final service in services.docs) {
+        await _deleteAll(service.reference.collection('file'));
+        await service.reference.delete();
+      }
+      for (final sub in const ['reminders', 'expenses']) {
         await _deleteAll(vehicle.reference.collection(sub));
       }
       await vehicle.reference.delete();
@@ -133,7 +153,30 @@ class AccountDeletionRepository {
       await listing.reference.delete();
     }
 
-    // 5. The credential itself.
+    // 5. What this person wrote on other people's things. Until 10/2026 this
+    //    was a "known residue" on the grounds that none of it carried a name —
+    //    and a note and a review both did, in full (SEC-18, SEC-19). Each is
+    //    found by a collection-group query on a field that repeats the uid,
+    //    because such a query cannot filter on a document id.
+    await _deleteAll(_firestore
+        .collectionGroup('notes')
+        .where('authorUid', isEqualTo: uid));
+    await _deleteAll(_firestore
+        .collectionGroup('buyer_likes')
+        .where('uid', isEqualTo: uid));
+    await _deleteAll(_firestore
+        .collectionGroup('journeys')
+        .where('uid', isEqualTo: uid));
+    // A "this place does not exist" report. The place's `reportCount` stays
+    // where it is: a hide is one-way, and recounting downwards would let an
+    // account file, hide, delete itself and leave a place hidden with fewer
+    // reports than the rules required.
+    await _deleteAll(_firestore
+        .collectionGroup('reports')
+        .where('reporterUid', isEqualTo: uid));
+    await _withdrawReviews(uid);
+
+    // 6. The credential itself.
     try {
       await user.delete();
     } on FirebaseAuthException catch (e) {
@@ -141,6 +184,44 @@ class AccountDeletionRepository {
         throw AccountDeletionNeedsRecentLogin();
       }
       rethrow;
+    }
+  }
+
+  /// Withdraws every garage review this account wrote, taking each rating
+  /// back out of its place's score.
+  ///
+  /// Not a plain delete: the rules bind a review to the aggregate it moved
+  /// (SEC-01), so a review deleted on its own is refused — and rightly, or the
+  /// score would keep a vote whose author is gone. The same arithmetic
+  /// `PlaceRepository.deleteReview` uses, one place per batch.
+  Future<void> _withdrawReviews(String uid) async {
+    final reviews = await _firestore
+        .collectionGroup('reviews')
+        .where('authorUid', isEqualTo: uid)
+        .get();
+    for (final review in reviews.docs) {
+      final place = review.reference.parent.parent;
+      // Only `places/{id}/reviews` carries `authorUid`; anything else named
+      // `reviews` is not ours to interpret.
+      if (place == null) continue;
+      final data = review.data();
+      // A hidden review's rating already left the score when it was hidden.
+      if (data['hiddenByOperator'] == true) {
+        await review.reference.delete();
+        continue;
+      }
+      final rating = (data['rating'] as num?)?.toInt() ?? 0;
+      final placeData = (await place.get()).data() ?? const <String, dynamic>{};
+      final count = ((placeData['ratingCount'] as num?)?.toInt() ?? 0) - 1;
+      final sum = ((placeData['ratingSum'] as num?)?.toInt() ?? 0) - rating;
+      final batch = _firestore.batch();
+      batch.delete(review.reference);
+      batch.update(place, {
+        'ratingCount': count,
+        'ratingSum': sum,
+        'ratingAvg': count <= 0 ? 0 : sum / count,
+      });
+      await batch.commit();
     }
   }
 

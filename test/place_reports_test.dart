@@ -34,7 +34,13 @@ void main() {
       // hidden with nothing on record explaining why.
       final block = rules.substring(
           rules.indexOf('match /places/{placeId}/reports/{reporterUid}'));
-      expect(block, contains('allow update, delete: if false'));
+      expect(block, contains('allow update: if false;'));
+      // Deletion only by leaving altogether — the same erasure exception
+      // service records make. A live account cannot withdraw a report
+      // (executed in test/rules/account_erasure.mjs).
+      expect(block, contains(
+          'allow delete: if isErasingAccount() && request.auth.uid == reporterUid;'));
+      expect(block, isNot(contains('allow delete: if isSignedIn()')));
     });
   });
 

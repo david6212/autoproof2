@@ -1,3 +1,5 @@
+import '../../core/utils/public_name.dart';
+
 /// One person's review of a garage or a car wash.
 ///
 /// **The document id is the author's uid.** That is not a shortcut — it is
@@ -65,13 +67,10 @@ class PlaceReview {
   ///
   /// A review is public and attached to a named business, and the author did
   /// not agree to have their full name sit under an opinion of it forever.
-  String get displayName {
-    final parts = authorName.trim().split(RegExp(r'\s+'))
-      ..removeWhere((p) => p.isEmpty);
-    if (parts.isEmpty) return 'מבקר';
-    if (parts.length == 1) return parts.first;
-    return '${parts.first} ${parts[1].substring(0, 1)}.';
-  }
+  ///
+  /// The writer already stores this form; passing it through again here is
+  /// for reviews written before 10/2026, which carry the full name.
+  String get displayName => publicName(authorName);
 
   factory PlaceReview.fromFirestore(Map<String, dynamic> data, String uid) {
     int? asIntOrNull(Object? v) =>
@@ -107,6 +106,10 @@ class PlaceReview {
         if (vehicleId != null) 'vehicleId': vehicleId,
         'serviceRecordIds': serviceRecordIds,
         'authorName': authorName,
+        // The uid is the document id too; it is repeated as a field so that
+        // "delete my account" can find this review with a collection-group
+        // query, which cannot filter on a document id alone.
+        'authorUid': uid,
         'createdAt': createdAt,
         if (editedAt != null) 'editedAt': editedAt,
       };

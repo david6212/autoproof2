@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/utils/public_name.dart';
 import '../../data/models/place.dart';
 import '../../data/models/place_review.dart';
 import '../../data/repositories/place_repository.dart';
@@ -100,7 +101,9 @@ class PlaceReviewActions {
             vehicleModel: vehicleModel,
             vehicleId: vehicleId,
             serviceRecordIds: serviceRecordIds,
-            authorName: name,
+            // Shortened BEFORE it is written: the review is world-readable,
+            // and the rules refuse a full name (SEC-19).
+            authorName: publicName(name),
             createdAt: DateTime.now(),
           ),
         );

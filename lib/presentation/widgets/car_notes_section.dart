@@ -8,6 +8,7 @@ import '../providers/analytics_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cars_provider.dart';
 import '../../core/theme/app_text.dart';
+import '../../core/utils/public_name.dart';
 import 'app_card.dart';
 import 'login_required_sheet.dart';
 
@@ -166,8 +167,10 @@ class _NoteTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final trimmed = note.authorName.trim();
-    final initial = trimmed.isNotEmpty ? trimmed.substring(0, 1) : '?';
+    // Through `publicName` even though new notes are stored shortened: notes
+    // written before 10/2026 carry the Google display name in full.
+    final shown = publicName(note.authorName);
+    final initial = String.fromCharCode(shown.runes.first);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -191,7 +194,7 @@ class _NoteTile extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(note.authorName,
+                child: Text(shown,
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,

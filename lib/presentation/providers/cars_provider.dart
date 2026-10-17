@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../widgets/support_contact.dart';
+import '../../core/utils/public_name.dart';
 import '../../data/models/car_model.dart';
 import '../../data/models/car_note_model.dart';
 import '../../data/models/plate_snapshot_model.dart';
@@ -447,7 +448,9 @@ final addNoteProvider =
     await ref.read(carRepositoryProvider).addNote(
           carId: carId,
           authorUid: user.uid,
-          authorName: name,
+          // Shortened BEFORE it is written: a note is readable without an
+          // account, and the rules refuse a full name (SEC-18).
+          authorName: publicName(name),
           tags: tags,
         );
   };

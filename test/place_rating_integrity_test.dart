@@ -139,7 +139,7 @@ void main() {
     test('a report cannot be filed without moving the count', () {
       final reports = rules.substring(
           rules.indexOf('match /places/{placeId}/reports/{reporterUid}'));
-      expect(reports.substring(0, reports.indexOf('allow update, delete')),
+      expect(reports.substring(0, reports.indexOf('allow update: if false')),
           contains(r'getAfter(/databases/$(database)/documents/places/$(placeId))'));
     });
 

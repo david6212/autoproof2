@@ -17,6 +17,44 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // The most a world-readable document may say about who wrote it: one
+    // word, and at most an initial after it — "מיכל ש.". Until 10/2026 the
+    // screen showed that while the document stored the Google display name in
+    // full, readable without an account (SEC-18, SEC-19). The client shortens
+    // before writing (`lib/core/utils/public_name.dart`, whose
+    // `publicNamePattern` must stay identical to this one); this is what makes
+    // it true for a client that does not.
+    function isPublicName(name) {
+      return name is string && name.matches('[^ ]{1,30}( [^ ][.])?');
+    }
+
+    // ---- Finding what an account wrote on other people's things ----
+    //
+    // "Delete my account" has to reach notes, likes, journeys, reviews and
+    // reports that live under somebody ELSE's listing or place. Only a
+    // collection-group query can, and Firestore applies a parent-scoped rule
+    // to none of them — so each gets a recursive match granting exactly one
+    // thing: listing your own. Nothing here widens what anybody else can read.
+    //
+    // Deliberately keyed on a field and never on the document id, and never
+    // `allow read: if true` — a recursive match on a name like `reports`
+    // reaches every subcollection anyone ever gives that name (SEC-26).
+    match /{path=**}/notes/{noteId} {
+      allow read: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+    match /{path=**}/buyer_likes/{likeId} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+    match /{path=**}/journeys/{journeyId} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+    match /{path=**}/reviews/{reviewId} {
+      allow read: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+    match /{path=**}/reports/{reportId} {
+      allow read: if isSignedIn() && resource.data.reporterUid == request.auth.uid;
+    }
+
     function carSellerId(carId) {
       return get(/databases/$(database)/documents/cars/$(carId)).data.sellerId;
     }
@@ -246,7 +284,8 @@ service cloud.firestore {
       match /notes/{noteId} {
         allow read: if true;
         allow create: if isSignedIn()
-                      && request.resource.data.authorUid == request.auth.uid;
+                      && request.resource.data.authorUid == request.auth.uid
+                      && isPublicName(request.resource.data.authorName);
         allow delete: if isSignedIn()
                       && resource.data.authorUid == request.auth.uid;
       }
@@ -863,6 +902,15 @@ service cloud.firestore {
                  && getAfter(p).data.ratingSum == get(p).data.ratingSum + sumDelta;
         }
 
+        // A public name only (SEC-19), and an `authorUid` that is the
+        // document id — the field "delete my account" finds the review by.
+        // Optional so a review written before 10/2026 can still be edited;
+        // when present it may not point anywhere else.
+        function reviewIdentifiesItsAuthor() {
+          return isPublicName(request.resource.data.authorName)
+                 && request.resource.data.get('authorUid', reviewUid) == reviewUid;
+        }
+
         allow create: if isSignedIn()
                       && request.auth.uid == reviewUid
                       && request.resource.data.rating is int
@@ -872,6 +920,7 @@ service cloud.firestore {
                           || request.resource.data.text.size() <= 500)
                       // Nobody arrives pre-hidden, and nobody hides their own.
                       && !('hiddenByOperator' in request.resource.data)
+                      && reviewIdentifiesItsAuthor()
                       && placeMovesBy(1, request.resource.data.rating);
 
         // The author may edit — but not a review the operator has hidden.
@@ -887,6 +936,7 @@ service cloud.firestore {
                       && request.resource.data.rating <= 5
                       && (!('text' in request.resource.data)
                           || request.resource.data.text.size() <= 500)
+                      && reviewIdentifiesItsAuthor()
                       && placeMovesBy(0, request.resource.data.rating
                                          - resource.data.rating);
 
@@ -929,6 +979,8 @@ service cloud.firestore {
       allow create: if isSignedIn()
                     && request.auth.uid == reporterUid
                     && request.resource.data.reason is string
+                    // The field account deletion finds it by.
+                    && request.resource.data.reporterUid == reporterUid
                     // Filed together with the counter it moves — see
                     // `reportCountFollowsOwnReport`. A report that does not
                     // count would let the threshold drift from the reports.
@@ -936,7 +988,11 @@ service cloud.firestore {
                        == get(/databases/$(database)/documents/places/$(placeId)).data.get('reportCount', 0) + 1;
       // A report stands. Withdrawing one after it has hidden a place would
       // leave the place hidden with nothing on record explaining why.
-      allow update, delete: if false;
+      allow update: if false;
+      // ...except by leaving altogether, the same exception service records
+      // make (see `isErasingAccount`). The place keeps its `reportCount` and
+      // stays hidden if it was: what happened stands, the uid does not.
+      allow delete: if isErasingAccount() && request.auth.uid == reporterUid;
     }
 
     // ---- Retired collections ----

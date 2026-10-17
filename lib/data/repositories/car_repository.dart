@@ -220,7 +220,9 @@ class CarRepository {
         .doc(carId)
         .collection('buyer_likes')
         .doc(buyerId)
-        .set({'likedAt': FieldValue.serverTimestamp()});
+        // `uid` repeats the document id so that "delete my account" can find
+        // this like on somebody else's listing with a collection-group query.
+        .set({'likedAt': FieldValue.serverTimestamp(), 'uid': buyerId});
 
     final carSnap = await _cars.doc(carId).get();
     final demoMatch = carSnap.data()?['demoMatch'] == true;
@@ -316,6 +318,8 @@ class CarRepository {
 
   Future<void> setJourneyStage(String carId, String uid, int stage) {
     return _journey(carId, uid).set({
+      // See `likeCar`: the field is what account deletion queries on.
+      'uid': uid,
       'stage': stage,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
