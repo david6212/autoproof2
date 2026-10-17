@@ -64,12 +64,17 @@ class ServiceRepository {
       throw ArgumentError('לא הצלחנו לשמור את הקבלה');
     }
 
-    await _receipt(vehicleId, serviceId).set({
+    // ONE batch. As two writes, a refused flag left the image stored with
+    // nothing pointing at it — invisible to the owner, and the very file
+    // account deletion then failed to reach (SEC-30, SEC-17).
+    final batch = _db.batch();
+    batch.set(_receipt(vehicleId, serviceId), {
       'bytes': Blob(prepared.bytes),
       'width': prepared.width,
       'height': prepared.height,
     });
-    await _services(vehicleId).doc(serviceId).update({'hasReceipt': true});
+    batch.update(_services(vehicleId).doc(serviceId), {'hasReceipt': true});
+    await batch.commit();
   }
 
   /// The receipt itself, fetched only when the owner opens it.

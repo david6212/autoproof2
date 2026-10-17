@@ -43,18 +43,18 @@ void main() {
         ),
       );
 
-  testWidgets('no receipt picker is offered while uploads cannot work',
+  testWidgets('a receipt picker is offered whatever the Storage flag says',
       (tester) async {
+    // Until 10/2026 the picker hid behind `storageEnabled`. Since 26/09 a
+    // receipt is a Firestore document (`services/{id}/file/blob`), which works
+    // on the free plan — so hiding it hid a working feature, and the flag no
+    // longer describes it (SEC-30). The write itself is executed against the
+    // rules in test/rules/receipt_and_registry.mjs.
     await tester.pumpWidget(host(const AddServiceScreen(vehicleId: 'v1')));
     await tester.pump();
 
-    if (AppConfig.storageEnabled) {
-      expect(find.text('צרף קבלה'), findsOneWidget);
-      expect(find.text(AppConfig.uploadsUnavailable), findsNothing);
-    } else {
-      expect(find.text('צרף קבלה'), findsNothing);
-      expect(find.text(AppConfig.uploadsUnavailable), findsOneWidget);
-    }
+    expect(find.text('צרף קבלה'), findsOneWidget);
+    expect(find.text(AppConfig.uploadsUnavailable), findsNothing);
   });
 
   testWidgets('the rest of the record can still be written', (tester) async {

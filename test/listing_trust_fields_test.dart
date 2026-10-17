@@ -119,8 +119,26 @@ void main() {
           'request.resource.data.createdAt == resource.data.createdAt'));
     });
 
-    test("the registry's answer is frozen after publication", () {
-      expect(cars, contains("get('govSnapshot', {})"));
+    test("the registry's answer changes only beside a server-clock date", () {
+      // It was frozen outright until 10/2026, which killed the seller's
+      // refresh (SEC-21). Replacing it is allowed; rewriting it under the old
+      // date, or moving the date alone, is not — executed in
+      // test/rules/receipt_and_registry.mjs.
+      expect(cars, contains(".hasAny(['govSnapshot', 'govCheckedAt'])"));
+      expect(cars, contains('request.resource.data.govCheckedAt == request.time'));
+      final repo =
+          File('lib/data/repositories/car_repository.dart').readAsStringSync();
+      expect(repo, contains("'govCheckedAt': FieldValue.serverTimestamp()"));
+    });
+
+    test('and a refusal of our own is not blamed on the registry', () {
+      final card = File('lib/presentation/widgets/registry_refresh_card.dart')
+          .readAsStringSync();
+      final ours = card.indexOf('on FirebaseException catch');
+      final theirs = card.indexOf('לא הצלחנו להגיע למרשם');
+      expect(ours, greaterThan(-1));
+      expect(theirs, greaterThan(ours),
+          reason: 'the Firestore refusal is caught before the generic branch');
     });
 
     test('what is still open is written down, not implied', () {

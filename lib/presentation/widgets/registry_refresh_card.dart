@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -59,6 +60,19 @@ class _RegistryRefreshCardState extends ConsumerState<RegistryRefreshCard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('נתוני המרשם עודכנו.')),
+        );
+      }
+    } on FirebaseException catch (_) {
+      // The registry answered; it is OUR write that did not go through. Until
+      // 10/2026 this landed in the branch below and told the seller the
+      // Ministry was unreachable (SEC-21) — a refusal of our own, blamed on
+      // somebody else.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'קיבלנו תשובה מהמרשם, אבל לא הצלחנו לשמור אותה במודעה. הנתונים הקודמים נשארו.'),
+          ),
         );
       }
     } catch (_) {

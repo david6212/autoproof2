@@ -203,7 +203,9 @@ class CarRepository {
   ) {
     return _cars.doc(carId).update({
       'govSnapshot': snapshot,
-      'govCheckedAt': DateTime.now(),
+      // The server's clock, not the phone's: the rules accept a new snapshot
+      // only beside a date equal to the time of the write (SEC-21).
+      'govCheckedAt': FieldValue.serverTimestamp(),
     });
   }
 

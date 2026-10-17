@@ -238,9 +238,20 @@ service cloud.firestore {
                     // age cannot be reset — retention counts from it.
                     && request.resource.data.sellerId == resource.data.sellerId
                     && request.resource.data.createdAt == resource.data.createdAt
-                    // The registry's answer is what it was at publication.
-                    && request.resource.data.get('govSnapshot', {})
-                       == resource.data.get('govSnapshot', {})
+                    // The registry's answer may be REPLACED, never quietly
+                    // rewritten: it changes only together with a check date
+                    // that is the server's clock, so the date a buyer reads
+                    // beside it is always when it was really written.
+                    //
+                    // Until 10/2026 the snapshot was frozen outright, and that
+                    // killed the seller's "refresh" button — the one way to
+                    // keep the date current — while the app blamed data.gov.il
+                    // for the refusal (SEC-21). What the rules still cannot do
+                    // is check the answer against the registry; that needs a
+                    // server, as at create.
+                    && (!request.resource.data.diff(resource.data).affectedKeys()
+                          .hasAny(['govSnapshot', 'govCheckedAt'])
+                        || request.resource.data.govCheckedAt == request.time)
                     && (claimsUnchanged(resource.data, request.resource.data)
                         || claimsMatchThePassport(request.resource.data));
 
@@ -519,7 +530,15 @@ service cloud.firestore {
                       && vehicleData(vehicleId).ownerId == request.auth.uid
                       && request.resource.data.addedByOwnerId == resource.data.addedByOwnerId
                       && request.resource.data.createdAt == resource.data.createdAt
-                      && request.resource.data.editedAt is timestamp;
+                      && (request.resource.data.editedAt is timestamp
+                          // Attaching a receipt is not an edit of what the
+                          // record SAYS, which is what `editedAt` discloses —
+                          // and demanding the stamp refused every attach on a
+                          // record never edited, leaving the image orphaned
+                          // (SEC-30). Only the flag, and only switched on.
+                          || (request.resource.data.diff(resource.data).affectedKeys()
+                                .hasOnly(['hasReceipt'])
+                              && request.resource.data.hasReceipt == true));
         // Never while the account exists — see `isErasingAccount()`. A record
         // that could vanish while a buyer was reading it would make the whole
         // history worthless; a record that outlives the person who wrote it

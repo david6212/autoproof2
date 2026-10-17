@@ -273,6 +273,11 @@ class AddServiceController extends AutoDisposeAsyncNotifier<void> {
   @override
   Future<void> build() async {}
 
+  /// True when the last [submit] saved the record but not its receipt. The
+  /// record is not rolled back for it — the owner keeps what they typed — but
+  /// the screen says so instead of letting them believe it is attached.
+  bool receiptFailed = false;
+
   Future<bool> submit({
     required String vehicleId,
     required ServiceType type,
@@ -292,6 +297,7 @@ class AddServiceController extends AutoDisposeAsyncNotifier<void> {
     if (uid == null) return false;
 
     state = const AsyncLoading();
+    receiptFailed = false;
     final result = await AsyncValue.guard(() async {
       final services = ref.read(serviceRepositoryProvider);
       final id = services.newServiceId(vehicleId);
@@ -326,7 +332,8 @@ class AddServiceController extends AutoDisposeAsyncNotifier<void> {
             bytes: receiptBytes,
           );
         } catch (_) {
-          // Left without a receipt; the record stands.
+          // Left without a receipt; the record stands, and the screen says so.
+          receiptFailed = true;
         }
       }
     });

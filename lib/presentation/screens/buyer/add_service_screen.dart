@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/constants/app_config.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_text.dart';
@@ -231,6 +230,13 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
 
     if (!mounted) return;
     if (ok) {
+      // The record is saved either way; a receipt that failed must not be
+      // passed over in silence, or the owner believes it is attached (SEC-30).
+      if (controller.receiptFailed) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('הרשומה נשמרה, אבל לא הצלחנו לשמור את הקבלה.'),
+        ));
+      }
       await _maybeOfferToRate();
       if (mounted) Navigator.of(context).pop(true);
       return;
@@ -341,17 +347,14 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
               decoration: const InputDecoration(labelText: 'הערות (לא חובה)'),
             ),
             const SizedBox(height: AppSpace.xl),
-            // No picker at all when Storage is not provisioned. Offering one
-            // that always fails teaches people the feature is broken, and they
-            // stop trusting the parts that work.
-            if (AppConfig.storageEnabled)
-              _ReceiptPicker(
-                bytes: _receipt,
-                onPick: _pickReceipt,
-                onClear: () => setState(() => _receipt = null),
-              )
-            else
-              Text(AppConfig.uploadsUnavailable, style: context.text.caption),
+            // Not gated on `AppConfig.storageEnabled` any more: since 26/09 a
+            // receipt is a Firestore document, not a Cloud Storage file, so
+            // it works on the free plan (SEC-30).
+            _ReceiptPicker(
+              bytes: _receipt,
+              onPick: _pickReceipt,
+              onClear: () => setState(() => _receipt = null),
+            ),
             if (_error != null) ...[
               const SizedBox(height: AppSpace.lg),
               Container(
