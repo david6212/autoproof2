@@ -23,6 +23,11 @@ void main() {
   late FakeFirebaseFirestore db;
   late AccountDeletionRepository repo;
 
+  // What the injected Storage sweep saw when it ran (SEC-04).
+  String? sweptUid;
+  bool? profileGoneAtSweep;
+  bool? listingStillThereAtSweep;
+
   Future<bool> exists(String path) async => (await db.doc(path).get()).exists;
 
   setUp(() async {
@@ -31,10 +36,20 @@ void main() {
       signedIn: true,
       mockUser: MockUser(uid: me, email: 'me@example.com'),
     );
-    repo = AccountDeletionRepository(auth: auth, firestore: db);
+    sweptUid = null;
+    repo = AccountDeletionRepository(
+      auth: auth,
+      firestore: db,
+      sweepStorage: (uid) async {
+        sweptUid = uid;
+        profileGoneAtSweep = !await exists('users/$uid');
+        listingStillThereAtSweep = await exists('cars/mine');
+      },
+    );
 
     // ---- mine ----
     await db.doc('users/$me').set({'name': 'דוד'});
+    await db.doc('cars/mine').set({'sellerId': me, 'photos': ['p.jpg']});
     await db.doc('vehicles/v1').set({'ownerId': me, 'serviceCount': 1});
     await db.doc('vehicles/v1/services/s1').set({'addedByOwnerId': me});
     await db.doc('vehicles/v1/services/s1/file/blob').set({'bytes': 'invoice'});
@@ -85,6 +100,19 @@ void main() {
   });
 
   group('what was mine is gone', () {
+    test('my listing', () async {
+      expect(await exists('cars/mine'), isFalse);
+    });
+
+    test('my files in Storage — swept after the profile, before the listing',
+        () async {
+      // Before the listing: with its record gone nothing could ever find a
+      // photo again, in a prefix the bucket makes publicly listable (SEC-04).
+      expect(sweptUid, me);
+      expect(profileGoneAtSweep, isTrue);
+      expect(listingStillThereAtSweep, isTrue);
+    });
+
     test('the invoice image under a service record (SEC-17)', () async {
       expect(await exists('vehicles/v1/services/s1/file/blob'), isFalse);
       expect(await exists('vehicles/v1/services/s1'), isFalse);

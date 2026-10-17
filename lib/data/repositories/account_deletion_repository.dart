@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../core/constants/app_config.dart';
+import 'storage_repository.dart';
+
 /// What "delete my account" actually deletes.
 ///
 /// Apple requires an app that creates accounts to delete them **in the app**
@@ -67,12 +70,26 @@ import 'package:firebase_auth/firebase_auth.dart';
 ///   `data_corrections`): kept as the record of how a complaint was handled.
 /// - Chat messages: a conversation has a second party.
 class AccountDeletionRepository {
-  AccountDeletionRepository({FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+  AccountDeletionRepository({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+    Future<void> Function(String uid)? sweepStorage,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _sweepStorage = sweepStorage ?? _defaultStorageSweep;
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
+
+  /// Deletes this account's files in Cloud Storage. Injected so the order can
+  /// be tested without a bucket; by default it runs only while Storage is
+  /// provisioned, because without a bucket every call fails (SEC-04).
+  final Future<void> Function(String uid) _sweepStorage;
+
+  static Future<void> _defaultStorageSweep(String uid) async {
+    if (!AppConfig.storageEnabled) return;
+    await StorageRepository().deleteEverythingFor(uid);
+  }
 
   /// Deletes everything this account owns, then the account.
   ///
@@ -96,6 +113,11 @@ class AccountDeletionRepository {
     for (final sub in const ['saved', 'past_vehicles']) {
       await _deleteAll(_firestore.collection('users').doc(uid).collection(sub));
     }
+
+    // 2b. Files in Cloud Storage, BEFORE the listings that name them: with
+    //     the record gone, nothing in the app could ever find a photo again,
+    //     and `cars/{uid}/` is publicly listable (SEC-04).
+    await _sweepStorage(uid);
 
     // 3. Vehicle passports. The purchase price, the previous keeper, the
     //    service history, and the attached scans — a licence carries an ID

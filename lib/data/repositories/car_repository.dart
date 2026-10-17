@@ -44,11 +44,23 @@ class CarRepository {
   static bool withinRetention(DateTime createdAt, [DateTime? cutoff]) =>
       createdAt.isAfter(cutoff ?? expiredBefore);
 
+  /// How far inside [retention] the feed query reaches. The rules refuse any
+  /// listing older than 730 days by THEIR clock, and a query whose results
+  /// they cannot prove readable is refused whole — so the feed asks for a
+  /// window a few days narrower, and a phone clock that is a day or two
+  /// behind cannot take the whole feed down with it (SEC-25).
+  static const feedQueryRetention = Duration(days: 725);
+
   /// Stream of active listings, newest first, excluding expired ones.
   Stream<List<CarModel>> streamActiveCars() {
-    // Sort client-side to avoid needing a composite (status + createdAt) index.
+    // The `createdAt` bound is what lets the rules admit this query, and it
+    // is why `firestore.indexes.json` carries a (status, createdAt) index.
+    // Sorted client-side all the same, newest first.
     return _cars
         .where('status', isEqualTo: CarStatus.active.name)
+        .where('createdAt',
+            isGreaterThan: Timestamp.fromDate(
+                DateTime.now().subtract(feedQueryRetention)))
         .snapshots()
         .map((snap) {
       final cutoff = expiredBefore;
@@ -62,7 +74,9 @@ class CarRepository {
   }
 
   /// Ids of listings past the retention window, for a future purge job to
-  /// delete. Nothing calls this yet — it exists so the deletion path is ready.
+  /// delete. Nothing calls this yet. Since SEC-25 the rules refuse this query
+  /// to every client — an expired listing is readable only by its seller — so
+  /// the purge it was written for has to run on a server, with admin rights.
   Future<List<String>> expiredListingIds() async {
     final snap = await _cars
         .where('createdAt', isLessThan: Timestamp.fromDate(expiredBefore))
@@ -77,7 +91,15 @@ class CarRepository {
   /// promise is kept here rather than only in the browse list. The router
   /// already renders null as "this page does not exist".
   Future<CarModel?> getCarById(String id) async {
-    final snap = await _cars.doc(id).get();
+    final DocumentSnapshot<Map<String, dynamic>> snap;
+    try {
+      snap = await _cars.doc(id).get();
+    } on FirebaseException catch (e) {
+      // An expired listing is refused by the rules now (SEC-25), not just
+      // filtered here. To the reader it is the same thing: not available.
+      if (e.code == 'permission-denied') return null;
+      rethrow;
+    }
     if (!snap.exists || snap.data() == null) return null;
     return visibleCar(snap.data()!, snap.id);
   }

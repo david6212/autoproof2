@@ -287,10 +287,26 @@ service cloud.firestore {
     }
 
     match /cars/{carId} {
-      allow read: if true;
+      // Public — but only for 24 months. The privacy policy says a listing
+      // stops being shown after that, and until 10/2026 only the app kept the
+      // promise: a direct REST read served every listing ever published, with
+      // its photos and description (SEC-25). The seller keeps access to their
+      // own, so "delete my account" and "one active listing" still find it.
+      //
+      // `streamActiveCars` filters on `createdAt` with a margin of a few
+      // days, so the rules can prove its results readable; a list query
+      // without such a filter is refused outright.
+      allow read: if resource.data.createdAt > request.time - duration.value(730, 'd')
+                  || (isSignedIn() && resource.data.sellerId == request.auth.uid);
 
       allow create: if isSignedIn()
                     && request.resource.data.sellerId == request.auth.uid
+                    // Retention counts from this date, so it must be today's —
+                    // a listing dated next year would never expire. A day's
+                    // slack either way for a phone clock that is off.
+                    && request.resource.data.createdAt is timestamp
+                    && request.resource.data.createdAt > request.time - duration.value(1, 'd')
+                    && request.resource.data.createdAt < request.time + duration.value(1, 'd')
                     && claimsMatchThePassport(request.resource.data)
                     // A registry answer is stamped when it is taken, and a
                     // listing published today cannot have been checked
